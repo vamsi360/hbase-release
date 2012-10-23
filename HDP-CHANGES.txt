@@ -1,0 +1,1 @@
+HDP Trunk: hdp-hbase-0.94.2 Created from Apache Release Tag: 0.94.2
