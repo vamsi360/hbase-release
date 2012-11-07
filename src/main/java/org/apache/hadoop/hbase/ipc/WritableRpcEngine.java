@@ -20,35 +20,33 @@
 
 package org.apache.hadoop.hbase.ipc;
 
-import java.lang.reflect.Proxy;
-import java.lang.reflect.Method;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
-
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
-import java.io.*;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.net.SocketFactory;
 
-import org.apache.commons.logging.*;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.client.Operation;
 import org.apache.hadoop.hbase.io.HbaseObjectWritable;
 import org.apache.hadoop.hbase.monitoring.MonitoredRPCHandler;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Objects;
-import org.apache.hadoop.io.*;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.ipc.RPC;
-import org.apache.hadoop.hbase.ipc.VersionedProtocol;
-import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.authorize.ServiceAuthorizationManager;
-import org.apache.hadoop.conf.*;
-
 import org.codehaus.jackson.map.ObjectMapper;
 
 /** An RpcEngine implementation for Writable data. */
@@ -272,6 +270,30 @@ class WritableRpcEngine implements RpcEngine {
           DEFAULT_WARN_RESPONSE_SIZE);
     }
 
+    private Map<String, Method> methodMaps = new ConcurrentHashMap<String, Method>();
+
+    private Method getMethod(Class<? extends VersionedProtocol> protocol,
+        String methodName, Class[] parameterClasses) throws Exception {
+      StringBuilder sb = new StringBuilder();
+
+      sb.append(protocol.getName());
+      sb.append('-');
+      sb.append(methodName);
+      sb.append('-');
+      for (Class c : parameterClasses) {
+        sb.append(c.getName());
+        sb.append('-');
+      }
+      String signature = sb.toString();
+      Method method = methodMaps.get(signature);
+      if (method == null) {
+        method = protocol.getMethod(methodName, parameterClasses);
+        method.setAccessible(true);
+        methodMaps.put(signature, method);
+      }
+      return method;
+    }
+
     @Override
     public Writable call(Class<? extends VersionedProtocol> protocol,
         Writable param, long receivedTime, MonitoredRPCHandler status)
@@ -287,10 +309,8 @@ class WritableRpcEngine implements RpcEngine {
         status.setRPCPacket(param);
         status.resume("Servicing call");
 
-        Method method =
-          protocol.getMethod(call.getMethodName(),
-                                   call.getParameterClasses());
-        method.setAccessible(true);
+        Method method = getMethod(protocol, call.getMethodName(),
+            call.getParameterClasses());
 
         //Verify protocol version.
         //Bypass the version check for VersionedProtocol
