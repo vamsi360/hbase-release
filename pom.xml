@@ -303,7 +303,6 @@
       </releases>
     </repository>
   </repositories>
-
   <pluginRepositories>
     <pluginRepository>
       <id>ghelmling.testing</id>
@@ -1000,6 +999,13 @@
         </configuration>
       </plugin>
     </plugins>
+    <extensions>  
+       <extension>  
+         <groupId>org.springframework.build.aws</groupId>  
+         <artifactId>org.springframework.build.aws.maven</artifactId>  
+         <version>3.0.0.RELEASE</version>  
+       </extension>  
+     </extensions> 
   </build>
 
   <properties>
@@ -1070,6 +1076,9 @@
     <surefire.secondPartGroups>org.apache.hadoop.hbase.MediumTests</surefire.secondPartGroups>
     <test.output.tofile>true</test.output.tofile>
     <surefire.timeout>900</surefire.timeout>
+    <repoid>maven-s3-release-repo</repoid>
+    <repourl>s3://repo.hortonworks.com/release</repourl>
+    <reponame>S3 Release Repository</reponame>
   </properties>
 
   <!-- Sorted by groups of dependencies then groupId and artifactId -->
@@ -2563,5 +2572,10 @@ MAVEN_OPTS=-Xmx2048m mvn clean test -Pclover site -->
                -->
           <url>file:///tmp</url>
       </site>
+    <repository>
+      <id>${repoid}</id>
+      <name>${reponame}</name>
+      <url>${repourl}</url>
+    </repository>
   </distributionManagement>
 </project>
