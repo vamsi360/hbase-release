@@ -1,4 +1,5 @@
-HDP Trunk: hdp-hbase-0.94.2 Created from Apache Release Tag: 0.94.2
+bimota-0.94 created from https://svn.apache.org/repos/asf/hbase/branches/0.94@1406700
+13f79535-47bb-0310-9956-ffa450edef68
 
-Release 1.2 (Bimota)
+(Bimota)
     LWHBASE-1   port HBASE-6338 Cache Method in RPC handler to Bimota
