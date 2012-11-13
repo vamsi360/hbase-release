@@ -3,3 +3,4 @@ bimota-0.94 created from https://svn.apache.org/repos/asf/hbase/branches/0.94@14
 
 (Bimota)
     LWHBASE-1   port HBASE-6338 Cache Method in RPC handler to Bimota
+    LWHBASE-2   port HBASE-6134 Improvement for split-worker to speed up distributed log splitting
