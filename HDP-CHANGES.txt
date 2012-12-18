@@ -4,3 +4,9 @@ bimota-0.94 created from https://svn.apache.org/repos/asf/hbase/branches/0.94@14
 (Bimota)
     LWHBASE-1   port HBASE-6338 Cache Method in RPC handler to Bimota
     LWHBASE-2   port HBASE-6134 Improvement for split-worker to speed up distributed log splitting
+    HBASE-7165  TestSplitLogManager.testUnassignedTimeout is flaky(1a3d034d8a02da1c228bbccf2364e0c0b88a1910)
+    HBASE-7166  TestSplitTransactionOnCluster tests are flaky(d02a549a9bbbf12de4bdc927ce7dfe68d9cdebc7)
+    HBASE-7177  TestZooKeeperScanPolicyObserver.testScanPolicyObserver is flaky(d954c65ae6b966d9f502b89d4b0dc81f60589683)
+    HBASE-7235  TestMasterObserver is flaky(54fe8749fd74c96c898df30e751b992c21613f05)
+    HBASE-7343  Fix flaky condition for TestDrainingServer (Himanshu)(c9023284fc381a3b8e49d91279983ffae661da02)
+    HBASE-6175  TestFSUtils flaky on hdfs getFileStatus method(a7b0d0fc5259cbb34c1af7b06464d27603e02c54)
