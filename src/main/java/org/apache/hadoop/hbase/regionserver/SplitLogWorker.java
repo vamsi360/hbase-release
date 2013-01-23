@@ -91,7 +91,7 @@ public class SplitLogWorker extends ZooKeeperListener implements Runnable {
   }
 
   public SplitLogWorker(ZooKeeperWatcher watcher, final Configuration conf,
-      final String serverName) {
+      final String serverName, final LastSequenceId sequenceIdChecker) {
     this(watcher, conf, serverName, new TaskExecutor () {
       @Override
       public Status exec(String filename, CancelableProgressable p) {
@@ -110,7 +110,7 @@ public class SplitLogWorker extends ZooKeeperListener implements Runnable {
         try {          
           String relativeLogPath = getRelativeLogPath(filename);
           if (HLogSplitter.splitLogFile(rootdir,
-              fs.getFileStatus(new Path(rootdir, relativeLogPath)), fs, conf, p) == false) {
+              fs.getFileStatus(new Path(rootdir, relativeLogPath)), fs, conf, p, sequenceIdChecker) == false) {
             return Status.PREEMPTED;
           }
         } catch (InterruptedIOException iioe) {

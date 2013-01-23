@@ -56,6 +56,7 @@ import org.apache.hadoop.hbase.io.HeapSize;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.monitoring.TaskMonitor;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.regionserver.LastSequenceId;
 import org.apache.hadoop.hbase.regionserver.wal.HLog.Entry;
 import org.apache.hadoop.hbase.regionserver.wal.HLog.Reader;
 import org.apache.hadoop.hbase.regionserver.wal.HLog.Writer;
@@ -118,35 +119,62 @@ public class HLogSplitter {
   // Used in distributed log splitting
   private DistributedLogSplittingHelper distributedLogSplittingHelper = null;
 
+  //For checking the latest flushed sequence id
+  protected final LastSequenceId sequenceIdChecker;
 
   /**
    * Create a new HLogSplitter using the given {@link Configuration} and the
    * <code>hbase.hlog.splitter.impl</code> property to derived the instance
    * class to use.
    * <p>
-   * @param conf
+   * @param rootDir hbase directory
+   * @param b/srcDir logs directory
+   * @param oldLogDir directory where processed logs are archived to
+   * @return New HLogSplitter instance
+   */
+  public static HLogSplitter createLogSplitter(Configuration conf,
+      final Path rootDir, final Path srcDir,
+      Path oldLogDir, final FileSystem fs, LastSequenceId idChecker)  {
+    return createLogSplitter(conf, rootDir, srcDir, oldLogDir, fs, idChecker, false);
+  }
+
+  /**
+   * Create a new HLogSplitter using the given {@link Configuration} and the
+   * <code>hbase.hlog.splitter.impl</code> property to derived the instance
+   * class to use.
+   * <p>
    * @param rootDir hbase directory
    * @param srcDir logs directory
    * @param oldLogDir directory where processed logs are archived to
-   * @param fs FileSystem
    * @return New HLogSplitter instance
    */
   public static HLogSplitter createLogSplitter(Configuration conf,
       final Path rootDir, final Path srcDir,
       Path oldLogDir, final FileSystem fs)  {
+    return createLogSplitter(conf, rootDir, srcDir, oldLogDir, fs, null, true);
+  }
 
+  private static HLogSplitter createLogSplitter(Configuration conf,
+      final Path rootDir, final Path srcDir, Path oldLogDir, final FileSystem fs,
+      LastSequenceId seqId, boolean createViaOldCtor) {
     @SuppressWarnings("unchecked")
     Class<? extends HLogSplitter> splitterClass = (Class<? extends HLogSplitter>) conf
         .getClass(LOG_SPLITTER_IMPL, HLogSplitter.class);
     try {
-       Constructor<? extends HLogSplitter> constructor =
-         splitterClass.getConstructor(
-          Configuration.class, // conf
-          Path.class, // rootDir
-          Path.class, // srcDir
-          Path.class, // oldLogDir
-          FileSystem.class); // fs
-      return constructor.newInstance(conf, rootDir, srcDir, oldLogDir, fs);
+      List<Class<?>> ctorArgs = new ArrayList<Class<?>>(6);
+      ctorArgs.add(Configuration.class);
+      ctorArgs.add(Path.class); // rootDir
+      ctorArgs.add(Path.class); // srcDir
+      ctorArgs.add(Path.class); // oldLogDir
+      ctorArgs.add(FileSystem.class);
+      if (!createViaOldCtor) {
+        ctorArgs.add(LastSequenceId.class);
+      }
+      Constructor<? extends HLogSplitter> ctor =
+          splitterClass.getConstructor(ctorArgs.toArray(new Class<?>[0]));
+      return !createViaOldCtor
+        ? ctor.newInstance(conf, rootDir, srcDir, oldLogDir, fs, seqId)
+        : ctor.newInstance(conf, rootDir, srcDir, oldLogDir, fs);
     } catch (IllegalArgumentException e) {
       throw new RuntimeException(e);
     } catch (InstantiationException e) {
@@ -158,17 +186,28 @@ public class HLogSplitter {
     } catch (SecurityException e) {
       throw new RuntimeException(e);
     } catch (NoSuchMethodException e) {
+      // backward compat for older HLogSplitters (is this even used?)
+      if (!createViaOldCtor) {
+        LOG.info("Unable to create HLogSplitter with sequence ID checker, trying old ctor");
+        return createLogSplitter(conf, rootDir, srcDir, oldLogDir, fs, null, true);
+      }
       throw new RuntimeException(e);
     }
   }
 
   public HLogSplitter(Configuration conf, Path rootDir, Path srcDir,
       Path oldLogDir, FileSystem fs) {
+    this(conf, rootDir, srcDir, oldLogDir, fs, null);
+  }
+
+  public HLogSplitter(Configuration conf, Path rootDir, Path srcDir,
+      Path oldLogDir, FileSystem fs, LastSequenceId idChecker) {
     this.conf = conf;
     this.rootDir = rootDir;
     this.srcDir = srcDir;
     this.oldLogDir = oldLogDir;
     this.fs = fs;
+    this.sequenceIdChecker = idChecker;
 
     entryBuffers = new EntryBuffers(
         conf.getInt("hbase.regionserver.hlog.splitlog.buffersize",
@@ -192,9 +231,9 @@ public class HLogSplitter {
 
     status = TaskMonitor.get().createStatus(
         "Splitting logs in " + srcDir);
-    
+
     long startTime = EnvironmentEdgeManager.currentTimeMillis();
-    
+
     status.setStatus("Determining files to split...");
     List<Path> splits = null;
     if (!fs.exists(srcDir)) {
@@ -218,7 +257,7 @@ public class HLogSplitter {
     LOG.info(msg);
     return splits;
   }
-  
+
   private void logAndReport(String msg) {
     status.setStatus(msg);
     LOG.info(msg);
@@ -314,7 +353,7 @@ public class HLogSplitter {
         }
       }
       status.setStatus("Log splits complete. Checking for orphaned logs.");
-      
+
       if (fs.listStatus(srcDir).length > processedLogs.size()
           + corruptedLogs.size()) {
         throw new OrphanHLogAfterSplitException(
@@ -356,17 +395,18 @@ public class HLogSplitter {
    * @throws IOException
    */
   static public boolean splitLogFile(Path rootDir, FileStatus logfile,
-      FileSystem fs, Configuration conf, CancelableProgressable reporter)
+      FileSystem fs, Configuration conf, CancelableProgressable reporter,
+      LastSequenceId idChecker)
       throws IOException {
     HLogSplitter s = new HLogSplitter(conf, rootDir, null, null /* oldLogDir */,
-        fs);
+        fs, idChecker);
     return s.splitLogFile(logfile, reporter);
   }
 
   public boolean splitLogFile(FileStatus logfile,
       CancelableProgressable reporter) throws IOException {
     boolean isCorrupted = false;
-    
+
     Preconditions.checkState(status == null);
     status = TaskMonitor.get().createStatus(
         "Splitting log file " + logfile.getPath() +
@@ -405,7 +445,7 @@ public class HLogSplitter {
     int editsCount = 0;
     Entry entry;
     try {
-      while ((entry = getNextLogLine(in,logPath, skipErrors)) != null) {
+      while ((entry = getNextLogLine(in, logPath, skipErrors)) != null) {
         entryBuffers.appendEntry(entry);
         editsCount++;
         // If sufficient edits have passed, check if we should report progress.
@@ -433,8 +473,12 @@ public class HLogSplitter {
     } finally {
       LOG.info("Finishing writing output logs and closing down.");
       progress_failed = outputSink.finishWritingAndClose() == null;
-      String msg = "Processed " + editsCount + " edits across "
-          + outputSink.getOutputCounts().size() + " regions; log file="
+      long editsSkipped = 0;
+      for (WriterAndPath wap : outputSink.logWriters.values()) {
+        editsSkipped += wap.editsSkipped;
+      }
+      String msg = "Processed " + editsCount + " edits and skipped " + editsSkipped
+          + " edits across " + outputSink.getOutputCounts().size() + " regions; log file="
           + logPath + " is corrupted = " + isCorrupted + " progress failed = "
           + progress_failed;
       LOG.info(msg);
@@ -785,7 +829,7 @@ public class HLogSplitter {
           buffer = new RegionEntryBuffer(key.getTablename(), key.getEncodedRegionName());
           buffers.put(key.getEncodedRegionName(), buffer);
         }
-        incrHeap= buffer.appendEntry(entry);        
+        incrHeap= buffer.appendEntry(entry);
       }
 
       // If we crossed the chunk threshold, wait for more space to be available
@@ -936,6 +980,7 @@ public class HLogSplitter {
       long startTime = System.nanoTime();
       try {
         int editsCount = 0;
+        int editsSkipped = 0;
 
         for (Entry logEntry : entries) {
           if (wap == null) {
@@ -946,12 +991,19 @@ public class HLogSplitter {
               return;
             }
           }
+          byte[] region = logEntry.getKey().getEncodedRegionName();
+          long logSeqNum = logEntry.getKey().getLogSeqNum();
+          if (outputSink.shouldSkipEntry(region, logSeqNum)) {
+            ++editsSkipped;
+            continue;
+          }
           wap.w.append(logEntry);
-          outputSink.updateRegionMaximumEditLogSeqNum(logEntry);
+          outputSink.updateRegionMaximumEditLogSeqNum(region, logSeqNum);
           editsCount++;
         }
         // Pass along summary statistics
         wap.incrementEdits(editsCount);
+        wap.incrementSkipped(editsSkipped);
         wap.incrementNanoTime(System.nanoTime() - startTime);
       } catch (IOException e) {
         e = RemoteExceptionHandler.checkIOException(e);
@@ -1049,13 +1101,15 @@ public class HLogSplitter {
     private final Map<byte[], Long> regionMaximumEditLogSeqNum = Collections
         .synchronizedMap(new TreeMap<byte[], Long>(Bytes.BYTES_COMPARATOR));
     private final List<WriterThread> writerThreads = Lists.newArrayList();
+    private final Map<byte[], Long> regionLastFlushedSequenceIds =
+        new TreeMap<byte[], Long>(Bytes.BYTES_COMPARATOR);
 
     /* Set of regions which we've decided should not output edits */
     private final Set<byte[]> blacklistedRegions = Collections.synchronizedSet(
         new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR));
 
     private boolean closeAndCleanCompleted = false;
-    
+
     private boolean logWritersClosed  = false;
 
     private final int numThreads;
@@ -1215,7 +1269,7 @@ public class HLogSplitter {
       }
       return paths;
     }
-    
+
     private List<IOException> closeLogWriters(List<IOException> thrown)
         throws IOException {
       if (!logWritersClosed) {
@@ -1269,20 +1323,37 @@ public class HLogSplitter {
     /**
      * Update region's maximum edit log SeqNum.
      */
-    void updateRegionMaximumEditLogSeqNum(Entry entry) {
+    void updateRegionMaximumEditLogSeqNum(byte[] region, long logSeqNum) {
       synchronized (regionMaximumEditLogSeqNum) {
-        Long currentMaxSeqNum=regionMaximumEditLogSeqNum.get(entry.getKey().getEncodedRegionName());
-        if (currentMaxSeqNum == null
-            || entry.getKey().getLogSeqNum() > currentMaxSeqNum) {
-          regionMaximumEditLogSeqNum.put(entry.getKey().getEncodedRegionName(),
-              entry.getKey().getLogSeqNum());
+        Long currentMaxSeqNum = regionMaximumEditLogSeqNum.get(region);
+        if (currentMaxSeqNum == null || logSeqNum > currentMaxSeqNum) {
+          regionMaximumEditLogSeqNum.put(region, logSeqNum);
         }
       }
-
     }
 
     Long getRegionMaximumEditLogSeqNum(byte[] region) {
       return regionMaximumEditLogSeqNum.get(region);
+    }
+
+    boolean shouldSkipEntry(byte[] region, long logSeqNum) {
+      Long lastFlushedSequenceId = Long.MIN_VALUE;
+      if (sequenceIdChecker != null) {
+        // sequenceIdChecker will probably make a network request. We'd prefer to have
+        // redundant requests to locking for all regions over one; if this becomes a
+        // problem, it's trivial to make some threads wait for the lone requestor.
+        synchronized (regionLastFlushedSequenceIds) {
+          lastFlushedSequenceId = regionLastFlushedSequenceIds.get(region);
+        }
+        if (lastFlushedSequenceId == null) {
+          lastFlushedSequenceId = sequenceIdChecker.getLastSequenceId(region);
+          synchronized (regionLastFlushedSequenceIds) {
+            // Should be the same value - might as well overwrite it.
+            regionLastFlushedSequenceIds.put(region, lastFlushedSequenceId);
+          }
+        }
+      }
+      return lastFlushedSequenceId >= logSeqNum;
     }
 
     /**
@@ -1314,9 +1385,11 @@ public class HLogSplitter {
 
     /* Count of edits written to this path */
     long editsWritten = 0;
+    /* Count of edits skipped to this path */
+    long editsSkipped = 0;
     /* Number of nanos spent writing to this log */
     long nanosSpent = 0;
-    
+
     /* To check whether a close has already been tried on the
      * writer
      */
@@ -1329,6 +1402,10 @@ public class HLogSplitter {
 
     void incrementEdits(int edits) {
       editsWritten += edits;
+    }
+
+    void incrementSkipped(int edits) {
+      editsSkipped += edits;
     }
 
     void incrementNanoTime(long nanos) {

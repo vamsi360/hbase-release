@@ -22,8 +22,10 @@ package org.apache.hadoop.hbase;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -52,7 +54,7 @@ implements WritableComparable<HServerLoad> {
   /** Total Number of requests from the start of the region server.
    */
   private int totalNumberOfRequests = 0;
-  
+
   /** the amount of used heap, in MB */
   private int usedHeapMB = 0;
 
@@ -71,7 +73,7 @@ implements WritableComparable<HServerLoad> {
   }
 
   /** per-region load metrics */
-  private Map<byte[], RegionLoad> regionLoad =
+  Map<byte[], RegionLoad> regionLoad =
     new TreeMap<byte[], RegionLoad>(Bytes.BYTES_COMPARATOR);
 
   /** @return the object version number */
@@ -128,6 +130,12 @@ implements WritableComparable<HServerLoad> {
      * block cache, in KB.
      */
     private int totalStaticBloomSizeKB;
+
+    /**  The completed sequence Id for the region, if any.
+     * HACK: These are written from HServerLoadWithSeqIds, to
+     * achieve backward compat while also porting HBASE-6508.
+     */
+    private long completeSequenceId;
 
     /**
      * Constructor, for Writable
@@ -242,14 +250,14 @@ implements WritableComparable<HServerLoad> {
     public long getWriteRequestsCount() {
       return writeRequestsCount;
     }
-    
+
     /**
      * @return The current total size of root-level indexes for the region, in KB.
      */
     public int getRootIndexSizeKB() {
       return rootIndexSizeKB;
     }
-    
+
     /**
      * @return The total size of all index blocks, not just the root level, in KB.
      */
@@ -264,7 +272,7 @@ implements WritableComparable<HServerLoad> {
     public int getTotalStaticBloomSizeKB() {
       return totalStaticBloomSizeKB;
     }
-    
+
     /**
      * @return the total number of kvs in current compaction
      */
@@ -277,6 +285,13 @@ implements WritableComparable<HServerLoad> {
      */
     public long getCurrentCompactedKVs() {
       return currentCompactedKVs;
+    }
+
+    /**
+     * @return the maximum complete sequence Id, if available.
+     */
+    public long getCompleteSequenceId() {
+      return this.completeSequenceId;
     }
 
     // Setters
@@ -347,6 +362,13 @@ implements WritableComparable<HServerLoad> {
     }
 
     /**
+     * @return sets the maximum complete sequence Id.
+     */
+    public void setCompleteSequenceId(long value) {
+      this.completeSequenceId = value;
+    }
+
+    /**
      * HBASE-5256 and HBASE-5283 introduced incompatible serialization changes
      * This method reads the fields in 0.92 serialization format, ex-version field
      * @param in
@@ -377,12 +399,12 @@ implements WritableComparable<HServerLoad> {
         in.readUTF();
       }
     }
-    
+
     // Writable
     public void readFields(DataInput in) throws IOException {
       int version = in.readByte();
       if (version > VERSION) throw new IOException("Version mismatch; " + version);
-      if (version == 1) { 
+      if (version == 1) {
         readFields92(in);
         return;
       }
@@ -602,7 +624,7 @@ implements WritableComparable<HServerLoad> {
   public int getNumberOfRequests() {
     return numberOfRequests;
   }
-  
+
   /**
    * @return the numberOfRequests
    */
@@ -672,8 +694,11 @@ implements WritableComparable<HServerLoad> {
   }
 
   // Writable
-
   public void readFields(DataInput in) throws IOException {
+    readFieldsGetRegionKeys(in);
+  }
+
+  public List<byte[]> readFieldsGetRegionKeys(DataInput in) throws IOException {
     super.readFields(in);
     int version = in.readByte();
     if (version > VERSION) throw new IOException("Version mismatch; " + version);
@@ -681,16 +706,23 @@ implements WritableComparable<HServerLoad> {
     usedHeapMB = in.readInt();
     maxHeapMB = in.readInt();
     int numberOfRegions = in.readInt();
+    // get the ordered region keys to be able to map hackily-extended per-region data
+    // that may follow HServerLoad and map it correctly to regions in the map.
+    List<byte[]> regionKeys = new ArrayList<byte[]>(numberOfRegions);
+    regionLoad.clear();
     for (int i = 0; i < numberOfRegions; i++) {
       RegionLoad rl = new RegionLoad();
       rl.readFields(in);
       regionLoad.put(rl.getName(), rl);
+      regionKeys.add(rl.getName());
     }
     totalNumberOfRequests = in.readInt();
     int coprocessorsSize = in.readInt();
+    coprocessors.clear();
     for(int i = 0; i < coprocessorsSize; i++) {
       coprocessors.add(in.readUTF());
     }
+    return regionKeys;
   }
 
   public void write(DataOutput out) throws IOException {

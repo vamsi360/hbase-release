@@ -55,6 +55,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HServerLoad;
+import org.apache.hadoop.hbase.HServerLoadWithSeqIds;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.HealthCheckChore;
 import org.apache.hadoop.hbase.MasterNotRunningException;
@@ -992,7 +993,16 @@ Server {
   }
 
   @Override
-  public void regionServerReport(final byte [] sn, final HServerLoad hsl)
+  public void regionServerReportWithSeqId(final byte [] sn, final HServerLoadWithSeqIds hsl)
+  throws IOException {
+    // the part where difference between HSL and HSLWithSeqIds
+    // actually matters is (de)serialization. When already
+    // deserialized, they are equivalent (sans some defaults).
+    regionServerReport(sn, hsl.getServerLoad());
+  }
+
+  @Override
+  public void regionServerReport(byte [] sn, HServerLoad hsl)
   throws IOException {
     this.serverManager.regionServerReport(ServerName.parseVersionedServerName(sn), hsl);
     if (hsl != null && this.metrics != null) {
@@ -1011,6 +1021,11 @@ Server {
 
   public boolean isMasterRunning() {
     return !isStopped();
+  }
+
+  @Override
+  public long getLastFlushedSequenceId(byte [] regionName) throws IOException {
+    return serverManager.getLastFlushedSequenceId(regionName);
   }
 
   /**

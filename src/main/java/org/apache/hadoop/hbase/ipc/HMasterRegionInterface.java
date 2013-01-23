@@ -22,6 +22,7 @@ package org.apache.hadoop.hbase.ipc;
 import java.io.IOException;
 
 import org.apache.hadoop.hbase.HServerLoad;
+import org.apache.hadoop.hbase.HServerLoadWithSeqIds;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.security.KerberosInfo;
 import org.apache.hadoop.io.MapWritable;
@@ -65,7 +66,7 @@ public interface HMasterRegionInterface extends VersionedProtocol {
    */
   public void regionServerReport(byte [] sn, HServerLoad hsl)
   throws IOException;
-  
+
   /**
    * Called by a region server to report a fatal error that is causing
    * it to abort.
@@ -73,4 +74,19 @@ public interface HMasterRegionInterface extends VersionedProtocol {
    * @param errorMessage informative text to expose in the master logs and UI
    */
   public void reportRSFatalError(byte [] sn, String errorMessage);
+
+  /**
+   * @see HServerLoadWithSeqIds
+   * @param sn {@link ServerName#getVersionedBytes()}
+   * @param hsl Server load.
+   * @throws IOException
+   */
+  public void regionServerReportWithSeqId(byte [] sn, HServerLoadWithSeqIds hsl)
+  throws IOException;
+
+  /**
+   * Gets the last complete sequence ID for a particular region.
+   * @throws IOException
+   */
+  public long getLastFlushedSequenceId(byte [] regionName) throws IOException;
 }

@@ -29,7 +29,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -51,6 +54,7 @@ import org.apache.hadoop.hbase.master.handler.MetaServerShutdownHandler;
 import org.apache.hadoop.hbase.master.handler.ServerShutdownHandler;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.regionserver.RegionOpeningState;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  * The ServerManager class manages info about region servers.
@@ -82,6 +86,9 @@ public class ServerManager {
 
   // Set if we are to shutdown the cluster.
   private volatile boolean clusterShutdown = false;
+
+  private final SortedMap<byte[], Long> flushedSequenceIdByRegion =
+      new ConcurrentSkipListMap<byte[], Long>(Bytes.BYTES_COMPARATOR);
 
   /** Map of registered servers to their current load */
   private final Map<ServerName, HServerLoad> onlineServers =
@@ -167,6 +174,32 @@ public class ServerManager {
     return sn;
   }
 
+  /**
+   * Updates last flushed sequence Ids for the regions on server sn
+   * @param sn
+   * @param hsl
+   */
+  private void updateLastFlushedSequenceIds(ServerName sn, HServerLoad hsl) {
+    Map<byte[], HServerLoad.RegionLoad> regionsLoad = hsl.getRegionsLoad();
+    for (Entry<byte[], HServerLoad.RegionLoad> entry : regionsLoad.entrySet()) {
+      Long existingValue = flushedSequenceIdByRegion.get(entry.getKey());
+      long newValue = entry.getValue().getCompleteSequenceId();
+      if (existingValue != null) {
+        if (newValue >= 0 && newValue < existingValue) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("RegionServer " + sn +
+                " indicates a last flushed sequence id (" + entry.getValue() +
+                ") that is less than the previous last flushed sequence id (" +
+                existingValue + ") for region " +
+                Bytes.toString(entry.getKey()) + " Ignoring.");
+          }
+          continue; // Don't let smaller sequence ids override greater sequence ids.
+        }
+      }
+      flushedSequenceIdByRegion.put(entry.getKey(), newValue);
+    }
+  }
+
   void regionServerReport(ServerName sn, HServerLoad hsl)
   throws YouAreDeadException, PleaseHoldException {
     checkIsDead(sn, "REPORT");
@@ -182,6 +215,7 @@ public class ServerManager {
     } else {
       this.onlineServers.put(sn, hsl);
     }
+    updateLastFlushedSequenceIds(sn, hsl);
   }
 
   /**
@@ -274,6 +308,14 @@ public class ServerManager {
     LOG.info("Registering server=" + serverName);
     this.onlineServers.put(serverName, hsl);
     this.serverConnections.remove(serverName);
+  }
+
+  public long getLastFlushedSequenceId(byte[] regionName) {
+    long seqId = Long.MIN_VALUE;
+    if (flushedSequenceIdByRegion.containsKey(regionName)) {
+      seqId = flushedSequenceIdByRegion.get(regionName);
+    }
+    return seqId;
   }
 
   /**

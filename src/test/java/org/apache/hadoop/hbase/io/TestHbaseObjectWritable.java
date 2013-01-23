@@ -1,6 +1,4 @@
 /**
- * Copyright 2007 The Apache Software Foundation
- *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -43,6 +41,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HServerAddress;
 import org.apache.hadoop.hbase.HServerInfo;
 import org.apache.hadoop.hbase.HServerLoad;
+import org.apache.hadoop.hbase.HServerLoadWithSeqIds;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.SmallTests;
@@ -531,12 +530,15 @@ public class TestHbaseObjectWritable extends TestCase {
     assertEquals(80,HbaseObjectWritable.getClassCode(Message.class).intValue());
 
     assertEquals(81,HbaseObjectWritable.getClassCode(Array.class).intValue());
+
+    // HDP specific
+    assertEquals(-2,HbaseObjectWritable.getClassCode(HServerLoadWithSeqIds.class).intValue());
   }
 
   /**
    * This test verifies that additional objects have not been added to the end of the list.
    * If you are legitimately adding objects, this test will need to be updated, but see the
-   * note on the test above. 
+   * note on the test above.
    */
   public void testGetNextObjectCode(){
     assertEquals(83,HbaseObjectWritable.getNextClassCode());

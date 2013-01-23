@@ -49,6 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.management.ObjectName;
@@ -71,6 +72,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HServerAddress;
 import org.apache.hadoop.hbase.HServerInfo;
 import org.apache.hadoop.hbase.HServerLoad;
+import org.apache.hadoop.hbase.HServerLoadWithSeqIds;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.MasterAddressTracker;
@@ -182,7 +184,7 @@ import com.google.common.collect.Lists;
  * the HMaster. There are many HRegionServers in a single HBase deployment.
  */
 public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
-    Runnable, RegionServerServices {
+    Runnable, RegionServerServices, LastSequenceId {
 
   public static final Log LOG = LogFactory.getLog(HRegionServer.class);
 
@@ -240,6 +242,9 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
 
   // RPC Engine for master connection
   private RpcEngine rpcEngine;
+
+  // Whether we are dealing with old master that doesn't support sequence Ids.
+  private boolean isTalkingToOldMaster;
 
   // Server to handle client requests. Default access so can be accessed by
   // unit tests.
@@ -866,6 +871,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
     this.hbaseMaster = null;
     this.rpcEngine.close();
     this.leases.close();
+    this.isTalkingToOldMaster = false;
 
     if (!killed) {
       join();
@@ -900,20 +906,39 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
     return allUserRegionsOffline;
   }
 
-  void tryRegionServerReport()
-  throws IOException {
-    HServerLoad hsl = buildServerLoad();
+  void tryRegionServerReport() throws IOException {
     // Why we do this?
     this.requestCount.set(0);
+    byte[] sn = this.serverNameFromMasterPOV.getVersionedBytes();
+    HServerLoadWithSeqIds hsl = new HServerLoadWithSeqIds(buildServerLoad());
+    tryRegionServerReport(sn, hsl);
+  }
+
+  private void tryRegionServerReport(byte[] sn, HServerLoadWithSeqIds hsl)
+    throws IOException {
     try {
-      this.hbaseMaster.regionServerReport(this.serverNameFromMasterPOV.getVersionedBytes(), hsl);
+      // We assume hbaseMaster and isTalkingToOldMaster do not require thread safety.
+      if (!this.isTalkingToOldMaster) {
+        this.hbaseMaster.regionServerReportWithSeqId(sn, hsl);
+      } else {
+        this.hbaseMaster.regionServerReport(sn, hsl.getServerLoad());
+      }
     } catch (IOException ioe) {
       if (ioe instanceof RemoteException) {
-        ioe = ((RemoteException)ioe).unwrapRemoteException();
-      }
-      if (ioe instanceof YouAreDeadException) {
-        // This will be caught and handled as a fatal error in run()
-        throw ioe;
+        RemoteException remoteEx = (RemoteException)ioe;
+        Throwable resultEx = remoteEx.unwrapRemoteException();
+        if (resultEx instanceof YouAreDeadException) {
+         // This will be caught and handled as a fatal error in run()
+          throw (YouAreDeadException)resultEx;
+        }
+        // HACK: there's no actual NoSuchMethodException - we get IOException w/a string.
+        if (!this.isTalkingToOldMaster
+            && remoteEx.getMessage().contains("java.lang.NoSuchMethodException")) {
+          // Old version of the master, retry old method.
+          this.isTalkingToOldMaster = true;
+          LOG.info("Old master found, falling back to regionServerReport");
+          tryRegionServerReport(sn, hsl);
+        }
       }
       // Couldn't connect to the master, get location from zk and reconnect
       // Method blocks until new master is found or we are stopped
@@ -1147,12 +1172,14 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
           (int) (store.getTotalStaticBloomSize() / 1024);
       }
     }
-    return new HServerLoad.RegionLoad(name, stores, storefiles,
+    HServerLoad.RegionLoad regionLoad = new HServerLoad.RegionLoad(name, stores, storefiles,
         storeUncompressedSizeMB,
         storefileSizeMB, memstoreSizeMB, storefileIndexSizeMB, rootIndexSizeKB,
         totalStaticIndexSizeKB, totalStaticBloomSizeKB,
         (int) r.readRequestsCount.get(), (int) r.writeRequestsCount.get(),
         totalCompactingKVs, currentCompactedKVs);
+    regionLoad.setCompleteSequenceId(r.completeSequenceId);
+    return regionLoad;
   }
 
   /**
@@ -1634,7 +1661,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
 
     // Create the log splitting worker and start it
     this.splitLogWorker = new SplitLogWorker(this.zooKeeper,
-        this.getConfiguration(), this.getServerName().toString());
+        this.getConfiguration(), this.getServerName().toString(), this);
     splitLogWorker.start();
     
   }
@@ -1936,6 +1963,8 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
       }
     }
     LOG.info("Connected to master at " + masterIsa);
+    // Assume by default we connected to an up-to-date master.
+    this.isTalkingToOldMaster = false;
     this.hbaseMaster = master;
     return masterServerName;
   }
@@ -1979,6 +2008,30 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
       LOG.warn("error telling master we are up", e);
     }
     return result;
+  }
+
+  @Override
+  public long getLastSequenceId(byte[] region) {
+    // We assume hbaseMaster and isTalkingToOldMaster do not require thread safety.
+    if (this.isTalkingToOldMaster) {
+      LOG.debug("Old master, will not try to get the last sequence id");
+      return Long.MIN_VALUE;
+    }
+    try {
+      return hbaseMaster.getLastFlushedSequenceId(region);
+    } catch (IOException e) {
+      // HACK: there's no actual NoSuchMethodException - we get IOException w/a string.
+      if ((e instanceof RemoteException)
+          && e.getMessage().contains("java.lang.NoSuchMethodException")) {
+        // Old version of the master.
+        this.isTalkingToOldMaster = true;
+        LOG.info("Old master, cannot get the last sequence id");
+      } else {
+        LOG.warn("Unable to connect to the master to check " +
+           "the last flushed sequence id", e);
+      }
+    }
+    return Long.MIN_VALUE;
   }
 
   /**

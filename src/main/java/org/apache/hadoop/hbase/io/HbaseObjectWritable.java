@@ -22,8 +22,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -48,6 +48,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HServerAddress;
 import org.apache.hadoop.hbase.HServerInfo;
 import org.apache.hadoop.hbase.HServerLoad;
+import org.apache.hadoop.hbase.HServerLoadWithSeqIds;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Action;
@@ -274,6 +275,11 @@ public class HbaseObjectWritable implements Writable, WritableWithSize, Configur
     // we don't want to cause incompatiblity with older 0.94/0.92 clients.
     addToMap(HSnapshotDescription.class, code);
 
+    // for keeping backward-forward compat, we are using
+    // negative codes for HDP-specific classes
+    int negativeCode = -2;
+    addToMap(HServerLoadWithSeqIds.class, negativeCode--);
+
     // make sure that this is the last statement in this static block
     NEXT_CLASS_CODE = code;
   }
@@ -383,7 +389,7 @@ public class HbaseObjectWritable implements Writable, WritableWithSize, Configur
   }
 
   /**
-   * @return the next object code in the list.  Used in testing to verify that additional fields are not added 
+   * @return the next object code in the list.  Used in testing to verify that additional fields are not added
    */
   static int getNextClassCode(){
     return NEXT_CLASS_CODE;
@@ -566,7 +572,7 @@ public class HbaseObjectWritable implements Writable, WritableWithSize, Configur
   /** Reads and returns the class as written by {@link #writeClass(DataOutput, Class)} */
   static Class<?> readClass(Configuration conf, DataInput in) throws IOException {
     Class<?> instanceClass = null;
-    int b = (byte)WritableUtils.readVInt(in);
+    int b = WritableUtils.readVInt(in);
     if (b == NOT_ENCODED) {
       String className = Text.readString(in);
       try {
