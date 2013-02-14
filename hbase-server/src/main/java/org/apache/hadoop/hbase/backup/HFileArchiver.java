@@ -72,7 +72,7 @@ public class HFileArchiver {
   public static void archiveRegion(Configuration conf, FileSystem fs, HRegionInfo info)
       throws IOException {
     Path rootDir = FSUtils.getRootDir(conf);
-    archiveRegion(fs, rootDir, FSUtils.getTableDir(rootDir, info.getTable()),
+    archiveRegion(fs, rootDir, HTableDescriptor.getTableDir(rootDir, info.getTableName()),
       HRegion.getRegionDir(rootDir, info));
   }
 

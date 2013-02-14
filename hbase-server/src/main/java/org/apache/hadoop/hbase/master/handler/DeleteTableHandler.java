@@ -107,23 +107,13 @@ public class DeleteTableHandler extends TableEventHandler {
       }
 
       // 5. Delete table from FS (temp directory)
-      if (!fs.delete(tempTableDir, true)) {
-        LOG.error("Couldn't delete " + tempTableDir);
-      }
-
-      LOG.debug("Table '" + tableName + "' archived!");
+      fs.delete(tempTableDir, true);
     } finally {
       // 6. Update table descriptor cache
-      LOG.debug("Removing '" + tableName + "' descriptor.");
-      this.masterServices.getTableDescriptors().remove(tableName);
+      this.masterServices.getTableDescriptors().remove(Bytes.toString(tableName));
 
-      // 7. Clean up regions of the table in RegionStates.
-      LOG.debug("Removing '" + tableName + "' from region states.");
-      states.tableDeleted(tableName);
-
-      // 8. If entry for this table in zk, and up in AssignmentManager, remove it.
-      LOG.debug("Marking '" + tableName + "' as deleted.");
-      am.getZKTable().setDeletedTable(tableName);
+      // 7. If entry for this table in zk, and up in AssignmentManager, remove it.
+      am.getZKTable().setDeletedTable(Bytes.toString(tableName));
     }
 
     if (cpHost != null) {
