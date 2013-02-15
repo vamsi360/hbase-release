@@ -1628,8 +1628,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
       conf.getInt("hbase.regionserver.executor.closemeta.threads", 1));
 
     Threads.setDaemonThreadRunning(this.hlogRoller.getThread(), n + ".logRoller", handler);
-    Threads.setDaemonThreadRunning(this.cacheFlusher.getThread(), n + ".cacheFlusher",
-      handler);
+    this.cacheFlusher.start(handler);
     Threads.setDaemonThreadRunning(this.compactionChecker.getThread(), n +
       ".compactionChecker", handler);
     if (this.healthCheckChore != null) {
@@ -1865,7 +1864,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
    */
   protected void join() {
     Threads.shutdown(this.compactionChecker.getThread());
-    Threads.shutdown(this.cacheFlusher.getThread());
+    this.cacheFlusher.join();
     if (this.healthCheckChore != null) {
       Threads.shutdown(this.healthCheckChore.getThread());
     }

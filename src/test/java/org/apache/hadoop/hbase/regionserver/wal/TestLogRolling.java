@@ -248,12 +248,16 @@ public class TestLogRolling  {
       put.add(HConstants.CATALOG_FAMILY, null, value);
       table.put(put);
     }
+    Put tmpPut = new Put(Bytes.toBytes("tmprow"));
+    tmpPut.add(HConstants.CATALOG_FAMILY, null, value);
     long startTime = System.currentTimeMillis();
     long remaining = timeout;
     while (remaining > 0) {
       if (log.isLowReplicationRollEnabled() == expect) {
         break;
       } else {
+        // Trigger calling Hlog#checkLowReplication()
+        table.put(tmpPut);
         try {
           Thread.sleep(200);
         } catch (InterruptedException e) {
@@ -372,7 +376,8 @@ public class TestLogRolling  {
     assertTrue(dfsCluster.stopDataNode(pipeline[1].getName()) != null);
 
     batchWriteAndWait(table, 3, false, 10000);
-    assertTrue("LowReplication Roller should've been disabled",
+    assertTrue("LowReplication Roller should've been disabled, current replication="
+            + log.getLogReplication(),
         !log.isLowReplicationRollEnabled());
 
     dfsCluster
