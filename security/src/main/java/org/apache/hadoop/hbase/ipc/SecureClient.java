@@ -18,9 +18,26 @@
 
 package org.apache.hadoop.hbase.ipc;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
+import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
+import javax.net.SocketFactory;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.security.HBaseMultiRealmUserAuthentication;
 import org.apache.hadoop.hbase.security.HBaseSaslRpcClient;
 import org.apache.hadoop.hbase.security.HBaseSaslRpcServer.AuthMethod;
 import org.apache.hadoop.hbase.security.KerberosInfo;
@@ -28,8 +45,11 @@ import org.apache.hadoop.hbase.security.TokenInfo;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.token.AuthenticationTokenIdentifier;
 import org.apache.hadoop.hbase.security.token.AuthenticationTokenSelector;
-import org.apache.hadoop.hbase.util.PoolMap;
-import org.apache.hadoop.io.*;
+import org.apache.hadoop.io.DataOutputBuffer;
+import org.apache.hadoop.io.IOUtils;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.SecurityUtil;
@@ -39,20 +59,7 @@ import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.security.token.TokenSelector;
 import org.apache.hadoop.util.ReflectionUtils;
 
-import javax.net.SocketFactory;
 import javax.security.sasl.SaslException;
-import java.io.*;
-import java.net.*;
-import java.security.PrivilegedExceptionAction;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A client for an IPC service, which support SASL authentication of connections
@@ -131,6 +138,15 @@ public class SecureClient extends HBaseClient {
         authMethod = AuthMethod.SIMPLE;
       } else if (token != null) {
         authMethod = AuthMethod.DIGEST;
+      } else if (HBaseMultiRealmUserAuthentication.isAUserInADifferentRealm(
+          ticket.getUGI(), conf)) {
+        authMethod = AuthMethod.KERBEROS_USER_REALM;
+        serverPrincipal =
+          HBaseMultiRealmUserAuthentication.replaceRealmWithUserRealm(serverPrincipal, conf);
+        if (LOG.isDebugEnabled()){
+          LOG.debug("AuthMehod is KERBEROS_USER_REALM and serverPrincipal is changed to "
+              + serverPrincipal);
+        }
       } else {
         authMethod = AuthMethod.KERBEROS;
       }
@@ -161,7 +177,8 @@ public class SecureClient extends HBaseClient {
       UserGroupInformation currentUser =
         UserGroupInformation.getCurrentUser();
       UserGroupInformation realUser = currentUser.getRealUser();
-      return authMethod == AuthMethod.KERBEROS &&
+      return (authMethod == AuthMethod.KERBEROS ||
+          authMethod == AuthMethod.KERBEROS_USER_REALM) &&
           loginUser != null &&
           //Make sure user logged in using Kerberos either keytab or TGT
           loginUser.hasKerberosCredentials() &&
@@ -269,7 +286,8 @@ public class SecureClient extends HBaseClient {
             final InputStream in2 = inStream;
             final OutputStream out2 = outStream;
             User ticket = remoteId.getTicket();
-            if (authMethod == AuthMethod.KERBEROS) {
+            if (authMethod == AuthMethod.KERBEROS ||
+		authMethod == AuthMethod.KERBEROS_USER_REALM) {
               UserGroupInformation ugi = ticket.getUGI();
               if (ugi != null && ugi.getRealUser() != null) {
                 ticket = User.create(ugi.getRealUser());

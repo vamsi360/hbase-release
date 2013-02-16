@@ -80,7 +80,8 @@ class SecureConnectionHeader extends ConnectionHeader {
     Text.writeString(out, (protocol == null) ? "" : protocol);
     if (user != null) {
       UserGroupInformation ugi = user.getUGI();
-      if (authMethod == AuthMethod.KERBEROS) {
+      if (authMethod == AuthMethod.KERBEROS ||
+          authMethod == AuthMethod.KERBEROS_USER_REALM) {
         // Send effective user for Kerberos auth
         out.writeBoolean(true);
         out.writeUTF(ugi.getUserName());

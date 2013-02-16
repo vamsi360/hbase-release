@@ -136,7 +136,9 @@ public class HBaseSaslRpcServer {
   public static enum AuthMethod {
     SIMPLE((byte) 80, "", AuthenticationMethod.SIMPLE),
     KERBEROS((byte) 81, "GSSAPI", AuthenticationMethod.KERBEROS),
-    DIGEST((byte) 82, "DIGEST-MD5", AuthenticationMethod.TOKEN);
+    DIGEST((byte) 82, "DIGEST-MD5", AuthenticationMethod.TOKEN),
+    KERBEROS_USER_REALM((byte) 83, "GSSAPI", AuthenticationMethod.KERBEROS);
+
 
     /** The code for this method. */
     public final byte code;

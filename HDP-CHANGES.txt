@@ -5,3 +5,4 @@ Based on 0.94.5
     HBASE-6338   Cache Method in RPC handler
     HBASE-6134   Improvement for split-worker to speed up distributed log splitting
     HBASE-6508   [0.89-fb] Filter out edits at log split time (without breaking backward compat)
+    HBASE-7820   Support for multi-realm authentication.

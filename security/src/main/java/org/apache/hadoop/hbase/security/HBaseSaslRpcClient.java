@@ -78,6 +78,7 @@ public class HBaseSaslRpcClient {
           HBaseSaslRpcServer.SASL_PROPS, new SaslClientCallbackHandler(token));
       break;
     case KERBEROS:
+    case KERBEROS_USER_REALM:
       if (LOG.isDebugEnabled()) {
         LOG
             .debug("Creating SASL " + AuthMethod.KERBEROS.getMechanismName()
