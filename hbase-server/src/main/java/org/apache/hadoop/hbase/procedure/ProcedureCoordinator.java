@@ -162,6 +162,8 @@ public class ProcedureCoordinator {
     Future<Void> f = null;
     try {
       synchronized (procedures) {
+        f = this.pool.submit(proc);
+        // if everything got started properly, we can add it known running procedures
         this.procedures.put(procName, proc);
         f = this.pool.submit(proc);
       }

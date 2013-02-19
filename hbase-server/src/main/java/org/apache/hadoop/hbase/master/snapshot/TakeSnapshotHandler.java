@@ -63,7 +63,7 @@ import org.apache.zookeeper.KeeperException;
  * A handler for taking snapshots from the master.
  *
  * This is not a subclass of TableEventHandler because using that would incur an extra hbase:meta scan.
- *
+ * 
  * The {@link #snapshotRegions(List)} call should get implemented for each snapshot flavor.
  */
 @InterfaceAudience.Private
@@ -112,6 +112,8 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
     this.tableLock = this.tableLockManager.writeLock(
         snapshotTable,
         EventType.C_M_SNAPSHOT_TABLE.toString());
+
+    loadTableDescriptor(); // check that .tableinfo is present
 
     // prepare the verify
     this.verifier = new MasterSnapshotVerifier(masterServices, snapshot, rootDir);

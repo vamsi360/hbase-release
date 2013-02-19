@@ -464,6 +464,7 @@ public class SnapshotManager implements Stoppable {
   }
 
   /**
+<<<<<<< HEAD
    * Take a snapshot of a disabled table.
    * @param snapshot description of the snapshot to take. Modified to be {@link Type#DISABLED}.
    * @throws HBaseSnapshotException if the snapshot could not be started
@@ -484,6 +485,13 @@ public class SnapshotManager implements Stoppable {
 
   /**
    * Take a snapshot of an enabled table.
+=======
+   * Take a snapshot of an enabled table.
+   * <p>
+   * The thread limitation on the executorService's thread pool for snapshots ensures the
+   * snapshot won't be started if there is another snapshot already running. Does
+   * <b>not</b> check to see if another snapshot of the same name already exists.
+>>>>>>> HBASE-7858 cleanup before merging snapshots branch to trunk (Ted Yu)
    * @param snapshot description of the snapshot to take.
    * @throws HBaseSnapshotException if the snapshot could not be started
    */
@@ -517,8 +525,13 @@ public class SnapshotManager implements Stoppable {
       Path workingDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);
       try {
         if (!this.master.getMasterFileSystem().getFileSystem().delete(workingDir, true)) {
+<<<<<<< HEAD
           LOG.error("Couldn't delete working directory (" + workingDir + " for snapshot:" +
               ClientSnapshotDescriptionUtils.toString(snapshot));
+=======
+          LOG.warn("Couldn't delete working directory (" + workingDir + " for snapshot:"
+              + SnapshotDescriptionUtils.toString(snapshot));
+>>>>>>> HBASE-7858 cleanup before merging snapshots branch to trunk (Ted Yu)
         }
       } catch (IOException e1) {
         LOG.error("Couldn't delete working directory (" + workingDir + " for snapshot:" +
@@ -604,6 +617,46 @@ public class SnapshotManager implements Stoppable {
   }
 
   /**
+<<<<<<< HEAD
+=======
+   * Take a snapshot of a disabled table.
+   * <p>
+   * The thread limitation on the executorService's thread pool for snapshots ensures the
+   * snapshot won't be started if there is another snapshot already running. Does
+   * <b>not</b> check to see if another snapshot of the same name already exists.
+   * @param snapshot description of the snapshot to take. Modified to be {@link Type#DISABLED}.
+   * @throws HBaseSnapshotException if the snapshot could not be started
+   */
+  private synchronized void snapshotDisabledTable(SnapshotDescription snapshot)
+      throws HBaseSnapshotException {
+
+    // set the snapshot to be a disabled snapshot, since the client doesn't know about that
+    snapshot = snapshot.toBuilder().setType(Type.DISABLED).build();
+
+    DisabledTableSnapshotHandler handler;
+    try {
+      handler = new DisabledTableSnapshotHandler(snapshot, this.master);
+      this.executorService.submit(handler);
+      this.handler = handler;
+    } catch (IOException e) {
+      // cleanup the working directory by trying to delete it from the fs.
+      Path workingDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);
+      try {
+        if (!this.master.getMasterFileSystem().getFileSystem().delete(workingDir, true)) {
+          LOG.error("Couldn't delete working directory (" + workingDir + " for snapshot:" +
+              SnapshotDescriptionUtils.toString(snapshot));
+        }
+      } catch (IOException e1) {
+        LOG.error("Couldn't delete working directory (" + workingDir + " for snapshot:" +
+            SnapshotDescriptionUtils.toString(snapshot));
+      }
+      // fail the snapshot
+      throw new SnapshotCreationException("Could not build snapshot handler", e, snapshot);
+    }
+  }
+
+  /**
+>>>>>>> HBASE-7858 cleanup before merging snapshots branch to trunk (Ted Yu)
    * Set the handler for the current snapshot
    * <p>
    * Exposed for TESTING
@@ -797,8 +850,14 @@ public class SnapshotManager implements Stoppable {
    * If the in-progress restore is failed throws the exception that caused the failure.
    *
    * @param snapshot
+<<<<<<< HEAD
    * @return false if in progress, true if restore is completed or not requested.
    * @throws IOException if there was a failure during the restore
+=======
+   * @return true if in progress, false if snapshot is completed.
+   * @throws UnknownSnapshotException if specified source snapshot does not exit.
+   * @throws IOException if there was some sort of IO failure
+>>>>>>> HBASE-7858 cleanup before merging snapshots branch to trunk (Ted Yu)
    */
   public boolean isRestoreDone(final SnapshotDescription snapshot) throws IOException {
     // check to see if the sentinel exists,
@@ -874,6 +933,7 @@ public class SnapshotManager implements Stoppable {
    * To avoid having sentinels staying around for long time if something client side is failed,
    * each operation tries to clean up the in-progress maps sentinels finished from a long time.
    */
+<<<<<<< HEAD
   private void cleanupSentinels() {
     cleanupSentinels(this.snapshotHandlers);
     cleanupSentinels(this.restoreHandlers);
@@ -888,6 +948,10 @@ public class SnapshotManager implements Stoppable {
     long currentTime = EnvironmentEdgeManager.currentTimeMillis();
     Iterator<Map.Entry<TableName, SnapshotSentinel>> it =
         sentinels.entrySet().iterator();
+=======
+  private synchronized void cleanupRestoreSentinels() {
+    Iterator<Map.Entry<String, SnapshotSentinel>> it = restoreHandlers.entrySet().iterator();
+>>>>>>> HBASE-7858 cleanup before merging snapshots branch to trunk (Ted Yu)
     while (it.hasNext()) {
       Map.Entry<TableName, SnapshotSentinel> entry = it.next();
       SnapshotSentinel sentinel = entry.getValue();

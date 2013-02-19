@@ -107,7 +107,9 @@ public class DeleteTableHandler extends TableEventHandler {
       }
 
       // 5. Delete table from FS (temp directory)
-      fs.delete(tempTableDir, true);
+      if (!fs.delete(tempTableDir, true)) {
+        LOG.error("Couldn't delete " + tempTableDir);
+      }
     } finally {
       // 6. Update table descriptor cache
       this.masterServices.getTableDescriptors().remove(Bytes.toString(tableName));
