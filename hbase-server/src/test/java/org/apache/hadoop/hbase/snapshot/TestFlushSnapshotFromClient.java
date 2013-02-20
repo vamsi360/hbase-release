@@ -470,7 +470,7 @@ public class TestFlushSnapshotFromClient {
     // dump for debugging
     logFSTree(FSUtils.getRootDir(UTIL.getConfiguration()));
 
-    List<SnapshotDescription> taken = admin.listSnapshots();
+    List<SnapshotDescription> taken = admin.getCompletedSnapshots();
     int takenSize = taken.size();
     LOG.info("Taken " + takenSize + " snapshots:  " + taken);
     assertTrue("We expect at least 1 request to be rejected because of we concurrently" +
