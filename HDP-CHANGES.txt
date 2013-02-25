@@ -1,8 +1,9 @@
 bimota-0.94 created from https://svn.apache.org/repos/asf/hbase/branches/0.94@1443843 13f79535-47bb-0310-9956-ffa450edef68
 Based on 0.94.5
 
-(Bimota)
+(Bianchi)
     HBASE-6338   Cache Method in RPC handler
     HBASE-6134   Improvement for split-worker to speed up distributed log splitting
     HBASE-6508   [0.89-fb] Filter out edits at log split time (without breaking backward compat)
+    HBASE-6466   Enable multi-thread for memstore flush
     HBASE-7820   Support for multi-realm authentication.
