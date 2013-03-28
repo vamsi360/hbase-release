@@ -39,6 +39,8 @@ import org.apache.hadoop.net.DNS;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
@@ -47,6 +49,7 @@ import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.thread.QueuedThreadPool;
 
+import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 /**
@@ -148,6 +151,13 @@ public class Main implements Constants {
       ResourceConfig.class.getCanonicalName());
     sh.setInitParameter("com.sun.jersey.config.property.packages",
       "jetty");
+    ServletHolder shPojoMap = new ServletHolder(ServletContainer.class);
+    @SuppressWarnings("unchecked")
+    Map<String, String> shInitMap = sh.getInitParameters();
+    for (Entry<String, String> e : shInitMap.entrySet()) {
+      shPojoMap.setInitParameter(e.getKey(), e.getValue());
+    }
+    shPojoMap.setInitParameter(JSONConfiguration.FEATURE_POJO_MAPPING, "true");
 
     // set up Jetty and run the embedded server
 
@@ -176,6 +186,7 @@ public class Main implements Constants {
 
     // set up context
     Context context = new Context(server, "/", Context.SESSIONS);
+    context.addServlet(shPojoMap, "/status/cluster");
     context.addServlet(sh, "/*");
     context.addFilter(GzipFilter.class, "/*", 0);
 

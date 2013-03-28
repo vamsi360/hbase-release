@@ -7,3 +7,4 @@ Based on 0.94.5
     HBASE-6508   [0.89-fb] Filter out edits at log split time (without breaking backward compat)
     HBASE-6466   Enable multi-thread for memstore flush
     HBASE-7820   Support for multi-realm authentication.
+    HBASE-8179   JSON formatting for cluster status is sort of broken
