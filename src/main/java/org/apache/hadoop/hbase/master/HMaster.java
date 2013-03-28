@@ -103,6 +103,7 @@ import org.apache.hadoop.hbase.monitoring.MemoryBoundedLogMessageBuffer;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.monitoring.TaskMonitor;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
+import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.replication.regionserver.Replication;
 import org.apache.hadoop.hbase.snapshot.HSnapshotDescription;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
@@ -210,6 +211,8 @@ Server {
   private volatile boolean initialized = false;
   // flag set after we complete assignRootAndMeta.
   private volatile boolean serverShutdownHandlerEnabled = false;
+  // flag to indicate that we should be handling meta hlogs differently for splitting
+  private volatile boolean shouldSplitMetaSeparately;
 
   // Instance of the hbase executor service.
   ExecutorService executorService;
@@ -325,6 +328,7 @@ Server {
     if (isHealthCheckerConfigured()) {
       healthCheckChore = new HealthCheckChore(sleepTime, this, getConfiguration());
     }
+    this.shouldSplitMetaSeparately = conf.getBoolean(HLog.SEPARATE_HLOG_FOR_META, false);
   }
 
   /**
@@ -789,7 +793,12 @@ Server {
       return;
     }
     LOG.info("Forcing splitLog and expire of " + sn);
-    fileSystemManager.splitLog(sn);
+    if (this.shouldSplitMetaSeparately) {
+      fileSystemManager.splitMetaLog(sn);
+      fileSystemManager.splitLog(sn);
+    } else {
+      fileSystemManager.splitAllLogs(sn);  
+    }
     serverManager.expireServer(sn);
   }
 
@@ -1740,6 +1749,10 @@ Server {
    */
   public boolean isServerShutdownHandlerEnabled() {
     return this.serverShutdownHandlerEnabled;
+  }
+
+  public boolean shouldSplitMetaSeparately() {
+    return this.shouldSplitMetaSeparately;
   }
 
   @Override
