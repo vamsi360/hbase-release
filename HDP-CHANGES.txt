@@ -8,3 +8,4 @@ Based on 0.94.6
     HBASE-7820   Support for multi-realm authentication.
     HBASE-8179   JSON formatting for cluster status is sort of broken
     HBASE-8081   Backport HBASE-7213 (separate hlog for meta tables)
+    HBASE-8158   Backport HBASE-8140 (use JarFinder more aggressively when resolving MR dependencies)
