@@ -11,3 +11,4 @@ Based on 0.94.6.1
     HBASE-8158   Backport HBASE-8140 (use JarFinder more aggressively when resolving MR dependencies)
     HBASE-8260   create generic integration test for trunk and 94 that is more deterministic, can be run for longer and is less aggressive 
     HBASE-8274   Backport to 94: HBASE-7488 Implement HConnectionManager.locateRegions which is currently returning null
+    HBASE-8146   IntegrationTestBigLinkedList does not work on distributed setup
