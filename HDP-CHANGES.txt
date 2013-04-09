@@ -1,4 +1,4 @@
-Based on 0.94.6
+Based on 0.94.6.1
 
 (Condor)
     HBASE-6338   Cache Method in RPC handler
