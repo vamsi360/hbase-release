@@ -12,3 +12,8 @@ Based on 0.94.6.1
     HBASE-8260   create generic integration test for trunk and 94 that is more deterministic, can be run for longer and is less aggressive 
     HBASE-8274   Backport to 94: HBASE-7488 Implement HConnectionManager.locateRegions which is currently returning null
     HBASE-8146   IntegrationTestBigLinkedList does not work on distributed setup
+    HBASE-8207   Replication could have data loss when machine name contains hyphen "-"
+    HBASE-8106   Test to check replication log znodes move is done correctly
+    HBASE-8246   Backport HBASE-6318 to 0.94 where SplitLogWorker exits due to ConcurrentModificationException
+    HBASE-8276   Backport hbase-6738 to 0.94 "Too aggressive task resubmission from the distributed log manager"
+    HBASE-8270   Backport HBASE-8097 'MetaServerShutdownHandler may potentially keep bumping up DeadServer.numProcessing' to 0.94
