@@ -141,6 +141,7 @@ public class SnapshotManager implements Stoppable {
   public SnapshotManager(final MasterServices master) throws KeeperException, IOException,
     UnsupportedOperationException {
     this.master = master;
+		this.rootDir = master.getMasterFileSystem().getRootDir();
     checkSnapshotSupport(master.getConfiguration(), master.getMasterFileSystem());
 
     // get the configuration for the coordinator
@@ -154,7 +155,6 @@ public class SnapshotManager implements Stoppable {
     ProcedureCoordinatorRpcs comms = new ZKProcedureCoordinatorRpcs(
         master.getZooKeeper(), SnapshotManager.ONLINE_SNAPSHOT_CONTROLLER_DESCRIPTION, name);
     this.coordinator = new ProcedureCoordinator(comms, tpool);
-    this.rootDir = master.getMasterFileSystem().getRootDir();
     this.executorService = master.getExecutorService();
     resetTempDir();
   }
@@ -168,12 +168,12 @@ public class SnapshotManager implements Stoppable {
   public SnapshotManager(final MasterServices master, ProcedureCoordinator coordinator, ExecutorService pool)
       throws IOException, UnsupportedOperationException {
     this.master = master;
+		this.rootDir = master.getMasterFileSystem().getRootDir();
     checkSnapshotSupport(master.getConfiguration(), master.getMasterFileSystem());
 
     this.wakeFrequency = master.getConfiguration().getInt(SNAPSHOT_WAKE_MILLIS_KEY,
       SNAPSHOT_WAKE_MILLIS_DEFAULT);
     this.coordinator = coordinator;
-    this.rootDir = master.getMasterFileSystem().getRootDir();
     this.executorService = pool;
     resetTempDir();
   }
@@ -184,9 +184,20 @@ public class SnapshotManager implements Stoppable {
    * @throws IOException File system exception
    */
   public List<SnapshotDescription> getCompletedSnapshots() throws IOException {
+    return getCompletedSnapshots(SnapshotDescriptionUtils.getSnapshotsDir(rootDir));
+  }
+  
+  /**
+   * Gets the list of all completed snapshots.
+   * @param snapshotDir snapshot directory
+   * @return list of SnapshotDescriptions
+   * @throws IOException File system exception
+   */
+  private List<SnapshotDescription> getCompletedSnapshots(Path snapshotDir) throws IOException {
     List<SnapshotDescription> snapshotDescs = new ArrayList<SnapshotDescription>();
     // first create the snapshot root path and check to see if it exists
-    Path snapshotDir = SnapshotDescriptionUtils.getSnapshotsDir(rootDir);
+    if (snapshotDir == null) snapshotDir = SnapshotDescriptionUtils.getSnapshotsDir(rootDir);
+
     FileSystem fs = master.getMasterFileSystem().getFileSystem();
 
     // if there are no snapshots, return an empty list
@@ -866,6 +877,15 @@ public class SnapshotManager implements Stoppable {
     cleaners = conf.getStrings(HConstants.HBASE_MASTER_LOGCLEANER_PLUGINS);
     if (cleaners != null) Collections.addAll(logCleaners, cleaners);
 
+    // check if an older version of snapshot directory was present
+    Path oldSnapshotDir = new Path(mfs.getRootDir(), HConstants.OLD_SNAPSHOT_DIR_NAME);
+    FileSystem fs = mfs.getFileSystem();
+    List<SnapshotDescription> ss = getCompletedSnapshots(new Path(rootDir, oldSnapshotDir));
+    if (ss != null && !ss.isEmpty()) {
+      LOG.error("Snapshots from an earlier release were found under: " + oldSnapshotDir);
+      LOG.error("Please rename the directory as " + HConstants.SNAPSHOT_DIR_NAME);
+    }
+    
     // If the user has enabled the snapshot, we force the cleaners to be present
     // otherwise we still need to check if cleaners are enabled or not and verify
     // that there're no snapshot in the .snapshot folder.
@@ -902,7 +922,6 @@ public class SnapshotManager implements Stoppable {
     if (!snapshotEnabled) {
       LOG.info("Snapshot feature is not enabled, missing log and hfile cleaners.");
       Path snapshotDir = SnapshotDescriptionUtils.getSnapshotsDir(mfs.getRootDir());
-      FileSystem fs = mfs.getFileSystem();
       if (fs.exists(snapshotDir)) {
         FileStatus[] snapshots = FSUtils.listStatus(fs, snapshotDir,
           new SnapshotDescriptionUtils.CompletedSnaphotDirectoriesFilter(fs));
