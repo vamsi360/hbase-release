@@ -18,3 +18,5 @@ Based on 0.94.6.1
     HBASE-8276   Backport hbase-6738 to 0.94 "Too aggressive task resubmission from the distributed log manager"
     HBASE-8270   Backport HBASE-8097 'MetaServerShutdownHandler may potentially keep bumping up DeadServer.numProcessing' to 0.94
     HBASE-8326   mapreduce.TestTableInputFormatScan times out frequently (and addendum)
+    HBASE-8352   Rename '.snapshot' directory (to .hbase-snapshot)
+    HBASE-8377   IntegrationTestBigLinkedList calculates wrap for linked list size incorrectly
