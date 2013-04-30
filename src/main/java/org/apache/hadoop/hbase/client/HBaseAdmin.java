@@ -2123,6 +2123,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     }
   }
 
+  private static final String RESTORE_DROP_ROLLBACK_SNAPSHOT="hbase.snapshot.restore.drop.rollback";
   /**
    * Restore the specified snapshot on the original table. (The table must be disabled)
    * Before restoring the table, a new snapshot with the current table state is created.
@@ -2135,12 +2136,30 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void restoreSnapshot(final byte[] snapshotName)
       throws IOException, RestoreSnapshotException {
-    restoreSnapshot(Bytes.toString(snapshotName));
+    restoreSnapshot(Bytes.toString(snapshotName),
+      conf.getBoolean(RESTORE_DROP_ROLLBACK_SNAPSHOT, true));
   }
 
   /**
    * Restore the specified snapshot on the original table. (The table must be disabled)
    * Before restoring the table, a new snapshot with the current table state is created.
+   * In case of failure, the table will be rolled back to its original state.
+   *
+   * @param snapshotName name of the snapshot to restore
+   * @param dropRollbackSnapshot whether rollback snapshot should be dropped at the end of restore
+   * @throws IOException if a remote or network exception occurs
+   * @throws RestoreSnapshotException if snapshot failed to be restored
+   * @throws IllegalArgumentException if the restore request is formatted incorrectly
+   */
+  public void restoreSnapshot(final byte[] snapshotName, final boolean dropRollbackSnapshot)
+      throws IOException, RestoreSnapshotException {
+    restoreSnapshot(Bytes.toString(snapshotName), dropRollbackSnapshot);
+  }
+
+  /**
+   * Restore the specified snapshot on the original table. (The table must be disabled)
+   * Before restoring the table, a new snapshot (rollback snapshot) with the current table state is
+   * created.
    * In case of failure, the table will be rolled back to its original state.
    *
    * @param snapshotName name of the snapshot to restore
@@ -2150,7 +2169,24 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void restoreSnapshot(final String snapshotName)
       throws IOException, RestoreSnapshotException {
-    String rollbackSnapshot = snapshotName + "-" + EnvironmentEdgeManager.currentTimeMillis();
+    restoreSnapshot(snapshotName, conf.getBoolean(RESTORE_DROP_ROLLBACK_SNAPSHOT, true));
+  }
+  
+  /**
+   * Restore the specified snapshot on the original table. (The table must be disabled)
+   * Before restoring the table, a new snapshot with the current table state is created.
+   * In case of failure, the table will be rolled back to the its original state.
+   *
+   * @param snapshotName name of the snapshot to restore
+   * @param dropRollbackSnapshot whether rollback snapshot should be dropped at the end of restore
+   * @throws IOException if a remote or network exception occurs
+   * @throws RestoreSnapshotException if snapshot failed to be restored
+   * @throws IllegalArgumentException if the restore request is formatted incorrectly
+   */
+  public void restoreSnapshot(final String snapshotName, final boolean dropRollbackSnapshot)
+      throws IOException, RestoreSnapshotException {
+    String rollbackSnapshot = snapshotName + "-for-rollback-" +
+      EnvironmentEdgeManager.currentTimeMillis();
 
     String tableName = null;
     for (SnapshotDescription snapshotInfo: listSnapshots()) {
@@ -2183,6 +2219,14 @@ public class HBaseAdmin implements Abortable, Closeable {
         String msg = "Failed to restore and rollback to snapshot=" + rollbackSnapshot;
         LOG.error(msg, ex);
         throw new RestoreSnapshotException(msg, ex);
+      }
+    }
+    if (dropRollbackSnapshot) {
+      try {
+        deleteSnapshot(rollbackSnapshot);
+        LOG.info("Deleted " + rollbackSnapshot);
+      } catch (IOException e) {
+        LOG.error("Failed to drop " + rollbackSnapshot, e);
       }
     }
   }
