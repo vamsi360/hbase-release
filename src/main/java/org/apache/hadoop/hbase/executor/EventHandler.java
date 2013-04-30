@@ -141,8 +141,8 @@ public abstract class EventHandler implements Runnable, Comparable<Runnable> {
     // WARNING: Please do not insert, remove or swap any line in this enum.
     // RegionTransitionData.write() uses eventType.ordinal() that is the enum index
     // and not the value specified in the enum definition. so we can't add stuff in the middle.
-    C_M_SNAPSHOT_TABLE        (48),   // Client asking Master to snapshot an offline table
-    C_M_RESTORE_SNAPSHOT      (49);   // Client asking Master to snapshot an offline table
+    C_M_SNAPSHOT_TABLE        (73),   // Client asking Master to snapshot an offline table
+    C_M_RESTORE_SNAPSHOT      (74);   // Client asking Master to restore an offline table
 
     /**
      * Constructor
