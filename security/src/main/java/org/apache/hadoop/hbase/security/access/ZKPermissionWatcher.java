@@ -45,7 +45,6 @@ public class ZKPermissionWatcher extends ZooKeeperListener {
   static final String ACL_NODE = "acl";
   TableAuthManager authManager;
   String aclZNode;
-  boolean initialized = false;
 
   public ZKPermissionWatcher(ZooKeeperWatcher watcher,
       TableAuthManager authManager, Configuration conf) {
@@ -53,19 +52,15 @@ public class ZKPermissionWatcher extends ZooKeeperListener {
     this.authManager = authManager;
     String aclZnodeParent = conf.get("zookeeper.znode.acl.parent", ACL_NODE);
     this.aclZNode = ZKUtil.joinZNode(watcher.baseZNode, aclZnodeParent);
-    this.watcher.registerListener(this);
   }
 
   public void start() throws KeeperException {
-    if (!initialized && ZKUtil.watchAndCheckExists(watcher, aclZNode)) {
+    watcher.registerListener(this);
+    if (ZKUtil.watchAndCheckExists(watcher, aclZNode)) {
       List<ZKUtil.NodeAndData> existing =
           ZKUtil.getChildDataAndWatchForNewChildren(watcher, aclZNode);
       if (existing != null) {
-        int cnt = refreshNodes(existing);
-        if (cnt > 0) {
-          LOG.info("refreshNodes() read " + cnt + " znodes");
-          initialized = true;
-        }
+        refreshNodes(existing);
       }
     }
   }
@@ -126,11 +121,7 @@ public class ZKPermissionWatcher extends ZooKeeperListener {
     }
   }
 
-  /*
-   * @return the number of nodes where non-empty data is retrieved
-   */
-  private int refreshNodes(List<ZKUtil.NodeAndData> nodes) {
-    int cnt = 0;
+  private void refreshNodes(List<ZKUtil.NodeAndData> nodes) {
     for (ZKUtil.NodeAndData n : nodes) {
       if (n.isEmpty()) continue;
       String path = n.getNode();
@@ -143,13 +134,11 @@ public class ZKPermissionWatcher extends ZooKeeperListener {
         }
         authManager.refreshCacheFromWritable(Bytes.toBytes(table),
           nodeData);
-        cnt++;
       } catch (IOException ioe) {
         LOG.error("Failed parsing permissions for table '" + table +
             "' from zk", ioe);
       }
     }
-    return cnt;
   }
 
   /***

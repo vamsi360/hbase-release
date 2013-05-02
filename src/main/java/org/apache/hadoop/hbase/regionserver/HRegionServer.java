@@ -1807,7 +1807,7 @@ public class HRegionServer implements HRegionInterface, HBaseRPCErrorHandler,
   @Override
   public void stop(final String msg) {
     try {
-      if (this.rsHost!= null) this.rsHost.preStop(msg);
+      this.rsHost.preStop(msg);
       this.stopped = true;
       LOG.info("STOPPED: " + msg);
       // Wakes run() if it is sleeping
