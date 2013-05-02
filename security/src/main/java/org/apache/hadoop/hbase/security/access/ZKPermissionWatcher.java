@@ -45,6 +45,7 @@ public class ZKPermissionWatcher extends ZooKeeperListener {
   static final String ACL_NODE = "acl";
   TableAuthManager authManager;
   String aclZNode;
+  boolean initialized = false;
 
   public ZKPermissionWatcher(ZooKeeperWatcher watcher,
       TableAuthManager authManager, Configuration conf) {
@@ -52,15 +53,16 @@ public class ZKPermissionWatcher extends ZooKeeperListener {
     this.authManager = authManager;
     String aclZnodeParent = conf.get("zookeeper.znode.acl.parent", ACL_NODE);
     this.aclZNode = ZKUtil.joinZNode(watcher.baseZNode, aclZnodeParent);
+    this.watcher.registerListener(this);
   }
 
   public void start() throws KeeperException {
-    watcher.registerListener(this);
-    if (ZKUtil.watchAndCheckExists(watcher, aclZNode)) {
+    if (!initialized && ZKUtil.watchAndCheckExists(watcher, aclZNode)) {
       List<ZKUtil.NodeAndData> existing =
           ZKUtil.getChildDataAndWatchForNewChildren(watcher, aclZNode);
       if (existing != null) {
         refreshNodes(existing);
+        initialized = true;
       }
     }
   }

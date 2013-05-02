@@ -69,6 +69,7 @@ import org.apache.hadoop.hbase.security.access.Permission.Action;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.hadoop.hbase.util.Pair;
+import org.apache.zookeeper.KeeperException;
 
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
@@ -423,6 +424,11 @@ public class AccessController extends BaseRegionObserver
       logResult(AuthResult.allow(request, "Global check allowed", user, perm, null));
     } else {
       logResult(AuthResult.deny(request, "Global check failed", user, perm, null));
+      try {
+        this.authManager.getZKPermissionWatcher().start();
+      } catch (KeeperException ke) {
+        throw new IOException(ke);
+      }
       throw new AccessDeniedException("Insufficient permissions for user '" +
           (user != null ? user.getShortName() : "null") +"' (global, action=" +
           perm.toString() + ")");
@@ -465,6 +471,11 @@ public class AccessController extends BaseRegionObserver
     logResult(result);
 
     if (!result.isAllowed()) {
+      try {
+        this.authManager.getZKPermissionWatcher().start();
+      } catch (KeeperException ke) {
+        throw new IOException(ke);
+      }
       StringBuffer sb = new StringBuffer("");
       if ((families != null && families.size() > 0)) {
         for (byte[] familyName : families.keySet()) {
