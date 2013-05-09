@@ -235,8 +235,6 @@ class CatalogJanitor extends Chore {
     if (hasNoReferences(a) && hasNoReferences(b)) {
       LOG.debug("Deleting region " + parent.getRegionNameAsString() +
         " because daughter splits no longer hold references");
-      // wipe out daughter references from parent region in meta
-      removeDaughtersFromParent(parent);
 
       // This latter regionOffline should not be necessary but is done for now
       // until we let go of regionserver to master heartbeats.  See HBASE-3368.
@@ -276,16 +274,6 @@ class CatalogJanitor extends Chore {
   throws IOException {
     byte [] bytes = result.getValue(HConstants.CATALOG_FAMILY, which);
     return Writables.getHRegionInfoOrNull(bytes);
-  }
-
-  /**
-   * Remove mention of daughters from parent row.
-   * @param parent
-   * @throws IOException
-   */
-  private void removeDaughtersFromParent(final HRegionInfo parent)
-  throws IOException {
-    MetaEditor.deleteDaughtersReferencesInParent(this.server.getCatalogTracker(), parent);
   }
 
   /**
