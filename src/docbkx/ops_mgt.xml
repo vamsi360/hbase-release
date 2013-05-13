@@ -799,8 +799,8 @@ false
         and since it works at file-system level the hbase cluster does not have to be online.
         The HBase Snapshot Export tool must be run as hbase user.
         The HBase Snapshot Export tool must have temp directory, specified by "hbase.tmp.dir" (ie /grid/0/var/log/hbase), created on HDFS with hbase user as the owner.
-        <para>To copy a snapshot called MySnapshot to an HBase cluster srv2 (hdfs://srv2:8080/hbase) using 16 mappers:
-<programlisting>$ bin/hbase class org.apache.hadoop.hbase.snapshot.tool.ExportSnapshot -snapshot MySnapshot -copy-to hdfs://srv2:8080/hbase -mappers 16</programlisting>
+        <para>To copy a snapshot called MySnapshot to an HBase cluster srv2 (hdfs://srv2:8020/hbase) using 16 mappers:
+<programlisting>$ bin/hbase class org.apache.hadoop.hbase.snapshot.tool.ExportSnapshot -snapshot MySnapshot -copy-to hdfs://srv2:8020/hbase -mappers 16</programlisting>
         </para>
       </para>
     </section>
