@@ -21,3 +21,4 @@ Based on 0.94.6.1
     HBASE-8352   Rename '.snapshot' directory (to .hbase-snapshot)
     HBASE-8377   IntegrationTestBigLinkedList calculates wrap for linked list size incorrectly
     HBASE-8505   References to split daughters should not be deleted separately from parent META entry (Patch file: hbase-8505_v2-0.94-reduce.patch)
+    HBASE-8550   0.94 ChaosMonkey grep for master is too broad
