@@ -25,3 +25,6 @@ Based on 0.94.6.1
     HBASE-8547   Fix java.lang.RuntimeException: Cached an already cached block (Patch file: hbase-8547_v2-0.94-reduced.patch, and addendum2+3)
     HBASE-7410   [snapshots] add snapshot/clone/restore/export docs to ref guide
     HBASE-8530   Refine error message from ExportSnapshot when there is leftover snapshot in target cluster
+
+
+Comanche:
