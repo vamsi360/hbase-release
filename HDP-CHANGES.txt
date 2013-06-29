@@ -28,3 +28,4 @@ Based on 0.94.6.1
 
 
 Comanche:
+    HBASE-8816  Add support of loading multiple tables into LoadTestTool
