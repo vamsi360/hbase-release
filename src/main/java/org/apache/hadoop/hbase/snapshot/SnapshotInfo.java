@@ -191,8 +191,8 @@ public final class SnapshotInfo extends Configured implements Tool {
       new SnapshotReferenceUtil.FileVisitor() {
         public void storeFile (final String region, final String family, final String hfile)
             throws IOException {
-          Path path = new Path(family, HFileLink.createHFileLinkName(table, region, hfile));
-          HFileLink link = new HFileLink(conf, path);
+          HFileLink link = HFileLink.create(conf, table, region, family, hfile);
+
           boolean inArchive = false;
           long size = -1;
           try {

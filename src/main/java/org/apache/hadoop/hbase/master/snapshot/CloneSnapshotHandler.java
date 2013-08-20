@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NotAllMetaRegionsOnlineException;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.catalog.MetaReader;
+import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.errorhandling.ForeignException;
 import org.apache.hadoop.hbase.errorhandling.ForeignExceptionDispatcher;
 import org.apache.hadoop.hbase.master.MasterServices;
@@ -61,6 +62,8 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
   private final SnapshotDescription snapshot;
 
   private final ForeignExceptionDispatcher monitor;
+
+  private RestoreSnapshotHelper.RestoreMetaChanges metaChanges;
 
   private volatile boolean stopped = false;
 
@@ -96,7 +99,7 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
       Path snapshotDir = SnapshotDescriptionUtils.getCompletedSnapshotDir(snapshot, rootDir);
       RestoreSnapshotHelper restoreHelper = new RestoreSnapshotHelper(conf, fs,
           snapshot, snapshotDir, hTableDescriptor, tableDir, monitor);
-      RestoreSnapshotHelper.RestoreMetaChanges metaChanges = restoreHelper.restoreHdfsRegions();
+      metaChanges = restoreHelper.restoreHdfsRegions();
 
       // Clone operation should not have stuff to restore or remove
       Preconditions.checkArgument(!metaChanges.hasRegionsToRestore(),
@@ -118,6 +121,13 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
       this.monitor.receive(new ForeignException(NAME, rse));
       throw rse;
     }
+  }
+
+  @Override
+  protected void addRegionsToMeta(final CatalogTracker ct, final List<HRegionInfo> regionInfos)
+      throws IOException {
+    super.addRegionsToMeta(ct, regionInfos);
+    metaChanges.updateMetaParentRegions(ct, regionInfos);
   }
 
   @Override
