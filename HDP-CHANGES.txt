@@ -1,1 +1,6 @@
-condorM30-0.94.6 is branched from hortonworks  comanche-0.94.6  SHA1 855cf8f60d3595ea8a3ab89cb3e8f9362f07f1f4 @  git@github.com:hortonworks/hbase.git 
+condorM30-0.94.6 is branched from hortonworks  comanche-0.94.6  SHA1 855cf8f60d3595ea8a3ab89cb3e8f9362f07f1f4 @  git@github.com:hortonworks/hbase.git
+
+BUG FIXES
+  HBASE-8760 Possible loss of data in snapshot taken after region split
+  HBASE-9303 Snapshot restore of table which splits after snapshot was taken encounters 'Region is not online'
+  HBASE-9906 Restore snapshot fails to restore the meta edits sporadically
