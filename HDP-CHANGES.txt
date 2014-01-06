@@ -1,0 +1,1 @@
+bigwheel-m16-0.96.1 is branched from apache branch 0.96 (SHA1 288318123a5d0cb4decea0d553fdb73bb862580e) @ git://git.apache.org/hbase.git
