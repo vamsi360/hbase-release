@@ -1,1 +1,9 @@
 bigwheel-m16-0.96.1 is branched from apache branch 0.96 (SHA1 288318123a5d0cb4decea0d553fdb73bb862580e) @ git://git.apache.org/hbase.git
+
+Bug fix to bring the version to 0.96.1.1:
+
+HBASE-10188 Deprecate ServerName constructors, but make it public (Nicolas Liochon)
+
+Bug fixes:
+
+HBASE-10210 during master startup, RS can be you-are-dead-ed by master in error
