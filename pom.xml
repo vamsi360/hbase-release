@@ -2368,5 +2368,10 @@
                -->
       <url>file:///tmp</url>
     </site>
+    <repository>
+      <id>${repoid}</id>
+      <name>${reponame}</name>
+      <url>${repourl}</url>
+    </repository>
   </distributionManagement>
 </project>
