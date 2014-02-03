@@ -24,6 +24,7 @@
   <id>bin</id>
   <formats>
     <format>tar.gz</format>
+    <format>zip</format>
   </formats>
   <componentDescriptors>
       <componentDescriptor>src/main/assembly/components.xml</componentDescriptor>
