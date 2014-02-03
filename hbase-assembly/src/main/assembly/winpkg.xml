@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly>
+  <id>${project.version}.winpkg</id>
+  <formats>
+    <format>zip</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <fileSets>
+     <fileSet>
+      <directory>target/win/resources</directory>
+      <outputDirectory>/resources</outputDirectory>
+      <includes>
+        <include>**</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>target/win/scripts</directory>
+      <outputDirectory>/scripts</outputDirectory>
+      <includes>
+        <include>**</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <directory>target/win/template</directory>
+      <outputDirectory>/template</outputDirectory>
+      <includes>
+        <include>**</include>
+      </includes>
+    </fileSet>
+
+  </fileSets>
+  <files>
+    <file>
+      <source>
+        target/hbase-${project.version}.zip
+      </source>
+      <outputDirectory>/resources</outputDirectory>
+    </file>
+  </files>
+</assembly>
