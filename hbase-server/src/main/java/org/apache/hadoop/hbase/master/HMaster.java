@@ -19,6 +19,7 @@
 package org.apache.hadoop.hbase.master;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
@@ -1413,7 +1414,7 @@ MasterServices, Server {
     return balancerCutoffTime;
   }
 
-  public boolean balance() throws HBaseIOException {
+  public boolean balance() throws IOException {
     // if master not initialized, don't run balancer.
     if (!this.initialized) {
       LOG.debug("Master has not been initialized, don't run balancer.");
@@ -1500,7 +1501,7 @@ MasterServices, Server {
   public BalanceResponse balance(RpcController c, BalanceRequest request) throws ServiceException {
     try {
       return BalanceResponse.newBuilder().setBalancerRan(balance()).build();
-    } catch (HBaseIOException ex) {
+    } catch (IOException ex) {
       throw new ServiceException(ex);
     }
   }
@@ -2065,14 +2066,18 @@ MasterServices, Server {
       GetClusterStatusRequest req)
   throws ServiceException {
     GetClusterStatusResponse.Builder response = GetClusterStatusResponse.newBuilder();
-    response.setClusterStatus(getClusterStatus().convert());
+    try {
+      response.setClusterStatus(getClusterStatus().convert());
+    } catch (InterruptedIOException e) {
+      throw new ServiceException(e);
+    }
     return response.build();
   }
 
   /**
    * @return cluster status
    */
-  public ClusterStatus getClusterStatus() {
+  public ClusterStatus getClusterStatus() throws InterruptedIOException {
     // Build Set of backup masters from ZK nodes
     List<String> backupMasterStrings;
     try {
@@ -2086,9 +2091,13 @@ MasterServices, Server {
                                           backupMasterStrings.size());
     for (String s: backupMasterStrings) {
       try {
-        byte [] bytes =
-            ZKUtil.getData(this.zooKeeper, ZKUtil.joinZNode(
-                this.zooKeeper.backupMasterAddressesZNode, s));
+        byte [] bytes;
+        try {
+          bytes = ZKUtil.getData(this.zooKeeper, ZKUtil.joinZNode(
+              this.zooKeeper.backupMasterAddressesZNode, s));
+        } catch (InterruptedException e) {
+          throw new InterruptedIOException();
+        }
         if (bytes != null) {
           ServerName sn;
           try {
