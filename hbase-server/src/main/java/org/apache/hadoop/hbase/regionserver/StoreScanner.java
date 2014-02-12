@@ -233,8 +233,6 @@ public class StoreScanner extends NonReversedNonLazyKeyValueScanner
           earliestPutTs, oldestUnexpiredTS, dropDeletesFromRow, dropDeletesToRow);
     }
 
-    this.store.addChangedReaderObserver(this);
-
     // Filter the list of scanners using Bloom filters, time range, TTL, etc.
     scanners = selectScannersFrom(scanners);
 
@@ -735,7 +733,7 @@ public class StoreScanner extends NonReversedNonLazyKeyValueScanner
     try {
       latch.await();
     } catch (InterruptedException ie) {
-      throw new InterruptedIOException(ie.getMessage());
+      throw (InterruptedIOException)new InterruptedIOException().initCause(ie);
     }
 
     for (ParallelSeekHandler handler : handlers) {
