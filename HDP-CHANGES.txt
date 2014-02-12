@@ -1,0 +1,6 @@
+baikal-GA-0.98.0 is based on apache hbase 0.98.0RC2
+
+Bug fixes:
+  HBASE-10486: ProtobufUtil Append & Increment deserialization lost cell level timestamp
+  HBASE-10472 Manage the interruption in ZKUtil#getData
+  HBASE-10500 Some tools OOM when BucketCache is enabled
