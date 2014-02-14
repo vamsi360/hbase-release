@@ -4,3 +4,6 @@ Bug fixes:
   HBASE-10486: ProtobufUtil Append & Increment deserialization lost cell level timestamp
   HBASE-10472 Manage the interruption in ZKUtil#getData
   HBASE-10500 Some tools OOM when BucketCache is enabled
+
+New feature
+  HBASE-10350: Master/AM/RegionStates changes to create and assign region replicas
