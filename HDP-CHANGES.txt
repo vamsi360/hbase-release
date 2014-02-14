@@ -6,4 +6,7 @@ Bug fixes:
   HBASE-10500 Some tools OOM when BucketCache is enabled
 
 New feature
-  HBASE-10350: Master/AM/RegionStates changes to create and assign region replicas
+  HBASE-10350. Master/AM/RegionStates changes to create and assign region replicas
+  HBASE-10361. Enable/AlterTable support for region replicas
+  HBASE-10354. Add an API for defining consistency per request
+
