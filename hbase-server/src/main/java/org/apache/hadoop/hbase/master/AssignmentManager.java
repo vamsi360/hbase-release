@@ -1286,6 +1286,7 @@ public class AssignmentManager extends ZooKeeperListener {
     clearRegionPlan(regionInfo);
     // Add the server to serversInUpdatingTimer
     addToServersInUpdatingTimer(sn);
+    balancer.regionOnline(regionInfo, sn);
   }
 
   /**
@@ -3596,6 +3597,7 @@ public class AssignmentManager extends ZooKeeperListener {
     removeClosedRegion(regionInfo);
     // remove the region plan as well just in case.
     clearRegionPlan(regionInfo);
+    balancer.regionOffline(regionInfo);
   }
 
   /**
