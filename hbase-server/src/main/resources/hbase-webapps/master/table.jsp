@@ -46,7 +46,7 @@
   String tableHeader;
   boolean withReplica = false;
   if (table.getTableDescriptor().getRegionReplication() > 1) {
-    tableHeader = "<h2>Table Regions</h2><table class=\"table table-striped\"><tr><th>Name</th><th>Region Server</th><th>Start Key</th><th>End Key</th><th>Requests</th><th>Default-replica?</th></tr>";
+    tableHeader = "<h2>Table Regions</h2><table class=\"table table-striped\"><tr><th>Name</th><th>Region Server</th><th>Start Key</th><th>End Key</th><th>Requests</th><th>ReplicaID</th></tr>";
     withReplica = true;
   } else {
     tableHeader = "<h2>Table Regions</h2><table class=\"table table-striped\"><tr><th>Name</th><th>Region Server</th><th>Start Key</th><th>End Key</th><th>Requests</th></tr>";
@@ -285,7 +285,6 @@
 <tr>
   <td><%= escapeXml(Bytes.toStringBinary(regionInfo.getRegionName())) %></td>
   <%
-  boolean isDefault = RegionReplicaUtil.isDefaultReplica(regionInfo);
   if (addr != null) {
     String url = "//" + addr.getHostname() + ":" + master.getRegionServerInfoPort(addr) + "/";
   %>
@@ -305,7 +304,7 @@
   <%
   if (withReplica) {
   %>
-  <td><%= isDefault%></td>
+  <td><%= regionInfo.getReplicaId() %></td>
   <%
   }
   %>

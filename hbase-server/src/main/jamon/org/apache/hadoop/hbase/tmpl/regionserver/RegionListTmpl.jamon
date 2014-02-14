@@ -88,7 +88,7 @@
             <th>Region Name</th>
             <th>Start Key</th>
             <th>End Key</th>
-            <th>Default-replica?</th>
+            <th>ReplicaID</th>
         </tr>
 
         <%for HRegionInfo r: onlineRegions %>
@@ -96,7 +96,7 @@
             <td><% r.getRegionNameAsString() %></td>
             <td><% Bytes.toStringBinary(r.getStartKey()) %></td>
             <td><% Bytes.toStringBinary(r.getEndKey()) %></td>
-            <td><% (RegionReplicaUtil.isDefaultReplica(r)) %></td>
+            <td><% r.getReplicaId() %></td>
         </tr>
         </%for>
     </table>
