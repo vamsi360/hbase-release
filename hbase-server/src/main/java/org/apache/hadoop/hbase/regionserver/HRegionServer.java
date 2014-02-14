@@ -2633,7 +2633,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     return getRegionByEncodedName(regionName, encodedRegionName);
   }
 
-  public HRegion getRegionByEncodedName(String encodedRegionName)
+  protected HRegion getRegionByEncodedName(String encodedRegionName)
       throws NotServingRegionException {
     return getRegionByEncodedName(null, encodedRegionName);
   }
@@ -2834,8 +2834,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         }
       }
       if (existence != null){
-        ClientProtos.Result pbr =
-            ProtobufUtil.toResult(existence, region.getRegionInfo().getReplicaId() != 0);
+        ClientProtos.Result pbr = ProtobufUtil.toResult(existence);
         builder.setResult(pbr);
       } else  if (r != null) {
         ClientProtos.Result pbr = ProtobufUtil.toResult(r);
