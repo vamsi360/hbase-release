@@ -59,7 +59,7 @@ import com.google.protobuf.ServiceException;
  */
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
-public class CoprocessorHConnection implements ClusterConnection {
+class CoprocessorHConnection implements ClusterConnection {
   private static final NonceGenerator ng = new ConnectionManager.NoNonceGenerator();
 
   /**
@@ -70,7 +70,7 @@ public class CoprocessorHConnection implements ClusterConnection {
    * @return an unmanaged {@link HConnection}.
    * @throws IOException if we cannot create the basic connection
    */
-  public static ClusterConnection getConnectionForEnvironment(CoprocessorEnvironment env)
+  static ClusterConnection getConnectionForEnvironment(CoprocessorEnvironment env)
       throws IOException {
     ClusterConnection connection =
         ConnectionManager.createConnectionInternal(env.getConfiguration());
@@ -467,5 +467,10 @@ public class CoprocessorHConnection implements ClusterConnection {
   @Override
   public AsyncProcess getAsyncProcess() {
     return delegate.getAsyncProcess();
+  }
+
+  @Override
+  public RegionLocations locateRegionAll(TableName tableName, byte[] row) throws IOException {
+    return delegate.locateRegionAll(tableName, row);
   }
 }

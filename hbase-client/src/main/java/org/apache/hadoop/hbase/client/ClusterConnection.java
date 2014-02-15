@@ -224,4 +224,8 @@ interface ClusterConnection extends HConnection {
    */
   AsyncProcess getAsyncProcess();
 
+  /**
+   * @return All locations for a particular region.
+   */
+  RegionLocations locateRegionAll(TableName tableName, byte[] row) throws IOException;
 }
