@@ -96,6 +96,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -252,7 +254,7 @@ public class RpcClient {
     // The return type.  Used to create shell into which we deserialize the response if any.
     Message responseDefaultType;
     IOException error;                            // exception, null if value
-    boolean done;                                 // true when call is done
+    volatile boolean done;                                 // true when call is done
     long startTime;
     final MethodDescriptor md;
 
@@ -325,6 +327,22 @@ public class RpcClient {
     return new Connection(remoteId, codec, compressor);
   }
 
+  /**
+   * see {@link Connection.ThreadCallSender}
+   */
+  private static class CallFuture {
+    Call call;
+    int priority;
+
+    // We will use this to stop the writer
+    final static CallFuture DEATH_PILL = new CallFuture(null, -1);
+
+    CallFuture(Call call, int priority) {
+      this.call = call;
+      this.priority = priority;
+    }
+  }
+
   /** Thread that reads responses and notifies callers.  Each connection owns a
    * socket connected to a remote address.  Calls are multiplexed through this
    * socket: responses may be delivered out of order. */
@@ -349,6 +367,103 @@ public class RpcClient {
       new ConcurrentSkipListMap<Integer, Call>();
 
     protected final AtomicBoolean shouldCloseConnection = new AtomicBoolean();
+    protected final ThreadCallSender callSender;
+
+
+    /**
+     * We can either write the call directly on the socket, either delegate this to
+     *  a different threads. Ultimately, this will allow to have a set of writer & reader
+     *  for the whole cluster.
+     * Using a different thread allows the client thread to be interrupted w/o any impact. If
+     *  the client threads writes on the sockets, an interruption will close this socket.
+     */
+    private class ThreadCallSender extends Thread {
+      protected final BlockingQueue<CallFuture> callsToWrite;
+
+      public CallFuture sendCall(Call call, int priority) throws InterruptedException {
+        CallFuture cts = new CallFuture(call, priority);
+        callsToWrite.put(cts);
+        return cts;
+      }
+
+      public void close(){
+        callsToWrite.offer(CallFuture.DEATH_PILL);
+        // We don't care if we can't add the death pill to the queue: the writer
+        //  won't be blocked in the 'take', as its queue is full.
+      }
+
+      ThreadCallSender(String name, Configuration conf) {
+        int queueSize = conf.getInt("hbase.ipc.client.write.queueSize", 1000);
+        callsToWrite = new ArrayBlockingQueue<CallFuture>(queueSize);
+        setDaemon(true);
+        setName(name + " - writer");
+      }
+
+      public void cancel(CallFuture cts){
+        callsToWrite.remove(cts);
+      }
+
+      /**
+       * Reads the call from the queue, write them on the socket.
+       */
+      @Override
+      public void run() {
+        while (!shouldCloseConnection.get()) {
+          CallFuture cts = null;
+          try {
+            cts = callsToWrite.take();
+          } catch (InterruptedException e) {
+            markClosed(new InterruptedIOException());
+          }
+
+          if (cts == null || cts == CallFuture.DEATH_PILL){
+            assert shouldCloseConnection.get();
+            break;
+          }
+
+          if (cts.call.done) {
+            continue;
+          }
+
+          if (remoteId.rpcTimeout > 0) {
+            long waitTime = EnvironmentEdgeManager.currentTimeMillis() - cts.call.getStartTime();
+            if (waitTime >= remoteId.rpcTimeout) {
+              IOException ie = new CallTimeoutException("Call id=" + cts.call.id +
+                  ", waitTime=" + waitTime + ", rpcTimetout=" + remoteId.rpcTimeout +
+                  ", expired before being sent to the server.");
+              cts.call.setException(ie); // includes a notify
+              continue;
+            }
+          }
+
+          try {
+            Connection.this.writeRequest(cts.call, cts.priority);
+          } catch (IOException e) {
+            LOG.warn("call write error for call #" + cts.call.id + ", message =" + e.getMessage());
+            cts.call.setException(e);
+          }
+        }
+
+        cleanup();
+      }
+
+      /**
+       * Cleans the call not yet sent when we finish.
+       */
+      private void cleanup(){
+        CallFuture cts;
+        IOException ie = new IOException("Connection closing");
+        while (true)  {
+          cts = callsToWrite.poll();
+          if (cts == null){
+            break;
+          }
+          if (cts.call != null && !cts.call.done){
+            cts.call.setException(ie);
+          }
+        }
+      }
+    }
 
     Connection(ConnectionId remoteId, final Codec codec, final CompressionCodec compressor)
     throws IOException {
@@ -421,6 +536,13 @@ public class RpcClient {
         ((ticket==null)?" from an unknown user": (" from "
         + ticket.getUserName())));
       this.setDaemon(true);
+
+      if (conf.getBoolean("hbase.ipc.client.allowsInterrupt", true)) {
+        callSender = new ThreadCallSender(getName(), conf);
+        callSender.start();
+      } else {
+        callSender = null;
+      }
     }
 
     private UserInformation getUserInfo(UserGroupInformation ugi) {
@@ -936,7 +1058,7 @@ public class RpcClient {
             TextFormat.shortDebugString(responseHeader) + ", totalSize: " + totalSize + " bytes");
         }
         Call call = calls.remove(id);
-        if (call == null) {
+        if (call == null || call.done) {
           // So we got a response for which we have no corresponding 'call' here on the client-side.
           // We probably timed out waiting, cleaned up all references, and now the server decides
           // to return a response.  There is nothing we can do w/ the response at this stage. Clean
@@ -959,7 +1081,7 @@ public class RpcClient {
         } else {
           Message value = null;
           // Call may be null because it may have timedout and been cleaned up on this side already
-          if (call != null && call.responseDefaultType != null) {
+          if (call != null && !call.done && call.responseDefaultType != null) {
             Builder builder = call.responseDefaultType.newBuilderForType();
             builder.mergeDelimitedFrom(in);
             value = builder.build();
@@ -973,7 +1095,7 @@ public class RpcClient {
           }
           // it's possible that this call may have been cleaned up due to a RPC
           // timeout, so check if it still exists before setting the value.
-          if (call != null) call.setResponse(value, cellBlockScanner);
+          if (call != null && !call.done) call.setResponse(value, cellBlockScanner);
         }
       } catch (IOException e) {
         if (e instanceof SocketTimeoutException && remoteId.rpcTimeout > 0) {
@@ -1023,6 +1145,9 @@ public class RpcClient {
       if (shouldCloseConnection.compareAndSet(false, true)) {
         if (LOG.isDebugEnabled()) {
           LOG.debug(getName() + ": marking at should closed, reason =" + e.getMessage());
+        }
+        if (callSender != null) {
+          callSender.close();
         }
         synchronized (this) {
           notifyAll();
@@ -1291,17 +1416,30 @@ public class RpcClient {
   Pair<Message, CellScanner> call(MethodDescriptor md, Message param, CellScanner cells,
       Message returnType, User ticket, InetSocketAddress addr,
       int rpcTimeout, int priority)
-  throws InterruptedException, IOException {
+      throws IOException, InterruptedException {
     Call call = new Call(md, param, cells, returnType);
     Connection connection =
       getConnection(ticket, call, addr, rpcTimeout, this.codec, this.compressor);
 
-    connection.writeRequest(call, priority);
+    CallFuture cts = null;
+    if (connection.callSender != null){
+      cts = connection.callSender.sendCall(call, priority);
+    } else {
+      connection.writeRequest(call, priority);
+    }
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (call) {
       while (!call.done) {
-        call.wait(1000);                       // wait for the result
+        try {
+          call.wait(1000);                       // wait for the result
+        } catch (InterruptedException e) {
+          if (cts != null){
+            connection.callSender.cancel(cts);
+          }
+          call.done = true;
+          throw e;
+        }
       }
 
       if (call.error != null) {
