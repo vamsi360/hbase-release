@@ -39,6 +39,8 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -57,6 +59,7 @@ import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.exceptions.RegionMovedException;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
+import org.apache.hadoop.hbase.ipc.RpcClient;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
@@ -226,6 +229,96 @@ public class TestHCM {
     });
 
     hci.getClient(sn);  // will throw an exception: RegionServerStoppedException
+  }
+
+  /**
+   * Test that we can handle connection close: it will trigger a retry, but the calls will
+   *  finish.
+   */
+  @Test
+  public void testConnectionCloseAllowsInterrupt() throws Exception {
+    testConnectionClose(true);
+  }
+
+  @Test
+  public void testConnectionNotAllowsInterrupt() throws Exception {
+    testConnectionClose(false);
+  }
+
+  private void testConnectionClose(boolean allowsInterrupt) throws Exception {
+    String tableName = "testConnectionClose" + allowsInterrupt;
+    TEST_UTIL.createTable(tableName.getBytes(), FAM_NAM).close();
+
+    boolean previousBalance = TEST_UTIL.getHBaseAdmin().setBalancerRunning(false, true);
+
+    Configuration c2 = new Configuration(TEST_UTIL.getConfiguration());
+    // We want to work on a separate connection.
+    c2.set(HConstants.HBASE_CLIENT_INSTANCE_ID, String.valueOf(-1));
+    c2.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, Integer.MAX_VALUE - 1); // retry a lot
+    c2.setInt(HConstants.HBASE_CLIENT_PAUSE, 0); // don't wait between retries.
+    c2.setInt(RpcClient.FAILED_SERVER_EXPIRY_KEY, 0); // Server do not really expire
+    c2.setBoolean(RpcClient.ALLOWS_INTERRUPTS, allowsInterrupt);
+
+    final HTable table = new HTable(c2, tableName.getBytes());
+
+    Put put = new Put(ROW);
+    put.add(FAM_NAM, ROW, ROW);
+    table.put(put);
+
+    // 4 steps: ready=0; doGets=1; mustStop=2; stopped=3
+    final AtomicInteger step = new AtomicInteger(0);
+
+    final AtomicReference<Throwable> failed = new AtomicReference<Throwable>(null);
+    Thread t = new Thread("testConnectionCloseThread") {
+      public void run() {
+        int done = 0;
+        try {
+          step.set(1);
+          while (step.get() == 1) {
+            Get get = new Get(ROW);
+            table.get(get);
+            done++;
+            if (done % 100 == 0)
+              LOG.info("done=" + done);
+          }
+        } catch (Throwable t) {
+          failed.set(t);
+          LOG.error(t);
+        }
+        step.set(3);
+      }
+    };
+    t.start();
+    TEST_UTIL.waitFor(20000, new Waiter.Predicate<Exception>() {
+      @Override
+      public boolean evaluate() throws Exception {
+        return step.get() == 1;
+      }
+    });
+
+    ServerName sn = table.getRegionLocation(ROW).getServerName();
+    ConnectionManager.HConnectionImplementation conn =
+        (ConnectionManager.HConnectionImplementation) table.getConnection();
+    RpcClient rpcClient = conn.getRpcClient();
+
+    LOG.info("Going to cancel connections. connection=" + conn.toString() + ", sn=" + sn);
+    for (int i = 0; i < 5000; i++) {
+      rpcClient.cancelConnections(sn.getHostname(), sn.getPort(), null);
+      Thread.sleep(5);
+    }
+
+    step.compareAndSet(1, 2);
+    // The test may fail here if the thread doing the gets is stuck. The wait to find
+    //  out what's happening is to look for the thread named 'testConnectionCloseThread'
+    TEST_UTIL.waitFor(20000, new Waiter.Predicate<Exception>() {
+      @Override
+      public boolean evaluate() throws Exception {
+        return step.get() == 3;
+      }
+    });
+
+    Assert.assertTrue("Unexpected exception is " + failed.get(), failed.get() == null);
+    TEST_UTIL.getHBaseAdmin().setBalancerRunning(previousBalance, true);
   }
 
   /**
