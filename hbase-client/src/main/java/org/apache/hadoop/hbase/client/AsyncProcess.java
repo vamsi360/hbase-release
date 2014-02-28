@@ -1144,6 +1144,7 @@ class AsyncProcess {
       }
       synchronized (state) {
         if (state.callCount == 0) return; // someone already set the result
+        if (result instanceof ReplicaResultState) LOG.info("THIS IS BAD");
         state.result = result;
         state.callCount = 0;
         state.replicaErrors = null; // no longer matters
@@ -1222,6 +1223,7 @@ class AsyncProcess {
         if (isFromReplica) {
           throw new AssertionError("Unexpected stale result for " + row);
         }
+        if (!(result instanceof Result)) LOG.info("2 Not a result instance");
         results[index] = result;
       } else {
         synchronized (replicaResultLock) {
@@ -1229,8 +1231,10 @@ class AsyncProcess {
             if (isFromReplica) {
               throw new AssertionError("Unexpected stale result for " + row);
             }
+            if (!(result instanceof Result)) LOG.info("3 Not a result instance");
             results[index] = result;
           }
+          if (!(result instanceof Result)) LOG.info("THIS IS REALLY BAD");
         }
       }
       return (resObj == null || !(resObj instanceof ReplicaResultState))
@@ -1251,13 +1255,16 @@ class AsyncProcess {
           }
         }
         if (!actionsInProgress.compareAndSet(1, 0)) {
-          throw new AssertionError("Cannot set actions in progress to 0");
+          LOG.info("Cannot set actions in progress to 0");
+          //throw new AssertionError("Cannot set actions in progress to 0");
         }
         if (staleCount > 0) {
           LOG.trace("Returning " + staleCount + " stale results");
         }
       } else {
-        actionsInProgress.decrementAndGet();
+        if (actionsInProgress.get() > 0) {
+          actionsInProgress.decrementAndGet();
+        }
       }
       synchronized (actionsInProgress) {
         actionsInProgress.notifyAll();
@@ -1272,6 +1279,7 @@ class AsyncProcess {
         throw new AssertionError("Actions are done but callcount is " + state.callCount);
       }
       // TODO: we expect the Result coming from server to already have "isStale" specified.
+      if (!(state.result instanceof Result)) LOG.info("4 Not a result instance");
       Object res = results[index] = state.result;
       return (res instanceof Result) && ((Result)res).isStale();
     }
