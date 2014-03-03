@@ -125,6 +125,7 @@ public class TestMasterOperationsForRegionReplicas {
           assert (state != null);
         }
       }
+
       List<Result> metaRows = MetaReader.fullScan(ct);
       int numRows = 0;
       for (Result result : metaRows) {
@@ -138,7 +139,7 @@ public class TestMasterOperationsForRegionReplicas {
         assert(!servers[0].equals(servers[1]));
       }
       assert(numRows == numRegions);
-
+ 
       // The same verification of the meta as above but with the SnapshotOfRegionAssignmentFromMeta
       // class
       validateFromSnapshotFromMeta(table, numRegions, numReplica, ct);
