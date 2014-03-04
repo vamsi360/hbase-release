@@ -64,8 +64,6 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
   public static void beforeAllTests() throws Exception {
     conf = HBaseConfiguration.create();
     conf.setFloat("hbase.master.balancer.stochastic.maxMovePercent", 0.75f);
-    conf.setClass("hbase.util.ip.to.rack.determiner",
-        MyRackResolver.class, DNSToSwitchMapping.class);
     loadBalancer = new StochasticLoadBalancer();
     loadBalancer.setConf(conf);
   }
@@ -546,16 +544,16 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
     }
   }
 
-  @Test (timeout = 120000)
+  @Test (timeout = 180000)
   public void testRegionReplicationOnMidClusterWithRacks() {
     conf.setLong(StochasticLoadBalancer.MAX_STEPS_KEY, 4000000L);
     conf.setFloat("hbase.master.balancer.stochastic.maxMovePercent", 1.0f);
-    conf.setLong("hbase.master.balancer.stochastic.maxRunningTime", 60 * 1000); // 60 sec
+    conf.setLong("hbase.master.balancer.stochastic.maxRunningTime", 90 * 1000); // 90 sec
     loadBalancer.setConf(conf);
-    int numNodes = 50;
+    int numNodes = 30;
     int numRegions = numNodes * 30;
     int replication = 3; // 3 replicas per region
-    int numRegionsPerServer = 25;
+    int numRegionsPerServer = 28;
     int numTables = 10;
     int numRacks = 4; // all replicas should be on a different rack
     Map<ServerName, List<HRegionInfo>> serverMap =
@@ -645,20 +643,4 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
     return clusterState;
   }
 
-  public static class MyRackResolver implements DNSToSwitchMapping {
-
-    public MyRackResolver(Configuration conf) {}
-
-    @Override
-    public List<String> resolve(List<String> names) {
-      List<String> racks = new ArrayList<String>(names.size());
-      for (int i = 0; i < names.size(); i++) {
-        racks.add(i, NetworkTopology.DEFAULT_RACK);
-      }
-      return racks;
-    }
-
-    @Override
-    public void reloadCachedMappings() {}
-  }
 }
