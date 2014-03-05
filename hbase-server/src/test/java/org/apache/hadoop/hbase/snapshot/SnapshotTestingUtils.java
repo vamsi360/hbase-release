@@ -72,6 +72,7 @@ import com.google.protobuf.ServiceException;
 public class SnapshotTestingUtils {
 
   private static final Log LOG = LogFactory.getLog(SnapshotTestingUtils.class);
+  private static byte[] KEYS = Bytes.toBytes("0123456789");
 
   /**
    * Assert that we don't have any snapshots lists
@@ -468,7 +469,7 @@ public class SnapshotTestingUtils {
     byte[][] splitKeys = new byte[14][];
     byte[] hex = Bytes.toBytes("123456789abcde");
     for (int i = 0; i < splitKeys.length; ++i) {
-      splitKeys[i] = new byte[] { hex[i] };
+      splitKeys[i] = new byte[] { KEYS[i+1] };
     }
     return splitKeys;
   }
@@ -488,8 +489,8 @@ public class SnapshotTestingUtils {
     table.setAutoFlush(false, true);
 
     // Ensure one row per region
-    assertTrue(rows >= 16);
-    for (byte k0: Bytes.toBytes("0123456789abcdef")) {
+    assertTrue(rows >= KEYS.length);
+    for (byte k0: KEYS) {
       byte[] k = new byte[] { k0 };
       byte[] value = Bytes.add(Bytes.toBytes(System.currentTimeMillis()), k);
       byte[] key = Bytes.add(k, Bytes.toBytes(MD5Hash.getMD5AsHex(value)));
