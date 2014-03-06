@@ -920,7 +920,7 @@ public class StochasticLoadBalancer extends BaseLoadBalancer {
     @Override
     double cost() {
       double max = cluster.numRegions;
-      double min = cluster.numRegions / cluster.numServers;
+      double min = ((double) cluster.numRegions) / cluster.numServers;
       double value = 0;
 
       for (int i = 0; i < cluster.numMaxRegionsPerTable.length; i++) {
