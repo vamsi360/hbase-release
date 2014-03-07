@@ -2854,8 +2854,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         }
       }
       if (existence != null){
-        boolean stale = !ServerRegionReplicaUtil.isDefaultReplica(region.getRegionInfo());
-        ClientProtos.Result pbr = ProtobufUtil.toResult(existence, stale);
+        ClientProtos.Result pbr = ProtobufUtil.toResult(existence);
         builder.setResult(pbr);
       } else  if (r != null) {
         ClientProtos.Result pbr = ProtobufUtil.toResult(r);

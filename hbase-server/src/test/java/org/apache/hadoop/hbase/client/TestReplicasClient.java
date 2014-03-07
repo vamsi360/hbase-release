@@ -44,6 +44,7 @@ import org.apache.zookeeper.KeeperException;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -64,7 +65,7 @@ public class TestReplicasClient {
   private static final Log LOG = LogFactory.getLog(TestReplicasClient.class);
 
   private static final int NB_SERVERS = 1;
-  private static HTable table;
+  private static HTable table = null;
   private static final byte[] row = TestReplicasClient.class.getName().getBytes();
 
   private static HRegionInfo hriPrimary;
@@ -150,8 +151,13 @@ public class TestReplicasClient {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    table.close();
+    if (table != null) table.close();
     HTU.shutdownMiniCluster();
+  }
+
+  @Before
+  public void before() throws IOException {
+    HTU.getHBaseAdmin().getConnection().clearRegionCache();
   }
 
   @After
@@ -175,9 +181,9 @@ public class TestReplicasClient {
     // first version is '0'
     AdminProtos.OpenRegionRequest orr = RequestConverter.buildOpenRegionRequest(hri, 0, null);
     AdminProtos.OpenRegionResponse responseOpen = getRS().openRegion(null, orr);
-    Assert.assertTrue(responseOpen.getOpeningStateCount() == 1);
-    Assert.assertTrue(responseOpen.getOpeningState(0).
-        equals(AdminProtos.OpenRegionResponse.RegionOpeningState.OPENED));
+    Assert.assertEquals(responseOpen.getOpeningStateCount(), 1);
+    Assert.assertEquals(responseOpen.getOpeningState(0),
+      AdminProtos.OpenRegionResponse.RegionOpeningState.OPENED);
     checkRegionIsOpened(hri);
   }
 
@@ -223,7 +229,7 @@ public class TestReplicasClient {
   public void testUseRegionWithoutReplica() throws Exception {
     byte[] b1 = "testUseRegionWithoutReplica".getBytes();
     openRegion(hriSecondary);
-
+    SlowMeCopro.cdl.set(new CountDownLatch(0));
     try {
       Get g = new Get(b1);
       Result r = table.get(g);
@@ -279,14 +285,12 @@ public class TestReplicasClient {
     byte[] b1 = "testGetNoResultStaleRegionWithReplica".getBytes();
     openRegion(hriSecondary);
 
+    SlowMeCopro.cdl.set(new CountDownLatch(1));
     try {
-      SlowMeCopro.cdl.set(new CountDownLatch(1));
-
       Get g = new Get(b1);
       g.setConsistency(Consistency.TIMELINE);
       Result r = table.get(g);
       Assert.assertTrue(r.isStale());
-
     } finally {
       SlowMeCopro.cdl.get().countDown();
       closeRegion(hriSecondary);
@@ -312,7 +316,7 @@ public class TestReplicasClient {
   }
 
 
-  @Test()
+  @Test
   public void testFlushTable() throws Exception {
     openRegion(hriSecondary);
     try {
@@ -330,7 +334,7 @@ public class TestReplicasClient {
     }
   }
 
-  @Test()
+  @Test
   public void testFlushPrimary() throws Exception {
     openRegion(hriSecondary);
 
@@ -349,7 +353,7 @@ public class TestReplicasClient {
     }
   }
 
-  @Test()
+  @Test
   public void testFlushSecondary() throws Exception {
     openRegion(hriSecondary);
     try {
@@ -397,13 +401,13 @@ public class TestReplicasClient {
       LOG.info("sleep and is not stale done");
 
       // But if we ask for stale we will get it
-      SlowMeCopro.sleepTime.set(2000);
+      SlowMeCopro.cdl.set(new CountDownLatch(1));
       g = new Get(b1);
       g.setConsistency(Consistency.TIMELINE);
       r = table.get(g);
       Assert.assertTrue(r.isStale());
       Assert.assertTrue(r.getColumnCells(f, b1).isEmpty());
-      SlowMeCopro.sleepTime.set(0);
+      SlowMeCopro.cdl.get().countDown();
 
       LOG.info("stale done");
 

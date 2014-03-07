@@ -131,10 +131,11 @@ public class HTable implements HTableInterface {
   private ExecutorService pool;  // For Multi
   private boolean closed;
   private int operationTimeout;
+  private int retries;
   private final boolean cleanupPoolOnClose; // shutdown the pool in close()
   private final boolean cleanupConnectionOnClose; // close the connection in close()
   private Consistency defaultConsistency = Consistency.STRONG;
-  private int primaryCallTimeout;
+  private int primaryCallTimeoutMicroSecond;
 
 
   /** The Async process for puts with autoflush set to false or multiputs */
@@ -357,8 +358,10 @@ public class HTable implements HTableInterface {
     this.scannerCaching = this.configuration.getInt(
         HConstants.HBASE_CLIENT_SCANNER_CACHING,
         HConstants.DEFAULT_HBASE_CLIENT_SCANNER_CACHING);
-    this.primaryCallTimeout =
-        this.configuration.getInt("hbase.client.primaryCallTimeout", 10000); // 10 ms
+    this.primaryCallTimeoutMicroSecond =
+        this.configuration.getInt("hbase.client.primaryCallTimeout.get", 10000); // 10 ms
+    this.retries = configuration.getInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER,
+            HConstants.DEFAULT_HBASE_CLIENT_RETRIES_NUMBER);
 
     this.rpcCallerFactory = RpcRetryingCallerFactory.instantiate(configuration);
     // puts need to track errors globally due to how the APIs currently work.
@@ -809,15 +812,8 @@ public class HTable implements HTableInterface {
     }
 
     // Call that takes into account the replica
-    int retries =
-        configuration.getInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER,
-            HConstants.DEFAULT_HBASE_CLIENT_RETRIES_NUMBER);
-    int callTimeout = configuration.getInt(
-        HConstants.HBASE_CLIENT_OPERATION_TIMEOUT,
-        HConstants.DEFAULT_HBASE_CLIENT_OPERATION_TIMEOUT);
-
-    RpcRetryingCallerWithFallBack callable = new RpcRetryingCallerWithFallBack(
-        tableName, this.connection, get, pool, retries, callTimeout, primaryCallTimeout);
+    RpcRetryingCallerWithReadReplicas callable = new RpcRetryingCallerWithReadReplicas(
+        tableName, this.connection, get, pool, retries, operationTimeout, primaryCallTimeoutMicroSecond);
     return callable.call();
   }
 

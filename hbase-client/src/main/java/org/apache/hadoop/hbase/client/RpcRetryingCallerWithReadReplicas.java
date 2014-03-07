@@ -25,23 +25,22 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
+import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.util.BoundedCompletionService;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -52,8 +51,8 @@ import java.util.concurrent.TimeUnit;
  * the first answer. If the answer comes from one of the secondary replica, it will
  * be marked as stale.
  */
-public class RpcRetryingCallerWithFallBack {
-  static final Log LOG = LogFactory.getLog(RpcRetryingCallerWithFallBack.class);
+public class RpcRetryingCallerWithReadReplicas {
+  static final Log LOG = LogFactory.getLog(RpcRetryingCallerWithReadReplicas.class);
   protected final ExecutorService pool;
   protected final ClusterConnection cConnection;
   protected final Configuration conf;
@@ -63,10 +62,10 @@ public class RpcRetryingCallerWithFallBack {
   private final int callTimeout;
   private final int retries;
 
-  public RpcRetryingCallerWithFallBack(TableName tableName,
-                                       ClusterConnection cConnection, final Get get,
-                                       ExecutorService pool, int retries, int callTimeout,
-                                       int timeBeforeReplicas) {
+  public RpcRetryingCallerWithReadReplicas(TableName tableName,
+                                           ClusterConnection cConnection, final Get get,
+                                           ExecutorService pool, int retries, int callTimeout,
+                                           int timeBeforeReplicas) {
     this.tableName = tableName;
     this.cConnection = cConnection;
     this.conf = cConnection.getConfiguration();
@@ -87,8 +86,8 @@ public class RpcRetryingCallerWithFallBack {
     final int id;
 
     public ReplicaRegionServerCallable(int id, HRegionLocation location) {
-      super(RpcRetryingCallerWithFallBack.this.cConnection,
-          RpcRetryingCallerWithFallBack.this.tableName, get.getRow());
+      super(RpcRetryingCallerWithReadReplicas.this.cConnection,
+          RpcRetryingCallerWithReadReplicas.this.tableName, get.getRow());
       this.id = id;
       this.location = location;
     }
@@ -105,12 +104,14 @@ public class RpcRetryingCallerWithFallBack {
       }
 
       if (reload || location == null) {
-        RegionLocations rl = getRegionLocations(!reload);
-        location = rl.getRegionLocation(id);
+        RegionLocations rl = getRegionLocations(false);
+        location = id < rl.size() ? rl.getRegionLocation(id) : null;
       }
 
       if (location == null) {
-        throw new DoNotRetryIOException("There is no location for replica id #" + id);
+        // With this exception, there will be a retry. The location can be null for a replica
+        //  when the table is created or after a split.
+        throw new HBaseIOException("There is no location for replica id #" + id);
       }
 
       ServerName dest = location.getServerName();
@@ -169,17 +170,15 @@ public class RpcRetryingCallerWithFallBack {
    */
   public synchronized Result call()
       throws DoNotRetryIOException, InterruptedIOException, RetriesExhaustedException {
-
     RegionLocations rl = getRegionLocations(true);
-    CompletionService<Result> cs = new ExecutorCompletionService<Result>(pool);
-    List<Future<Result>> inProgress = new ArrayList<Future<Result>>(rl.size());
+    BoundedCompletionService<Result> cs = new BoundedCompletionService<Result>(pool, rl.size());
 
-    addCallsForReplica(cs, inProgress, rl, 0, 0); // primary.
+    addCallsForReplica(cs, rl, 0, 0); // primary.
 
     try {
       Future<Result> f = cs.poll(timeBeforeReplicas, TimeUnit.MICROSECONDS); // Yes, microseconds
       if (f == null) {
-        addCallsForReplica(cs, inProgress, rl, 1, rl.size() - 1);  // secondaries
+        addCallsForReplica(cs, rl, 1, rl.size() - 1);  // secondaries
         f = cs.take();
       }
       return f.get();
@@ -193,9 +192,7 @@ public class RpcRetryingCallerWithFallBack {
     } finally {
       // We get there because we were interrupted or because one or more of the
       //  calls succeeded or failed. In all case, we stop all our tasks.
-      for (Future<Result> task : inProgress) {
-        task.cancel(true);
-      }
+      cs.cancelAll(true);
     }
   }
 
@@ -230,18 +227,17 @@ public class RpcRetryingCallerWithFallBack {
    * Creates the calls and submit them
    *
    * @param cs         - the completion service to use for submitting
-   * @param inProgress - the list of calls created
    * @param rl         - the region locations
    * @param min        - the id of the first replica, inclusive
    * @param max        - the id of the last replica, inclusive.
    */
-  private void addCallsForReplica(CompletionService<Result> cs, List<Future<Result>> inProgress,
+  private void addCallsForReplica(BoundedCompletionService<Result> cs,
                                   RegionLocations rl, int min, int max) {
     for (int id = min; id <= max; id++) {
       HRegionLocation hrl = rl.getRegionLocation(id);
       ReplicaRegionServerCallable callOnReplica = new ReplicaRegionServerCallable(id, hrl);
       RetryingRPC retryingOnReplica = new RetryingRPC(callOnReplica);
-      inProgress.add(cs.submit(retryingOnReplica));
+      cs.submit(retryingOnReplica);
     }
   }
 

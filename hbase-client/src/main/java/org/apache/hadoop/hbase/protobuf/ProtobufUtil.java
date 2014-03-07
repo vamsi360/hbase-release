@@ -1231,7 +1231,7 @@ public final class ProtobufUtil {
    */
   public static ClientProtos.Result toResult(final Result result) {
     if (result.getExists() != null) {
-      return toResult(result.getExists(), result.isStale());
+      return toResult(result.getExists());
     }
 
     Cell[] cells = result.rawCells();
@@ -1255,12 +1255,8 @@ public final class ProtobufUtil {
    * @param existence the client existence to send
    * @return the converted protocol buffer Result
    */
-  public static ClientProtos.Result toResult(boolean existence, boolean stale) {
-    if (stale) {
-      return existence ? EMPTY_RESULT_PB_EXISTS_TRUE_STALE : EMPTY_RESULT_PB_EXISTS_FALSE_STALE;
-    } else {
-      return existence ? EMPTY_RESULT_PB_EXISTS_TRUE : EMPTY_RESULT_PB_EXISTS_FALSE;
-    }
+  public static ClientProtos.Result toResult(final boolean existence) {
+    return existence ? EMPTY_RESULT_PB_EXISTS_TRUE : EMPTY_RESULT_PB_EXISTS_FALSE;
   }
 
   /**
@@ -1271,7 +1267,7 @@ public final class ProtobufUtil {
    * @return the converted protocol buffer Result
    */
   public static ClientProtos.Result toResultNoData(final Result result) {
-    if (result.getExists() != null) return toResult(result.getExists(), result.isStale());
+    if (result.getExists() != null) return toResult(result.getExists());
     int size = result.size();
     if (size == 0) return result.isStale() ? EMPTY_RESULT_PB_STALE : EMPTY_RESULT_PB;
     ClientProtos.Result.Builder builder = ClientProtos.Result.newBuilder();
