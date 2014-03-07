@@ -19,39 +19,14 @@
 
 package org.apache.hadoop.hbase.ipc;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.Closeable;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.io.OutputStream;
-import java.net.ConnectException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.security.PrivilegedExceptionAction;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.net.SocketFactory;
-import javax.security.sasl.SaslException;
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.protobuf.BlockingRpcChannel;
+import com.google.protobuf.Descriptors.MethodDescriptor;
+import com.google.protobuf.Message;
+import com.google.protobuf.Message.Builder;
+import com.google.protobuf.RpcController;
+import com.google.protobuf.ServiceException;
+import com.google.protobuf.TextFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -97,14 +72,37 @@ import org.cloudera.htrace.Span;
 import org.cloudera.htrace.Trace;
 import org.cloudera.htrace.TraceScope;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.protobuf.BlockingRpcChannel;
-import com.google.protobuf.Descriptors.MethodDescriptor;
-import com.google.protobuf.Message;
-import com.google.protobuf.Message.Builder;
-import com.google.protobuf.RpcController;
-import com.google.protobuf.ServiceException;
-import com.google.protobuf.TextFormat;
+import javax.net.SocketFactory;
+import javax.security.sasl.SaslException;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.security.PrivilegedExceptionAction;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -121,13 +119,13 @@ public class RpcClient {
   protected final AtomicInteger callIdCnt = new AtomicInteger();
   protected final AtomicBoolean running = new AtomicBoolean(true); // if client runs
   final protected Configuration conf;
-  final protected int minIdleTimeBeforeClose; // if the connection is iddle for more than this
+  protected final int minIdleTimeBeforeClose; // if the connection is iddle for more than this
                                                // time (in ms), it will be closed at any moment.
   final protected int maxRetries; //the max. no. of retries for socket connections
   final protected long failureSleep; // Time to sleep before retry on failure.
   protected final boolean tcpNoDelay; // if T then disable Nagle's Algorithm
   protected final boolean tcpKeepAlive; // if T then use keepalives
-  protected FailedServers failedServers;
+  protected final FailedServers failedServers;
   private final Codec codec;
   private final CompressionCodec compressor;
   private final IPCUtil ipcUtil;
@@ -145,6 +143,8 @@ public class RpcClient {
 
   public final static String FAILED_SERVER_EXPIRY_KEY = "hbase.ipc.client.failed.servers.expiry";
   public final static int FAILED_SERVER_EXPIRY_DEFAULT = 2000;
+
+  public final static String IDLE_TIME = "hbase.ipc.client.connection.minIdleTimeBeforeClose";
 
   public static final String IPC_CLIENT_FALLBACK_TO_SIMPLE_AUTH_ALLOWED_KEY =
       "hbase.ipc.client.fallback-to-simple-auth-allowed";
@@ -260,7 +260,7 @@ public class RpcClient {
       this.param = param;
       this.md = md;
       this.cells = cells;
-      this.startTime = System.currentTimeMillis();
+      this.startTime = EnvironmentEdgeManager.currentTimeMillis();
       this.responseDefaultType = responseDefaultType;
       this.id = callIdCnt.getAndIncrement();
     }
@@ -400,7 +400,6 @@ public class RpcClient {
         return cts;
       }
 
-      @Override
       public void close(){
         assert shouldCloseConnection.get();
         callsToWrite.offer(CallFuture.DEATH_PILL);
@@ -469,17 +468,16 @@ public class RpcClient {
       /**
        * Cleans the call not yet sent when we finish.
        */
-      private void cleanup(){
+      private void cleanup() {
         assert shouldCloseConnection.get();
 
-        CallFuture cts;
         IOException ie = new IOException("Connection to " + server + " is closing.");
-        while (true)  {
-          cts = callsToWrite.poll();
-          if (cts == null){
+        while (true) {
+          CallFuture cts = callsToWrite.poll();
+          if (cts == null) {
             break;
           }
-          if (cts.call != null && !cts.call.done){
+          if (cts.call != null && !cts.call.done) {
             cts.call.setException(ie);
           }
         }
@@ -613,7 +611,7 @@ public class RpcClient {
       }
     }
 
-    protected void closeConnection() {
+    protected synchronized void closeConnection() {
       if (socket == null) {
         return;
       }
@@ -704,10 +702,7 @@ public class RpcClient {
       //  remove them.
       long waitUntil = EnvironmentEdgeManager.currentTimeMillis() + minIdleTimeBeforeClose;
       while (!shouldCloseConnection.get() && running.get() &&
-          EnvironmentEdgeManager.currentTimeMillis() < waitUntil) {
-        if (!calls.isEmpty()) {
-          return true;
-        }
+          EnvironmentEdgeManager.currentTimeMillis() < waitUntil && calls.isEmpty()) {
         wait(Math.min(minIdleTimeBeforeClose, 1000));
       }
 
@@ -717,12 +712,21 @@ public class RpcClient {
 
       if (!running.get()) {
         markClosed(new IOException("stopped with " + calls.size() + " pending request(s)"));
-      } else {
-        // We expect the number of calls to be zero here, but actually someone can
-        //  adds a call at the any moment. It's not a big issue, but it will get an exception.
-        markClosed(new IOException(
-            "idle connection closed with " + calls.size() + " pending request(s)"));
+        return false;
       }
+
+      if (!calls.isEmpty()) {
+        // shouldCloseConnection can be set to true by a parallel thread here. The caller
+        //  will need to check anyway.
+        return true;
+      }
+
+      // Connection is idle.
+      // We expect the number of calls to be zero here, but actually someone can
+      //  adds a call at the any moment, as there is no synchronization between this task
+      //  and adding new calls. It's not a big issue, but it will get an exception.
+      markClosed(new IOException(
+          "idle connection closed with " + calls.size() + " pending request(s)"));
 
       return false;
     }
@@ -807,7 +811,6 @@ public class RpcClient {
         final UserGroupInformation user)
     throws IOException, InterruptedException{
       user.doAs(new PrivilegedExceptionAction<Object>() {
-        @Override
         public Object run() throws IOException, InterruptedException {
           closeConnection();
           if (shouldAuthenticateOverKrb()) {
@@ -964,9 +967,8 @@ public class RpcClient {
 
     /**
      * Write the connection header.
-     * Out is not synchronized because only the first thread does this.
      */
-    private void writeConnectionHeader() throws IOException {
+    private synchronized void writeConnectionHeader() throws IOException {
       synchronized (this.out) {
         this.out.writeInt(this.header.getSerializedSize());
         this.header.writeTo(this.out);
@@ -1027,8 +1029,6 @@ public class RpcClient {
      * @param priority
      * @see #readResponse()
      */
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "NN_NAKED_NOTIFY",
-        justification = "on close the reader thread must stop")
     private void writeRequest(Call call, final int priority, Span span) throws IOException {
       RequestHeader.Builder builder = RequestHeader.newBuilder();
       builder.setCallId(call.id);
@@ -1053,7 +1053,7 @@ public class RpcClient {
       //  know where we stand, we have to close the connection.
       checkIsOpen();
       IOException writeException = null;
-      synchronized (this.out) { // FindBugs IS2_INCONSISTENT_SYNC
+      synchronized (this.out) {
         if (Thread.interrupted()) throw new InterruptedIOException();
 
         calls.put(call.id, call); // We put first as we don't want the connection to become idle.
@@ -1152,9 +1152,7 @@ public class RpcClient {
           markClosed(e);
         }
       } finally {
-        if (remoteId.rpcTimeout > 0) {
-          cleanupCalls(remoteId.rpcTimeout);
-        }
+        cleanupCalls(remoteId.rpcTimeout);
       }
     }
 
@@ -1182,35 +1180,42 @@ public class RpcClient {
           e.getStackTrace(), doNotRetry);
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "NN_NAKED_NOTIFY",
-        justification = "on close the reader thread must stop")
-    protected void markClosed(IOException e) {
+    protected synchronized void markClosed(IOException e) {
       if (e == null) throw new NullPointerException();
 
       if (shouldCloseConnection.compareAndSet(false, true)) {
+        LOG.warn(getName() + ": marking at should close, reason =" + e.getMessage());
         if (LOG.isDebugEnabled()) {
-          LOG.debug(getName() + ": marking at should closed, reason =" + e.getMessage());
+          LOG.debug(getName() + ": marking at should close, reason =" + e.getMessage());
         }
         if (callSender != null) {
           callSender.close();
         }
-        synchronized (this) {
-          notifyAll();
-        }
+        notifyAll();
       }
     }
 
     /* Cleanup all calls and mark them as done */
     protected void cleanupCalls() {
-      cleanupCalls(0);
+      cleanupCalls(-1);
     }
 
-    protected void cleanupCalls(long rpcTimeout) {
+    /**
+     * Cleanup the calls older than a given timeout, in milli seconds.
+     * @param rpcTimeout -1 for all calls, > 0 otherwise. 0 means no timeout and does nothing.
+     */
+    protected synchronized void cleanupCalls(long rpcTimeout) {
+      if (rpcTimeout == 0) return;
+
       Iterator<Entry<Integer, Call>> itor = calls.entrySet().iterator();
       while (itor.hasNext()) {
         Call c = itor.next().getValue();
-        long waitTime = System.currentTimeMillis() - c.getStartTime();
-        if (waitTime >= rpcTimeout) {
+        long waitTime = EnvironmentEdgeManager.currentTimeMillis() - c.getStartTime();
+        if (rpcTimeout < 0) {
+          IOException ie = new IOException("Call id=" + c.id + ", waitTime=" + waitTime);
+          c.setException(ie);
+          itor.remove();
+        } else if (waitTime >= rpcTimeout) {
           IOException ie = new CallTimeoutException("Call id=" + c.id +
               ", waitTime=" + waitTime + ", rpcTimeout=" + rpcTimeout);
           c.setException(ie);
@@ -1223,22 +1228,14 @@ public class RpcClient {
         }
       }
 
-      try {
-        if (!shouldCloseConnection.get()) {
-          setSocketTimeout(socket, (int) rpcTimeout);
+      if (!shouldCloseConnection.get() && socket != null && rpcTimeout > 0) {
+        try {
+          socket.setSoTimeout((int)rpcTimeout);
+        } catch (SocketException e) {
+          LOG.warn("Couldn't change timeout, which may result in longer than expected calls");
         }
-      } catch (SocketException e) {
-        LOG.warn("Couldn't lower timeout, which may result in longer than expected calls");
       }
     }
-  }
-
-  @edu.umd.cs.findbugs.annotations.SuppressWarnings(value="IS2_INCONSISTENT_SYNC",
-    justification="Presume sync not needed setting socket timeout")
-  private static void setSocketTimeout(final Socket socket, final int rpcTimeout)
-  throws java.net.SocketException {
-    if (socket == null) return;
-    socket.setSoTimeout(rpcTimeout);
   }
 
   /**
@@ -1271,8 +1268,7 @@ public class RpcClient {
    * @param localAddr client socket bind address
    */
   RpcClient(Configuration conf, String clusterId, SocketFactory factory, SocketAddress localAddr) {
-    this.minIdleTimeBeforeClose =
-        conf.getInt("hbase.ipc.client.connection.minIdleTimeBeforeClose", 120000); // 2 minutes
+    this.minIdleTimeBeforeClose = conf.getInt(IDLE_TIME, 120000); // 2 minutes
     this.maxRetries = conf.getInt("hbase.ipc.client.connect.max.retries", 0);
     this.failureSleep = conf.getLong(HConstants.HBASE_CLIENT_PAUSE,
         HConstants.DEFAULT_HBASE_CLIENT_PAUSE);
@@ -1463,30 +1459,31 @@ public class RpcClient {
       connection.tracedWriteRequest(call, priority, Trace.currentSpan());
     }
 
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (call) {
-      while (!call.done) {
-        try {
-          call.wait(1000);                       // wait for the result
-        } catch (InterruptedException e) {
-          if (cts != null){
-            connection.callSender.cancel(cts);
-          }
+    while (!call.done) {
+      try {
+        synchronized (call) {
+          call.wait(1000);  // wait for the result. We will be notified by the reader.
+        }
+      } catch (InterruptedException e) {
+        if (cts != null) {
+          connection.callSender.cancel(cts);
+        } else {
           call.done = true;
-          throw e;
         }
+        throw e;
       }
-
-      if (call.error != null) {
-        if (call.error instanceof RemoteException) {
-          call.error.fillInStackTrace();
-          throw call.error;
-        }
-        // local exception
-        throw wrapException(addr, call.error);
-      }
-      return new Pair<Message, CellScanner>(call.response, call.cells);
     }
+
+    if (call.error != null) {
+      if (call.error instanceof RemoteException) {
+        call.error.fillInStackTrace();
+        throw call.error;
+      }
+      // local exception
+      throw wrapException(addr, call.error);
+    }
+
+    return new Pair<Message, CellScanner>(call.response, call.cells);
   }
 
 
@@ -1534,7 +1531,8 @@ public class RpcClient {
             connection.getRemoteAddress().getHostName().equals(hostname)) {
           LOG.info("The server on " + hostname + ":" + port +
               " is dead - stopping the connection " + connection.remoteId);
-          connection.interrupt(); // We're interrupting a Reader. It means we want it to close.
+          connection.interrupt(); // We're interrupting a Reader. It means we want it to finish.
+                                  // This will close the connection as well.
         }
       }
     }
@@ -1651,18 +1649,10 @@ public class RpcClient {
   /**
    * Make a blocking call. Throws exceptions if there are network problems or if the remote code
    * threw an exception.
-   * @param md
-   * @param controller
-   * @param param
-   * @param returnType
-   * @param isa
    * @param ticket Be careful which ticket you pass. A new user will mean a new Connection.
    *          {@link UserProvider#getCurrent()} makes a new instance of User each time so will be a
    *          new Connection each time.
-   * @param rpcTimeout
    * @return A pair with the Message response and the Cell data (if any).
-   * @throws InterruptedException
-   * @throws IOException
    */
   Message callBlockingMethod(MethodDescriptor md, RpcController controller,
       Message param, Message returnType, final User ticket, final InetSocketAddress isa,
@@ -1670,7 +1660,7 @@ public class RpcClient {
   throws ServiceException {
     long startTime = 0;
     if (LOG.isTraceEnabled()) {
-      startTime = System.currentTimeMillis();
+      startTime = EnvironmentEdgeManager.currentTimeMillis();
     }
     PayloadCarryingRpcController pcrc = (PayloadCarryingRpcController)controller;
     CellScanner cells = null;
@@ -1691,7 +1681,7 @@ public class RpcClient {
       }
 
       if (LOG.isTraceEnabled()) {
-        long callTime = System.currentTimeMillis() - startTime;
+        long callTime = EnvironmentEdgeManager.currentTimeMillis() - startTime;
         LOG.trace("Call: " + md.getName() + ", callTime: " + callTime + "ms");
       }
       return val.getFirst();
@@ -1703,9 +1693,6 @@ public class RpcClient {
   /**
    * Creates a "channel" that can be used by a blocking protobuf service.  Useful setting up
    * protobuf blocking stubs.
-   * @param sn
-   * @param ticket
-   * @param rpcTimeout
    * @return A blocking rpc channel that goes via this rpc client instance.
    */
   public BlockingRpcChannel createBlockingRpcChannel(final ServerName sn,
@@ -1716,7 +1703,7 @@ public class RpcClient {
   /**
    * Blocking rpc channel that goes via hbase rpc.
    */
-  // Public so can be subclassed for tests.
+  @VisibleForTesting
   public static class BlockingRpcChannelImplementation implements BlockingRpcChannel {
     private final InetSocketAddress isa;
     private final RpcClient rpcClient;

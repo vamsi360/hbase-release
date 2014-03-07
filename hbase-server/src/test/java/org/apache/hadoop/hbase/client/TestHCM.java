@@ -246,7 +246,7 @@ public class TestHCM {
   }
 
   private void testConnectionClose(boolean allowsInterrupt) throws Exception {
-    String tableName = "testConnectionClose" + allowsInterrupt;
+    String tableName = "HCM-testConnectionClose" + allowsInterrupt;
     TEST_UTIL.createTable(tableName.getBytes(), FAM_NAM).close();
 
     boolean previousBalance = TEST_UTIL.getHBaseAdmin().setBalancerRunning(false, true);
@@ -322,10 +322,65 @@ public class TestHCM {
   }
 
   /**
-   * Test that the connection to the dead server is cut immediately when we receive the
-   *  notification.
-   * @throws Exception
+   * Test that connection can become idle without breaking everything.
    */
+  @Test
+  public void testConnectionIdle() throws Exception {
+    String tableName = "HCM-testConnectionIdle";
+    TEST_UTIL.createTable(tableName.getBytes(), FAM_NAM).close();
+    int idleTime =  20000;
+    boolean previousBalance = TEST_UTIL.getHBaseAdmin().setBalancerRunning(false, true);
+
+    Configuration c2 = new Configuration(TEST_UTIL.getConfiguration());
+    // We want to work on a separate connection.
+    c2.set(HConstants.HBASE_CLIENT_INSTANCE_ID, String.valueOf(-1));
+    c2.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 1); // Don't retry: retry = test failed
+    c2.setInt(RpcClient.IDLE_TIME, idleTime);
+
+    final HTable table = new HTable(c2, tableName.getBytes());
+
+    Put put = new Put(ROW);
+    put.add(FAM_NAM, ROW, ROW);
+    table.put(put);
+
+    ManualEnvironmentEdge mee = new ManualEnvironmentEdge();
+    mee.setValue(System.currentTimeMillis());
+    EnvironmentEdgeManager.injectEdge(mee);
+    LOG.info("first get");
+    table.get(new Get(ROW));
+
+    LOG.info("first get - changing the time & sleeping");
+    mee.incValue(idleTime + 1000);
+    Thread.sleep(1500); // we need to wait a little for the connection to be seen as idle.
+                        // 1500 = sleep time in RpcClient#waitForWork + a margin
+
+    LOG.info("second get - connection has been marked idle in the middle");
+    // To check that the connection actually became idle would need to read some private
+    //  fields of RpcClient.
+    table.get(new Get(ROW));
+    mee.incValue(idleTime + 1000);
+
+    LOG.info("third get - connection is idle, but the reader doesn't know yet");
+    // We're testing here a special case:
+    //  time limit reached BUT connection not yet reclaimed AND a new call.
+    //  in this situation, we don't close the connection, instead we use it immediately.
+    // If we're very unlucky we can have a race condition in the test: the connection is already
+    //  under closing when we do the get, so we have an exception, and we don't retry as the
+    //  retry number is 1. The probability is very very low, and seems acceptable for now. It's
+    //  a test issue only.
+    table.get(new Get(ROW));
+
+    LOG.info("we're done - time will change back");
+
+    EnvironmentEdgeManager.reset();
+    TEST_UTIL.getHBaseAdmin().setBalancerRunning(previousBalance, true);
+  }
+
+    /**
+     * Test that the connection to the dead server is cut immediately when we receive the
+     *  notification.
+     * @throws Exception
+     */
   @Test
   public void testConnectionCut() throws Exception {
     String tableName = "HCM-testConnectionCut";
