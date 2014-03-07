@@ -23,9 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
@@ -243,12 +240,7 @@ public class SnapshotTestingUtils {
     // check the region snapshot for all the regions
     List<HRegionInfo> regions = admin.getTableRegions(tableName);
     // remove the non-default regions
-    Iterator<HRegionInfo> iter = regions.iterator();
-    while (iter.hasNext()) {
-      if (!RegionReplicaUtil.isDefaultReplica(iter.next())) {
-        iter.remove();
-      }
-    }
+    RegionReplicaUtil.removeNonDefaultRegions(regions);
     assertEquals(regions.size(), snapshotRegions.size());
 
     // Verify Regions
