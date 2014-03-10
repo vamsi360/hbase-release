@@ -40,7 +40,6 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.PerformanceEvaluation;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.io.crypto.Cipher;
 import org.apache.hadoop.hbase.io.crypto.Encryption;
@@ -197,6 +196,9 @@ public class LoadTestTool extends AbstractHBaseTool {
 
   private int numRegionsPerServer = DEFAULT_NUM_REGIONS_PER_SERVER;
   private int regionReplication = -1; // not set
+  private String superUser;
+
+  private String userNames = "user1, user2, user3, user4";
 
   // TODO: refactor LoadTestToolImpl somewhere to make the usage from tests less bad,
   //       console tool itself should only be used from console.
@@ -496,12 +498,18 @@ public class LoadTestTool extends AbstractHBaseTool {
     if (cmd.hasOption(OPT_GENERATOR)) {
       String[] clazzAndArgs = cmd.getOptionValue(OPT_GENERATOR).split(COLON);
       dataGen = getLoadGeneratorInstance(clazzAndArgs[0]);
-      if(dataGen instanceof LoadTestDataGeneratorWithACL) {
+      String args[];
+      if (dataGen instanceof LoadTestDataGeneratorWithACL) {
         LOG.info("ACL is on");
-        userOwner = User.createUserForTesting(conf, "owner", new String[0]);
+        superUser = clazzAndArgs[1];
+        userNames = clazzAndArgs[2];
+        args = Arrays.copyOfRange(clazzAndArgs, 1,
+            clazzAndArgs.length);
+        userOwner = User.createUserForTesting(conf, superUser, new String[0]);
+      } else {
+        args = clazzAndArgs.length == 1 ? new String[0] : Arrays.copyOfRange(clazzAndArgs, 1,
+            clazzAndArgs.length);
       }
-      String[] args = clazzAndArgs.length == 1 ? new String[0] : Arrays.copyOfRange(clazzAndArgs,
-          1, clazzAndArgs.length);
       dataGen.initialize(args);
     } else {
       // Default DataGenerator is MultiThreadedAction.DefaultDataGenerator
@@ -540,7 +548,7 @@ public class LoadTestTool extends AbstractHBaseTool {
     if (isUpdate) {
       if (userOwner != null) {
         updaterThreads = new MultiThreadedUpdaterWithACL(dataGen, conf, tableName, updatePercent,
-            userOwner);
+            userOwner, userNames);
       } else {
         updaterThreads = new MultiThreadedUpdater(dataGen, conf, tableName, updatePercent);
       }
@@ -549,9 +557,15 @@ public class LoadTestTool extends AbstractHBaseTool {
     }
 
     if (isRead) {
+<<<<<<< HEAD
       String readerClass = null;
       if (cmd.hasOption(OPT_READER)) {
         readerClass = cmd.getOptionValue(OPT_READER);
+=======
+      if (userOwner != null) {
+        readerThreads = new MultiThreadedReaderWithACL(dataGen, conf, tableName, verifyPercent,
+            userNames);
+>>>>>>> HBASE-10675 - IntegrationTestIngestWithACL should allow User to be passed as Parameter (Ram)
       } else {
         if (userOwner != null) {
           readerClass = MultiThreadedReaderWithACL.class.getCanonicalName();
