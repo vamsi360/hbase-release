@@ -73,9 +73,11 @@ import com.google.common.collect.Lists;
  * -Dhbase.DIntegrationTestTimeBoundedRequestsWithRegionReplicas.runtime=600000
  * -DIntegrationTestTimeBoundedRequestsWithRegionReplicas.num_regions_per_server=5
  * -DIntegrationTestTimeBoundedRequestsWithRegionReplicas.get_timeout_ms=5000
+ * -DIntegrationTestTimeBoundedRequestsWithRegionReplicas.num_keys_per_server=2500
  * -DIntegrationTestTimeBoundedRequestsWithRegionReplicas.region_replication=3
  * -DIntegrationTestTimeBoundedRequestsWithRegionReplicas.num_read_threads=20
  * -DIntegrationTestTimeBoundedRequestsWithRegionReplicas.num_write_threads=20
+ * -DIntegrationTestTimeBoundedRequestsWithRegionReplicas.num_regions_per_server=5
  * -DIntegrationTestTimeBoundedRequestsWithRegionReplicas.chaos_monkey_delay=20000
  * </pre>
  * Use this test with "serverKilling" ChaosMonkey. Sample usage:
@@ -317,7 +319,7 @@ public class IntegrationTestTimeBoundedRequestsWithRegionReplicas extends Integr
         // always read a random key, assuming that the writer has finished writing all keys
         long key = startKey + Math.abs(RandomUtils.nextLong())
             % (endKey - startKey);
-        return key - (key % numThreads) + readerId; // round for this reader
+        return key;
       }
 
       @Override

@@ -3130,6 +3130,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
       DataBlockEncoding dataBlockEncoding, int numRegionsPerServer, int regionReplication)
           throws IOException {
     HTableDescriptor desc = new HTableDescriptor(tableName);
+    desc.setRegionReplication(regionReplication);
     HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
     hcd.setDataBlockEncoding(dataBlockEncoding);
     hcd.setCompressionType(compression);
