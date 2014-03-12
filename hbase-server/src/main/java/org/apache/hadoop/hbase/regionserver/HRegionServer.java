@@ -3300,12 +3300,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       checkOpen();
       requestCount.increment();
       HRegion region = getRegion(request.getRegion());
-      // ignore the passed in controller (from the serialized call)
-      ServerRpcController execController = new ServerRpcController();
-      Message result = region.execService(execController, request.getCall());
-      if (execController.getFailedOn() != null) {
-        throw execController.getFailedOn();
-      }
+      Message result = execServiceOnRegion(region, request.getCall());
       CoprocessorServiceResponse.Builder builder =
           CoprocessorServiceResponse.newBuilder();
       builder.setRegion(RequestConverter.buildRegionSpecifier(
@@ -3317,6 +3312,17 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     } catch (IOException ie) {
       throw new ServiceException(ie);
     }
+  }
+
+  private Message execServiceOnRegion(HRegion region,
+      final ClientProtos.CoprocessorServiceCall serviceCall) throws IOException {
+    // ignore the passed in controller (from the serialized call)
+    ServerRpcController execController = new ServerRpcController();
+    Message result = region.execService(execController, serviceCall);
+    if (execController.getFailedOn() != null) {
+      throw execController.getFailedOn();
+    }
+    return result;
   }
 
   /**
@@ -3409,6 +3415,20 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         if (action.hasGet()) {
           Get get = ProtobufUtil.toGet(action.getGet());
           r = region.get(get);
+        } else if (action.hasServiceCall()) {
+          resultOrExceptionBuilder = ResultOrException.newBuilder();
+          try {
+            Message result = execServiceOnRegion(region, action.getServiceCall());
+            ClientProtos.CoprocessorServiceResult.Builder serviceResultBuilder =
+                ClientProtos.CoprocessorServiceResult.newBuilder();
+            resultOrExceptionBuilder.setServiceResult(
+                serviceResultBuilder.setValue(
+                  serviceResultBuilder.getValueBuilder()
+                    .setName(result.getClass().getName())
+                    .setValue(result.toByteString())));
+          } catch (IOException ioe) {
+            resultOrExceptionBuilder.setException(ResponseConverter.buildException(ioe));
+          }
         } else if (action.hasMutation()) {
           MutationType type = action.getMutation().getMutateType();
           if (type != MutationType.PUT && type != MutationType.DELETE && mutations != null &&
@@ -4374,7 +4394,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       case DELETE:
         rm.add(ProtobufUtil.toDelete(action.getMutation(), cellScanner));
         break;
-        default:
+      default:
           throw new DoNotRetryIOException("Atomic put and/or delete only, not " + type.name());
       }
     }

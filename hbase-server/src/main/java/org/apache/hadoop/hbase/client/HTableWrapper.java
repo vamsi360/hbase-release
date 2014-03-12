@@ -318,4 +318,19 @@ public class HTableWrapper implements HTableInterface {
       byte[] qualifier, long amount, boolean writeToWAL) throws IOException {
     return table.incrementColumnValue(row, family, qualifier, amount, writeToWAL);
   }
+
+  @Override
+  public <R extends Message> Map<byte[], R> batchCoprocessorService(
+      Descriptors.MethodDescriptor method, Message request, byte[] startKey,
+      byte[] endKey, R responsePrototype) throws ServiceException, Throwable {
+    return table.batchCoprocessorService(method, request, startKey, endKey, responsePrototype);
+  }
+
+  @Override
+  public <R extends Message> void batchCoprocessorService(Descriptors.MethodDescriptor method,
+      Message request, byte[] startKey, byte[] endKey, R responsePrototype,
+      Callback<R> callback) throws ServiceException, Throwable {
+    table.batchCoprocessorService(method, request, startKey, endKey, responsePrototype,
+        callback);
+  }
 }
