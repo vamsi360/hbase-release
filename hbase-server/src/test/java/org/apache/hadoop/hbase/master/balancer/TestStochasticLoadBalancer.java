@@ -487,7 +487,7 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
     testWithCluster(numNodes, numRegions, numRegionsPerServer, replication, numTables, true, true);
   }
 
-  @Test (timeout = 60000)
+  @Test (timeout = 800000)
   public void testRegionReplicasOnSmallCluster() {
     int numNodes = 10;
     int numRegions = 1000;
@@ -497,7 +497,7 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
     testWithCluster(numNodes, numRegions, numRegionsPerServer, replication, numTables, true, true);
   }
 
-  @Test (timeout = 60000)
+  @Test (timeout = 800000)
   public void testRegionReplicasOnMidCluster() {
     conf.setFloat("hbase.master.balancer.stochastic.maxMovePercent", 1.0f);
     loadBalancer.setConf(conf);
@@ -509,7 +509,7 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
     testWithCluster(numNodes, numRegions, numRegionsPerServer, replication, numTables, true, true);
   }
 
-  @Test (timeout = 60000)
+  @Test (timeout = 800000)
   public void testRegionReplicasOnLargeCluster() {
     conf.setFloat("hbase.master.balancer.stochastic.maxMovePercent", 1.0f);
     loadBalancer.setConf(conf);
@@ -521,7 +521,7 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
     testWithCluster(numNodes, numRegions, numRegionsPerServer, replication, numTables, true, true);
   }
 
-  @Test (timeout = 180000)
+  @Test (timeout = 800000)
   public void testRegionReplicasOnMidClusterHighReplication() {
     conf.setLong(StochasticLoadBalancer.MAX_STEPS_KEY, 4000000L);
     conf.setLong("hbase.master.balancer.stochastic.maxRunningTime", 90 * 1000); // 90 sec
@@ -535,7 +535,7 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
     testWithCluster(numNodes, numRegions, numRegionsPerServer, replication, numTables, true, true);
   }
 
-  @Test (timeout = 60000)
+  @Test (timeout = 800000)
   public void testRegionReplicationOnMidClusterSameHosts() {
     conf.setLong(StochasticLoadBalancer.MAX_STEPS_KEY, 2000000L);
     conf.setFloat("hbase.master.balancer.stochastic.maxMovePercent", 1.0f);
@@ -580,7 +580,7 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
     }
   }
 
-  @Test (timeout = 180000)
+  @Test (timeout = 800000)
   public void testRegionReplicationOnMidClusterWithRacks() {
     conf.setLong(StochasticLoadBalancer.MAX_STEPS_KEY, 10000000L);
     conf.setFloat("hbase.master.balancer.stochastic.maxMovePercent", 1.0f);
@@ -599,7 +599,7 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
     testWithCluster(serverMap, rm, true, true);
   }
 
-  @Test (timeout = 60000)
+  @Test (timeout = 800000)
   public void testRegionReplicationOnMidClusterReplicationGreaterThanNumNodes() {
     conf.setLong(StochasticLoadBalancer.MAX_STEPS_KEY, 2000000L);
     conf.setFloat("hbase.master.balancer.stochastic.maxMovePercent", 1.0f);
