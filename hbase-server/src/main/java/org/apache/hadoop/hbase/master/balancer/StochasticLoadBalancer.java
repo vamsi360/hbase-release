@@ -586,9 +586,8 @@ public class StochasticLoadBalancer extends BaseLoadBalancer {
         }
       }
 
-      return idx < regionLocations.length
-          ? regionLocations[idx]
-          : pickOtherRandomServer(cluster, thisServer);
+      // no location found
+      return pickOtherRandomServer(cluster, thisServer);
     }
 
     void setServices(MasterServices services) {
