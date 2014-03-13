@@ -1076,4 +1076,3 @@ public class TestStore {
     verify(spiedStore, times(0)).replaceStoreFiles(null, null);
   }
 }
-
