@@ -118,8 +118,8 @@ public class TestRegionRebalancing {
     UTIL.getHBaseCluster().getMaster().balance();
     assertRegionsAreBalanced();
 
-    // On a balanced cluster, calling balance() should return false
-    assert(UTIL.getHBaseCluster().getMaster().balance() == false);
+    // On a balanced cluster, calling balance() should return true
+    assert(UTIL.getHBaseCluster().getMaster().balance() == true);
 
     // However if we add a server, then the balance() call should return true 
     // add a region server - total of 3
