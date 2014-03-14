@@ -1706,7 +1706,9 @@ public class AssignmentManager extends ZooKeeperListener {
         }
         boolean logRetries = true;
         if (t instanceof NotServingRegionException
-            || t instanceof RegionServerStoppedException) {
+            || t instanceof RegionServerStoppedException
+            || t instanceof ServerNotRunningYetException
+            || t instanceof FailedServerException) {
           LOG.debug("Offline " + region.getRegionNameAsString()
             + ", it's not any more on " + server, t);
           if (transitionInZK) {
@@ -2163,7 +2165,7 @@ public class AssignmentManager extends ZooKeeperListener {
    * if no servers to assign, it returns null).
    */
   private RegionPlan getRegionPlan(final HRegionInfo region,
-      final boolean forceNewPlan)  throws HBaseIOException  {
+      final boolean forceNewPlan)  throws HBaseIOException {
     return getRegionPlan(region, null, forceNewPlan);
   }
 
