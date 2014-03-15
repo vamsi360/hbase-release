@@ -1751,9 +1751,9 @@ public class HBaseAdmin implements Abortable, Closeable {
    * region as in unassign. This API can be used when a region not served by any region server and
    * still online as per Master's in memory state. If this API is incorrectly used on active region
    * then master will loose track of that region.
-   * 
+   *
    * This is a special method that should be used by experts or hbck.
-   * 
+   *
    * @param regionName
    *          Region to offline.
    * @throws IOException
