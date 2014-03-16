@@ -101,7 +101,8 @@ public class TestRegionReplicas {
   private void openRegion(HRegionInfo hri) throws Exception {
     ZKAssign.createNodeOffline(HTU.getZooKeeperWatcher(), hri, getRS().getServerName());
     // first version is '0'
-    AdminProtos.OpenRegionRequest orr = RequestConverter.buildOpenRegionRequest(hri, 0, null);
+    AdminProtos.OpenRegionRequest orr 
+      = RequestConverter.buildOpenRegionRequest(getRS().getServerName(), hri, 0, null);
     AdminProtos.OpenRegionResponse responseOpen = getRS().openRegion(null, orr);
     Assert.assertTrue(responseOpen.getOpeningStateCount() == 1);
     Assert.assertTrue(responseOpen.getOpeningState(0).
@@ -113,7 +114,7 @@ public class TestRegionReplicas {
     ZKAssign.createNodeClosing(HTU.getZooKeeperWatcher(), hri, getRS().getServerName());
 
     AdminProtos.CloseRegionRequest crr = RequestConverter.buildCloseRegionRequest(
-        hri.getEncodedName(), true);
+        getRS().getServerName(), hri.getEncodedName(), true);
     AdminProtos.CloseRegionResponse responseClose = getRS().closeRegion(null, crr);
     Assert.assertTrue(responseClose.getClosed());
 

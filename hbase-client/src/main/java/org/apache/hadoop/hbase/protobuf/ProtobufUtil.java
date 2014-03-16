@@ -1624,9 +1624,9 @@ public final class ProtobufUtil {
    * @throws IOException
    */
   public static void closeRegion(final AdminService.BlockingInterface admin,
-      final byte[] regionName, final boolean transitionInZK) throws IOException {
+      final ServerName server, final byte[] regionName, final boolean transitionInZK) throws IOException {
     CloseRegionRequest closeRegionRequest =
-      RequestConverter.buildCloseRegionRequest(regionName, transitionInZK);
+      RequestConverter.buildCloseRegionRequest(server, regionName, transitionInZK);
     try {
       admin.closeRegion(null, closeRegionRequest);
     } catch (ServiceException se) {
@@ -1645,11 +1645,12 @@ public final class ProtobufUtil {
    * @throws IOException
    */
   public static boolean closeRegion(final AdminService.BlockingInterface admin,
+      final ServerName server,
       final byte[] regionName,
       final int versionOfClosingNode, final ServerName destinationServer,
       final boolean transitionInZK) throws IOException {
     CloseRegionRequest closeRegionRequest =
-      RequestConverter.buildCloseRegionRequest(
+      RequestConverter.buildCloseRegionRequest(server,
         regionName, versionOfClosingNode, destinationServer, transitionInZK);
     try {
       CloseRegionResponse response = admin.closeRegion(null, closeRegionRequest);
@@ -1667,9 +1668,9 @@ public final class ProtobufUtil {
    * @throws IOException
    */
   public static void openRegion(final AdminService.BlockingInterface admin,
-      final HRegionInfo region) throws IOException {
+      ServerName server, final HRegionInfo region) throws IOException {
     OpenRegionRequest request =
-      RequestConverter.buildOpenRegionRequest(region, -1, null);
+      RequestConverter.buildOpenRegionRequest(server, region, -1, null);
     try {
       admin.openRegion(null, request);
     } catch (ServiceException se) {
