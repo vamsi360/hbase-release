@@ -200,6 +200,10 @@ Test-JavaHome
         UpdateXmlConfig $hbaseSiteXmlFile @{
         "hbase.rootdir" = "$hbaseRootDir"
         "hbase.zookeeper.quorum" = "$zookeeper_quorum"}
+        if ($ENV:IS_PHOENIX -ieq "yes") {
+            UpdateXmlConfig $hbaseSiteXmlFile @{"hbase.regionserver.wal.codec" = "org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec"}
+        }
+
 
 	Write-Log "Installation of Hbase Core complete"
 }
