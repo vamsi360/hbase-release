@@ -596,7 +596,7 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
         createServerMap(numNodes, numRegions, numRegionsPerServer, replication, numTables);
     RackManager rm = new ForTestRackManager(numRacks);
 
-    testWithCluster(serverMap, rm, true, true);
+    testWithCluster(serverMap, rm, false, true);
   }
 
   @Test (timeout = 800000)
@@ -635,15 +635,19 @@ public class TestStochasticLoadBalancer extends BalancerTestBase {
     assertNotNull(plans);
 
     // Check to see that this actually got to a stable place.
-    if (assertFullyBalanced) {
+    if (assertFullyBalanced || assertFullyBalancedForReplicas) {
       // Apply the plan to the mock cluster.
       List<ServerAndLoad> balancedCluster = reconcile(list, plans, serverMap);
 
       // Print out the cluster loads to make debugging easier.
       LOG.info("Mock Balance : " + printMock(balancedCluster));
-      assertClusterAsBalanced(balancedCluster);
-      List<RegionPlan> secondPlans =  loadBalancer.balanceCluster(serverMap);
-      assertNull(secondPlans);
+
+      if (assertFullyBalanced) {
+        assertClusterAsBalanced(balancedCluster);
+        List<RegionPlan> secondPlans =  loadBalancer.balanceCluster(serverMap);
+        assertNull(secondPlans);
+      }
+
       if (assertFullyBalancedForReplicas) {
         assertRegionReplicaPlacement(serverMap, rackManager);
       }
