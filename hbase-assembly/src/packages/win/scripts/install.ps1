@@ -125,20 +125,7 @@ Test-JavaHome
             try
             {
                 Write-Log "Creating service $service as $hbaseInstallBin\$service.exe"
-                Copy-Item "$HDP_RESOURCES_DIR\serviceHost.exe" "$hbaseInstallBin\$service.exe" -Force
-
-                #serviceHost.exe will write to this log but does not create it
-                #Creating the event log needs to be done from an elevated process, so we do it here
-                if( -not ([Diagnostics.EventLog]::SourceExists( "$service" )))
-                {
-                    [Diagnostics.EventLog]::CreateEventSource( "$service", "" )
-                }
-
-                Write-Log( "Adding service $service" )
-                $s = New-Service -Name "$service" -BinaryPathName "$hbaseInstallBin\$service.exe" -Credential $serviceCredential -DisplayName "Apache Hadoop Hbase $service"
-
-                $cmd="$ENV:WINDIR\system32\sc.exe failure $service reset= 30 actions= restart/5000"
-                Invoke-Cmd $cmd
+                CreateAndConfigureHadoopService $service $HDP_RESOURCES_DIR $hbaseInstallBin $serviceCredential
 				$disabled_services = 'rest','thrift','thrift2'
 				if ($disabled_services -match $service)
 				{
@@ -149,8 +136,6 @@ Test-JavaHome
 					$cmd="$ENV:WINDIR\system32\sc.exe config $service start= demand"
 				}
                 Invoke-Cmd $cmd
-
-                Set-ServiceAcl $service
             }
             catch [Exception]
             {
@@ -256,6 +241,75 @@ function UpdateXmlConfig(
     }
     $xml.Save($fileName)
     $xml.ReleasePath
+}
+
+### Creates and configures the service.
+function CreateAndConfigureHadoopService(
+    [String]
+    [Parameter( Position=0, Mandatory=$true )]
+    $service,
+    [String]
+    [Parameter( Position=1, Mandatory=$true )]
+    $hdpResourcesDir,
+    [String]
+    [Parameter( Position=2, Mandatory=$true )]
+    $serviceBinDir,
+    [System.Management.Automation.PSCredential]
+    [Parameter( Position=3, Mandatory=$true )]
+    $serviceCredential
+)
+{
+    if ( -not ( Get-Service "$service" -ErrorAction SilentlyContinue ) )
+    {
+		 Write-Log "Creating service `"$service`" as $serviceBinDir\$service.exe"
+        $xcopyServiceHost_cmd = "copy /Y `"$HDP_RESOURCES_DIR\serviceHost.exe`" `"$serviceBinDir\$service.exe`""
+        Invoke-CmdChk $xcopyServiceHost_cmd
+		
+        #Creating the event log needs to be done from an elevated process, so we do it here
+        if( -not ([Diagnostics.EventLog]::SourceExists( "$service" )))
+        {
+            [Diagnostics.EventLog]::CreateEventSource( "$service", "" )
+        }
+
+        Write-Log "Adding service $service"
+        $s = New-Service -Name "$service" -BinaryPathName "$serviceBinDir\$service.exe" -Credential $serviceCredential -DisplayName "Apache Hadoop $service"
+        if ( $s -eq $null )
+        {
+            throw "CreateAndConfigureHadoopService: Service `"$service`" creation failed"
+        }
+
+        $cmd="$ENV:WINDIR\system32\sc.exe failure $service reset= 30 actions= restart/5000"
+        Invoke-CmdChk $cmd
+
+        $cmd="$ENV:WINDIR\system32\sc.exe config $service start= disabled"
+        Invoke-CmdChk $cmd
+
+        Set-ServiceAcl $service
+    }
+    else
+    {
+        Write-Log "Service `"$service`" already exists, Removing `"$service`""
+        StopAndDeleteHadoopService $service
+		CreateAndConfigureHadoopService $service $hdpResourcesDir $serviceBinDir $serviceCredential
+    }
+}
+
+### Stops and deletes the Hadoop service.
+function StopAndDeleteHadoopService(
+    [String]
+    [Parameter( Position=0, Mandatory=$true )]
+    $service
+)
+{
+    Write-Log "Stopping $service"
+    $s = Get-Service $service -ErrorAction SilentlyContinue 
+
+    if( $s -ne $null )
+    {
+        Stop-Service $service
+        $cmd = "sc.exe delete $service"
+        Invoke-Cmd $cmd
+    }
 }
 
 try
