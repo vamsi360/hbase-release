@@ -1056,15 +1056,9 @@ class ConnectionManager {
     }
 
     @Override
-    public RegionLocations locateRegionAll(
-        final TableName tableName, final byte[] row) throws IOException{
-      return locateRegion(tableName, row, true, true);
-    }
-
-    @Override
     public HRegionLocation locateRegion(
         final TableName tableName, final byte[] row) throws IOException{
-      RegionLocations locations = locateRegionAll(tableName, row);
+      RegionLocations locations = locateRegion(tableName, row, true, true);
       return locations == null ? null : locations.getRegionLocation();
     }
 
@@ -2547,12 +2541,12 @@ class ConnectionManager {
         new ConcurrentHashMap<ServerName, ServerErrors>();
     private final long canRetryUntil;
     private final int maxRetries;
-    private final String startTrackingTime;
+    private final long startTrackingTime;
 
     public ServerErrorTracker(long timeout, int maxRetries) {
       this.maxRetries = maxRetries;
       this.canRetryUntil = EnvironmentEdgeManager.currentTimeMillis() + timeout;
-      this.startTrackingTime = new Date().toString();
+      this.startTrackingTime = new Date().getTime();
     }
 
     /**
@@ -2599,7 +2593,7 @@ class ConnectionManager {
       }
     }
 
-    String getStartTrackingTime() {
+    long getStartTrackingTime() {
       return startTrackingTime;
     }
 
