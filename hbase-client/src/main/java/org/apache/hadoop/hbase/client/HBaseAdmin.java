@@ -633,7 +633,6 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws IOException if a remote or network exception occurs
    */
   public void deleteTable(final TableName tableName) throws IOException {
-    HRegionLocation firstMetaServer = getFirstMetaServerForTable(tableName);
     boolean tableExists = true;
 
     executeCallable(new MasterCallable<Void>(getConnection()) {
@@ -646,9 +645,9 @@ public class HBaseAdmin implements Abortable, Closeable {
     });
 
     // Wait until all regions deleted
-    for (int tries = 0; tries < (this.numRetries * this.retryLongerMultiplier); tries++) {
+    for (int tries = 0; tries < this.numRetries; tries++) {
       try {
-
+        HRegionLocation firstMetaServer = getFirstMetaServerForTable(tableName);
         Scan scan = MetaReader.getScanForTableName(tableName);
         scan.addColumn(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER);
         ScanRequest request = RequestConverter.buildScanRequest(
