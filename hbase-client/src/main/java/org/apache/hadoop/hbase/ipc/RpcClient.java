@@ -58,6 +58,7 @@ import org.apache.hadoop.hbase.util.ExceptionUtil;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.PoolMap;
 import org.apache.hadoop.hbase.util.PoolMap.PoolType;
+import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CompressionCodec;
@@ -554,6 +555,7 @@ public class RpcClient {
         remoteId.getAddress().toString() +
         ((ticket==null)?" from an unknown user": (" from "
         + ticket.getUserName())));
+      Threads.setLoggingUncaughtExceptionHandler(this);
       this.setDaemon(true);
 
       if (conf.getBoolean(ALLOWS_INTERRUPTS, false)) {
@@ -1470,6 +1472,10 @@ public class RpcClient {
 
     while (!call.done) {
       try {
+        if (connection.shouldCloseConnection.get()) {
+          LOG.warn("Unexpected closed connection: " + connection);
+          throw new IOException("Unexpected closed connection");
+        }
         synchronized (call) {
           call.wait(1000);  // wait for the result. We will be notified by the reader.
         }
