@@ -644,8 +644,9 @@ public class HBaseAdmin implements Abortable, Closeable {
       }
     });
 
+    int failures = 0;
     // Wait until all regions deleted
-    for (int tries = 0; tries < this.numRetries; tries++) {
+    for (int tries = 0; tries < (this.numRetries * this.retryLongerMultiplier); tries++) {
       try {
         HRegionLocation firstMetaServer = getFirstMetaServerForTable(tableName);
         Scan scan = MetaReader.getScanForTableName(tableName);
@@ -686,7 +687,8 @@ public class HBaseAdmin implements Abortable, Closeable {
           }
         }
       } catch (IOException ex) {
-        if(tries == numRetries - 1) {           // no more tries left
+        failures++;
+        if(failures == numRetries - 1) {           // no more tries left
           if (ex instanceof RemoteException) {
             throw ((RemoteException) ex).unwrapRemoteException();
           } else {
