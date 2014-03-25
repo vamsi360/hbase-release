@@ -126,16 +126,6 @@ Test-JavaHome
             {
                 Write-Log "Creating service $service as $hbaseInstallBin\$service.exe"
                 CreateAndConfigureHadoopService $service $HDP_RESOURCES_DIR $hbaseInstallBin $serviceCredential
-				$disabled_services = 'rest','thrift','thrift2'
-				if ($disabled_services -match $service)
-				{
-					$cmd="$ENV:WINDIR\system32\sc.exe config $service start= disabled"
-				}
-                else
-				{
-					$cmd="$ENV:WINDIR\system32\sc.exe config $service start= demand"
-				}
-                Invoke-Cmd $cmd
             }
             catch [Exception]
             {
@@ -281,7 +271,7 @@ function CreateAndConfigureHadoopService(
         $cmd="$ENV:WINDIR\system32\sc.exe failure $service reset= 30 actions= restart/5000"
         Invoke-CmdChk $cmd
 
-        $cmd="$ENV:WINDIR\system32\sc.exe config $service start= disabled"
+        $cmd="$ENV:WINDIR\system32\sc.exe config $service start= demand"
         Invoke-CmdChk $cmd
 
         Set-ServiceAcl $service

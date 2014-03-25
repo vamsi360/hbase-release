@@ -182,6 +182,10 @@ class ConnectionManager {
   public static final String RETRIES_BY_SERVER_KEY = "hbase.client.retries.by.server";
   private static final String CLIENT_NONCES_ENABLED_KEY = "hbase.client.nonces.enabled";
 
+  // safeguard for now. No need to disable this unless a bug
+  private static final String CACHE_META_LOCATION_ENABLED = "hbase.cache.meta.location.enabled";
+  private static final boolean DEFAULT_CACHE_META_LOCATION_ENABLED = true;
+
   // An LRU Map of HConnectionKey -> HConnection (TableServer).  All
   // access must be synchronized.  This map is not private because tests
   // need to be able to tinker with it.
@@ -588,6 +592,8 @@ class ConnectionManager {
     // package protected for the tests
     ClusterStatusListener clusterStatusListener;
 
+    private final Object metaRegionLock = new Object();
+
     private final Object userRegionLock = new Object();
 
     // We have a single lock for master & zk to prevent deadlocks. Having
@@ -612,6 +618,7 @@ class ConnectionManager {
     private RpcClient rpcClient;
 
     private MetaCache metaCache = new MetaCache();
+    private boolean cacheMetaLocationEnabled; // whether to cache meta's own location
 
     private int refCount;
 
@@ -675,6 +682,8 @@ class ConnectionManager {
               }, conf, listenerClass);
         }
       }
+      this.cacheMetaLocationEnabled = conf.getBoolean(CACHE_META_LOCATION_ENABLED,
+        DEFAULT_CACHE_META_LOCATION_ENABLED);
     }
 
     /**
@@ -1113,12 +1122,51 @@ class ConnectionManager {
       }
 
       if (tableName.equals(TableName.META_TABLE_NAME)) {
-        return this.registry.getMetaRegionLocation();
+        return locateMeta(tableName, useCache, replicaId);
       } else {
         // Region not in the cache - have to go to the meta RS
         return locateRegionInMeta(TableName.META_TABLE_NAME, tableName, row,
           useCache, userRegionLock, retry, replicaId);
       }
+    }
+
+    private RegionLocations locateMeta(final TableName tableName,
+        boolean useCache, int replicaId) throws IOException {
+      // HBASE-10785: We cache the location of the META itself, so that we are not overloading
+      // zookeeper with one request for every region lookup. We cache the META with empty row
+      // key in MetaCache.
+      if (!cacheMetaLocationEnabled) {
+        return this.registry.getMetaRegionLocation();
+      }
+
+      byte[] metaCacheKey = HConstants.EMPTY_START_ROW; // use byte[0] as the row for meta
+      RegionLocations locations = null;
+      if (useCache) {
+        locations = getCachedLocation(tableName, metaCacheKey);
+        if (locations != null) {
+          return locations;
+        }
+      } else {
+        // If we are not supposed to be using the cache, delete any existing cached location
+        // so it won't interfere.
+        metaCache.clearCache(tableName, metaCacheKey, replicaId);
+      }
+
+      // only one thread should do the lookup.
+      synchronized (metaRegionLock) {
+        // Check the cache again for a hit in case some other thread made the
+        // same query while we were waiting on the lock.
+        locations = getCachedLocation(tableName, metaCacheKey);
+        if (locations != null) {
+          return locations;
+        }
+        // Look up from zookeeper
+        locations = this.registry.getMetaRegionLocation();
+        if (locations != null) {
+          cacheLocation(tableName, locations);
+        }
+      }
+      return locations;
     }
 
     /*
@@ -1207,7 +1255,7 @@ class ConnectionManager {
         HRegionLocation metaLocation = null;
         try {
           // locate the meta region
-          RegionLocations metaLocations = locateRegion(parentTable, metaKey, true, false);
+          RegionLocations metaLocations = locateRegion(parentTable, metaKey, tries == 0, false);
           metaLocation = metaLocations == null ? null : metaLocations.getDefaultRegionLocation();
           // If null still, go around again.
           if (metaLocation == null) continue;
