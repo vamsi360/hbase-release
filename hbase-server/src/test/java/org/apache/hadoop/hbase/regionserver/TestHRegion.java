@@ -528,7 +528,7 @@ public class TestHRegion {
     String method = "testSkipRecoveredEditsReplayTheLastFileIgnored";
     TableName tableName = TableName.valueOf(method);
     byte[] family = Bytes.toBytes("family");
-    this.region = initHRegion(tableName, method, conf, family);
+    this.region = initHRegion(tableName, method, CONF, family);
     try {
       Path regiondir = region.getRegionFileSystem().getRegionDir();
       FileSystem fs = region.getRegionFileSystem().getFileSystem();
@@ -545,7 +545,7 @@ public class TestHRegion {
       for (long i = minSeqId; i <= maxSeqId; i += 10) {
         Path recoveredEdits = new Path(recoveredEditsDir, String.format("%019d", i));
         fs.create(recoveredEdits);
-        HLog.Writer writer = HLogFactory.createRecoveredEditsWriter(fs, recoveredEdits, conf);
+        HLog.Writer writer = HLogFactory.createRecoveredEditsWriter(fs, recoveredEdits, CONF);
 
         long time = System.nanoTime();
         WALEdit edit = null;
