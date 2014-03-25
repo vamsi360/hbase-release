@@ -140,6 +140,7 @@ import org.junit.rules.TestName;
 import org.mockito.Mockito;
 
 import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
 
 /**
  * Basic stand-alone testing of HRegion.  No clusters!
@@ -521,6 +522,67 @@ public class TestHRegion {
       this.region = null;
     }
   }
+
+  @Test
+  public void testSkipRecoveredEditsReplayTheLastFileIgnored() throws Exception {
+    String method = "testSkipRecoveredEditsReplayTheLastFileIgnored";
+    TableName tableName = TableName.valueOf(method);
+    byte[] family = Bytes.toBytes("family");
+    this.region = initHRegion(tableName, method, conf, family);
+    try {
+      Path regiondir = region.getRegionFileSystem().getRegionDir();
+      FileSystem fs = region.getRegionFileSystem().getFileSystem();
+      byte[] regionName = region.getRegionInfo().getEncodedNameAsBytes();
+
+      assertEquals(0, region.getStoreFileList(
+        region.getStores().keySet().toArray(new byte[0][])).size());
+
+      Path recoveredEditsDir = HLogUtil.getRegionDirRecoveredEditsDir(regiondir);
+
+      long maxSeqId = 1050;
+      long minSeqId = 1000;
+
+      for (long i = minSeqId; i <= maxSeqId; i += 10) {
+        Path recoveredEdits = new Path(recoveredEditsDir, String.format("%019d", i));
+        fs.create(recoveredEdits);
+        HLog.Writer writer = HLogFactory.createRecoveredEditsWriter(fs, recoveredEdits, conf);
+
+        long time = System.nanoTime();
+        WALEdit edit = null;
+        if (i == maxSeqId) {
+          edit = WALEdit.createCompaction(CompactionDescriptor.newBuilder()
+          .setTableName(ByteString.copyFrom(tableName.getName()))
+          .setFamilyName(ByteString.copyFrom(regionName))
+          .setEncodedRegionName(ByteString.copyFrom(regionName))
+          .setStoreHomeDirBytes(ByteString.copyFrom(Bytes.toBytes(regiondir.toString())))
+          .build());
+        } else {
+          edit = new WALEdit();
+          edit.add(new KeyValue(row, family, Bytes.toBytes(i), time, KeyValue.Type.Put, Bytes
+            .toBytes(i)));
+        }
+        writer.append(new HLog.Entry(new HLogKey(regionName, tableName, i, time,
+            HConstants.DEFAULT_CLUSTER_ID), edit));
+        writer.close();
+      }
+
+      long recoverSeqId = 1030;
+      Map<byte[], Long> maxSeqIdInStores = new TreeMap<byte[], Long>(Bytes.BYTES_COMPARATOR);
+      MonitoredTask status = TaskMonitor.get().createStatus(method);
+      for (Store store : region.getStores().values()) {
+        maxSeqIdInStores.put(store.getColumnFamilyName().getBytes(), recoverSeqId - 1);
+      }
+      long seqId = region.replayRecoveredEditsIfAny(regiondir, maxSeqIdInStores, null, status);
+      assertEquals(maxSeqId, seqId);
+
+      // assert that the files are flushed
+      assertEquals(1, region.getStoreFileList(
+        region.getStores().keySet().toArray(new byte[0][])).size());
+
+    } finally {
+      HRegion.closeHRegion(this.region);
+      this.region = null;
+    }  }
 
   @Test
   public void testRecoveredEditsReplayCompaction() throws Exception {
