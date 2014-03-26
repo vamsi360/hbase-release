@@ -889,7 +889,8 @@ public class TestAsyncProcess {
     List<Get> rows = makeTimelineGets(DUMMY_BYTES_1, DUMMY_BYTES_2);
     AsyncRequestFuture ars = ap.submitAll(DUMMY_TABLE, rows, null, new Object[2]);
     verifyReplicaResult(ars, RR.TRUE, RR.TRUE);
-    Assert.assertEquals(2, ap.getReplicaCallCount());
+    long replicaCallCount = ap.getReplicaCallCount();
+    Assert.assertTrue(replicaCallCount ==  2 || replicaCallCount == 3);
   }
 
   @Test
