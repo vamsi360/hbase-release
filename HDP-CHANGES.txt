@@ -1,13 +1,78 @@
-baikal-GA-0.98.0 is based on apache hbase 0.98.0RC2
+baikal-GA-0.98.0 is based on Apache HBase 0.98.0
+
+Following are the changes on top of Apache HBase 0.98.0
 
 Bug fixes:
-  HBASE-10486: ProtobufUtil Append & Increment deserialization lost cell level timestamp
-  HBASE-10472 Manage the interruption in ZKUtil#getData
-  HBASE-10500 Some tools OOM when BucketCache is enabled
-  HBASE-10833 Region assignment may fail during cluster start up
+HBASE-10833 Region assignment may fail during cluster start up
+HBASE-10829 Flush is skipped after log replay if the last recovered edits file is skipped
+HBASE-10514 Forward port HBASE-10466, possible data loss when failed flushes.
+HBASE-10700 IntegrationTestWithCellVisibilityLoadAndVerify should allow current user to be the admin
+HBASE-10592 Refactor PerformanceEvaluation tool
+HBASE-10419 Add multiget support to PerformanceEvaluation
+HBASE-10548 Correct commons-math dependency version
+HBASE-10809 HBaseAdmin#deleteTable fails when META region happen to move around same time
+HBASE-10793 AuthFailed as a valid zookeeper state
+HBASE-10767 Load balancer may interfere with tests in TestHBaseFsck
+HBASE-9721  RegionServer should not accept regionOpen RPC intended for another(previous) server
+HBASE-10688 Add a draining_node script to manage nodes in draining mode
+HBASE-8304  Bulkload fails to remove files if fs.default.name / fs.defaultFS is configured without default port
+HBASE-10660 MR over snapshots can OOM when alternative blockcache is enabled
+HBASE-10635 thrift#TestThriftServer fails due to TTL validity check
+HBASE-10591 Sanity check table configuration in createTable
+HBASE-10670 HBaseFsck#connect() should use new connection
+HBASE-10632 Region lost in limbo after ArrayIndexOutOfBoundsException during assignment
+HBASE-10621 Unable to grant user permission to namespace
+HBASE-10638 Improve error message when there is no region server available for move
+HBASE-10582 0.94->0.96 Upgrade: ACL can't be repopulated when ACL table contains row for table '-ROOT' or '.META.'
+HBASE-10581 ACL znode are left without PBed during upgrading hbase0.94* to hbase0.96+
+HBASE-10500 Some tools OOM when BucketCache is enabled
+HBASE-10486 ProtobufUtil Append & Increment deserialization lost cell level timestamp
 
-New feature
-  HBASE-10350. Master/AM/RegionStates changes to create and assign region replicas
-  HBASE-10361. Enable/AlterTable support for region replicas
-  HBASE-10354. Add an API for defining consistency per request
+Windows Fixes:
+HBASE-10799 [WINDOWS] TestImportTSVWithVisibilityLabels.testBulkOutputWithTsvImporterTextMapper fails on windows
+HBASE-10735 [WINDOWS] Set -XX:MaxPermSize for unit tests
+HBASE-10685 [WINDOWS] TestKeyStoreKeyProvider fails on windows
+HBASE-10686 [WINDOWS] TestStripeStoreFileManager fails on windows
 
+Changes related to HBASE-10070:
+HBASE-10875 Metas own location should be cached
+HBASE-10791 Add integration test to demonstrate performance improvement
+HBASE-10810 LoadTestTool should share the connection and connection pool
+HBASE-10794 multi-get should handle missing replica location from cache
+HBASE-10634 Multiget doesn't fully work.
+HBASE-10661 TestStochasticLoadBalancer.testRegionReplicationOnMidClusterWithRacks() is flaky
+HBASE-10701 Cache invalidation improvements from client side
+HBASE-10778 Unique keys accounting in MultiThreadedReader is incorrect
+HBASE-10743 Replica map update is problematic in RegionStates
+HBASE-10616 Integration test for multi-get calls
+HBASE-10734 Fix RegionStates.getRegionAssignments to not add duplicate regions
+HBASE-10729 Enable table doesn't balance out replicas evenly if the replicas were unassigned earlier
+HBASE-10726 Fix java.lang.ArrayIndexOutOfBoundsException in StochasticLoadBalancer
+HBASE-10720 rpcClient: Wrong log level when closing the connection
+HBASE-10704 BaseLoadBalancer#roundRobinAssignment() may add same region to assignment plan multiple times
+HBASE-10633 StoreFileRefresherChore throws ConcurrentModificationException sometimes
+HBASE-10572 Create an IntegrationTest for region replicas.
+HBASE-10703 TestAsyncProcess does not pass on HBASE-10070
+HBASE-10637 rpcClient: Setup the iostreams when writing
+HBASE-10620 LoadBalancer.needsBalance() should check for co-located region replicas as well
+HBASE-10672 Table snapshot should handle tables whose REGION_REPLICATION is greater than one.
+HBASE-10630 NullPointerException in ConnectionManager.locateRegionInMeta() due to missing region info
+HBASE-10356 Failover RPC's for multi-get.
+HBASE-10525 Allow the client to use a different thread for writing to ease interrupt.
+HBASE-10355 Failover RPC's from client using region replicas.
+HBASE-10352 Region and RegionServer changes for opening region replicas, and refreshing store files
+HBASE-10351 LoadBalancer changes for supporting region replicas
+HBASE-10359 Master/RS WebUI changes for region replicas.
+HBASE-10362 HBCK changes for supporting region replicas.
+HBASE-10361 Enable/AlterTable support for region replicas.
+HBASE-10350 Master/AM/RegionStates changes to create and assign region replicas.
+HBASE-10490 Simplify RpcClient code (Nicolas Liochon)
+HBASE-10511 Add latency percentiles on PerformanceEvaluation
+HBASE-10517 NPE in MetaCache.clearCache()
+HBASE-10479 HConnection interface is public but is used internally, and contains a bunch of methods
+HBASE-10348 HTableDescriptor changes for region replicas
+HBASE-10354 Add an API for defining consistency per request
+HBASE-10347 HRegionInfo changes for adding replicaId and MetaEditor/MetaReader changes for region replicas
+HBASE-10277 refactor AsyncProcess
+HBASE-10427 clean up HRegionLocation/ServerName usage
+HBASE-10472 Manage the interruption in ZKUtil#getData
