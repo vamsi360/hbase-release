@@ -27,6 +27,8 @@ HBASE-10582 0.94->0.96 Upgrade: ACL can't be repopulated when ACL table contains
 HBASE-10581 ACL znode are left without PBed during upgrading hbase0.94* to hbase0.96+
 HBASE-10500 Some tools OOM when BucketCache is enabled
 HBASE-10486 ProtobufUtil Append & Increment deserialization lost cell level timestamp
+HBASE-10844 Coprocessor failure during batchmutation leaves the memstore datastructs in an inconsistent state (Note: the
+committed fix only improves logging)
 
 Windows Fixes:
 HBASE-10799 [WINDOWS] TestImportTSVWithVisibilityLabels.testBulkOutputWithTsvImporterTextMapper fails on windows
