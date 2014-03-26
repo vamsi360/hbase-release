@@ -1109,7 +1109,13 @@ public class HRegion implements HeapSize { // , Writable{
 
         // close each store in parallel
         for (final Store store : stores.values()) {
-          assert abort? true: store.getFlushableSize() == 0;
+          if (store.getFlushableSize() != 0) {
+            LOG.warn("store.getFlushableSize for " + store + " is not zero! It's " 
+                + store.getFlushableSize() + ". Maybe a coprocessor "
+                + "operation failed and "
+                + "left the memstore datastructures in a partially updated state. "
+                + "Current memstoreSize " + this.getMemstoreSize().get());
+          }
           completionService
               .submit(new Callable<Pair<byte[], Collection<StoreFile>>>() {
                 @Override
