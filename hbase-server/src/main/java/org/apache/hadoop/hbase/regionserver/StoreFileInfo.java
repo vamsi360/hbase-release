@@ -35,7 +35,6 @@ import org.apache.hadoop.hbase.io.FSDataInputStreamWrapper;
 import org.apache.hadoop.hbase.io.HFileLink;
 import org.apache.hadoop.hbase.io.HalfStoreFileReader;
 import org.apache.hadoop.hbase.io.Reference;
-import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
 import org.apache.hadoop.hbase.util.FSUtils;
 
@@ -130,6 +129,22 @@ public class StoreFileInfo implements Comparable<StoreFileInfo> {
     } else {
       throw new IOException("path=" + p + " doesn't look like a valid StoreFile");
     }
+  }
+
+  /**
+   * Create a Store File Info from an HFileLink
+   * @param conf the {@link Configuration} to use
+   * @param fs The current file system to use.
+   * @param fileStatus The {@link FileStatus} of the file
+   */
+  public StoreFileInfo(final Configuration conf, final FileSystem fs, final FileStatus fileStatus,
+      final HFileLink link)
+      throws IOException {
+    this.conf = conf;
+    this.fileStatus = fileStatus;
+      // HFileLink
+    this.reference = null;
+    this.link = link;
   }
 
   /**
