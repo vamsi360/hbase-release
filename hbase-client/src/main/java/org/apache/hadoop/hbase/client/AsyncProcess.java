@@ -1257,7 +1257,7 @@ class AsyncProcess {
          decActionCounter(index);
          return; // Simple case, no replica requests.
       } else if ((state = trySetResultSimple(
-          index, action.getAction(), result, isStale)) == null) {
+          index, action.getAction(), false, result, null, isStale)) == null) {
         return; // Simple case, no replica requests.
       }
       assert state != null;
@@ -1296,8 +1296,8 @@ class AsyncProcess {
         errors.add(throwable, row, server);
         decActionCounter(index);
         return; // Simple case, no replica requests.
-      } else if ((state = trySetResultSimple(index, row, throwable, false)) == null) {
-        errors.add(throwable, row, server);
+      } else if ((state = trySetResultSimple(
+          index, row, true, throwable, server, false)) == null) {
         return; // Simple case, no replica requests.
       }
       assert state != null;
@@ -1356,8 +1356,8 @@ class AsyncProcess {
      * Tries to set the result or error for a particular action as if there were no replica calls.
      * @return null if successful; replica state if there were in fact replica calls.
      */
-    private ReplicaResultState trySetResultSimple(
-        int index, Row row, Object result, boolean isFromReplica) {
+    private ReplicaResultState trySetResultSimple(int index, Row row, boolean isError,
+        Object result, ServerName server, boolean isFromReplica) {
       Object resObj = null;
       if (!isReplicaGet(row)) {
         if (isFromReplica) {
@@ -1374,11 +1374,20 @@ class AsyncProcess {
           }
         }
       }
+
+      ReplicaResultState rrs =
+          (resObj instanceof ReplicaResultState) ? (ReplicaResultState)resObj : null;
+      if (rrs == null && isError) {
+        // The resObj is not replica state (null or already set).
+        errors.add((Throwable)result, row, server);
+      }
+
       if (resObj == null) {
+        // resObj is null - no replica calls were made.
         decActionCounter(index);
         return null;
       }
-      return (resObj instanceof ReplicaResultState) ? (ReplicaResultState)resObj : null;
+      return rrs;
     }
 
     private void decActionCounter(int index) {
