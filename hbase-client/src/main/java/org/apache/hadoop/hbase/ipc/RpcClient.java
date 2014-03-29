@@ -401,6 +401,7 @@ public class RpcClient {
         return cts;
       }
 
+      @Override
       public void close(){
         assert shouldCloseConnection.get();
         callsToWrite.offer(CallFuture.DEATH_PILL);
@@ -457,7 +458,9 @@ public class RpcClient {
           try {
             Connection.this.tracedWriteRequest(cts.call, cts.priority, cts.span);
           } catch (IOException e) {
-            LOG.warn("call write error for call #" + cts.call.id + ", message =" + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("call write error for call #" + cts.call.id + ", message =" + e.getMessage());
+            }
             cts.call.setException(e);
             markClosed(e);
           }
@@ -813,6 +816,7 @@ public class RpcClient {
         final UserGroupInformation user)
     throws IOException, InterruptedException{
       user.doAs(new PrivilegedExceptionAction<Object>() {
+        @Override
         public Object run() throws IOException, InterruptedException {
           closeConnection();
           if (shouldAuthenticateOverKrb()) {
