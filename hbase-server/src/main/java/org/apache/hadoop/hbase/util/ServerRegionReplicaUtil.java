@@ -56,6 +56,18 @@ public class ServerRegionReplicaUtil extends RegionReplicaUtil {
   }
 
   /**
+   * Returns whether to replay the recovered edits to flush the results.
+   * Currently secondary region replicas do not replay the edits, since it would
+   * cause flushes which might affect the primary region. Primary regions even opened
+   * in read only mode should replay the edits.
+   * @param region the HRegion object
+   * @return whether recovered edits should be replayed.
+   */
+  public static boolean shouldReplayRecoveredEdits(HRegion region) {
+    return isDefaultReplica(region.getRegionInfo());
+  }
+
+  /**
    * Returns a StoreFileInfo from the given FileStatus. Secondary replicas refer to the
    * files of the primary region, so an HFileLink is used to construct the StoreFileInfo. This
    * way ensures that the secondary will be able to continue reading the store files even if

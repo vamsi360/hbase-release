@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -43,6 +44,7 @@ import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.zookeeper.ZKAssign;
+import org.apache.hadoop.util.StringUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -310,7 +312,7 @@ public class TestRegionReplicas {
 
     long runtime = 30 * 1000;
     // enable store file refreshing
-    final int refreshPeriod = 2000; // 2 sec
+    final int refreshPeriod = 100; // 100ms refresh is a lot
     HTU.getConfiguration().setInt("hbase.hstore.compactionThreshold", 3);
     HTU.getConfiguration().setInt(StorefileRefresherChore.REGIONSERVER_STOREFILE_REFRESH_PERIOD, refreshPeriod);
     // restart the region server so that it starts the refresher chore
@@ -347,7 +349,8 @@ public class TestRegionReplicas {
               if (key == endKey) key = startKey;
             }
           } catch (Exception ex) {
-            exceptions[0].set(ex);
+            Log.warn(ex);
+            exceptions[0].compareAndSet(null, ex);
           }
         }
       };
@@ -366,7 +369,8 @@ public class TestRegionReplicas {
               }
             }
           } catch (Exception ex) {
-            exceptions[1].set(ex);
+            Log.warn(ex);
+            exceptions[1].compareAndSet(null, ex);
           }
         }
       };
@@ -377,11 +381,28 @@ public class TestRegionReplicas {
         public void run() {
           try {
             while (running.get()) {
+              // whether to do a close and open
+              if (random.nextInt(10) == 0) {
+                try {
+                  closeRegion(hriSecondary);
+                } catch (Exception ex) {
+                  Log.warn("Failed closing the region " + hriSecondary + " "  + StringUtils.stringifyException(ex));
+                  exceptions[2].compareAndSet(null, ex);
+                }
+                try {
+                  openRegion(hriSecondary);
+                } catch (Exception ex) {
+                  Log.warn("Failed opening the region " + hriSecondary + " "  + StringUtils.stringifyException(ex));
+                  exceptions[2].compareAndSet(null, ex);
+                }
+              }
+
               int key = random.nextInt(endKey - startKey) + startKey;
               assertGetRpc(hriSecondary, key, true);
             }
           } catch (Exception ex) {
-            exceptions[2].set(ex);
+            Log.warn("Failed getting the value in the region " + hriSecondary + " "  + StringUtils.stringifyException(ex));
+            exceptions[2].compareAndSet(null, ex);
           }
         }
       };
@@ -396,6 +417,7 @@ public class TestRegionReplicas {
       Threads.sleep(runtime);
       running.set(false);
       executor.shutdown();
+      executor.awaitTermination(30, TimeUnit.SECONDS);
 
       for (AtomicReference<Exception> exRef : exceptions) {
         Assert.assertNull(exRef.get());
