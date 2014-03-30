@@ -4190,6 +4190,10 @@ public class TestHRegion {
 
   @Test
   public void testCompactionFromPrimary() throws IOException {
+    if (FSUtils.WINDOWS) {
+      return; // this won't work on windows, since we are moving an open file
+    }
+
     Path rootDir = new Path(dir + "testRegionReplicaSecondary");
     TEST_UTIL.getConfiguration().set(HConstants.HBASE_DIR, rootDir.toString());
 
