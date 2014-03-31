@@ -30,6 +30,8 @@ HBASE-10486 ProtobufUtil Append & Increment deserialization lost cell level time
 HBASE-10844 Coprocessor failure during batchmutation leaves the memstore datastructs in an inconsistent state (Note: the committed fix only improves logging)
 HBASE-10863 Scan doesn't return rows for user who has authorization by visibility label in secure deployment
 HBASE-10852 TestDistributedLogSplitting#testDisallowWritesInRecovering occasionally fails
+HBASE-10863 Scan doesn't return rows for user who has authorization by visibility label in secure deployment
+HBASE-10618 User should not be allowed to disable/drop visibility labels table
 
 Windows Fixes:
 HBASE-10799 [WINDOWS] TestImportTSVWithVisibilityLabels.testBulkOutputWithTsvImporterTextMapper fails on windows
