@@ -27,8 +27,9 @@ HBASE-10582 0.94->0.96 Upgrade: ACL can't be repopulated when ACL table contains
 HBASE-10581 ACL znode are left without PBed during upgrading hbase0.94* to hbase0.96+
 HBASE-10500 Some tools OOM when BucketCache is enabled
 HBASE-10486 ProtobufUtil Append & Increment deserialization lost cell level timestamp
-HBASE-10844 Coprocessor failure during batchmutation leaves the memstore datastructs in an inconsistent state (Note: the
-committed fix only improves logging)
+HBASE-10844 Coprocessor failure during batchmutation leaves the memstore datastructs in an inconsistent state (Note: the committed fix only improves logging)
+HBASE-10863 Scan doesn't return rows for user who has authorization by visibility label in secure deployment
+HBASE-10852 TestDistributedLogSplitting#testDisallowWritesInRecovering occasionally fails
 
 Windows Fixes:
 HBASE-10799 [WINDOWS] TestImportTSVWithVisibilityLabels.testBulkOutputWithTsvImporterTextMapper fails on windows
@@ -78,3 +79,5 @@ HBASE-10347 HRegionInfo changes for adding replicaId and MetaEditor/MetaReader c
 HBASE-10277 refactor AsyncProcess
 HBASE-10427 clean up HRegionLocation/ServerName usage
 HBASE-10472 Manage the interruption in ZKUtil#getData
+HBASE-10859 HStore.openStoreFiles() should pass the StoreFileInfo object to createStoreFileAndReader().
+HBASE-10858 TestRegionRebalancing is failing
