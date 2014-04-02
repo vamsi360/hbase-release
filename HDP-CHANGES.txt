@@ -32,6 +32,7 @@ HBASE-10863 Scan doesn't return rows for user who has authorization by visibilit
 HBASE-10852 TestDistributedLogSplitting#testDisallowWritesInRecovering occasionally fails
 HBASE-10863 Scan doesn't return rows for user who has authorization by visibility label in secure deployment
 HBASE-10618 User should not be allowed to disable/drop visibility labels table
+HBASE-10895 unassign a region fails due to the hosting region server is in FailedServerList
 
 Windows Fixes:
 HBASE-10799 [WINDOWS] TestImportTSVWithVisibilityLabels.testBulkOutputWithTsvImporterTextMapper fails on windows
