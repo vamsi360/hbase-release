@@ -3943,7 +3943,7 @@ public class HRegion implements HeapSize { // , Writable{
               isStopRow(nextKv.getBuffer(), nextKv.getRowOffset(), nextKv.getRowLength());
           // save that the row was empty before filters applied to it.
           final boolean isEmptyRow = results.isEmpty();
-
+          
           // We have the part of the row necessary for filtering (all of it, usually).
           // First filter with the filterRow(List).
           FilterWrapper.FilterRowRetCode ret = FilterWrapper.FilterRowRetCode.NOT_CALLED;
