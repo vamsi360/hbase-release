@@ -18,6 +18,8 @@
  */
 package org.apache.hadoop.hbase;
 
+import static org.codehaus.jackson.map.SerializationConfig.Feature.SORT_PROPERTIES_ALPHABETICALLY;
+
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Constructor;
@@ -62,6 +64,8 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterAllFilter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.PageFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.WhileMatchFilter;
@@ -83,7 +87,9 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import static org.codehaus.jackson.map.SerializationConfig.Feature.SORT_PROPERTIES_ALPHABETICALLY;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.yammer.metrics.core.Histogram;
+import com.yammer.metrics.core.MetricsRegistry;
 
 /**
  * Script used evaluating HBase performance and scalability.  Runs a HBase
@@ -543,10 +549,12 @@ public class PerformanceEvaluation extends Configured implements Tool {
       this.splitPolicy = that.splitPolicy;
       this.compression = that.compression;
       this.blockEncoding = that.blockEncoding;
+      this.filterAll = that.filterAll;
     }
 
     public String cmdName = null;
     public boolean nomapred = false;
+    public boolean filterAll = false;
     public int startRow = 0;
     public int perClientRunRows = ROWS_PER_GB;
     public int numClientThreads = 1;
@@ -667,8 +675,13 @@ public class PerformanceEvaluation extends Configured implements Tool {
     @Override
     void testRow(final int i) throws IOException {
       Scan scan = new Scan(getRandomRow(this.rand, opts.totalRows));
+      FilterList list = new FilterList();
       scan.addColumn(FAMILY_NAME, QUALIFIER_NAME);
-      scan.setFilter(new WhileMatchFilter(new PageFilter(120)));
+      if (opts.filterAll) {
+        list.addFilter(new FilterAllFilter());
+      }
+      list.addFilter(new WhileMatchFilter(new PageFilter(120)));
+      scan.setFilter(list);
       ResultScanner s = this.table.getScanner(scan);
       for (Result rr; (rr = s.next()) != null;) ;
       s.close();
@@ -692,6 +705,9 @@ public class PerformanceEvaluation extends Configured implements Tool {
     void testRow(final int i) throws IOException {
       Pair<byte[], byte[]> startAndStopRow = getStartAndStopRow();
       Scan scan = new Scan(startAndStopRow.getFirst(), startAndStopRow.getSecond());
+      if (opts.filterAll) {
+        scan.setFilter(new FilterAllFilter());
+      }
       scan.addColumn(FAMILY_NAME, QUALIFIER_NAME);
       ResultScanner s = this.table.getScanner(scan);
       int count = 0;
@@ -796,6 +812,9 @@ public class PerformanceEvaluation extends Configured implements Tool {
         Get get = new Get(getRandomRow(this.rand, opts.totalRows));
         get.addColumn(FAMILY_NAME, QUALIFIER_NAME);
         get.setConsistency(consistency);
+        if (opts.filterAll) {
+          get.setFilter(new FilterAllFilter());
+        }
         if (opts.multiGet > 0) {
           this.gets.add(get);
           if (this.gets.size() == opts.multiGet) {
@@ -901,7 +920,10 @@ public class PerformanceEvaluation extends Configured implements Tool {
         Scan scan = new Scan(format(opts.startRow));
         scan.setCaching(30);
         scan.addColumn(FAMILY_NAME, QUALIFIER_NAME);
-        this.testScanner = table.getScanner(scan);
+        if (opts.filterAll) {
+          scan.setFilter(new FilterAllFilter());
+        }
+       this.testScanner = table.getScanner(scan);
       }
       testScanner.next();
     }
@@ -917,6 +939,9 @@ public class PerformanceEvaluation extends Configured implements Tool {
     void testRow(final int i) throws IOException {
       Get get = new Get(format(i));
       get.addColumn(FAMILY_NAME, QUALIFIER_NAME);
+      if (opts.filterAll) {
+        get.setFilter(new FilterAllFilter());
+      }
       table.get(get);
     }
   }
@@ -971,13 +996,18 @@ public class PerformanceEvaluation extends Configured implements Tool {
     }
 
     protected Scan constructScan(byte[] valuePrefix) throws IOException {
+      FilterList list = new FilterList();
       Filter filter = new SingleColumnValueFilter(
           FAMILY_NAME, QUALIFIER_NAME, CompareFilter.CompareOp.EQUAL,
           new BinaryComparator(valuePrefix)
       );
+      list.addFilter(filter);
+      if(opts.filterAll) {
+        list.addFilter(new FilterAllFilter());
+      }
       Scan scan = new Scan();
       scan.addColumn(FAMILY_NAME, QUALIFIER_NAME);
-      scan.setFilter(filter);
+      scan.setFilter(list);
       return scan;
     }
   }
@@ -1124,6 +1154,9 @@ public class PerformanceEvaluation extends Configured implements Tool {
       "Default: false");
     System.err.println(" numoftags       Specify the no of tags that would be needed. " +
        "This works only if usetags is true.");
+    System.err.println(" filterAll       Helps to filter out all the rows on the server side"
+        + " there by not returning any thing back to the client.  Helps to check the server side"
+        + " performance.  Uses FilterAllFilter internally. ");
     System.err.println(" latency         Set to report operation latencies. " +
       "Currently only supported by randomRead test. Default: False");
     System.err.println(" multiGet        Batch gets together into groups of N. Only supported " +
@@ -1252,6 +1285,12 @@ public class PerformanceEvaluation extends Configured implements Tool {
         continue;
       }
 
+      final String filterOutAll = "--filterAll";
+      if (cmd.startsWith(filterOutAll)) {
+        opts.filterAll = true;
+        continue;
+      }
+        
       final String replicas = "--replicas=";
       if (cmd.startsWith(replicas)) {
         opts.replicas = Integer.parseInt(cmd.substring(replicas.length()));
