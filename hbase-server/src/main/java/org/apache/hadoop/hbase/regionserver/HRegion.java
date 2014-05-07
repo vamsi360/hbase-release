@@ -3383,7 +3383,7 @@ public class HRegion implements HeapSize { // , Writable{
     // KeyValue indicating that limit is reached when scanning
     private final KeyValue KV_LIMIT = new KeyValue();
     private final byte [] stopRow;
-    private Filter filter;
+    private FilterWrapper filter;
     private int batch;
     private int isScan;
     private boolean filterClosed = false;
@@ -3669,10 +3669,11 @@ public class HRegion implements HeapSize { // , Writable{
 
           // We have the part of the row necessary for filtering (all of it, usually).
           // First filter with the filterRow(List).
+          FilterWrapper.FilterRowRetCode ret = FilterWrapper.FilterRowRetCode.NOT_CALLED;
           if (filter != null && filter.hasFilterRow()) {
-            filter.filterRowCells(results);
+            ret = filter.filterRowCellsWithRet(results);
           }
-          if (isEmptyRow) {
+          if ((isEmptyRow || ret == FilterWrapper.FilterRowRetCode.EXCLUDE)) {
             boolean moreRows = nextRow(currentRow, offset, length);
             if (!moreRows) return false;
             results.clear();
