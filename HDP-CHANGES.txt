@@ -7,3 +7,4 @@ HBASE-10188 Deprecate ServerName constructors, but make it public (Nicolas Lioch
 Bug fixes:
 
 HBASE-10210 during master startup, RS can be you-are-dead-ed by master in error
+HBASE-10850 essential column family optimization is broken
