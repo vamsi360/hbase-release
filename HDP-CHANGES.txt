@@ -8,3 +8,7 @@ Bug fixes:
 
 HBASE-10210 during master startup, RS can be you-are-dead-ed by master in error
 HBASE-10850 essential column family optimization is broken
+HBASE-10219 HTTPS support for HBase in RegionServerListTmpl.jamon
+HBASE-10426 user_permission in security.rb calls non-existent UserPermission#getTable method
+HBASE-10581 ACL znode are left without PBed during upgrading hbase0.94* to hbase0.96+
+HBASE-10582 0.94->0.96 Upgrade: ACL can't be repopulated when ACL table contains row for table '-ROOT' or '.META.'
