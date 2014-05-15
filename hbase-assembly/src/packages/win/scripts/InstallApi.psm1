@@ -21,7 +21,7 @@
 ### Global variables
 ###
 $ScriptDir = Resolve-Path (Split-Path $MyInvocation.MyCommand.Path)
-$FinalName = "@final.name@"
+$FinalName = "hbase-@version@"
 $DefaultRoles = @("master","regionserver","hbrest")
 $WaitingTime = 10000
 
