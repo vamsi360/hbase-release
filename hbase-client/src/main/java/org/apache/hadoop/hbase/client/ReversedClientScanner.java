@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.client;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -53,8 +54,26 @@ public class ReversedClientScanner extends ClientScanner {
    * @throws IOException
    */
   public ReversedClientScanner(Configuration conf, Scan scan,
-      TableName tableName, HConnection connection) throws IOException {
+      TableName tableName, ClusterConnection connection) throws IOException {
     super(conf, scan, tableName, connection);
+  }
+
+  /**
+   * Create a new ReversibleClientScanner for the specified table Note that the
+   * passed {@link Scan}'s start row maybe changed.
+   * @param conf
+   * @param scan
+   * @param tableName
+   * @param connection
+   * @param pool
+   * @param primaryOperationTimeout
+   * @throws IOException
+   */
+  public ReversedClientScanner(Configuration conf, Scan scan,
+      TableName tableName, ClusterConnection connection,
+      RpcRetryingCallerFactory rpcFactory, RpcControllerFactory controllerFactory,
+      ExecutorService pool, int primaryOperationTimeout) throws IOException {
+    super(conf, scan, tableName, connection, rpcFactory, controllerFactory, pool, primaryOperationTimeout);
   }
 
   @Override
@@ -63,7 +82,9 @@ public class ReversedClientScanner extends ClientScanner {
     // Close the previous scanner if it's open
     if (this.callable != null) {
       this.callable.setClose();
-      this.caller.callWithRetries(callable);
+      // callWithoutRetries is at this layer. Within the ScannerCallableWithReplicas,
+      // we do a callWithRetries
+      this.caller.callWithoutRetries(callable, scannerTimeout);
       this.callable = null;
     }
 
@@ -111,7 +132,9 @@ public class ReversedClientScanner extends ClientScanner {
       callable = getScannerCallable(localStartKey, nbRows, locateStartRow);
       // Open a scanner on the region server starting at the
       // beginning of the region
-      this.caller.callWithRetries(callable);
+      // callWithoutRetries is at this layer. Within the ScannerCallableWithReplicas,
+      // we do a callWithRetries
+      this.caller.callWithoutRetries(callable, scannerTimeout);
       this.currentRegion = callable.getHRegionInfo();
       if (this.scanMetrics != null) {
         this.scanMetrics.countOfRegions.incrementAndGet();
@@ -123,15 +146,18 @@ public class ReversedClientScanner extends ClientScanner {
     }
     return true;
   }
-  
-  protected ScannerCallable getScannerCallable(byte[] localStartKey,
+
+  protected ScannerCallableWithReplicas getScannerCallable(byte[] localStartKey,
       int nbRows, byte[] locateStartRow) {
     scan.setStartRow(localStartKey);
     ScannerCallable s =
         new ReversedScannerCallable(getConnection(), getTable(), scan, this.scanMetrics,
-            locateStartRow, rpcControllerFactory.newController());
+            locateStartRow, rpcControllerFactory);
     s.setCaching(nbRows);
-    return s;
+    ScannerCallableWithReplicas sr = new ScannerCallableWithReplicas(getTable(), getConnection(),
+        s, pool, primaryOperationTimeout, scan,
+        getRetries(), getScannerTimeout(), caching, getConf(), caller);
+    return sr;
   }
 
   @Override
@@ -172,5 +198,4 @@ public class ReversedClientScanner extends ClientScanner {
       return closestFrontRow;
     }
   }
-
 }

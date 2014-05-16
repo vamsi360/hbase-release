@@ -19,7 +19,6 @@ package org.apache.hadoop.hbase.client;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -56,8 +55,8 @@ class MultiServerCallable<R> extends RegionServerCallable<MultiResponse> {
   private final boolean cellBlock;
   private RpcControllerFactory rpcFactory;
 
-  MultiServerCallable(final HConnection connection, final TableName tableName,
-      final ServerName location, final RpcControllerFactory rpcFactory, final MultiAction<R> multi) {
+  MultiServerCallable(final ClusterConnection connection, final TableName tableName,
+      final ServerName location, RpcControllerFactory rpcFactory, final MultiAction<R> multi) {
     super(connection, tableName, null);
     this.rpcFactory = rpcFactory;
     this.multiAction = multi;
