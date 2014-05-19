@@ -181,10 +181,10 @@ Test-JavaHome
             $hbaseRootDir = "hdfs://${ENV:HA_CLUSTER_NAME}/apps/hbase/data"
         }
 
-        $zookeeper_quorum = ($ENV:ZOOKEEPER_HOSTS.Split(",") | foreach { $_.Trim() + ":2181"}) -join ","
         UpdateXmlConfig $hbaseSiteXmlFile @{
-        "hbase.rootdir" = "$hbaseRootDir"
-        "hbase.zookeeper.quorum" = "$zookeeper_quorum"}
+        "hbase.rootdir" = "$hbaseRootDir";
+        "hbase.zookeeper.quorum" = "$ENV:ZOOKEEPER_HOSTS";
+        "hbase.zookeeper.property.clientPort" = "2181"}
         if ($ENV:IS_PHOENIX -ieq "yes") {
             UpdateXmlConfig $hbaseSiteXmlFile @{"hbase.regionserver.wal.codec" = "org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec"}
         }
