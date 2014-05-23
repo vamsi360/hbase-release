@@ -61,6 +61,7 @@ import org.apache.hadoop.hbase.filter.BinaryComparator;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.ipc.PayloadCarryingRpcController;
 import org.apache.hadoop.hbase.ipc.RegionCoprocessorRpcChannel;
+import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
@@ -75,6 +76,7 @@ import org.apache.hadoop.hbase.util.Threads;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
 import com.google.protobuf.ServiceException;
@@ -149,6 +151,7 @@ public class HTable implements HTableInterface {
   /** The Async process for batch */
   protected AsyncProcess multiAp;
   private RpcRetryingCallerFactory rpcCallerFactory;
+  private RpcControllerFactory rpcControllerFactory;
 
   /**
    * Creates an object to access a HBase table.
@@ -369,8 +372,9 @@ public class HTable implements HTableInterface {
             HConstants.DEFAULT_HBASE_CLIENT_RETRIES_NUMBER);
 
     this.rpcCallerFactory = RpcRetryingCallerFactory.instantiate(configuration);
+    this.rpcControllerFactory = RpcControllerFactory.instantiate(configuration);
     // puts need to track errors globally due to how the APIs currently work.
-    ap = new AsyncProcess(connection, configuration, pool, rpcCallerFactory, true);
+    ap = new AsyncProcess(connection, configuration, pool, rpcCallerFactory, true, rpcControllerFactory);
     multiAp = this.connection.getAsyncProcess();
 
     this.maxKeyValueSize = this.configuration.getInt(
@@ -747,11 +751,10 @@ public class HTable implements HTableInterface {
    throws IOException {
      RegionServerCallable<Result> callable = new RegionServerCallable<Result>(this.connection,
          tableName, row) {
-       @Override
-      public Result call() throws IOException {
-         return ProtobufUtil.getRowOrBefore(getStub(),
-           getLocation().getRegionInfo().getRegionName(), row, family);
-       }
+       public Result call() throws IOException {
+            return ProtobufUtil.getRowOrBefore(getStub(), getLocation().getRegionInfo()
+                .getRegionName(), row, family, rpcControllerFactory.newController());
+          }
      };
     return rpcCallerFactory.<Result> newCaller().callWithRetries(callable, this.operationTimeout);
   }
@@ -770,17 +773,14 @@ public class HTable implements HTableInterface {
         return new ClientSmallReversedScanner(getConfiguration(), scan, getName(),
             this.connection);
       } else {
-        return new ReversedClientScanner(getConfiguration(), scan, getName(),
-            this.connection);
+        return new ReversedClientScanner(getConfiguration(), scan, getName(), this.connection);
       }
     }
 
     if (scan.isSmall()) {
-      return new ClientSmallScanner(getConfiguration(), scan, getName(),
-          this.connection, this.rpcCallerFactory);
+      return new ClientSmallScanner(getConfiguration(), scan, getName(), this.connection);
     } else {
-      return new ClientScanner(getConfiguration(), scan,
-          getName(), this.connection);
+      return new ClientScanner(getConfiguration(), scan, getName(), this.connection);
     }
   }
 
@@ -816,13 +816,19 @@ public class HTable implements HTableInterface {
 
     if (get.getConsistency() == Consistency.STRONG) {
       // Good old call.
-      RegionServerCallable<Result> callable = new RegionServerCallable<Result>(this.connection,
-          getName(), get.getRow()) {
-        public Result call() throws IOException {
-          return ProtobufUtil.get(getStub(), getLocation().getRegionInfo().getRegionName(), get);
-        }
-      };
-      return rpcCallerFactory.<Result>newCaller().callWithRetries(callable, this.operationTimeout);
+      // have to instanatiate this and set the priority here since in protobuf util we don't pass in
+      // the tablename... an unfortunate side-effect of public interfaces :-/ In 0.99+ we put all the
+      // logic back into HTable
+      final PayloadCarryingRpcController controller = rpcControllerFactory.newController();
+      controller.setPriority(tableName);
+      RegionServerCallable<Result> callable =
+          new RegionServerCallable<Result>(this.connection, getName(), get.getRow()) {
+            public Result call() throws IOException {
+              return ProtobufUtil.get(getStub(), getLocation().getRegionInfo().getRegionName(), get,
+                controller);
+            }
+          };
+      return rpcCallerFactory.<Result> newCaller().callWithRetries(callable, this.operationTimeout);
     }
 
     // Call that takes into account the replica
@@ -924,7 +930,9 @@ public class HTable implements HTableInterface {
         try {
           MutateRequest request = RequestConverter.buildMutateRequest(
             getLocation().getRegionInfo().getRegionName(), delete);
-          MutateResponse response = getStub().mutate(null, request);
+              PayloadCarryingRpcController controller = rpcControllerFactory.newController();
+              controller.setPriority(tableName);
+              MutateResponse response = getStub().mutate(controller, request);
           return Boolean.valueOf(response.getProcessed());
         } catch (ServiceException se) {
           throw ProtobufUtil.getRemoteException(se);
@@ -1064,9 +1072,9 @@ public class HTable implements HTableInterface {
           regionMutationBuilder.setAtomic(true);
           MultiRequest request =
             MultiRequest.newBuilder().addRegionAction(regionMutationBuilder.build()).build();
-          PayloadCarryingRpcController pcrc = new PayloadCarryingRpcController();
+          PayloadCarryingRpcController pcrc = rpcControllerFactory.newController();
           pcrc.setPriority(tableName);
-          getStub().multi(null, request);
+          getStub().multi(pcrc, request);
         } catch (ServiceException se) {
           throw ProtobufUtil.getRemoteException(se);
         }
@@ -1095,7 +1103,7 @@ public class HTable implements HTableInterface {
           try {
             MutateRequest request = RequestConverter.buildMutateRequest(
               getLocation().getRegionInfo().getRegionName(), append, nonceGroup, nonce);
-            PayloadCarryingRpcController rpcController = new PayloadCarryingRpcController();
+            PayloadCarryingRpcController rpcController = rpcControllerFactory.newController();
             rpcController.setPriority(getTableName());
             MutateResponse response = getStub().mutate(rpcController, request);
             if (!response.hasResult()) return null;
@@ -1126,15 +1134,15 @@ public class HTable implements HTableInterface {
         try {
           MutateRequest request = RequestConverter.buildMutateRequest(
             getLocation().getRegionInfo().getRegionName(), increment, nonceGroup, nonce);
-          PayloadCarryingRpcController rpcController = new PayloadCarryingRpcController();
+          PayloadCarryingRpcController rpcController = rpcControllerFactory.newController();
           rpcController.setPriority(getTableName());
           MutateResponse response = getStub().mutate(rpcController, request);
           return ProtobufUtil.toResult(response.getResult(), rpcController.cellScanner());
         } catch (ServiceException se) {
           throw ProtobufUtil.getRemoteException(se);
         }
-        }
-      };
+      }
+    };
     return rpcCallerFactory.<Result> newCaller().callWithRetries(callable, this.operationTimeout);
   }
 
@@ -1190,7 +1198,7 @@ public class HTable implements HTableInterface {
             MutateRequest request = RequestConverter.buildIncrementRequest(
               getLocation().getRegionInfo().getRegionName(), row, family,
               qualifier, amount, durability, nonceGroup, nonce);
-            PayloadCarryingRpcController rpcController = new PayloadCarryingRpcController();
+            PayloadCarryingRpcController rpcController = rpcControllerFactory.newController();
             rpcController.setPriority(getTableName());
             MutateResponse response = getStub().mutate(rpcController, request);
             Result result =
@@ -1220,7 +1228,9 @@ public class HTable implements HTableInterface {
             MutateRequest request = RequestConverter.buildMutateRequest(
               getLocation().getRegionInfo().getRegionName(), row, family, qualifier,
                 new BinaryComparator(value), CompareType.EQUAL, put);
-            MutateResponse response = getStub().mutate(null, request);
+            PayloadCarryingRpcController rpcController = rpcControllerFactory.newController();
+            rpcController.setPriority(getTableName());
+            MutateResponse response = getStub().mutate(rpcController, request);
             return Boolean.valueOf(response.getProcessed());
           } catch (ServiceException se) {
             throw ProtobufUtil.getRemoteException(se);
@@ -1247,7 +1257,9 @@ public class HTable implements HTableInterface {
             MutateRequest request = RequestConverter.buildMutateRequest(
               getLocation().getRegionInfo().getRegionName(), row, family, qualifier,
                 new BinaryComparator(value), CompareType.EQUAL, delete);
-            MutateResponse response = getStub().mutate(null, request);
+            PayloadCarryingRpcController rpcController = rpcControllerFactory.newController();
+            rpcController.setPriority(getTableName());
+            MutateResponse response = getStub().mutate(rpcController, request);
             return Boolean.valueOf(response.getProcessed());
           } catch (ServiceException se) {
             throw ProtobufUtil.getRemoteException(se);
@@ -1552,7 +1564,8 @@ public class HTable implements HTableInterface {
    */
   @Override
   public CoprocessorRpcChannel coprocessorService(byte[] row) {
-    return new RegionCoprocessorRpcChannel(connection, tableName, row);
+    return new RegionCoprocessorRpcChannel(connection, tableName, row, rpcCallerFactory,
+        rpcControllerFactory);
   }
 
   /**
@@ -1590,7 +1603,8 @@ public class HTable implements HTableInterface {
         new TreeMap<byte[],Future<R>>(Bytes.BYTES_COMPARATOR);
     for (final byte[] r : keys) {
       final RegionCoprocessorRpcChannel channel =
-          new RegionCoprocessorRpcChannel(connection, tableName, r);
+          new RegionCoprocessorRpcChannel(connection, tableName, r, rpcCallerFactory,
+              rpcControllerFactory);
       Future<R> future = pool.submit(
           new Callable<R>() {
             @Override
@@ -1764,8 +1778,7 @@ public class HTable implements HTableInterface {
             return !(exception instanceof DoNotRetryIOException);
           }
         },
-        configuration,
-        RpcRetryingCallerFactory.instantiate(configuration));
+        configuration, rpcCallerFactory, rpcControllerFactory);
 
     asyncProcess.submitAll(execs);
     asyncProcess.waitUntilDone();

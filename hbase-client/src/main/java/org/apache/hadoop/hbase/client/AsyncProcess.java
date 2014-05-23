@@ -49,11 +49,13 @@ import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
+import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.cloudera.htrace.Trace;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 
 /**
  * This class  allows a continuous flow of requests. It's written to be compatible with a
@@ -183,6 +185,30 @@ class AsyncProcess {
   protected long clientOpTimeout;
   protected long primaryCallTimeoutMicroseconds;
   // End configuration settings.
+  protected RpcRetryingCallerFactory rpcCallerFactory;
+  private RpcControllerFactory rpcFactory;
+
+
+  /**
+   * This interface allows to keep the interface of the previous synchronous interface, that uses
+   * an array of object to return the result.
+   * <p/>
+   * This interface allows the caller to specify the behavior on errors: <list>
+   * <li>If we have not yet reach the maximum number of retries, the user can nevertheless
+   * specify if this specific operation should be retried or not.
+   * </li>
+   * <li>If an operation fails (i.e. is not retried or fails after all retries), the user can
+   * specify is we should mark this AsyncProcess as in error or not.
+   * </li>
+   * </list>
+   */
+  interface AsyncProcessCallback<CResult> {
+
+    /**
+     * Called on success. originalIndex holds the index in the action list.
+     */
+    void success(int originalIndex, byte[] region, Row row, CResult result);
+>>>>>>> HBASE-11048 Support setting custom priority per client RPC
 
   protected static class BatchErrors {
     private final List<Throwable> throwables = new ArrayList<Throwable>();
@@ -223,7 +249,7 @@ class AsyncProcess {
   }
 
   public AsyncProcess(ClusterConnection hc, Configuration conf, ExecutorService pool,
-      RpcRetryingCallerFactory rpcCaller, boolean useGlobalErrors) {
+      RpcRetryingCallerFactory rpcCaller, boolean useGlobalErrors, RpcControllerFactory rpcFactory) {
     if (hc == null) {
       throw new IllegalArgumentException("HConnection cannot be null.");
     }
@@ -278,8 +304,9 @@ class AsyncProcess {
       serverTrackerTimeout += ConnectionUtils.getPauseTime(this.pause, i);
     }
 
-
     this.rpcCallerFactory = rpcCaller;
+    Preconditions.checkNotNull(rpcFactory);
+    this.rpcFactory = rpcFactory;
   }
 
   private ExecutorService getPool(ExecutorService pool) {
@@ -848,7 +875,6 @@ class AsyncProcess {
         }
       }
     }
-
 
     private HRegionLocation getReplicaLocationOrFail(Action<Row> action) {
       // We are going to try get location once again. For each action, we'll do it once

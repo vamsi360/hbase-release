@@ -2335,7 +2335,8 @@ class ConnectionManager {
     protected AsyncProcess createAsyncProcess(Configuration conf) {
       // No default pool available.
       return new AsyncProcess(
-          this, conf, this.batchPool, RpcRetryingCallerFactory.instantiate(conf), false);
+          this, conf, this.batchPool, callback, RpcRetryingCallerFactory.instantiate(conf), false,
+           RpcControllerFactory.instantiate(conf));
     }
 
     @Override

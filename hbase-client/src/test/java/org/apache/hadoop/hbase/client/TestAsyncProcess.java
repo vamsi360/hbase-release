@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.AsyncProcess.AsyncRequestFuture;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.client.coprocessor.Batch.Callback;
+import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Threads;
 import org.junit.Assert;
@@ -146,14 +147,14 @@ public class TestAsyncProcess {
     public MyAsyncProcess(ClusterConnection hc, Configuration conf, AtomicInteger nbThreads) {
       super(hc, conf, new ThreadPoolExecutor(1, 20, 60, TimeUnit.SECONDS,
           new SynchronousQueue<Runnable>(), new CountingThreadFactory(nbThreads)),
-            new RpcRetryingCallerFactory(conf), false);
+            new RpcRetryingCallerFactory(conf), false, new RpcControllerFactory(conf));
     }
 
     public MyAsyncProcess(
         ClusterConnection hc, Configuration conf, boolean useGlobalErrors) {
       super(hc, conf, new ThreadPoolExecutor(1, 20, 60, TimeUnit.SECONDS,
         new SynchronousQueue<Runnable>(), new CountingThreadFactory(new AtomicInteger())),
-          new RpcRetryingCallerFactory(conf), useGlobalErrors);
+          new RpcRetryingCallerFactory(conf), useGlobalErrors, new RpcControllerFactory(conf));
     }
 
     @Override
@@ -162,6 +163,13 @@ public class TestAsyncProcess {
             throws InterruptedIOException {
       // We use results in tests to check things, so override to always save them.
       return super.submit(DUMMY_TABLE, rows, atLeastOne, callback, true);
+    }
+
+    public MyAsyncProcess(HConnection hc, AsyncProcessCallback<Res> callback, Configuration conf,
+                          AtomicInteger nbThreads) {
+      super(hc, conf, new ThreadPoolExecutor(1, 20, 60, TimeUnit.SECONDS,
+        new SynchronousQueue<Runnable>(), new CountingThreadFactory(nbThreads)),
+          new RpcRetryingCallerFactory(conf), false, new RpcControllerFactory(conf));
     }
 
     @Override
