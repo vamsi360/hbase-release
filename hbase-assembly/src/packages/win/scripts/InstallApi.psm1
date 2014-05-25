@@ -204,11 +204,10 @@ function Uninstall(
         Invoke-Cmd $cmd
 
         ###
-        ### Removing Base_HOME environment variable
+        ### Removing HBASE installation environment variables
         ###
-        Write-Log "Removing ENV:HBASE_HOME, ENV:BASE_OPTS at machine scope"
+        Write-Log "Removing HBASE_HOME, HBASE_LIB_DIR, and HBASE_CONF_DIR environment variables at machine scope"
         [Environment]::SetEnvironmentVariable( "HBASE_HOME", $null, [EnvironmentVariableTarget]::Machine )
-        [Environment]::SetEnvironmentVariable( "HBASE_OPTS", $null, [EnvironmentVariableTarget]::Machine )
         [Environment]::SetEnvironmentVariable( "HBASE_LIB_DIR", $null, [EnvironmentVariableTarget]::Machine )
         [Environment]::SetEnvironmentVariable( "HBASE_CONF_DIR", $null, [EnvironmentVariableTarget]::Machine )
     }
@@ -269,6 +268,12 @@ function Configure(
         ###
         $xmlFile = Join-Path $hbaseInstallToDir "conf\hbase-site.xml"
         UpdateXmlConfig $xmlFile $configs
+
+        ###
+        ### Apply configuration changes to hbase-env.cmd
+        ###
+        $envFile = Join-Path $hbaseInstallToDir "conf\hbase-env.cmd"
+        UpdateEnvironmentConfig $envFile $configs
     }
     else
     {
@@ -474,12 +479,6 @@ function InstallBinaries(
 
     GiveFullPermissions "$hbaseLogsDir" "Users"
 
-    $ENV:HADOOP_OPTS += " -Dfile.encoding=UTF-8"
-    $ENV:HBASE_OPTS += " -Dhbase.log.dir=$hbaseLogsDir"
-    $ENV:HBASE_OPTS += " -Dhbase.log.file=$hbaseLogFile"
-    $ENV:HBASE_OPTS += " -Dhbase.home.dir=$hbaseInstallToDir"
-
-    [Environment]::SetEnvironmentVariable( "HBASE_OPTS", "$ENV:HBASE_OPTS", [EnvironmentVariableTarget]::Machine )
     [Environment]::SetEnvironmentVariable( "HBASE_LIB_DIR", "$ENV:HBASE_HOME\lib", [EnvironmentVariableTarget]::Machine )
     [Environment]::SetEnvironmentVariable( "HBASE_CONF_DIR", "$ENV:HBASE_HOME\conf", [EnvironmentVariableTarget]::Machine )
 
@@ -666,6 +665,48 @@ function UpdateXmlConfig(
 
     $xml.Save($fileName)
     $xml.ReleasePath
+}
+
+### Helper routine that is used for adding environment variable definitions to the end
+### of the standard hbase-env.cmd file.
+function UpdateEnvironmentConfig(
+    [string]
+    [parameter( Position=0, Mandatory=$true )]
+    $fileName,
+    [hashtable]
+    [parameter( Position=1 )]
+    $config = @{} )
+{
+    ### try to find regionserver options configuration setting
+    $regionServerOpts = $config["azure.hbase.regionserver.opts"]
+    if ($regionServerOpts -eq $null)
+    {
+        ### don't change the file if what we're looking for isn't there
+        return
+    }
+
+    ### prepare new line
+    $regionServerOptsLine = "set HBASE_REGIONSERVER_OPTS=`"" + $regionServerOpts + "`""
+
+    ### If HBASE_REGIONSERVER_OPTS is already defined in the file
+    ### then remove it. This is so we can do re-run the Configure 
+    ### operation without cluttering up the end of the file with confusing
+    ### repeated lines that set the same variable.
+    $newLines = @()
+    $lines = (Get-Content $fileName)
+    foreach ($line in $lines) {
+        $trimmed = $line.trim()
+        if (-not $trimmed.StartsWith("set HBASE_REGIONSERVER_OPTS"))
+        {
+            $newLines += $line
+        }
+    }
+
+    ### add it to new file content
+    $newLines += $regionServerOptsLine
+
+    ### replace the file content
+    $newLines | Set-Content $fileName
 }
 
 ###
