@@ -1,4 +1,4 @@
-@echo off
+rem @echo off
 @rem/*
 @rem * Licensed to the Apache Software Foundation (ASF) under one
 @rem * or more contributor license agreements.  See the NOTICE file
