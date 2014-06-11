@@ -568,12 +568,11 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD,
       HConstants.HBASE_REGIONSERVER_LEASE_PERIOD_KEY,
       HConstants.DEFAULT_HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD);
-
-    // Server to handle client requests.
-    String hostname = conf.get("hbase.regionserver.ipc.address",
-      Strings.domainNamePointerToHostName(DNS.getDefaultHost(
+    String h = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
         conf.get("hbase.regionserver.dns.interface", "default"),
-        conf.get("hbase.regionserver.dns.nameserver", "default"))));
+        conf.get("hbase.regionserver.dns.nameserver", "default")));
+    // Server to handle client requests.
+    String hostname = conf.get("hbase.regionserver.ipc.address", h);
     int port = conf.getInt(HConstants.REGIONSERVER_PORT,
       HConstants.DEFAULT_REGIONSERVER_PORT);
     // Creation of a HSA will force a resolve.
@@ -611,11 +610,11 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
 
     // login the zookeeper client principal (if using security)
     ZKUtil.loginClient(this.conf, "hbase.zookeeper.client.keytab.file",
-      "hbase.zookeeper.client.kerberos.principal", this.isa.getHostName());
+      "hbase.zookeeper.client.kerberos.principal", h);
 
     // login the server principal (if using secure Hadoop)
     userProvider.login("hbase.regionserver.keytab.file",
-      "hbase.regionserver.kerberos.principal", this.isa.getHostName());
+      "hbase.regionserver.kerberos.principal", h);
     regionServerAccounting = new RegionServerAccounting();
     cacheConfig = new CacheConfig(conf);
     uncaughtExceptionHandler = new UncaughtExceptionHandler() {

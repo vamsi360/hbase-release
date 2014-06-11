@@ -35,6 +35,7 @@ HBASE-10618 User should not be allowed to disable/drop visibility labels table
 HBASE-10895 unassign a region fails due to the hosting region server is in FailedServerList
 HBASE-10850 essential column family optimization is broken
 HBASE-10751 TestHRegion testWritesWhileScanning occasional fail since HBASE-10514 went in
+HBASE-11293 Master and Region servers fail to start when hbase.master.ipc.address=0.0.0.0, hbase.regionserver.ipc.address=0.0.0.0 and Kerberos is enabled
 
 Windows Fixes:
 HBASE-10799 [WINDOWS] TestImportTSVWithVisibilityLabels.testBulkOutputWithTsvImporterTextMapper fails on windows

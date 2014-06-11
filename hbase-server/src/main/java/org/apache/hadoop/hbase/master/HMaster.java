@@ -451,12 +451,12 @@ MasterServices, Server {
 
     // login the zookeeper client principal (if using security)
     ZKUtil.loginClient(this.conf, "hbase.zookeeper.client.keytab.file",
-      "hbase.zookeeper.client.kerberos.principal", this.isa.getHostName());
+      "hbase.zookeeper.client.kerberos.principal", hostname);
 
     // initialize server principal (if using secure Hadoop)
     UserProvider provider = UserProvider.instantiate(conf);
     provider.login("hbase.master.keytab.file",
-      "hbase.master.kerberos.principal", this.isa.getHostName());
+      "hbase.master.kerberos.principal", hostname);
 
     LOG.info("hbase.rootdir=" + FSUtils.getRootDir(this.conf) +
         ", hbase.cluster.distributed=" + this.conf.getBoolean("hbase.cluster.distributed", false));
