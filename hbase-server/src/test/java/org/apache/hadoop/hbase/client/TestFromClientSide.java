@@ -4586,7 +4586,7 @@ public class TestFromClientSide {
     }
     // try null row
     try {
-      Increment incNoRow = new Increment(null);
+      Increment incNoRow = new Increment((byte [])null);
       incNoRow.addColumn(FAMILY, COLUMN, 5);
       fail("Should have thrown IllegalArgumentException");
     } catch (IllegalArgumentException iax) {
