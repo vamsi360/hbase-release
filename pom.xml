@@ -385,6 +385,27 @@
   </developers>
   <repositories>
     <repository>
+       <releases>
+           <enabled>true</enabled>
+       </releases>
+       <snapshots>
+           <enabled>false</enabled>
+       </snapshots>
+       <id>central</id>
+       <url>http://repo1.maven.org/maven2/</url>
+    </repository>
+    <repository>
+        <releases>
+                <enabled>true</enabled>
+        </releases>
+        <snapshots>
+                <enabled>false</enabled>
+        </snapshots>	
+        <id>hortonworks.repo</id>
+        <name>Hortonworks Repo</name>
+        <url>http://repo.hortonworks.com/content/repositories/releases</url>
+    </repository> 
+    <repository>
       <id>apache release</id>
       <url>https://repository.apache.org/content/repositories/releases/</url>
     </repository>
