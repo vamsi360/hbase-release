@@ -285,6 +285,33 @@ public class TestAsyncProcess {
     }
   }
 
+  static class CallerWithFailure extends RpcRetryingCaller<MultiResponse>{
+
+    public CallerWithFailure() {
+      super(100, 100);
+    }
+
+    @Override
+    public MultiResponse callWithoutRetries(RetryingCallable<MultiResponse> callable)
+      throws IOException, RuntimeException {
+      throw new IOException("test");
+    }
+  }
+
+  static class AsyncProcessWithFailure<Res> extends MyAsyncProcess<Res> {
+
+    public AsyncProcessWithFailure(HConnection hc, Configuration conf) {
+      super(hc, null, conf, new AtomicInteger());
+      serverTrackerTimeout = 1;
+    }
+
+    @Override
+    protected RpcRetryingCaller<MultiResponse> createCaller(MultiServerCallable<Row> callable) {
+      return new CallerWithFailure();
+    }
+  }
+
+
   static MultiResponse createMultiResponse(final MultiAction<Row> multi,
       AtomicInteger nbMultiResponse, AtomicInteger nbActions, ResponseGenerator gen) {
     final MultiResponse mr = new MultiResponse();
@@ -790,6 +817,33 @@ public class TestAsyncProcess {
     // Checking that the ErrorsServers came into play and didn't make us stop immediately
     Assert.assertEquals(2, ap.getRetriesRequested());
   }
+
+  @Test
+  public void testGlobalErrors() throws IOException {
+    HTable ht = new HTable();
+    Configuration configuration = new Configuration(conf);
+    configuration.setBoolean(HConnectionManager.RETRIES_BY_SERVER_KEY, true);
+    configuration.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 3);
+    ht.connection = new MyConnectionImpl(configuration);
+    AsyncProcessWithFailure<Object> ap =
+      new AsyncProcessWithFailure<Object>(ht.connection, configuration);
+    ht.ap = ap;
+
+    Assert.assertNotNull(ht.ap.createServerErrorTracker());
+
+    Put p = createPut(1, true);
+    ht.setAutoFlush(false, false);
+    ht.put(p);
+
+    try {
+      ht.flushCommits();
+      Assert.fail();
+    } catch (RetriesExhaustedWithDetailsException expected) {
+    }
+    // Checking that the ErrorsServers came into play and didn't make us stop immediately
+    Assert.assertEquals(3, ht.ap.tasksSent.get());
+  }
+
 
   /**
    * This test simulates multiple regions on 2 servers. We should have 2 multi requests and
