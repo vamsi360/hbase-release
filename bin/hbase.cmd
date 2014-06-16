@@ -239,6 +239,8 @@ if "%servercommand%" == "true" (
 )
 
 @rem If HBase is run as a windows service, configure logging
+@rem HBASE_ROOT_LOGGER will be set when initializing the log4j ETW appender, 
+@rem so do not override this value if it is defined
 if defined service_entry (
   set HBASE_LOG_PREFIX=hbase-%hbase-command%-%COMPUTERNAME%
   set HBASE_LOGFILE=!HBASE_LOG_PREFIX!.log
