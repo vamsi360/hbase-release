@@ -102,9 +102,9 @@
             <ul class="nav navbar-nav">
                 <li><a href="/master-status">Home</a></li>
                 <li><a href="/tablesDetailed.jsp">Table Details</a></li>
-                <li><a href="/logs/">Local logs</a></li>
+                <li><a href="/logs/">Local Logs</a></li>
                 <li><a href="/logLevel">Log Level</a></li>
-                <li><a href="/dump">Debug dump</a></li>
+                <li><a href="/dump">Debug Dump</a></li>
                 <li><a href="/jmx">Metrics Dump</a></li>
                 <% if (HBaseConfiguration.isShowConfInServlet()) { %>
                 <li><a href="/conf">HBase Configuration</a></li>
@@ -178,9 +178,9 @@
             <ul class="nav navbar-nav">
                 <li><a href="/master-status">Home</a></li>
                 <li><a href="/tablesDetailed.jsp">Table Details</a></li>
-                <li><a href="/logs/">Local logs</a></li>
+                <li><a href="/logs/">Local Logs</a></li>
                 <li><a href="/logLevel">Log Level</a></li>
-                <li><a href="/dump">Debug dump</a></li>
+                <li><a href="/dump">Debug Dump</a></li>
                 <li><a href="/jmx">Metrics Dump</a></li>
             </ul>
         </div><!--/.nav-collapse -->
