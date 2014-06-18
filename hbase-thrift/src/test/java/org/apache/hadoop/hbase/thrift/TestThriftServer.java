@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.filter.ParseFilter;
+import org.apache.hadoop.hbase.security.UserProvider;
 import org.apache.hadoop.hbase.test.MetricsAssertHelper;
 import org.apache.hadoop.hbase.thrift.ThriftServerRunner.HBaseHandler;
 import org.apache.hadoop.hbase.thrift.generated.BatchMutation;
@@ -133,7 +134,8 @@ public class TestThriftServer {
    */
   public void doTestTableCreateDrop() throws Exception {
     ThriftServerRunner.HBaseHandler handler =
-      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration());
+      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration(),
+        UserProvider.instantiate(UTIL.getConfiguration()));
     doTestTableCreateDrop(handler);
   }
 
@@ -147,7 +149,7 @@ public class TestThriftServer {
 
     protected MySlowHBaseHandler(Configuration c)
         throws IOException {
-      super(c);
+      super(c, UserProvider.instantiate(c));
     }
 
     @Override
@@ -252,7 +254,8 @@ public class TestThriftServer {
 
   public void doTestIncrements() throws Exception {
     ThriftServerRunner.HBaseHandler handler =
-        new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration());
+      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration(),
+        UserProvider.instantiate(UTIL.getConfiguration()));
     createTestTables(handler);
     doTestIncrements(handler);
     dropTestTables(handler);
@@ -299,7 +302,8 @@ public class TestThriftServer {
    */
   public void doTestTableMutations() throws Exception {
     ThriftServerRunner.HBaseHandler handler =
-      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration());
+      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration(),
+        UserProvider.instantiate(UTIL.getConfiguration()));
     doTestTableMutations(handler);
   }
 
@@ -377,7 +381,8 @@ public class TestThriftServer {
   public void doTestTableTimestampsAndColumns() throws Exception {
     // Setup
     ThriftServerRunner.HBaseHandler handler =
-      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration());
+      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration(),
+        UserProvider.instantiate(UTIL.getConfiguration()));
     handler.createTable(tableAname, getColumnDescriptors());
 
     // Apply timestamped Mutations to rowA
@@ -456,7 +461,8 @@ public class TestThriftServer {
   public void doTestTableScanners() throws Exception {
     // Setup
     ThriftServerRunner.HBaseHandler handler =
-      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration());
+      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration(),
+        UserProvider.instantiate(UTIL.getConfiguration()));
     handler.createTable(tableAname, getColumnDescriptors());
 
     // Apply timestamped Mutations to rowA
@@ -564,7 +570,8 @@ public class TestThriftServer {
    */
   public void doTestGetTableRegions() throws Exception {
     ThriftServerRunner.HBaseHandler handler =
-      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration());
+      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration(),
+        UserProvider.instantiate(UTIL.getConfiguration()));
     doTestGetTableRegions(handler);
   }
 
@@ -599,7 +606,8 @@ public class TestThriftServer {
 
   public void doTestGetRegionInfo() throws Exception {
     ThriftServerRunner.HBaseHandler handler =
-      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration());
+      new ThriftServerRunner.HBaseHandler(UTIL.getConfiguration(),
+        UserProvider.instantiate(UTIL.getConfiguration()));
     doTestGetRegionInfo(handler);
   }
 
