@@ -188,7 +188,7 @@ public class TestAsyncProcess {
 
       return new RpcRetryingCaller<MultiResponse>(conf) {
         @Override
-        public MultiResponse callWithoutRetries( RetryingCallable<MultiResponse> callable)
+        public MultiResponse callWithoutRetries(RetryingCallable<MultiResponse> callable, int to)
         throws IOException, RuntimeException {
           try {
             // sleep one second in order for threadpool to start another thread instead of reusing
@@ -292,7 +292,7 @@ public class TestAsyncProcess {
     }
 
     @Override
-    public MultiResponse callWithoutRetries(RetryingCallable<MultiResponse> callable)
+    public MultiResponse callWithoutRetries(RetryingCallable<MultiResponse> callable, int to)
       throws IOException, RuntimeException {
       throw new IOException("test");
     }
