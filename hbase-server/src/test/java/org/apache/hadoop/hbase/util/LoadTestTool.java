@@ -39,8 +39,8 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.PerformanceEvaluation;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.io.crypto.Cipher;
@@ -110,8 +110,10 @@ public class LoadTestTool extends AbstractHBaseTool {
         + "compression) to use for data blocks in the test column family, "
         + "one of " + Arrays.toString(DataBlockEncoding.values()) + ".";
 
-  public static final String OPT_BLOOM = "bloom";
-  public static final String OPT_COMPRESSION = "compression";
+  private static final String OPT_BLOOM = "bloom";
+  private static final String OPT_COMPRESSION = "compression";
+  private static final String OPT_DEFERRED_LOG_FLUSH = "deferredlogflush";
+  public static final String OPT_DEFERRED_LOG_FLUSH_USAGE = "Enable deferred log flush.";
   public static final String OPT_DATA_BLOCK_ENCODING =
       HColumnDescriptor.DATA_BLOCK_ENCODING.toLowerCase();
 
@@ -170,6 +172,7 @@ public class LoadTestTool extends AbstractHBaseTool {
   protected long startKey, endKey;
 
   protected boolean isWrite, isRead, isUpdate;
+  protected boolean deferredLogFlush;
 
   // Column family options
   protected DataBlockEncoding dataBlockEncodingAlgo;
@@ -276,6 +279,7 @@ public class LoadTestTool extends AbstractHBaseTool {
     }
     LOG.info("Enabling table " + tableName);
     admin.enableTable(tableName);
+    admin.close();
   }
 
   @Override
@@ -327,6 +331,7 @@ public class LoadTestTool extends AbstractHBaseTool {
     addOptWithArg(OPT_ENCRYPTION, OPT_ENCRYPTION_USAGE);
     addOptWithArg(OPT_NUM_REGIONS_PER_SERVER, OPT_NUM_REGIONS_PER_SERVER_USAGE);
     addOptWithArg(OPT_REGION_REPLICATION, OPT_REGION_REPLICATION_USAGE);
+    addOptNoArg(OPT_DEFERRED_LOG_FLUSH, OPT_DEFERRED_LOG_FLUSH_USAGE);
   }
 
   @Override
@@ -340,6 +345,7 @@ public class LoadTestTool extends AbstractHBaseTool {
     isRead = cmd.hasOption(OPT_READ);
     isUpdate = cmd.hasOption(OPT_UPDATE);
     isInitOnly = cmd.hasOption(OPT_INIT_ONLY);
+    deferredLogFlush = cmd.hasOption(OPT_DEFERRED_LOG_FLUSH);
 
     if (!isWrite && !isRead && !isUpdate && !isInitOnly) {
       throw new IllegalArgumentException("Either -" + OPT_WRITE + " or " +
@@ -467,13 +473,14 @@ public class LoadTestTool extends AbstractHBaseTool {
         Compression.Algorithm.valueOf(compressStr);
 
     String bloomStr = cmd.getOptionValue(OPT_BLOOM);
-    bloomType = bloomStr == null ? null :
+    bloomType = bloomStr == null ? BloomType.ROW :
         BloomType.valueOf(bloomStr);
 
     inMemoryCF = cmd.hasOption(OPT_INMEMORY);
     if (cmd.hasOption(OPT_ENCRYPTION)) {
       cipher = Encryption.getCipher(conf, cmd.getOptionValue(OPT_ENCRYPTION));
     }
+
   }
 
   public void initTestTable() throws IOException {

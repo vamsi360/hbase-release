@@ -72,6 +72,7 @@ import org.apache.hadoop.hbase.filter.WhileMatchFilter;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
+import org.apache.hadoop.hbase.regionserver.BloomType;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Hash;
 import org.apache.hadoop.hbase.util.MurmurHash;
@@ -322,6 +323,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
     HColumnDescriptor family = new HColumnDescriptor(FAMILY_NAME);
     family.setDataBlockEncoding(opts.blockEncoding);
     family.setCompressionType(opts.compression);
+    family.setBloomFilterType(opts.bloomType);
     if (opts.inMemoryCF) {
       family.setInMemory(true);
     }
@@ -550,6 +552,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
       this.compression = that.compression;
       this.blockEncoding = that.blockEncoding;
       this.filterAll = that.filterAll;
+      this.bloomType = that.bloomType;
     }
 
     public String cmdName = null;
@@ -572,6 +575,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
     public int replicas = HTableDescriptor.DEFAULT_REGION_REPLICATION;
     public String splitPolicy = null;
     public Compression.Algorithm compression = Compression.Algorithm.NONE;
+    public BloomType bloomType = BloomType.ROW;
     public DataBlockEncoding blockEncoding = DataBlockEncoding.NONE;
   }
 
@@ -1172,6 +1176,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
       "by randomRead. Default: disabled");
     System.err.println(" replicas        Enable region replica testing. Defaults: 1.");
     System.err.println(" splitPolicy     Specify a custom RegionSplitPolicy for the table.");
+    System.err.println(" bloomFilter      Bloom filter type, one of " + Arrays.toString(BloomType.values()));
     System.err.println();
     System.err.println(" Note: -D properties will be applied to the conf used. ");
     System.err.println("  For example: ");
@@ -1303,6 +1308,12 @@ public class PerformanceEvaluation extends Configured implements Tool {
       final String replicas = "--replicas=";
       if (cmd.startsWith(replicas)) {
         opts.replicas = Integer.parseInt(cmd.substring(replicas.length()));
+        continue;
+      }
+
+      final String bloomFilter = "--bloomFilter";
+      if (cmd.startsWith(bloomFilter)) {
+        opts.bloomType = BloomType.valueOf(cmd.substring(bloomFilter.length()));
         continue;
       }
 
