@@ -262,18 +262,30 @@ function Configure(
         {
             throw "ConfigureHBase: Install the hbase before configuring it"
         }
+        
+        ###
+        ### Apply configuration changes to service xmls
+        ###
+        foreach( $service in ("hbrest", "regionserver", "master"))
+        {
+            $serviceXmlFile = Join-Path $hbaseInstallToDir "bin\$service.xml"
+            # Apply configs only if the service xml exist
+            if ( Test-Path $serviceXmlFile )
+            {
+                [hashtable]$configs = ConfigureServiceXml $serviceXmlFile $service $configs
+            }
+        }
+
+        ###
+        ### Apply configuration changes to environment variables
+        ###
+        [hashtable]$configs = UpdateEnvVariables $configs
 
         ###
         ### Apply configuration changes to hbase-site.xml
         ###
         $xmlFile = Join-Path $hbaseInstallToDir "conf\hbase-site.xml"
         UpdateXmlConfig $xmlFile $configs
-
-        ###
-        ### Apply configuration changes to hbase-env.cmd
-        ###
-        $envFile = Join-Path $hbaseInstallToDir "conf\hbase-env.cmd"
-        UpdateEnvironmentConfig $envFile $configs
     }
     else
     {
@@ -667,9 +679,19 @@ function UpdateXmlConfig(
     $xml.ReleasePath
 }
 
-### Helper routine that is used for adding environment variable definitions to the end
-### of the standard hbase-env.cmd file.
-function UpdateEnvironmentConfig(
+### Helper routine that updates the given fileName XML file with the given
+### configuration values. The XML file is expected to be in the service
+### XML format. For example:
+### <service>
+###   <arguments>
+###     -Xms1024m -server -Xmx2048m -Dhadoop.root.logger=INFO
+###   </arguments>
+### </service>
+###
+### Example config hashmap entries:
+###   key: Xms
+###   value: -Xms1024m
+function UpdateServiceXmlConfig(
     [string]
     [parameter( Position=0, Mandatory=$true )]
     $fileName,
@@ -677,36 +699,125 @@ function UpdateEnvironmentConfig(
     [parameter( Position=1 )]
     $config = @{} )
 {
-    ### try to find regionserver options configuration setting
-    $regionServerOpts = $config["azure.hbase.regionserver.opts"]
-    if ($regionServerOpts -eq $null)
+    $xml = New-Object System.Xml.XmlDocument
+    $xml.PreserveWhitespace = $true
+    $xml.Load($fileName)
+
+    [string]$value = $xml.service.arguments
+
+    foreach( $key in empty-null $config.Keys )
     {
-        ### don't change the file if what we're looking for isn't there
-        return
-    }
+        # Given how java cmd line args are defined, the only thing
+        # we can do at this point is match as prefix. If this turns
+        # out to be buggy, we should introduce strongly named configs
+        # which are configurable.
 
-    ### prepare new line
-    $regionServerOptsLine = "set HBASE_REGIONSERVER_OPTS=`"" + $regionServerOpts + "`""
+        $newArg = $config[$key]
+        $escapedKey = [regex]::escape($key)
+        # Regex that matches config arg with the following properties
+        #  - It is on the beggining of a line or prefixed with space (quoted or unquoted)
+        #  - It is on the end of a line or followed with a space (quoted or unquoted)
+        #  - it contains the given key followed by: 0-9a-zA-Z\p{P}=
+        $regex = "(^| |(^| )"")-$escapedKey[0-9a-zA-Z\p{P}=]*?($| |""(^| ))"
 
-    ### If HBASE_REGIONSERVER_OPTS is already defined in the file
-    ### then remove it. This is so we can do re-run the Configure 
-    ### operation without cluttering up the end of the file with confusing
-    ### repeated lines that set the same variable.
-    $newLines = @()
-    $lines = (Get-Content $fileName)
-    foreach ($line in $lines) {
-        $trimmed = $line.trim()
-        if (-not $trimmed.StartsWith("set HBASE_REGIONSERVER_OPTS"))
+        if ( $value -imatch $regex )
         {
-            $newLines += $line
+            $value = $value -ireplace $regex, " $newArg "
+        }
+        else
+        {
+            # add a new entry to the beginning
+            $value = $config[$key] + " " + $value
         }
     }
 
-    ### add it to new file content
-    $newLines += $regionServerOptsLine
+    $xml.service.arguments = $value
 
-    ### replace the file content
-    $newLines | Set-Content $fileName
+    $xml.Save($fileName)
+    $xml.ReleasePath
+}
+
+### Helper method that extracts all servicexml configs from the "config"
+### hashmap and applies them to corresponding service.xml.
+### The function returns the list of configs that are not specific to this
+### service.
+### Example config:
+###   azure.servicexml.datanode.Xms = -Xms256m
+### Note that Xms and Xmx configs are case sensitive.
+function ConfigureServiceXml(
+    [string]
+    [parameter( Position=0, Mandatory=$true )]
+    $serviceXmlFileName,
+    [string]
+    [parameter( Position=1, Mandatory=$true )]
+    $serviceName,
+    [hashtable]
+    [parameter( Position=2 )]
+    $config = @{} )
+{
+    [hashtable]$newConfig = @{}
+    [hashtable]$newServiceConfig = @{}
+    foreach( $key in empty-null $config.Keys )
+    {
+        [string]$keyString = $key
+        $value = $config[$key]
+
+        if ( $keyString.StartsWith("azure.servicexml.$serviceName.", "InvariantCultureIgnoreCase") )
+        {
+            # remove the prefix to align with UpdateServiceXmlConfig contract
+            $newKey = $key -ireplace "azure\.servicexml\.$serviceName\.", ""
+            $newServiceConfig.Add($newKey, $value) > $null
+        }
+        else
+        {
+            $newConfig.Add($key, $value) > $null
+        }
+    }
+
+    # skip update if there are no service config changes
+    if ($newServiceConfig.Count -gt 0)
+    {
+        UpdateServiceXmlConfig $serviceXmlFileName $newServiceConfig > $null
+    }
+
+    $newConfig
+}
+
+### Helper method that extracts all environment variables from the 
+### "config" hashmap and sets them or replaces the value of the 
+### existing ones. The function returns the list of configs that 
+### are not including these ENV configs.
+### Example config:
+###   azure.env.HBASE.HEAPSIZE = 4000
+### This equals to setting HBASE_HEAPSIZE = 4000
+function UpdateEnvVariables(
+    [hashtable]
+    [parameter( Position=0 )]
+    $config = @{} )
+{
+    [hashtable]$newConfig = @{}
+    foreach( $key in empty-null $config.Keys )
+    {
+        [string]$keyString = $key
+        $value = $config[$key]
+        if ( $keyString.StartsWith("azure.env.", "InvariantCultureIgnoreCase") )
+        {
+            # remove the prefix to get the key
+            $newKey = $key -ireplace "azure\.env\.", ""
+            $newEnv = $newKey -ireplace "\.", "_"
+            [Environment]::SetEnvironmentVariable( $newEnv, $value, [EnvironmentVariableTarget]::Machine )
+        }
+        elseif ( $keyString.StartsWith("azure.servicexml.", "InvariantCultureIgnoreCase") )
+        {
+            # do not add service configurations into newConfig
+        }
+        else
+        {
+            $newConfig.Add($key, $value) > $null
+        }
+    }
+
+    $newConfig
 }
 
 ###
