@@ -804,8 +804,7 @@ function UpdateEnvVariables(
         {
             # remove the prefix to get the key
             $newKey = $key -ireplace "azure\.env\.", ""
-            $newEnv = $newKey -ireplace "\.", "_"
-            [Environment]::SetEnvironmentVariable( $newEnv, $value, [EnvironmentVariableTarget]::Machine )
+            [Environment]::SetEnvironmentVariable( $newKey, $value, [EnvironmentVariableTarget]::Machine )
         }
         elseif ( $keyString.StartsWith("azure.servicexml.", "InvariantCultureIgnoreCase") )
         {
