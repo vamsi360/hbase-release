@@ -4281,7 +4281,6 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         mArray[i++] = mutation;
       }
 
-      requestCount.add(mutations.size());
       if (!region.getRegionInfo().isMetaTable()) {
         cacheFlusher.reclaimMemStoreMemory();
       }
