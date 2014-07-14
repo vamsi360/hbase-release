@@ -140,6 +140,11 @@ public abstract class IntegrationTestBase extends AbstractHBaseTool {
     }
     return util;
   }
+  
+  protected MonkeyFactory getDefaultMonkeyFactory() {
+    return MonkeyFactory.getFactory(
+        util.isDistributedCluster() ? MonkeyFactory.CALM : MonkeyFactory.SLOW_DETERMINISTIC);
+  }
 
   public abstract void setUpCluster() throws Exception;
 
