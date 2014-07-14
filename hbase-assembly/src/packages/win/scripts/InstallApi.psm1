@@ -93,6 +93,14 @@ function Install(
         {
             InstallBinaries $nodeInstallRoot $serviceCredential
         }
+		
+        Write-Log "Adding the HBase custom jars into HBASE_CLASSPATH if exists"
+        if (Test-Path "$ENV:COMPONENT_RESOURCES_LOCATION")
+        {
+            $hbaseResourceDir = Join-Path "$ENV:COMPONENT_RESOURCES_LOCATION" "HBase\*"
+            [Environment]::SetEnvironmentVariable( "HBASE_CLASSPATH", $ENV:HBASE_CLASSPATH + ";" + $hbaseResourceDir, [EnvironmentVariableTarget]::Machine )
+            $ENV:HBASE_CLASSPATH = $ENV:HBASE_CLASSPATH + ";" + $hbaseResourceDir
+        }
 
         ###
         ### Create HBase Windows Services and grant user ACLS to start/stop
