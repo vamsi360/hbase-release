@@ -573,7 +573,7 @@ public class MetaEditor extends MetaReader {
     return p;
   }
 
-  private static Put addLocation(final Put p, final ServerName sn, long openSeqNum, int replicaId){
+  public static Put addLocation(final Put p, final ServerName sn, long openSeqNum, int replicaId){
     p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getServerColumn(replicaId),
       Bytes.toBytes(sn.getHostAndPort()));
     p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getStartCodeColumn(replicaId),
