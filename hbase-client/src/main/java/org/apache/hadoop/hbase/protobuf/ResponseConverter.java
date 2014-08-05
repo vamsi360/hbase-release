@@ -119,8 +119,7 @@ public final class ResponseConverter {
         if (roe.hasException()) {
           results.add(regionName, roe.getIndex(), ProtobufUtil.toException(roe.getException()));
         } else if (roe.hasResult()) {
-          results.add(regionName, new Pair<Integer, Object>(roe.getIndex(),
-              ProtobufUtil.toResult(roe.getResult(), cells)));
+          results.add(regionName, roe.getIndex(), ProtobufUtil.toResult(roe.getResult(), cells));
         } else if (roe.hasServiceResult()) {
           results.add(regionName, roe.getIndex(), roe.getServiceResult());
         } else {

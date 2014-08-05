@@ -58,7 +58,7 @@ public class MultiThreadedUpdaterWithACL extends MultiThreadedUpdater {
   private String[] userNames;
 
   public MultiThreadedUpdaterWithACL(LoadTestDataGenerator dataGen, Configuration conf,
-      TableName tableName, double updatePercent, User userOwner, String userNames) {
+      TableName tableName, double updatePercent, User userOwner, String userNames) throws IOException {
     super(dataGen, conf, tableName, updatePercent);
     this.userOwner = userOwner;
     this.userNames = userNames.split(COMMA);

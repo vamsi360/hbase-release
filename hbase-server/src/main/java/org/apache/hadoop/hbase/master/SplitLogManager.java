@@ -1127,7 +1127,7 @@ public class SplitLogManager extends ZooKeeperListener {
    * @param userRegions user regiones assigned on the region server
    */
   void markRegionsRecoveringInZK(final ServerName serverName, Set<HRegionInfo> userRegions)
-      throws KeeperException {
+      throws KeeperException, InterruptedIOException {
     if (userRegions == null || (this.recoveryMode != RecoveryMode.LOG_REPLAY)) {
       return;
     }
@@ -1312,8 +1312,12 @@ public class SplitLogManager extends ZooKeeperListener {
           // during initialization, try to get recovery mode from splitlogtask
           for (String task : tasks) {
             try {
-              byte[] data = ZKUtil.getData(this.watcher,
-                ZKUtil.joinZNode(watcher.splitLogZNode, task));
+              byte[] data = null;
+              try {
+                data = ZKUtil.getData(this.watcher, ZKUtil.joinZNode(watcher.splitLogZNode, task));
+              } catch (InterruptedException e) {
+                LOG.warn("Got interrupted " + e);
+              }
               if (data == null) continue;
               SplitLogTask slt = SplitLogTask.parseFrom(data);
               previousRecoveryMode = slt.getMode();

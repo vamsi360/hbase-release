@@ -111,7 +111,7 @@ public class TestRegionReplicas {
     ZKAssign.createNodeOffline(HTU.getZooKeeperWatcher(), hri, getRS().getServerName());
     // first version is '0'
     AdminProtos.OpenRegionRequest orr
-      = RequestConverter.buildOpenRegionRequest(getRS().getServerName(), hri, 0, null);
+      = RequestConverter.buildOpenRegionRequest(getRS().getServerName(), hri, 0, null, null);
     AdminProtos.OpenRegionResponse responseOpen = getRS().openRegion(null, orr);
     Assert.assertTrue(responseOpen.getOpeningStateCount() == 1);
     Assert.assertTrue(responseOpen.getOpeningState(0).

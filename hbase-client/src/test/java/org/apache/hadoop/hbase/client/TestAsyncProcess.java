@@ -102,6 +102,7 @@ public class TestAsyncProcess {
     final AtomicInteger nbMultiResponse = new AtomicInteger();
     final AtomicInteger nbActions = new AtomicInteger();
     public List<AsyncRequestFuture> allReqs = new ArrayList<AsyncRequestFuture>();
+    public AtomicInteger callsCt = new AtomicInteger();
 
     @Override
     protected <Res> AsyncRequestFutureImpl<Res> createAsyncRequestFuture(TableName tableName,
@@ -112,6 +113,7 @@ public class TestAsyncProcess {
           DUMMY_TABLE, actions, nonceGroup, pool, callback, results, needResults);
       r.hardRetryLimit = new AtomicInteger(1);
       allReqs.add(r);
+      callsCt.incrementAndGet();
       return r;
     }
 
@@ -165,15 +167,9 @@ public class TestAsyncProcess {
       return super.submit(DUMMY_TABLE, rows, atLeastOne, callback, true);
     }
 
-    public MyAsyncProcess(HConnection hc, AsyncProcessCallback<Res> callback, Configuration conf,
-                          AtomicInteger nbThreads) {
-      super(hc, conf, new ThreadPoolExecutor(1, 20, 60, TimeUnit.SECONDS,
-        new SynchronousQueue<Runnable>(), new CountingThreadFactory(nbThreads)),
-          new RpcRetryingCallerFactory(conf), false, new RpcControllerFactory(conf));
-    }
-
     @Override
     protected RpcRetryingCaller<MultiResponse> createCaller(MultiServerCallable<Row> callable) {
+      callsCt.incrementAndGet();
       final MultiResponse mr = createMultiResponse(
           callable.getMulti(), nbMultiResponse, nbActions, new ResponseGenerator() {
             @Override
@@ -186,7 +182,7 @@ public class TestAsyncProcess {
             }
           });
 
-      return new RpcRetryingCaller<MultiResponse>(conf) {
+      return new RpcRetryingCaller<MultiResponse>(100, 10) {
         @Override
         public MultiResponse callWithoutRetries(RetryingCallable<MultiResponse> callable, int to)
         throws IOException, RuntimeException {
@@ -262,9 +258,9 @@ public class TestAsyncProcess {
         replicaCalls.incrementAndGet();
       }
 
-      return new RpcRetryingCaller<MultiResponse>(conf) {
+      return new RpcRetryingCaller<MultiResponse>(100, 10) {
         @Override
-        public MultiResponse callWithoutRetries(RetryingCallable<MultiResponse> callable)
+        public MultiResponse callWithoutRetries(RetryingCallable<MultiResponse> callable, int callTimeout)
         throws IOException, RuntimeException {
           long sleep = -1;
           if (isDefault) {
@@ -298,15 +294,16 @@ public class TestAsyncProcess {
     }
   }
 
-  static class AsyncProcessWithFailure<Res> extends MyAsyncProcess<Res> {
+  static class AsyncProcessWithFailure extends MyAsyncProcess {
 
-    public AsyncProcessWithFailure(HConnection hc, Configuration conf) {
-      super(hc, null, conf, new AtomicInteger());
+    public AsyncProcessWithFailure(ClusterConnection hc, Configuration conf) {
+      super(hc, conf, true);
       serverTrackerTimeout = 1;
     }
 
     @Override
     protected RpcRetryingCaller<MultiResponse> createCaller(MultiServerCallable<Row> callable) {
+      callsCt.incrementAndGet();
       return new CallerWithFailure();
     }
   }
@@ -825,8 +822,8 @@ public class TestAsyncProcess {
     configuration.setBoolean(HConnectionManager.RETRIES_BY_SERVER_KEY, true);
     configuration.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 3);
     ht.connection = new MyConnectionImpl(configuration);
-    AsyncProcessWithFailure<Object> ap =
-      new AsyncProcessWithFailure<Object>(ht.connection, configuration);
+    AsyncProcessWithFailure ap =
+      new AsyncProcessWithFailure(ht.connection, configuration);
     ht.ap = ap;
 
     Assert.assertNotNull(ht.ap.createServerErrorTracker());
@@ -841,7 +838,7 @@ public class TestAsyncProcess {
     } catch (RetriesExhaustedWithDetailsException expected) {
     }
     // Checking that the ErrorsServers came into play and didn't make us stop immediately
-    Assert.assertEquals(3, ht.ap.tasksSent.get());
+    Assert.assertEquals(3, ap.callsCt.get());
   }
 
 

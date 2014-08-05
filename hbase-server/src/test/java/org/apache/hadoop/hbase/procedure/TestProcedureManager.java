@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.SmallTests;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.RegionLocations;
+import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
@@ -124,7 +125,7 @@ public class HConnectionTestingUtility {
     NonceGenerator ng = Mockito.mock(NonceGenerator.class);
     Mockito.when(c.getNonceGenerator()).thenReturn(ng);
     Mockito.when(c.getAsyncProcess()).thenReturn(new AsyncProcess(
-        c, conf, null, RpcRetryingCallerFactory.instantiate(conf), false));
+        c, conf, null, RpcRetryingCallerFactory.instantiate(conf), false, new RpcControllerFactory(conf)));
     return c;
   }
 

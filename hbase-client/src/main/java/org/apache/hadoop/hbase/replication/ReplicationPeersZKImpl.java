@@ -226,7 +226,9 @@ public class ReplicationPeersZKImpl extends ReplicationStateZKBase implements Re
     } catch (KeeperException e) {
       throw new ReplicationException("Unable to get status of the peer with id=" + id +
           " from backing store", e);
-    }
+    } catch (InterruptedException e) {
+      throw new ReplicationException(e);
+    } 
   }
 
   @Override

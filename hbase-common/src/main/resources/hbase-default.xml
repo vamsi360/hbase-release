@@ -1190,7 +1190,6 @@ possible configurations would overwhelm and obscure the important.
     </description>
   </property>
   <property>
-<<<<<<< HEAD
     <name>hbase.regionserver.storefile.refresh.period</name>
     <value>0</value>
     <description>
@@ -1203,7 +1202,7 @@ possible configurations would overwhelm and obscure the important.
       value is also recommended with this setting.
     </description>
   </property>
-=======
+  <property>
     <name>hbase.procedure.regionserver.classes</name>
     <value></value>
     <description>A comma-separated list of 
@@ -1224,5 +1223,4 @@ possible configurations would overwhelm and obscure the important.
     procedure. After implementing your own MasterProcedureManager, just put it in HBase's classpath
     and add the fully qualified class name here.</description>
   </property>
->>>>>>> HBASE-10812 Backport HBASE-9426 (Make custom distributed barrier procedure pluggable) to 0.98.x (Demai Ni)
 </configuration>

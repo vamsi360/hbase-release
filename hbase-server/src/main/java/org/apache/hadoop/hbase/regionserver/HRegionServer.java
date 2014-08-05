@@ -53,10 +53,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.management.ObjectName;
 
 import com.google.common.annotations.VisibleForTesting;
-<<<<<<< HEAD
-=======
 import org.apache.hadoop.hbase.util.ByteStringer;
->>>>>>> HBASE-11118 non environment variable solution for "IllegalAccessError: class com.google.protobuf.ZeroCopyLiteralByteString cannot access its superclass com.google.protobuf.LiteralByteString"
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;

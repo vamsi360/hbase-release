@@ -979,7 +979,7 @@ public class TestStore {
   private void addStoreFile() throws IOException {
     StoreFile f = this.store.getStorefiles().iterator().next();
     Path storedir = f.getPath().getParent();
-    long seqid = this.store.getMaxSequenceId(true);
+    long seqid = this.store.getMaxSequenceId();
     Configuration c = TEST_UTIL.getConfiguration();
     FileSystem fs = FileSystem.get(c);
     HFileContext fileContext = new HFileContextBuilder().withBlockSize(BLOCKSIZE_SMALL).build();

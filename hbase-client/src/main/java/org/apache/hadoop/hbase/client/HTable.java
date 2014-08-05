@@ -1734,60 +1734,44 @@ public class HTable implements HTableInterface {
     final List<Throwable> callbackErrorExceptions = new ArrayList<Throwable>();
     final List<Row> callbackErrorActions = new ArrayList<Row>();
     final List<String> callbackErrorServers = new ArrayList<String>();
+    Object[] results = new Object[execs.size()];
 
-    AsyncProcess<ClientProtos.CoprocessorServiceResult> asyncProcess =
-        new AsyncProcess<ClientProtos.CoprocessorServiceResult>(connection, tableName, pool,
-            new AsyncProcess.AsyncProcessCallback<ClientProtos.CoprocessorServiceResult>() {
-          @SuppressWarnings("unchecked")
+    AsyncProcess asyncProcess =
+        new AsyncProcess(connection, configuration, pool,
+            RpcRetryingCallerFactory.instantiate(configuration), true,
+            RpcControllerFactory.instantiate(configuration));
+    AsyncRequestFuture future = asyncProcess.submitAll(tableName, execs,
+        new Callback<ClientProtos.CoprocessorServiceResult>() {
           @Override
-          public void success(int originalIndex, byte[] region, Row row,
-              ClientProtos.CoprocessorServiceResult serviceResult) {
+          public void update(byte[] region, byte[] row,
+                              ClientProtos.CoprocessorServiceResult serviceResult) {
             if (LOG.isTraceEnabled()) {
               LOG.trace("Received result for endpoint " + methodDescriptor.getFullName() +
-                " call #" + originalIndex + ": region=" + Bytes.toStringBinary(region) +
-                ", row=" + Bytes.toStringBinary(row.getRow()) +
-                ", value=" + serviceResult.getValue().getValue());
+                  ": region=" + Bytes.toStringBinary(region) +
+                  ", row=" + Bytes.toStringBinary(row) +
+                  ", value=" + serviceResult.getValue().getValue());
             }
             try {
-              callback.update(region, row.getRow(),
-                (R) responsePrototype.newBuilderForType().mergeFrom(
-                  serviceResult.getValue().getValue()).build());
+              callback.update(region, row,
+                  (R) responsePrototype.newBuilderForType().mergeFrom(
+                      serviceResult.getValue().getValue()).build());
             } catch (InvalidProtocolBufferException e) {
               LOG.error("Unexpected response type from endpoint " + methodDescriptor.getFullName(),
-                e);
+                  e);
               callbackErrorExceptions.add(e);
-              callbackErrorActions.add(row);
+              callbackErrorActions.add(execsByRow.get(row));
               callbackErrorServers.add("null");
             }
           }
+        }, results);
 
-          @Override
-          public boolean failure(int originalIndex, byte[] region, Row row, Throwable t) {
-            RegionCoprocessorServiceExec exec = (RegionCoprocessorServiceExec) row;
-            LOG.error("Failed calling endpoint " + methodDescriptor.getFullName() + ": region="
-                + Bytes.toStringBinary(exec.getRegion()), t);
-            return true;
-          }
+    future.waitUntilDone();
 
-          @Override
-          public boolean retriableFailure(int originalIndex, Row row, byte[] region,
-              Throwable exception) {
-            RegionCoprocessorServiceExec exec = (RegionCoprocessorServiceExec) row;
-            LOG.error("Failed calling endpoint " + methodDescriptor.getFullName() + ": region="
-                + Bytes.toStringBinary(exec.getRegion()), exception);
-            return !(exception instanceof DoNotRetryIOException);
-          }
-        },
-        configuration, rpcCallerFactory, rpcControllerFactory);
-
-    asyncProcess.submitAll(execs);
-    asyncProcess.waitUntilDone();
-
-    if (asyncProcess.hasError()) {
-      throw asyncProcess.getErrors();
+    if (future.hasError()) {
+      throw future.getErrors();
     } else if (!callbackErrorExceptions.isEmpty()) {
       throw new RetriesExhaustedWithDetailsException(callbackErrorExceptions, callbackErrorActions,
-        callbackErrorServers);
+          callbackErrorServers);
     }
   }
 }

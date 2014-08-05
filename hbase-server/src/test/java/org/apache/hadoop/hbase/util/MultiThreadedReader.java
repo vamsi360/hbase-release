@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
 
 import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.test.LoadTestDataGenerator;
 
@@ -372,6 +373,48 @@ public class MultiThreadedReader extends MultiThreadedAction
 		    get.getRow(), false);
          String rowKey = Bytes.toString(get.getRow());
         LOG.info("Key = " + rowKey + ", Region location: " + hloc);
+        if(isNullExpected) {
+          nullResult.incrementAndGet();
+          LOG.debug("Null result obtained for the key ="+rowKey);
+          return;
+        }
+      }
+      boolean isOk = verifyResultAgainstDataGenerator(result, verify, false);
+      long numErrorsAfterThis = 0;
+      if (isOk) {
+        long cols = 0;
+        // Count the columns for reporting purposes.
+        for (byte[] cf : result.getMap().keySet()) {
+          cols += result.getFamilyMap(cf).size();
+        }
+        numCols.addAndGet(cols);
+      } else {
+        if (writer != null) {
+          LOG.error("At the time of failure, writer wrote " + writer.numKeys.get() + " keys");
+        }
+        numErrorsAfterThis = numReadErrors.incrementAndGet();
+      }
+
+      if (numErrorsAfterThis > maxErrors) {
+        LOG.error("Aborting readers -- found more than " + maxErrors + " errors");
+        aborted = true;
+      }
+    }
+
+    protected void getResultMetricUpdation(boolean verify, String rowKey, long start,
+        Result result, HTable table, boolean isNullExpected)
+        throws IOException {
+      totalOpTimeMs.addAndGet(System.currentTimeMillis() - start);
+      numKeys.addAndGet(1);
+      if (!result.isEmpty()) {
+        if (verify) {
+          numKeysVerified.incrementAndGet();
+        }
+      } else {
+         HRegionLocation hloc = table.getRegionLocation(
+             Bytes.toBytes(rowKey));
+        LOG.info("Key = " + rowKey + ", RegionServer: "
+            + hloc.getHostname());
         if(isNullExpected) {
           nullResult.incrementAndGet();
           LOG.debug("Null result obtained for the key ="+rowKey);

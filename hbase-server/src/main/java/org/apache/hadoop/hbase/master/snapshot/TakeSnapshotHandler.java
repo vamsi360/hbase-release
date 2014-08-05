@@ -113,8 +113,6 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
         snapshotTable,
         EventType.C_M_SNAPSHOT_TABLE.toString());
 
-    loadTableDescriptor(); // check that .tableinfo is present
-
     // prepare the verify
     this.verifier = new MasterSnapshotVerifier(masterServices, snapshot, rootDir);
     // update the running tasks

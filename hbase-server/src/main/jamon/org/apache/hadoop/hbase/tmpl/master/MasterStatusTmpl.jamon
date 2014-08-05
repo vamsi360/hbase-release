@@ -367,7 +367,7 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
 
 <%def userSnapshots>
 <%java>
-   List<SnapshotDescription> snapshots = admin.getCompletedSnapshots();
+   List<SnapshotDescription> snapshots = admin.listSnapshots();
 </%java>
 <%if (snapshots != null && snapshots.size() > 0)%>
 <table class="table table-striped">

@@ -111,7 +111,7 @@ public class LoadTestTool extends AbstractHBaseTool {
         + "one of " + Arrays.toString(DataBlockEncoding.values()) + ".";
 
   private static final String OPT_BLOOM = "bloom";
-  private static final String OPT_COMPRESSION = "compression";
+  public static final String OPT_COMPRESSION = "compression";
   private static final String OPT_DEFERRED_LOG_FLUSH = "deferredlogflush";
   public static final String OPT_DEFERRED_LOG_FLUSH_USAGE = "Enable deferred log flush.";
   public static final String OPT_DATA_BLOCK_ENCODING =
@@ -606,7 +606,6 @@ public class LoadTestTool extends AbstractHBaseTool {
         readerThreads = new MultiThreadedReaderWithACL(dataGen, conf, tableName, verifyPercent,
             userNames);
       } else {
-        String readerClass = null;
         if (cmd.hasOption(OPT_READER)) {
           readerClass = cmd.getOptionValue(OPT_READER);
         } else {

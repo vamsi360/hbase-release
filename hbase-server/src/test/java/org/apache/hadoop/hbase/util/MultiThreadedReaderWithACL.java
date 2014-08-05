@@ -27,6 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTableInterface;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.test.LoadTestDataGenerator;
@@ -48,7 +49,7 @@ public class MultiThreadedReaderWithACL extends MultiThreadedReader {
   private String[] userNames;
 
   public MultiThreadedReaderWithACL(LoadTestDataGenerator dataGen, Configuration conf,
-      TableName tableName, double verifyPercent, String userNames) {
+      TableName tableName, double verifyPercent, String userNames) throws IOException {
     super(dataGen, conf, tableName, verifyPercent);
     this.userNames = userNames.split(COMMA);
   }
@@ -107,7 +108,7 @@ public class MultiThreadedReaderWithACL extends MultiThreadedReader {
               result = localTable.get(get);
             }
             boolean isNullExpected = ((((int) keyToRead % specialPermCellInsertionFactor)) == 0);
-            getResultMetricUpdation(verify, rowKey, start, result, localTable, isNullExpected);
+            getResultMetricUpdation(verify, rowKey, start, result, (HTable)localTable, isNullExpected);
           } catch (IOException e) {
             recordFailure(keyToRead);
           }
