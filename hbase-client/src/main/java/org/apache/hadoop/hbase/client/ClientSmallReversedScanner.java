@@ -23,7 +23,6 @@ package org.apache.hadoop.hbase.client;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HConstants;
@@ -42,27 +41,11 @@ import java.util.concurrent.ExecutorService;
  * <p/>
  * For small scan, it will get better performance than {@link ReversedClientScanner}
  */
-@InterfaceAudience.Public
-@InterfaceStability.Evolving
+@InterfaceAudience.Private
 public class ClientSmallReversedScanner extends ReversedClientScanner {
   private static final Log LOG = LogFactory.getLog(ClientSmallReversedScanner.class);
   private ScannerCallableWithReplicas smallScanCallable = null;
   private byte[] skipRowOfFirstResult = null;
-
-  /**
-   * Create a new ReversibleClientScanner for the specified table Note that the
-   * passed {@link org.apache.hadoop.hbase.client.Scan}'s start row maybe changed.
-   *
-   * @param conf       The {@link org.apache.hadoop.conf.Configuration} to use.
-   * @param scan       {@link org.apache.hadoop.hbase.client.Scan} to use in this scanner
-   * @param tableName  The table that we wish to scan
-   * @param connection Connection identifying the cluster
-   * @throws java.io.IOException
-   */
-  public ClientSmallReversedScanner(Configuration conf, Scan scan, TableName tableName,
-                                    ClusterConnection connection) throws IOException {
-    super(conf, scan, tableName, connection);
-  }
 
   /**
    * Create a new ReversibleClientScanner for the specified table Note that the
