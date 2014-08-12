@@ -23,7 +23,7 @@
   <parent>
     <artifactId>hbase</artifactId>
     <groupId>org.apache.hbase</groupId>
-    <version>0.98.0-hadoop2-SNAPSHOT</version>
+    <version>0.98.4-hadoop2-SNAPSHOT</version>
     <relativePath>../pom.xml.hadoop2</relativePath>
   </parent>
   <artifactId>hbase-server</artifactId>
@@ -408,6 +408,7 @@
     <dependency>
       <groupId>tomcat</groupId>
       <artifactId>jasper-compiler</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>tomcat</groupId>
@@ -437,10 +438,6 @@
     <dependency>
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>stax</groupId>
-      <artifactId>stax-api</artifactId>
     </dependency>
     <!-- tracing Dependencies -->
     <dependency>
@@ -586,6 +583,7 @@
           <groupId>org.apache.hadoop</groupId>
           <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
           <type>test-jar</type>
+          <scope>test</scope>
         </dependency>
         <dependency>
           <groupId>org.apache.hadoop</groupId>
@@ -595,6 +593,7 @@
           <groupId>org.apache.hadoop</groupId>
           <artifactId>hadoop-hdfs</artifactId>
           <type>test-jar</type>
+          <scope>test</scope>
         </dependency>
         <dependency>
           <groupId>org.apache.hadoop</groupId>

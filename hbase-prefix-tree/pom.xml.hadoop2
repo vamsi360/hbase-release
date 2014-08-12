@@ -23,7 +23,7 @@
   <parent>
     <artifactId>hbase</artifactId>
     <groupId>org.apache.hbase</groupId>
-    <version>0.98.0-hadoop2-SNAPSHOT</version>
+    <version>0.98.4-hadoop2-SNAPSHOT</version>
     <relativePath>../pom.xml.hadoop2</relativePath>
   </parent>
 
@@ -74,6 +74,12 @@
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-common</artifactId>
+      <version>${project.version}</version>
+      <classifier>tests</classifier>
+    </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-common</artifactId>

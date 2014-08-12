@@ -23,7 +23,7 @@
     <parent>
         <artifactId>hbase</artifactId>
         <groupId>org.apache.hbase</groupId>
-        <version>0.98.0-hadoop2-SNAPSHOT</version>
+        <version>0.98.4-hadoop2-SNAPSHOT</version>
         <relativePath>../pom.xml.hadoop2</relativePath>
     </parent>
 
@@ -108,6 +108,10 @@
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
       </dependency>
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+      </dependency>
     </dependencies>
 
     <profiles>
@@ -158,6 +162,7 @@
                           <include>ClusterId.proto</include>
                           <include>ClusterStatus.proto</include>
                           <include>Comparator.proto</include>
+                          <include>Encryption.proto</include>
                           <include>ErrorHandling.proto</include>
                           <include>Filter.proto</include>
                           <include>FS.proto</include>
@@ -172,6 +177,7 @@
                           <include>RPC.proto</include>
                           <include>SecureBulkLoad.proto</include>
                           <include>Tracing.proto</include>
+                          <include>VisibilityLabels.proto</include>
                           <include>WAL.proto</include>
                           <include>ZooKeeper.proto</include>
                         </includes>

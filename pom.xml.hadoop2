@@ -39,7 +39,7 @@
   <groupId>org.apache.hbase</groupId>
   <artifactId>hbase</artifactId>
   <packaging>pom</packaging>
-  <version>0.98.0-hadoop2-SNAPSHOT</version>
+  <version>0.98.4-hadoop2-SNAPSHOT</version>
   <name>HBase</name>
   <description>
     Apache HBase is the Hadoop database. Use it when you need
@@ -384,7 +384,7 @@
     </developer>
   </developers>
   <repositories>
-     <repository>
+    <repository>
        <releases>
            <enabled>true</enabled>
        </releases>
@@ -400,11 +400,11 @@
         </releases>
         <snapshots>
                 <enabled>false</enabled>
-        </snapshots>
+        </snapshots>	
         <id>hortonworks.repo</id>
         <name>Hortonworks Repo</name>
         <url>http://repo.hortonworks.com/content/repositories/releases</url>
-    </repository>
+    </repository> 
     <repository>
       <id>apache release</id>
       <url>https://repository.apache.org/content/repositories/releases/</url>
@@ -528,7 +528,7 @@
             <parallel>classes</parallel>
             <!-- surefire hack, if not we're
               using method parallelization class ! -->
-            <testFailureIgnore>false</testFailureIgnore>
+            <testFailureIgnore>${surefire.testFailureIgnore}</testFailureIgnore>
             <forkedProcessTimeoutInSeconds>${surefire.timeout}</forkedProcessTimeoutInSeconds>
             <argLine>-enableassertions -Xmx1900m -XX:MaxPermSize=100m -Djava.security.egd=file:/dev/./urandom -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true</argLine>
             <redirectTestOutputToFile>${test.output.tofile}</redirectTestOutputToFile>
@@ -542,8 +542,8 @@
               </goals>
               <configuration>
                 <skip>${surefire.skipSecondPart}</skip>
-                <testFailureIgnore>false</testFailureIgnore>
-                <forkMode>perThread</forkMode>
+                <testFailureIgnore>${surefire.testFailureIgnore}</testFailureIgnore>
+                <forkMode>${surefire.secondPartForkMode}</forkMode>
                 <perCoreThreadCount>false</perCoreThreadCount>
                 <threadCount>${surefire.secondPartThreadCount}</threadCount>
                 <parallel>classes</parallel>
@@ -910,10 +910,10 @@
     <commons-io.version>2.4</commons-io.version>
     <commons-lang.version>2.6</commons-lang.version>
     <commons-logging.version>1.1.1</commons-logging.version>
-    <commons-math.version>2.2</commons-math.version>
+    <commons-math.version>2.1</commons-math.version>
     <collections.version>3.2.1</collections.version>
     <httpclient.version>3.1</httpclient.version>
-    <metrics-core.version>2.1.2</metrics-core.version>
+    <metrics-core.version>2.2.0</metrics-core.version>
     <guava.version>12.0.1</guava.version>
     <jackson.version>1.8.8</jackson.version>
     <jasper.version>5.5.23</jasper.version>
@@ -927,7 +927,6 @@
     <log4j.version>1.2.17</log4j.version>
     <mockito-all.version>1.9.0</mockito-all.version>
     <protobuf.version>2.5.0</protobuf.version>
-    <stax-api.version>1.0.1</stax-api.version>
     <thrift.version>0.9.0</thrift.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <slf4j.version>1.6.4</slf4j.version>
@@ -965,10 +964,12 @@
     <surefire.skipSecondPart>false</surefire.skipSecondPart>
     <surefire.firstPartForkMode>once</surefire.firstPartForkMode>
     <surefire.firstPartParallel>classes</surefire.firstPartParallel>
+    <surefire.secondPartForkMode>perThread</surefire.secondPartForkMode>
     <surefire.firstPartThreadCount>1</surefire.firstPartThreadCount>
     <surefire.secondPartThreadCount>2</surefire.secondPartThreadCount>
     <surefire.firstPartGroups>org.apache.hadoop.hbase.SmallTests</surefire.firstPartGroups>
     <surefire.secondPartGroups>org.apache.hadoop.hbase.MediumTests</surefire.secondPartGroups>
+    <surefire.testFailureIgnore>false</surefire.testFailureIgnore>
     <test.output.tofile>true</test.output.tofile>
     <surefire.timeout>900</surefire.timeout>
   </properties>
@@ -977,11 +978,10 @@
     <dependencies>
       <!--
       Note: There are a few exclusions to prevent duplicate code in different jars to be included:
-        * org.mortbay.jetty:servlet-api, javax.servlet:servlet-api: These are excluded because they are
+          org.mortbay.jetty:servlet-api, javax.servlet:servlet-api: These are excluded because they are
           the same implementations. I chose org.mortbay.jetty:servlet-api-2.5 instead, which is a third
           implementation of the same, because Hadoop also uses this version
-        * javax.servlet:jsp-api in favour of org.mortbay.jetty:jsp-api-2.1
-        * javax.xml.stream:stax-api in favour of stax:stax-api
+          javax.servlet:jsp-api in favour of org.mortbay.jetty:jsp-api-2.1
         -->
       <!-- Intra-module dependencies -->
       <dependency>
@@ -1240,6 +1240,10 @@
         <version>${jetty.jspapi.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>org.eclipse.jdt</groupId>
+            <artifactId>core</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>ant</groupId>
             <artifactId>ant</artifactId>
           </exclusion>
@@ -1336,6 +1340,12 @@
         <groupId>com.sun.jersey</groupId>
         <artifactId>jersey-json</artifactId>
         <version>${jersey.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>stax</groupId>
+            <artifactId>stax-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>com.sun.jersey</groupId>
@@ -1352,11 +1362,6 @@
             <artifactId>stax-api</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>stax</groupId>
-        <artifactId>stax-api</artifactId>
-        <version>${stax-api.version}</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -1464,7 +1469,7 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
               <configuration>
-                <argLine>-enableassertions -Xmx1900m -Djava.security.egd=file:/dev/./urandom -Djava.net.preferIPv4Stack=true "-Djava.library.path=${hadoop.library.path};${java.library.path}"</argLine>
+                <argLine>-enableassertions -Xmx1900m -XX:MaxPermSize=256m -Djava.security.egd=file:/dev/./urandom -Djava.net.preferIPv4Stack=true "-Djava.library.path=${hadoop.library.path};${java.library.path}"</argLine>
                 <systemProperties>
                   <property>
                     <name>java.net.preferIPv4Stack</name>
@@ -1658,6 +1663,20 @@
           <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
+              <exclusions>
+                <exclusion>
+                  <groupId>javax.servlet.jsp</groupId>
+                  <artifactId>jsp-api</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>javax.servlet</groupId>
+                  <artifactId>servlet-api</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>stax</groupId>
+                  <artifactId>stax-api</artifactId>
+                </exclusion>
+              </exclusions>
             <version>${hadoop-two.version}</version>
           </dependency>
           <dependency>
@@ -1665,6 +1684,20 @@
             <artifactId>hadoop-hdfs</artifactId>
             <version>${hadoop-two.version}</version>
             <type>test-jar</type>
+              <exclusions>
+                <exclusion>
+                  <groupId>javax.servlet.jsp</groupId>
+                  <artifactId>jsp-api</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>javax.servlet</groupId>
+                  <artifactId>servlet-api</artifactId>
+                </exclusion>
+                <exclusion>
+                  <groupId>stax</groupId>
+                  <artifactId>stax-api</artifactId>
+                </exclusion>
+              </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -1675,6 +1708,20 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
             <version>${hadoop-two.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>javax.servlet.jsp</groupId>
+                <artifactId>jsp-api</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>javax.servlet</groupId>
+                <artifactId>servlet-api</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>stax</groupId>
+                <artifactId>stax-api</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -1692,6 +1739,20 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-minicluster</artifactId>
             <version>${hadoop-two.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>javax.servlet.jsp</groupId>
+                <artifactId>jsp-api</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>javax.servlet</groupId>
+                <artifactId>servlet-api</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>stax</groupId>
+                <artifactId>stax-api</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
         </dependencies>
       </dependencyManagement>
@@ -1986,7 +2047,7 @@
 		<groupId>org.apache.hadoop</groupId>
 		<!-- doclet lives in hadoop 2's hadoop-common module -->
 		<artifactId>hadoop-common</artifactId>
-		<version>2.2.0</version>
+		<version>${hadoop-two.version}</version>
 	      </docletArtifact>
 	      <destDir>apidocs</destDir>
 	      <name>User API</name>
