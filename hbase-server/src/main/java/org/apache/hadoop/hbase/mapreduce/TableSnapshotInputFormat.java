@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.protobuf.HBaseZeroCopyByteString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -59,6 +58,7 @@ import org.apache.hadoop.hbase.snapshot.ExportSnapshot;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotHelper;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.SnapshotReferenceUtil;
+import org.apache.hadoop.hbase.util.ByteStringer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.io.Writable;
@@ -157,7 +157,7 @@ public class TableSnapshotInputFormat extends InputFormat<ImmutableBytesWritable
       MapReduceProtos.TableSnapshotRegionSplit.newBuilder()
         .setRegion(RegionSpecifier.newBuilder()
           .setType(RegionSpecifierType.ENCODED_REGION_NAME)
-          .setValue(HBaseZeroCopyByteString.wrap(Bytes.toBytes(regionName))).build());
+          .setValue(ByteStringer.wrap(Bytes.toBytes(regionName))).build());
 
       for (String location : locations) {
         builder.addLocations(location);

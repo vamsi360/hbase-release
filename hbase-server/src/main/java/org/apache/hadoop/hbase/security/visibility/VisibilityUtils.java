@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.protobuf.HBaseZeroCopyByteString;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TagType;
@@ -31,6 +30,7 @@ import org.apache.hadoop.hbase.protobuf.generated.VisibilityLabelsProtos.MultiUs
 import org.apache.hadoop.hbase.protobuf.generated.VisibilityLabelsProtos.UserAuthorizations;
 import org.apache.hadoop.hbase.protobuf.generated.VisibilityLabelsProtos.VisibilityLabel;
 import org.apache.hadoop.hbase.protobuf.generated.VisibilityLabelsProtos.VisibilityLabelsRequest;
+import org.apache.hadoop.hbase.util.ByteStringer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.ReflectionUtils;
 
@@ -56,7 +56,7 @@ public class VisibilityUtils {
     VisibilityLabelsRequest.Builder visReqBuilder = VisibilityLabelsRequest.newBuilder();
     for (Entry<String, Integer> entry : existingLabels.entrySet()) {
       VisibilityLabel.Builder visLabBuilder = VisibilityLabel.newBuilder();
-      visLabBuilder.setLabel(HBaseZeroCopyByteString.wrap(Bytes.toBytes(entry.getKey())));
+      visLabBuilder.setLabel(ByteStringer.wrap(Bytes.toBytes(entry.getKey())));
       visLabBuilder.setOrdinal(entry.getValue());
       visReqBuilder.addVisLabel(visLabBuilder.build());
     }
@@ -72,7 +72,7 @@ public class VisibilityUtils {
     MultiUserAuthorizations.Builder builder = MultiUserAuthorizations.newBuilder();
     for (Entry<String, List<Integer>> entry : userAuths.entrySet()) {
       UserAuthorizations.Builder userAuthsBuilder = UserAuthorizations.newBuilder();
-      userAuthsBuilder.setUser(HBaseZeroCopyByteString.wrap(Bytes.toBytes(entry.getKey())));
+      userAuthsBuilder.setUser(ByteStringer.wrap(Bytes.toBytes(entry.getKey())));
       for (Integer label : entry.getValue()) {
         userAuthsBuilder.addAuth(label);
       }

@@ -35,7 +35,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.google.protobuf.HBaseZeroCopyByteString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -115,6 +114,7 @@ import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.protobuf.ByteString;
+import org.apache.hadoop.hbase.util.ByteStringer;
 import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
 import com.google.protobuf.Service;
@@ -1255,7 +1255,7 @@ public class VisibilityController extends BaseRegionObserver implements MasterOb
     try {
       List<String> labels = getUserAuthsFromLabelsTable(user);
       for (String label : labels) {
-        response.addAuth(HBaseZeroCopyByteString.wrap(Bytes.toBytes(label)));
+        response.addAuth(ByteStringer.wrap(Bytes.toBytes(label)));
       }
     } catch (IOException e) {
       ResponseConverter.setControllerException(controller, e);

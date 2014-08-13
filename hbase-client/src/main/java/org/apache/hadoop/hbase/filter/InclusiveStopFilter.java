@@ -21,7 +21,7 @@ package org.apache.hadoop.hbase.filter;
 
 import java.util.ArrayList;
 
-import com.google.protobuf.HBaseZeroCopyByteString;
+import org.apache.hadoop.hbase.util.ByteStringer;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
@@ -86,7 +86,7 @@ public class InclusiveStopFilter extends FilterBase {
   public byte [] toByteArray() {
     FilterProtos.InclusiveStopFilter.Builder builder =
       FilterProtos.InclusiveStopFilter.newBuilder();
-    if (this.stopRowKey != null) builder.setStopRowKey(HBaseZeroCopyByteString.wrap(this.stopRowKey));
+    if (this.stopRowKey != null) builder.setStopRowKey(ByteStringer.wrap(this.stopRowKey));
     return builder.build().toByteArray();
   }
 
