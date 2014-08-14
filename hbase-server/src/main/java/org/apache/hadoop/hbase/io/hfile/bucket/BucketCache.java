@@ -158,7 +158,6 @@ public class BucketCache implements BlockCache, HeapSize {
   private long cacheCapacity;
   /** Approximate block size */
   private final long blockSize;
-  private final int[] bucketSizes;
 
   /** Duration of IO errors tolerated before we disable cache, 1 min as default */
   private final int ioErrorsTolerationDuration;
@@ -223,7 +222,6 @@ public class BucketCache implements BlockCache, HeapSize {
     this.cacheCapacity = capacity;
     this.persistencePath = persistencePath;
     this.blockSize = blockSize;
-    this.bucketSizes = bucketSizes;
     this.ioErrorsTolerationDuration = ioErrorsTolerationDuration;
 
     bucketAllocator = new BucketAllocator(capacity, bucketSizes);
@@ -239,7 +237,7 @@ public class BucketCache implements BlockCache, HeapSize {
 
     if (ioEngine.isPersistent() && persistencePath != null) {
       try {
-        retrieveFromFile();
+        retrieveFromFile(bucketSizes);
       } catch (IOException ioex) {
         LOG.error("Can't restore from file because of", ioex);
       } catch (ClassNotFoundException cnfe) {
@@ -804,7 +802,7 @@ public class BucketCache implements BlockCache, HeapSize {
   }
 
   @SuppressWarnings("unchecked")
-  private void retrieveFromFile() throws IOException, BucketAllocatorException,
+  private void retrieveFromFile(int[] bucketSizes) throws IOException, BucketAllocatorException,
       ClassNotFoundException {
     File persistenceFile = new File(persistencePath);
     if (!persistenceFile.exists()) {
