@@ -71,7 +71,7 @@ public class HTableWrapper implements HTableInterface {
 
   private TableName tableName;
   private HTable table;
-  private ClusterConnection connection;
+  private HConnection connection;
   private final List<HTableInterface> openTables;
 
   /**
@@ -85,7 +85,7 @@ public class HTableWrapper implements HTableInterface {
   }
 
   private HTableWrapper(List<HTableInterface> openTables, TableName tableName,
-      ClusterConnection connection, ExecutorService pool)
+      HConnection connection, ExecutorService pool)
       throws IOException {
     this.tableName = tableName;
     this.table = new HTable(tableName, connection, pool);

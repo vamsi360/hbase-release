@@ -181,7 +181,7 @@ import com.google.protobuf.ServiceException;
 @SuppressWarnings("serial")
 @InterfaceAudience.Private
 // NOTE: DO NOT make this class public. It was made package-private on purpose.
-class ConnectionManager {
+public class ConnectionManager {
   static final Log LOG = LogFactory.getLog(ConnectionManager.class);
 
   public static final String RETRIES_BY_SERVER_KEY = "hbase.client.retries.by.server";
