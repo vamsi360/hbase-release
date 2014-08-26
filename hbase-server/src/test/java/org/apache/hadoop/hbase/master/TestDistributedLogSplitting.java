@@ -119,7 +119,7 @@ public class TestDistributedLogSplitting {
     Logger.getLogger("org.apache.hadoop.hbase").setLevel(Level.DEBUG);
 
     // test ThreeRSAbort fails under hadoop2 (2.0.2-alpha) if shortcircuit-read (scr) is on. this
-    // turns it off for this test.  TODO: Figure out why scr breaks recovery. 
+    // turns it off for this test.  TODO: Figure out why scr breaks recovery.
     System.setProperty("hbase.tests.use.shortcircuit.reads", "false");
 
   }
@@ -178,7 +178,7 @@ public class TestDistributedLogSplitting {
     // refresh configuration
     conf = HBaseConfiguration.create(originalConf);
   }
-  
+
   @After
   public void after() throws Exception {
     try {
@@ -193,7 +193,7 @@ public class TestDistributedLogSplitting {
       ZKUtil.deleteNodeRecursively(TEST_UTIL.getZooKeeperWatcher(), "/hbase");
     }
   }
-  
+
   @Test (timeout=300000)
   public void testRecoveredEdits() throws Exception {
     LOG.info("testRecoveredEdits");
@@ -485,7 +485,7 @@ public class TestDistributedLogSplitting {
     ht.close();
     zkw.close();
   }
-  
+
   @Test(timeout = 300000)
   public void testMasterStartsUpWithLogReplayWork() throws Exception {
     LOG.info("testMasterStartsUpWithLogReplayWork");
@@ -708,7 +708,7 @@ public class TestDistributedLogSplitting {
 
     this.prepareData(ht, Bytes.toBytes("family"), Bytes.toBytes("c1"));
     String originalCheckSum = TEST_UTIL.checksumRows(ht);
-    
+
     // abort RA and trigger replay
     abortRSAndWaitForRecovery(hrs, zkw, NUM_REGIONS_TO_CREATE);
 
@@ -841,7 +841,7 @@ public class TestDistributedLogSplitting {
     assertEquals(NUM_LOG_LINES, count);
     LOG.info("Verify replayed edits");
     assertEquals(NUM_LOG_LINES, TEST_UTIL.countRows(ht));
-    
+
     // clean up
     for (HRegionInfo hri : regions) {
       @SuppressWarnings("deprecation")
@@ -884,7 +884,7 @@ public class TestDistributedLogSplitting {
       dstRS = rsts.get((i+1) % NUM_RS).getRegionServer();
       break;
     }
-    
+
     slm.markRegionsRecoveringInZK(hrs.getServerName(), regionSet);
     // move region in order for the region opened in recovering state
     final HRegionInfo hri = region;
@@ -901,7 +901,7 @@ public class TestDistributedLogSplitting {
         return (sn != null && sn.equals(tmpRS.getServerName()));
       }
     });
-    
+
     try {
       byte[] key = region.getStartKey();
       if (key == null || key.length == 0) {
@@ -960,6 +960,7 @@ public class TestDistributedLogSplitting {
       100);
 
     new Thread() {
+      @Override
       public void run() {
         waitForCounter(tot_wkr_task_acquired, 0, 1, 1000);
         for (RegionServerThread rst : rsts) {
@@ -1150,7 +1151,7 @@ public class TestDistributedLogSplitting {
     assertTrue(isMetaRegionInRecovery);
 
     master.getMasterFileSystem().splitMetaLog(hrs.getServerName());
-    
+
     isMetaRegionInRecovery = false;
     recoveringRegions =
         zkw.getRecoverableZooKeeper().getChildren(zkw.recoveringRegionsZNode, false);
@@ -1320,7 +1321,7 @@ public class TestDistributedLogSplitting {
       WALEdit e = new WALEdit();
       value++;
       e.add(new KeyValue(row, family, qualifier, timeStamp, Bytes.toBytes(value)));
-      hrs.getWAL().append(curRegionInfo, TableName.valueOf(tableName), e, 
+      hrs.getWAL().append(curRegionInfo, TableName.valueOf(tableName), e,
         System.currentTimeMillis(), htd, sequenceId);
     }
     hrs.getWAL().sync();
@@ -1328,7 +1329,7 @@ public class TestDistributedLogSplitting {
 
     // wait for abort completes
     this.abortRSAndWaitForRecovery(hrs, zkw, NUM_REGIONS_TO_CREATE);
- 
+
     // verify we got the last value
     LOG.info("Verification Starts...");
     Get g = new Get(row);
@@ -1340,7 +1341,7 @@ public class TestDistributedLogSplitting {
     LOG.info("Verification after flush...");
     TEST_UTIL.getHBaseAdmin().flush(tableName);
     TEST_UTIL.getHBaseAdmin().compact(tableName);
-    
+
     // wait for compaction completes
     TEST_UTIL.waitFor(30000, 200, new Waiter.Predicate<Exception>() {
       @Override
@@ -1359,7 +1360,7 @@ public class TestDistributedLogSplitting {
     return installTable(zkw, tname, fname, nrs, 0);
   }
 
-  HTable installTable(ZooKeeperWatcher zkw, String tname, String fname, int nrs, 
+  HTable installTable(ZooKeeperWatcher zkw, String tname, String fname, int nrs,
       int existingRegions) throws Exception {
     // Create a table with regions
     byte [] table = Bytes.toBytes(tname);
@@ -1485,8 +1486,11 @@ public class TestDistributedLogSplitting {
   throws IOException {
     int count = 0;
     HLog.Reader in = HLogFactory.createReader(fs, log, conf);
-    while (in.next() != null) {
-      count++;
+    HLog.Entry e;
+    while ((e = in.next()) != null) {
+      if (!WALEdit.isMetaEditFamily(e.getEdit().getKeyValues().get(0))) {
+        count++;
+      }
     }
     return count;
   }
