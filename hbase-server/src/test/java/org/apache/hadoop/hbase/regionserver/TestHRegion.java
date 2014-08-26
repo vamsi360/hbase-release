@@ -745,8 +745,8 @@ public class TestHRegion {
     String method = name.getMethodName();
     TableName tableName = TableName.valueOf(method);
     byte[] family = Bytes.toBytes("family");
-    Path logDir = TEST_UTIL.getDataTestDirOnTestFS("testRecoveredEditsIgnoreFlushMarkers.log");
-    HLog hlog = HLogFactory.createHLog(FILESYSTEM, logDir, UUID.randomUUID().toString(),
+    Path logDir = TEST_UTIL.getDataTestDirOnTestFS(method + ".log");
+    HLog hlog = HLogFactory.createHLog(FILESYSTEM, logDir, "logs",
       TEST_UTIL.getConfiguration());
 
     this.region = initHRegion(tableName.getName(), HConstants.EMPTY_START_ROW,
@@ -776,7 +776,7 @@ public class TestHRegion {
       // now verify that the flush markers are written
       hlog.close();
       HLog.Reader reader = HLogFactory.createReader(fs,
-        fs.listStatus(fs.listStatus(logDir)[0].getPath())[0].getPath(),
+        fs.listStatus(new Path(logDir, "logs"))[0].getPath(),
         TEST_UTIL.getConfiguration());
 
       List<HLog.Entry> flushDescriptors = new ArrayList<HLog.Entry>();
