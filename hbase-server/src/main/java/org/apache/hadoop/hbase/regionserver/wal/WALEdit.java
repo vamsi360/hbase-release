@@ -36,8 +36,10 @@ import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
+import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ClassSize;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.io.Writable;
 
 
@@ -84,6 +86,8 @@ public class WALEdit implements Writable, HeapSize {
   static final byte [] METAROW = Bytes.toBytes("METAROW");
   static final byte[] COMPLETE_CACHE_FLUSH = Bytes.toBytes("HBASE::CACHEFLUSH");
   static final byte[] COMPACTION = Bytes.toBytes("HBASE::COMPACTION");
+  static final byte [] FLUSH = Bytes.toBytes("HBASE::FLUSH");
+
   private final int VERSION_2 = -1;
   private final boolean isReplay;
 
@@ -109,6 +113,10 @@ public class WALEdit implements Writable, HeapSize {
    */
   public static boolean isMetaEditFamily(final byte [] f) {
     return Bytes.equals(METAFAMILY, f);
+  }
+
+  public static boolean isMetaEditFamily(Cell cell) {
+    return CellUtil.matchingFamily(cell, METAFAMILY);
   }
 
   /**
@@ -255,6 +263,19 @@ public class WALEdit implements Writable, HeapSize {
     return sb.toString();
   }
 
+  public static WALEdit createFlushWALEdit(HRegionInfo hri, FlushDescriptor f) {
+    KeyValue kv = new KeyValue(getRowForRegion(hri), METAFAMILY, FLUSH,
+      EnvironmentEdgeManager.currentTimeMillis(), f.toByteArray());
+    return new WALEdit().add(kv);
+  }
+
+  public static FlushDescriptor getFlushDescriptor(Cell cell) throws IOException {
+    if (CellUtil.matchingColumn(cell, METAFAMILY, FLUSH)) {
+      return FlushDescriptor.parseFrom(cell.getValue());
+    }
+    return null;
+  }
+
   /**
    * Create a compacion WALEdit
    * @param c
@@ -262,7 +283,8 @@ public class WALEdit implements Writable, HeapSize {
    */
   public static WALEdit createCompaction(final HRegionInfo hri, final CompactionDescriptor c) {
     byte [] pbbytes = c.toByteArray();
-    KeyValue kv = new KeyValue(getRowForRegion(hri), METAFAMILY, COMPACTION, System.currentTimeMillis(), pbbytes);
+    KeyValue kv = new KeyValue(getRowForRegion(hri), METAFAMILY, COMPACTION, 
+      EnvironmentEdgeManager.currentTimeMillis(), pbbytes);
     return new WALEdit().add(kv); //replication scope null so that this won't be replicated
   }
 

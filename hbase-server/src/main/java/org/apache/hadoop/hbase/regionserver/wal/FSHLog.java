@@ -36,7 +36,6 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -198,7 +197,7 @@ class FSHLog implements HLog, Syncable {
   // If > than this size, roll the log. This is typically 0.95 times the size
   // of the default Hdfs block size.
   private final long logrollsize;
-  
+
   /** size of current log */
   private long curLogSize = 0;
 
@@ -206,7 +205,7 @@ class FSHLog implements HLog, Syncable {
    * The total size of hlog
    */
   private AtomicLong totalLogSize = new AtomicLong(0);
-  
+
   // We synchronize on updateLock to prevent updates and to prevent a log roll
   // during an update
   // locked during appends
@@ -425,7 +424,7 @@ class FSHLog implements HLog, Syncable {
 
     asyncWriter = new AsyncWriter(n + "-WAL.AsyncWriter");
     asyncWriter.start();
-   
+
     int syncerNums = conf.getInt("hbase.hlog.asyncer.number", 5);
     asyncSyncers = new AsyncSyncer[syncerNums];
     for (int i = 0; i < asyncSyncers.length; ++i) {
@@ -994,9 +993,9 @@ class FSHLog implements HLog, Syncable {
    */
   @SuppressWarnings("deprecation")
   private long append(HRegionInfo info, TableName tableName, WALEdit edits, List<UUID> clusterIds,
-      final long now, HTableDescriptor htd, boolean doSync, boolean isInMemstore, 
+      final long now, HTableDescriptor htd, boolean doSync, boolean isInMemstore,
       AtomicLong sequenceId, long nonceGroup, long nonce) throws IOException {
-      if (edits.isEmpty()) return this.unflushedEntries.get();
+     if (edits.isEmpty()) return this.unflushedEntries.get();
       if (this.closed) {
         throw new IOException("Cannot append; log is closed");
       }
@@ -1097,6 +1096,7 @@ class FSHLog implements HLog, Syncable {
       }
     }
 
+    @Override
     public void run() {
       try {
         while (!this.isInterrupted()) {
@@ -1189,6 +1189,7 @@ class FSHLog implements HLog, Syncable {
       }
     }
 
+    @Override
     public void run() {
       try {
         while (!this.isInterrupted()) {
@@ -1236,7 +1237,7 @@ class FSHLog implements HLog, Syncable {
               asyncIOE = new IOException("has unsynced writes but writer is null!");
               failedTxid.set(this.txidToSync);
             } else {
-              this.isSyncing = true;            
+              this.isSyncing = true;
               writer.sync();
               this.isSyncing = false;
             }
@@ -1264,7 +1265,7 @@ class FSHLog implements HLog, Syncable {
               logRollNeeded = checkLowReplication();
             } finally {
               rollWriterLock.unlock();
-            }            
+            }
             try {
               if (logRollNeeded || writer != null && writer.getLength() > logrollsize) {
                 requestLogRoll();
@@ -1311,6 +1312,7 @@ class FSHLog implements HLog, Syncable {
       }
     }
 
+    @Override
     public void run() {
       try {
         while (!this.isInterrupted()) {
@@ -1529,13 +1531,13 @@ class FSHLog implements HLog, Syncable {
     // +1 for current use log
     return getNumRolledLogFiles() + 1;
   }
-  
+
   /** @return the size of log files in use */
   @Override
   public long getLogFileSize() {
     return totalLogSize.get() + curLogSize;
   }
-  
+
   @Override
   public boolean startCacheFlush(final byte[] encodedRegionName) {
     Long oldRegionSeqNum = null;

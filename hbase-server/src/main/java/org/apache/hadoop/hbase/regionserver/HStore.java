@@ -2003,6 +2003,7 @@ public class HStore implements Store {
     private long cacheFlushSeqNum;
     private SortedSet<KeyValue> snapshot;
     private List<Path> tempFiles;
+    private List<Path> committedFiles;
     private TimeRangeTracker snapshotTimeRangeTracker;
     private final AtomicLong flushedSize = new AtomicLong();
 
@@ -2019,6 +2020,7 @@ public class HStore implements Store {
       memstore.snapshot();
       this.snapshot = memstore.getSnapshot();
       this.snapshotTimeRangeTracker = memstore.getSnapshotTimeRangeTracker();
+      committedFiles = new ArrayList<Path>(1);
     }
 
     @Override
@@ -2053,13 +2055,19 @@ public class HStore implements Store {
         }
       }
 
-      if (HStore.this.getCoprocessorHost() != null) {
-        for (StoreFile sf : storeFiles) {
+      for (StoreFile sf : storeFiles) {
+        if (HStore.this.getCoprocessorHost() != null) {
           HStore.this.getCoprocessorHost().postFlush(HStore.this, sf);
         }
+        committedFiles.add(sf.getPath());
       }
       // Add new file to store files.  Clear snapshot too while we have the Store write lock.
       return HStore.this.updateStorefiles(storeFiles, snapshot);
+    }
+
+    @Override
+    public List<Path> getCommittedFiles() {
+      return committedFiles;
     }
   }
 

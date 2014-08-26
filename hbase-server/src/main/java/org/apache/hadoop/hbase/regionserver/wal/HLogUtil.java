@@ -41,6 +41,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
+import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
 
@@ -273,5 +274,21 @@ public class HLogUtil {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Appended compaction marker " + TextFormat.shortDebugString(c));
     }
+  }
+
+  /**
+   * Write a flush marker indicating a start / abort or a complete of a region flush
+   */
+  public static long writeFlushMarker(HLog log, HTableDescriptor htd, HRegionInfo info,
+      final FlushDescriptor f, AtomicLong sequenceId, boolean sync) throws IOException {
+    long now = EnvironmentEdgeManager.currentTimeMillis();
+    TableName tn = TableName.valueOf(f.getTableName().toByteArray());
+    long trx = log.appendNoSync(info, tn, WALEdit.createFlushWALEdit(info, f), 
+      new ArrayList<UUID>(), now, htd, sequenceId, false, HConstants.NO_NONCE, HConstants.NO_NONCE);
+    if (sync) log.sync(trx);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Appended flush marker " + TextFormat.shortDebugString(f));
+    }
+    return trx;
   }
 }
