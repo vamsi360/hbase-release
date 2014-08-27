@@ -47,7 +47,7 @@ import com.google.protobuf.ServiceException;
 @edu.umd.cs.findbugs.annotations.SuppressWarnings
     (value = "IS2_INCONSISTENT_SYNC", justification = "na")
 public class RpcRetryingCaller<T> {
-  static final Log LOG = LogFactory.getLog(RpcRetryingCaller.class);
+  public static final Log LOG = LogFactory.getLog(RpcRetryingCaller.class);
   /**
    * Timeout for the call including retries
    */

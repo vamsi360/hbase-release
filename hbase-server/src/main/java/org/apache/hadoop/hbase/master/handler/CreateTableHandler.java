@@ -51,6 +51,7 @@ import org.apache.hadoop.hbase.master.TableLockManager.TableLock;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.ModifyRegionUtils;
+import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
 import org.apache.zookeeper.KeeperException;
 
 /**
@@ -85,6 +86,7 @@ public class CreateTableHandler extends EventHandler {
         , EventType.C_M_CREATE_TABLE.toString());
   }
 
+  @Override
   public CreateTableHandler prepare()
       throws NotAllMetaRegionsOnlineException, TableExistsException, IOException {
     int timeout = conf.getInt("hbase.client.catalog.timeout", 10000);
@@ -171,9 +173,8 @@ public class CreateTableHandler extends EventHandler {
    */
   protected void completed(final Throwable exception) {
     releaseTableLock();
-    String msg = exception == null ? null : exception.getMessage();
     LOG.info("Table, " + this.hTableDescriptor.getTableName() + ", creation " +
-        msg == null ? "successful" : "failed. " + msg);
+        (exception == null ? "successful" : "failed. " + exception));
     if (exception != null) {
       // Try deleting the enabling node in case of error
       // If this does not happen then if the client tries to create the table
@@ -229,7 +230,12 @@ public class CreateTableHandler extends EventHandler {
       // 5. Add replicas if needed
       regionInfos = addReplicas(hTableDescriptor, regionInfos);
 
-      // 6. Trigger immediate assignment of the regions in round-robin fashion
+      // 6. Setup replication for region replicas if needed
+      if (hTableDescriptor.getRegionReplication() > 1) {
+        ServerRegionReplicaUtil.setupRegionReplicaReplication(conf);
+      }
+
+      // 7. Trigger immediate assignment of the regions in round-robin fashion
       try {
         assignmentManager.getRegionStates().createRegionStates(regionInfos);
         assignmentManager.assign(regionInfos);
@@ -241,7 +247,7 @@ public class CreateTableHandler extends EventHandler {
       }
     }
 
-    // 6. Set table enabled flag up in zk.
+    // 8. Set table enabled flag up in zk.
     try {
       assignmentManager.getZKTable().setEnabledTable(tableName);
     } catch (KeeperException e) {

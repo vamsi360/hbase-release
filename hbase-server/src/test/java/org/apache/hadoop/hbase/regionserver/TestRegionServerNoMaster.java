@@ -100,47 +100,56 @@ public class TestRegionServerNoMaster {
     return HTU.getHBaseCluster().getLiveRegionServerThreads().get(0).getRegionServer();
   }
 
-
-  /**
-   * Reopen the region. Reused in multiple tests as we always leave the region open after a test.
-   */
-  private void reopenRegion() throws Exception {
+  public static void openRegion(HBaseTestingUtility HTU, HRegionServer rs, HRegionInfo hri)
+      throws Exception {
     // We reopen. We need a ZK node here, as a open is always triggered by a master.
-    ZKAssign.createNodeOffline(HTU.getZooKeeperWatcher(), hri, getRS().getServerName());
+    ZKAssign.createNodeOffline(HTU.getZooKeeperWatcher(), hri, rs.getServerName());
     // first version is '0'
     AdminProtos.OpenRegionRequest orr = RequestConverter.buildOpenRegionRequest(
-      getRS().getServerName(), hri, 0, null, null);
-    AdminProtos.OpenRegionResponse responseOpen = getRS().openRegion(null, orr);
+      rs.getServerName(), hri, 0, null, null);
+    AdminProtos.OpenRegionResponse responseOpen = rs.openRegion(null, orr);
     Assert.assertTrue(responseOpen.getOpeningStateCount() == 1);
     Assert.assertTrue(responseOpen.getOpeningState(0).
         equals(AdminProtos.OpenRegionResponse.RegionOpeningState.OPENED));
 
-
-    checkRegionIsOpened();
+    checkRegionIsOpened(HTU, rs, hri);
   }
 
-  private void checkRegionIsOpened() throws Exception {
-
-    while (!getRS().getRegionsInTransitionInRS().isEmpty()) {
+  public static void checkRegionIsOpened(HBaseTestingUtility HTU, HRegionServer rs,
+      HRegionInfo hri) throws Exception {
+    while (!rs.getRegionsInTransitionInRS().isEmpty()) {
       Thread.sleep(1);
     }
 
-    Assert.assertTrue(getRS().getRegion(regionName).isAvailable());
+    Assert.assertTrue(rs.getRegion(hri.getRegionName()).isAvailable());
 
     Assert.assertTrue(
       ZKAssign.deleteOpenedNode(HTU.getZooKeeperWatcher(), hri.getEncodedName(),
-        getRS().getServerName()));
+        rs.getServerName()));
   }
 
+  public static void closeRegion(HBaseTestingUtility HTU, HRegionServer rs, HRegionInfo hri)
+      throws Exception {
+    ZKAssign.createNodeClosing(HTU.getZooKeeperWatcher(), hri, rs.getServerName());
 
-  private void checkRegionIsClosed() throws Exception {
+    AdminProtos.CloseRegionRequest crr = RequestConverter.buildCloseRegionRequest(
+      rs.getServerName(), hri.getEncodedName(), true);
+    AdminProtos.CloseRegionResponse responseClose = rs.closeRegion(null, crr);
+    Assert.assertTrue(responseClose.getClosed());
 
-    while (!getRS().getRegionsInTransitionInRS().isEmpty()) {
+    checkRegionIsClosed(HTU, rs, hri);
+
+    ZKAssign.deleteClosedNode(HTU.getZooKeeperWatcher(), hri.getEncodedName(), rs.getServerName());
+  }
+
+  public static void checkRegionIsClosed(HBaseTestingUtility HTU, HRegionServer rs,
+      HRegionInfo hri) throws Exception {
+    while (!rs.getRegionsInTransitionInRS().isEmpty()) {
       Thread.sleep(1);
     }
 
     try {
-      Assert.assertFalse(getRS().getRegion(regionName).isAvailable());
+      Assert.assertFalse(rs.getRegion(hri.getRegionName()).isAvailable());
     } catch (NotServingRegionException expected) {
       // That's how it work: if the region is closed we have an exception.
     }
@@ -152,7 +161,7 @@ public class TestRegionServerNoMaster {
   /**
    * Close the region without using ZK
    */
-  private void closeNoZK() throws Exception {
+  private void closeRegionNoZK() throws Exception {
     // no transition in ZK
     AdminProtos.CloseRegionRequest crr =
         RequestConverter.buildCloseRegionRequest(getRS().getServerName(), regionName, false);
@@ -160,14 +169,14 @@ public class TestRegionServerNoMaster {
     Assert.assertTrue(responseClose.getClosed());
 
     // now waiting & checking. After a while, the transition should be done and the region closed
-    checkRegionIsClosed();
+    checkRegionIsClosed(HTU, getRS(), hri);
   }
 
 
   @Test(timeout = 60000)
   public void testCloseByRegionServer() throws Exception {
-    closeNoZK();
-    reopenRegion();
+    closeRegionNoZK();
+    openRegion(HTU, getRS(), hri);
   }
 
   @Test(timeout = 60000)
@@ -198,12 +207,12 @@ public class TestRegionServerNoMaster {
     AdminProtos.CloseRegionResponse responseClose = getRS().closeRegion(null, crr);
     Assert.assertTrue(responseClose.getClosed());
 
-    checkRegionIsClosed();
+    checkRegionIsClosed(HTU, getRS(), hri);
 
     ZKAssign.deleteClosedNode(HTU.getZooKeeperWatcher(), hri.getEncodedName(),
       getRS().getServerName());
 
-    reopenRegion();
+    openRegion(HTU, getRS(), hri);
   }
 
   /**
@@ -220,8 +229,8 @@ public class TestRegionServerNoMaster {
   public void testMultipleOpen() throws Exception {
 
     // We close
-    closeNoZK();
-    checkRegionIsClosed();
+    closeRegionNoZK();
+    checkRegionIsClosed(HTU, getRS(), hri);
 
     // We reopen. We need a ZK node here, as a open is always triggered by a master.
     ZKAssign.createNodeOffline(HTU.getZooKeeperWatcher(), hri, getRS().getServerName());
@@ -240,7 +249,7 @@ public class TestRegionServerNoMaster {
       );
     }
 
-    checkRegionIsOpened();
+    checkRegionIsOpened(HTU, getRS(), hri);
   }
 
   @Test
@@ -280,14 +289,14 @@ public class TestRegionServerNoMaster {
       }
     }
 
-    checkRegionIsClosed();
+    checkRegionIsClosed(HTU, getRS(), hri);
 
     Assert.assertTrue(
       ZKAssign.deleteClosedNode(HTU.getZooKeeperWatcher(), hri.getEncodedName(),
         getRS().getServerName())
     );
 
-    reopenRegion();
+    openRegion(HTU, getRS(), hri);
   }
 
   /**
@@ -296,8 +305,8 @@ public class TestRegionServerNoMaster {
   @Test(timeout = 60000)
   public void testCancelOpeningWithoutZK() throws Exception {
     // We close
-    closeNoZK();
-    checkRegionIsClosed();
+    closeRegionNoZK();
+    checkRegionIsClosed(HTU, getRS(), hri);
 
     // Let do the initial steps, without having a handler
     ZKAssign.createNodeOffline(HTU.getZooKeeperWatcher(), hri, getRS().getServerName());
@@ -321,7 +330,7 @@ public class TestRegionServerNoMaster {
     getRS().service.submit(new OpenRegionHandler(getRS(), getRS(), hri, htd, 0));
 
     // The open handler should have removed the region from RIT but kept the region closed
-    checkRegionIsClosed();
+    checkRegionIsClosed(HTU, getRS(), hri);
 
     // The open handler should have updated the value in ZK.
     Assert.assertTrue(ZKAssign.deleteNode(
@@ -329,7 +338,7 @@ public class TestRegionServerNoMaster {
         EventType.RS_ZK_REGION_FAILED_OPEN, 1)
     );
 
-    reopenRegion();
+    openRegion(HTU, getRS(), hri);
   }
 
   /**
@@ -339,8 +348,8 @@ public class TestRegionServerNoMaster {
   @Test(timeout = 60000)
   public void testCancelOpeningWithZK() throws Exception {
     // We close
-    closeNoZK();
-    checkRegionIsClosed();
+    closeRegionNoZK();
+    checkRegionIsClosed(HTU, getRS(), hri);
 
     // Let do the initial steps, without having a handler
     getRS().getRegionsInTransitionInRS().put(hri.getEncodedNameAsBytes(), Boolean.TRUE);
@@ -375,12 +384,12 @@ public class TestRegionServerNoMaster {
     getRS().service.submit(new OpenRegionHandler(getRS(), getRS(), hri, htd, 0));
 
     // The open handler should have removed the region from RIT but kept the region closed
-    checkRegionIsClosed();
+    checkRegionIsClosed(HTU, getRS(), hri);
 
     // We should not find any znode here.
     Assert.assertEquals(-1, ZKAssign.getVersion(HTU.getZooKeeperWatcher(), hri));
 
-    reopenRegion();
+    openRegion(HTU, getRS(), hri);
   }
 
   /**
@@ -404,7 +413,7 @@ public class TestRegionServerNoMaster {
     }
 
     //actual close
-    closeNoZK();
+    closeRegionNoZK();
     try {
       AdminProtos.OpenRegionRequest orr = RequestConverter.buildOpenRegionRequest(
         earlierServerName, hri, 0, null, null);
@@ -414,7 +423,7 @@ public class TestRegionServerNoMaster {
       Assert.assertTrue(se.getCause() instanceof IOException);
       Assert.assertTrue(se.getCause().getMessage().contains("This RPC was intended for a different server"));
     } finally {
-      reopenRegion();
+      openRegion(HTU, getRS(), hri);
     }
   }
 }

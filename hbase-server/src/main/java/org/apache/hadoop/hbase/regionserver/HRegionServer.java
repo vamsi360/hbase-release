@@ -90,6 +90,7 @@ import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.ConnectionUtils;
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Mutation;
@@ -2712,10 +2713,10 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       String regionNameStr = regionName == null?
         encodedRegionName: Bytes.toStringBinary(regionName);
       if (isOpening != null && isOpening.booleanValue()) {
-        throw new RegionOpeningException("Region " + regionNameStr + 
+        throw new RegionOpeningException("Region " + regionNameStr +
           " is opening on " + this.serverNameFromMasterPOV);
       }
-      throw new NotServingRegionException("Region " + regionNameStr + 
+      throw new NotServingRegionException("Region " + regionNameStr +
         " is not online on " + this.serverNameFromMasterPOV);
     }
     return region;
@@ -3713,7 +3714,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
                 region.getEncodedName())) {
             // check if current region open is for distributedLogReplay. This check is to support
             // rolling restart/upgrade where we want to Master/RS see same configuration
-            if (!regionOpenInfo.hasOpenForDistributedLogReplay() 
+            if (!regionOpenInfo.hasOpenForDistributedLogReplay()
                   || regionOpenInfo.getOpenForDistributedLogReplay()) {
               this.recoveringRegions.put(region.getEncodedName(), null);
             } else {
@@ -4035,14 +4036,27 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         // empty input
         return ReplicateWALEntryResponse.newBuilder().build();
       }
-      HRegion region = this.getRegionByEncodedName(
-        entries.get(0).getKey().getEncodedRegionName().toStringUtf8());
-      RegionCoprocessorHost coprocessorHost = region.getCoprocessorHost();
+      ByteString regionName = entries.get(0).getKey().getEncodedRegionName();
+      HRegion region = getRegionByEncodedName(regionName.toStringUtf8());
+      RegionCoprocessorHost coprocessorHost =
+          ServerRegionReplicaUtil.isDefaultReplica(region.getRegionInfo())
+            ? region.getCoprocessorHost()
+            : null; // do not invoke coprocessors if this is a secondary region replica
       List<Pair<HLogKey, WALEdit>> walEntries = new ArrayList<Pair<HLogKey, WALEdit>>();
       List<HLogSplitter.MutationReplay> mutations = new ArrayList<HLogSplitter.MutationReplay>();
       // when tag is enabled, we need tag replay edits with log sequence number
       boolean needAddReplayTag = (HFile.getFormatVersion(this.conf) >= 3);
+
+      // Skip adding the edits to WAL if this is a secondary region replica
+      boolean isPrimary = RegionReplicaUtil.isDefaultReplica(region.getRegionInfo());
+      Durability durability = isPrimary ? Durability.USE_DEFAULT : Durability.SKIP_WAL;
+
       for (WALEntry entry : entries) {
+        if (!regionName.equals(entry.getKey().getEncodedRegionName())) {
+          throw new NotServingRegionException("Replay request contains entries from multiple " +
+              "regions. First region:" + regionName.toStringUtf8() + " , other region:"
+              + entry.getKey().getEncodedRegionName());
+        }
         if (nonceManager != null) {
           long nonceGroup = entry.getKey().hasNonceGroup()
               ? entry.getKey().getNonceGroup() : HConstants.NO_NONCE;
@@ -4052,7 +4066,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         Pair<HLogKey, WALEdit> walEntry = (coprocessorHost == null) ? null :
           new Pair<HLogKey, WALEdit>();
         List<HLogSplitter.MutationReplay> edits = HLogSplitter.getMutationsFromWALEntry(entry,
-          cells, walEntry, needAddReplayTag);
+          cells, walEntry, needAddReplayTag, durability);
         if (coprocessorHost != null) {
           // Start coprocessor replay here. The coprocessor is for each WALEdit instead of a
           // KeyValue.
@@ -4620,7 +4634,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         minSeqIdForLogReplay = storeSeqIdForReplay;
       }
     }
-    
+
     try {
       long lastRecordedFlushedSequenceId = -1;
       String nodePath = ZKUtil.joinZNode(this.zooKeeper.recoveringRegionsZNode,
@@ -4646,7 +4660,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     } catch (InterruptedException e) {
         throw new InterruptedIOException();
     } catch (NoNodeException ignore) {
-      LOG.debug("Region " + region.getEncodedName() + 
+      LOG.debug("Region " + region.getEncodedName() +
         " must have completed recovery because its recovery znode has been removed", ignore);
     }
   }
