@@ -171,35 +171,43 @@ public class RpcRetryingCallerWithReadReplicas {
    */
   public synchronized Result call()
       throws DoNotRetryIOException, InterruptedIOException, RetriesExhaustedException {
-    RegionLocations rl = getRegionLocations(true, RegionReplicaUtil.DEFAULT_REPLICA_ID,
-        cConnection, tableName, get.getRow());
+    boolean isTargetReplicaSpecified = (get.getReplicaId() >= 0);
+
+    RegionLocations rl = getRegionLocations(true, (isTargetReplicaSpecified ? get.getReplicaId()
+        : RegionReplicaUtil.DEFAULT_REPLICA_ID), cConnection, tableName, get.getRow());
+
     BoundedCompletionService<Result> cs = new BoundedCompletionService<Result>(pool, rl.size());
 
     List<ExecutionException> exceptions = null;
     int submitted = 0, completed = 0;
-    // submit call for the primary replica.
-    submitted += addCallsForReplica(cs, rl, 0, 0);
-    try {
-      // wait for the timeout to see whether the primary responds back
-      Future<Result> f = cs.poll(timeBeforeReplicas, TimeUnit.MICROSECONDS); // Yes, microseconds
-      if (f != null) {
-        return f.get(); //great we got a response
-      }
-    } catch (ExecutionException e) {
-      // the primary call failed with RetriesExhaustedException or DoNotRetryIOException
-      // but the secondaries might still succeed. Continue on the replica RPCs.
-      exceptions = new ArrayList<ExecutionException>(rl.size());
-      exceptions.add(e);
-      completed++;
-    } catch (CancellationException e) {
-      throw new InterruptedIOException();
-    } catch (InterruptedException e) {
-      throw new InterruptedIOException();
-    }
 
-    // submit call for the all of the secondaries at once
-    // TODO: this may be an overkill for large region replication
-    submitted += addCallsForReplica(cs, rl, 1, rl.size() - 1);
+    if(isTargetReplicaSpecified) {
+      submitted += addCallsForReplica(cs, rl, get.getReplicaId(), get.getReplicaId());
+    } else {
+      submitted += addCallsForReplica(cs, rl, 0, 0);
+
+      try {
+        // wait for the timeout to see whether the primary responds back
+        Future<Result> f = cs.poll(timeBeforeReplicas, TimeUnit.MICROSECONDS); // Yes, microseconds
+        if (f != null) {
+          return f.get(); //great we got a response
+        }
+      } catch (ExecutionException e) {
+        // the primary call failed with RetriesExhaustedException or DoNotRetryIOException
+        // but the secondaries might still succeed. Continue on the replica RPCs.
+        exceptions = new ArrayList<ExecutionException>(rl.size());
+        exceptions.add(e);
+        completed++;
+      } catch (CancellationException e) {
+        throw new InterruptedIOException();
+      } catch (InterruptedException e) {
+        throw new InterruptedIOException();
+      }
+
+      // submit call for the all of the secondaries at once
+      // TODO: this may be an overkill for large region replication
+      submitted += addCallsForReplica(cs, rl, 1, rl.size() - 1);
+    }
     try {
       while (completed < submitted) {
         try {

@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.catalog.TestMetaReaderEditor;
+import org.apache.hadoop.hbase.client.Consistency;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -154,6 +155,31 @@ public class TestRegionReplicas {
 
       assertGetRpc(hriSecondary, 42, true);
 
+    } finally {
+      HTU.deleteNumericRows(table, HConstants.CATALOG_FAMILY, 0, 1000);
+      closeRegion(HTU, getRS(), hriSecondary);
+    }
+  }
+
+  @Test(timeout = 60000)
+  public void testGetOnTargetRegionReplica() throws Exception {
+    try {
+      //load some data to primary
+      HTU.loadNumericRows(table, f, 0, 1000);
+      // assert that we can read back from primary
+      Assert.assertEquals(1000, HTU.countRows(table));
+      // flush so that region replica can read
+      getRS().getRegionByEncodedName(hriPrimary.getEncodedName()).flushcache();
+
+      openRegion(HTU, getRS(), hriSecondary);
+
+      // try directly Get against region replica
+      byte[] row = Bytes.toBytes(String.valueOf(42));
+      Get get = new Get(row);
+      get.setConsistency(Consistency.TIMELINE);
+      get.setReplicaId(1);
+      Result result = table.get(get);
+      Assert.assertArrayEquals(row, result.getValue(f, null));
     } finally {
       HTU.deleteNumericRows(table, HConstants.CATALOG_FAMILY, 0, 1000);
       closeRegion(HTU, getRS(), hriSecondary);
