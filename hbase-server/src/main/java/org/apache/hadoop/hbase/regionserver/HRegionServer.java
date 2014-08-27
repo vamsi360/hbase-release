@@ -196,6 +196,8 @@ import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.Regio
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerStatusService;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRSFatalErrorRequest;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
+import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
+import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor;
 import org.apache.hadoop.hbase.regionserver.HRegion.Operation;
 import org.apache.hadoop.hbase.regionserver.Leases.LeaseStillHeldException;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionProgress;
@@ -245,7 +247,6 @@ import org.cliffc.high_scale_lib.Counter;
 
 import com.google.protobuf.BlockingRpcChannel;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.HBaseZeroCopyByteString;
 import com.google.protobuf.Message;
 import com.google.protobuf.RpcController;
 import com.google.protobuf.ServiceException;
@@ -4051,6 +4052,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       boolean isPrimary = RegionReplicaUtil.isDefaultReplica(region.getRegionInfo());
       Durability durability = isPrimary ? Durability.USE_DEFAULT : Durability.SKIP_WAL;
 
+      long replaySeqId = 0;
       for (WALEntry entry : entries) {
         if (!regionName.equals(entry.getKey().getEncodedRegionName())) {
           throw new NotServingRegionException("Replay request contains entries from multiple " +
@@ -4078,10 +4080,11 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
           walEntries.add(walEntry);
         }
         mutations.addAll(edits);
+        replaySeqId = entry.getKey().getLogSequenceNumber(); // TODO: do we need orig seq number?
       }
 
       if (!mutations.isEmpty()) {
-        OperationStatus[] result = doReplayBatchOp(region, mutations);
+        OperationStatus[] result = doReplayBatchOp(region, mutations, replaySeqId);
         // check if it's a partial success
         for (int i = 0; result != null && i < result.length; i++) {
           if (result[i] != OperationStatus.SUCCESS) {
@@ -4383,7 +4386,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
    * @throws IOException
    */
   protected OperationStatus [] doReplayBatchOp(final HRegion region,
-      final List<HLogSplitter.MutationReplay> mutations) throws IOException {
+      final List<HLogSplitter.MutationReplay> mutations, long replaySeqId) throws IOException {
 
     long before = EnvironmentEdgeManager.currentTimeMillis();
     boolean batchContainsPuts = false, batchContainsDelete = false;
@@ -4401,7 +4404,22 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
           for (Cell metaCell : metaCells) {
             CompactionDescriptor compactionDesc = WALEdit.getCompaction(metaCell);
             if (compactionDesc != null) {
-              region.completeCompactionMarker(compactionDesc);
+              // replay the compaction. Remove the files from stores only if we are the primary
+              // region replica (thus own the files)
+              boolean isDefaultReplica = RegionReplicaUtil.isDefaultReplica(region.getRegionInfo());
+              region.replayWALCompactionMarker(compactionDesc, !isDefaultReplica, isDefaultReplica,
+                replaySeqId);
+              continue;
+            }
+            FlushDescriptor flushDesc = WALEdit.getFlushDescriptor(metaCell);
+            if (flushDesc != null) {
+              region.replayWALFlushMarker(flushDesc);
+              continue;
+            }
+            RegionEventDescriptor regionEvent = WALEdit.getRegionEventDescriptor(metaCell);
+            if (regionEvent != null) {
+              region.replayWALRegionEventMarker(regionEvent);
+              continue;
             }
           }
           it.remove();
@@ -4412,7 +4430,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         cacheFlusher.reclaimMemStoreMemory();
       }
       return region.batchReplay(mutations.toArray(
-        new HLogSplitter.MutationReplay[mutations.size()]));
+        new HLogSplitter.MutationReplay[mutations.size()]), replaySeqId);
     } finally {
       long after = EnvironmentEdgeManager.currentTimeMillis();
       if (batchContainsPuts) {

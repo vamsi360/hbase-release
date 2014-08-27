@@ -119,6 +119,10 @@ public class HRegionFileSystem {
     return this.regionInfo;
   }
 
+  public HRegionInfo getRegionInfoForFS() {
+    return this.regionInfoForFs;
+  }
+
   /** @return {@link Path} to the region's root directory. */
   public Path getTableDir() {
     return this.tableDir;
@@ -194,7 +198,7 @@ public class HRegionFileSystem {
     for (FileStatus status: files) {
       if (!StoreFileInfo.isValid(status)) continue;
       StoreFileInfo info = ServerRegionReplicaUtil.getStoreFileInfo(conf, fs, regionInfo,
-        regionInfoForFs, familyName, status);
+        regionInfoForFs, familyName, status.getPath());
       storeFiles.add(info);
     }
     return storeFiles;
@@ -222,8 +226,8 @@ public class HRegionFileSystem {
   StoreFileInfo getStoreFileInfo(final String familyName, final String fileName)
       throws IOException {
     Path familyDir = getStoreDir(familyName);
-    FileStatus status = fs.getFileStatus(new Path(familyDir, fileName));
-    return new StoreFileInfo(this.conf, this.fs, status);
+    return ServerRegionReplicaUtil.getStoreFileInfo(conf, fs, regionInfo,
+      regionInfoForFs, familyName, new Path(familyDir, fileName));
   }
 
   /**

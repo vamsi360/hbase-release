@@ -221,6 +221,14 @@ public class MemStore implements HeapSize {
   }
 
   /**
+   * Return the size of the snapshot(s) if any
+   * @return
+   */
+  public long getSnapshotSize() {
+    return this.snapshotSize;
+  }
+
+  /**
    * Write an update
    * @param kv
    * @return approximate size of the passed key and value.
@@ -530,7 +538,7 @@ public class MemStore implements HeapSize {
    * atomically.  Scans will only see each KeyValue update as atomic.
    *
    * @param cells
-   * @param readpoint readpoint below which we can safely remove duplicate KVs 
+   * @param readpoint readpoint below which we can safely remove duplicate KVs
    * @return change in memstore size
    */
   public long upsert(Iterable<Cell> cells, long readpoint) {
@@ -684,7 +692,7 @@ public class MemStore implements HeapSize {
     // last iterated KVs for kvset and snapshot (to restore iterator state after reseek)
     private KeyValue kvsetItRow = null;
     private KeyValue snapshotItRow = null;
-    
+
     // iterator based scanning.
     private Iterator<KeyValue> kvsetIt;
     private Iterator<KeyValue> snapshotIt;
@@ -699,7 +707,7 @@ public class MemStore implements HeapSize {
     // The allocator and snapshot allocator at the time of creating this scanner
     volatile MemStoreLAB allocatorAtCreation;
     volatile MemStoreLAB snapshotAllocatorAtCreation;
-    
+
     // A flag represents whether could stop skipping KeyValues for MVCC
     // if have encountered the next row. Only used for reversed scan
     private boolean stopSkippingKVsIfNextRow = false;
@@ -900,13 +908,14 @@ public class MemStore implements HeapSize {
       return (first != null ? first : second);
     }
 
+    @Override
     public synchronized void close() {
       this.kvsetNextRow = null;
       this.snapshotNextRow = null;
 
       this.kvsetIt = null;
       this.snapshotIt = null;
-      
+
       if (allocatorAtCreation != null) {
         this.allocatorAtCreation.decScannerCount();
         this.allocatorAtCreation = null;

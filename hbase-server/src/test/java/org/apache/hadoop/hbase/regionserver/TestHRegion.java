@@ -4484,6 +4484,8 @@ public class TestHRegion {
     }
   }
 
+
+
   @Test
   public void testCompactionFromPrimary() throws IOException {
     if (FSUtils.WINDOWS) {
@@ -4548,9 +4550,14 @@ public class TestHRegion {
 
   private void putData(HRegion region,
       int startRow, int numRows, byte[] qf, byte[]... families) throws IOException {
+    putData(region, Durability.SKIP_WAL, startRow, numRows, qf, families);
+  }
+
+  static void putData(HRegion region, Durability durability,
+      int startRow, int numRows, byte[] qf, byte[]... families) throws IOException {
     for (int i = startRow; i < startRow + numRows; i++) {
       Put put = new Put(Bytes.toBytes("" + i));
-      put.setDurability(Durability.SKIP_WAL);
+      put.setDurability(durability);
       for (byte[] family : families) {
         put.add(family, qf, null);
       }
@@ -4558,7 +4565,7 @@ public class TestHRegion {
     }
   }
 
-  private void verifyData(HRegion newReg, int startRow, int numRows, byte[] qf, byte[]... families)
+  static void verifyData(HRegion newReg, int startRow, int numRows, byte[] qf, byte[]... families)
       throws IOException {
     for (int i = startRow; i < startRow + numRows; i++) {
       byte[] row = Bytes.toBytes("" + i);
@@ -4577,7 +4584,7 @@ public class TestHRegion {
     }
   }
 
-  private void assertGet(final HRegion r, final byte[] family, final byte[] k) throws IOException {
+  static void assertGet(final HRegion r, final byte[] family, final byte[] k) throws IOException {
     // Now I have k, get values out and assert they are as expected.
     Get get = new Get(k).addFamily(family).setMaxVersions();
     Cell[] results = r.get(get).rawCells();
@@ -4724,7 +4731,7 @@ public class TestHRegion {
     return initHRegion(tableName, null, null, callingMethod, conf, isReadOnly, families);
   }
 
-  private static HRegion initHRegion(byte[] tableName, byte[] startKey, byte[] stopKey,
+  public static HRegion initHRegion(byte[] tableName, byte[] startKey, byte[] stopKey,
       String callingMethod, Configuration conf, boolean isReadOnly, byte[]... families)
       throws IOException {
     return initHRegion(tableName, startKey, stopKey, callingMethod, conf, isReadOnly,
@@ -4743,7 +4750,7 @@ public class TestHRegion {
    * @return A region on which you must call
    *         {@link HRegion#closeHRegion(HRegion)} when done.
    */
-  private static HRegion initHRegion(byte[] tableName, byte[] startKey, byte[] stopKey,
+  public static HRegion initHRegion(byte[] tableName, byte[] startKey, byte[] stopKey,
       String callingMethod, Configuration conf, boolean isReadOnly, Durability durability,
       HLog hlog, byte[]... families) throws IOException {
     return TEST_UTIL.createLocalHRegion(tableName, startKey, stopKey, callingMethod, conf, isReadOnly, durability, hlog, families);
@@ -5479,7 +5486,7 @@ public class TestHRegion {
     assertEquals(0, store.getStoreFileCount()); // no store files
   }
 
-  private static HRegion initHRegion(byte[] tableName, String callingMethod,
+  static HRegion initHRegion(byte[] tableName, String callingMethod,
       byte[]... families) throws IOException {
     return initHRegion(tableName, callingMethod, HBaseConfiguration.create(),
         families);
