@@ -35,11 +35,13 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.protobuf.generated.WALProtos;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor;
@@ -308,4 +310,37 @@ public class HLogUtil {
     }
     return trx;
   }
+  
+  
+   /**
+    * Write a log marker that a bulk load has succeeded and is about to be committed.
+    *
+    * @param log        The log to write into.
+    * @param htd        A description of the table that we are bulk loading into.
+    * @param info       A description of the region in the table that we are bulk loading into.
+    * @param descriptor A protocol buffers based description of the client's bulk loading request
+    * @param sequenceId The current sequenceId in the log at the time when we were to write the
+    *                   bulk load marker.
+    * @return txid of this transaction or if nothing to do, the last txid
+    * @throws IOException We will throw an IOException if we can not append to the HLog.
+    */
+  public static long writeBulkLoadMarkerAndSync(final HLog log, final HTableDescriptor htd,
+      final HRegionInfo info, final WALProtos.BulkLoadDescriptor descriptor,
+      final AtomicLong sequenceId) throws IOException {
+    TableName tn = info.getTable();
+
+    // Add it to the log but the false specifies that we don't need to add it to the memstore
+    long trx =
+        log.appendNoSync(info, tn, WALEdit.createBulkLoadEvent(info, descriptor),
+          new ArrayList<UUID>(), EnvironmentEdgeManager.currentTimeMillis(), htd, sequenceId,
+          false, HConstants.NO_NONCE, HConstants.NO_NONCE);
+    log.sync(trx);
+
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Appended Bulk Load marker " + TextFormat.shortDebugString(descriptor));
+    }
+    
+    return trx;
+  }
+
 }

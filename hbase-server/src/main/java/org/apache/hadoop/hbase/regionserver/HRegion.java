@@ -59,6 +59,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.google.protobuf.ByteString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -70,7 +71,6 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.CompoundConfiguration;
-import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.DroppedSnapshotException;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -120,6 +120,7 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.GetRegionInfoResponse.CompactionState;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.CoprocessorServiceCall;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
+import org.apache.hadoop.hbase.protobuf.generated.WALProtos;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor;
@@ -154,6 +155,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.protobuf.Descriptors;
+import com.google.protobuf.HBaseZeroCopyByteString;
 import com.google.protobuf.Message;
 import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
@@ -206,7 +208,7 @@ public class HRegion implements HeapSize { // , Writable{
    * This is the global default value for durability. All tables/mutations not
    * defining a durability or using USE_DEFAULT will default to this value.
    */
-  private static final Durability DEFAULT_DURABLITY = Durability.SYNC_WAL;
+  private static final Durability DEFAULT_DURABILITY = Durability.SYNC_WAL;
 
   final AtomicBoolean closed = new AtomicBoolean(false);
   /* Closing can take some time; use the closing flag if there is stuff we don't
@@ -626,7 +628,7 @@ public class HRegion implements HeapSize { // , Writable{
     this.rowProcessorTimeout = conf.getLong(
         "hbase.hregion.row.processor.timeout", DEFAULT_ROW_PROCESSOR_TIMEOUT);
     this.durability = htd.getDurability() == Durability.USE_DEFAULT
-        ? DEFAULT_DURABLITY
+        ? DEFAULT_DURABILITY
         : htd.getDurability();
     if (rsServices != null) {
       this.rsAccounting = this.rsServices.getRegionServerAccounting();
@@ -707,7 +709,7 @@ public class HRegion implements HeapSize { // , Writable{
   }
 
   private long initializeRegionInternals(final CancelableProgressable reporter,
-      final MonitoredTask status) throws IOException, UnsupportedEncodingException {
+      final MonitoredTask status) throws IOException {
     if (coprocessorHost != null) {
       status.setStatus("Running coprocessor pre-open hook");
       coprocessorHost.preOpen();
@@ -773,7 +775,7 @@ public class HRegion implements HeapSize { // , Writable{
   }
 
   private long initializeRegionStores(final CancelableProgressable reporter, MonitoredTask status)
-      throws IOException, UnsupportedEncodingException {
+      throws IOException {
     // Load in all the HStores.
 
     long maxSeqId = -1;
@@ -2043,7 +2045,7 @@ public class HRegion implements HeapSize { // , Writable{
    return getScanner(scan, null);
   }
 
-  void prepareScanner(Scan scan) throws IOException {
+  void prepareScanner(Scan scan) {
     if(!scan.hasFamilies()) {
       // Adding all families to scanner
       for(byte[] family: this.htableDescriptor.getFamiliesKeys()){
@@ -2361,7 +2363,7 @@ public class HRegion implements HeapSize { // , Writable{
   /**
    * Perform a batch of mutations.
    * It supports only Put and Delete mutations and will ignore other types passed.
-   * @param mutations the list of mutations
+   * @param batchOp the list of mutations
    * @return an array of OperationStatus which internally contains the
    *         OperationStatusCode and the exceptionMessage if any.
    * @throws IOException
@@ -2913,7 +2915,7 @@ public class HRegion implements HeapSize { // , Writable{
     }
   }
 
-  private void doBatchMutate(Mutation mutation) throws IOException, DoNotRetryIOException {
+  private void doBatchMutate(Mutation mutation) throws IOException {
     // Currently this is only called for puts and deletes, so no nonces.
     OperationStatus[] batchMutate = this.batchMutate(new Mutation[] { mutation },
         HConstants.NO_NONCE, HConstants.NO_NONCE);
@@ -3280,7 +3282,7 @@ public class HRegion implements HeapSize { // , Writable{
   protected long replayRecoveredEditsIfAny(final Path regiondir,
       Map<byte[], Long> maxSeqIdInStores,
       final CancelableProgressable reporter, final MonitoredTask status)
-      throws UnsupportedEncodingException, IOException {
+      throws IOException {
     long minSeqIdForTheRegion = -1;
     for (Long maxSeqIdInStore : maxSeqIdInStores.values()) {
       if (maxSeqIdInStore < minSeqIdForTheRegion || minSeqIdForTheRegion == -1) {
@@ -3734,7 +3736,17 @@ public class HRegion implements HeapSize { // , Writable{
     return multipleFamilies;
   }
 
-
+  /**
+   * Bulk load a/many HFiles into this region
+   *
+   * @param familyPaths A list which maps column families to the location of the HFile to load
+   *                    into that column family region.
+   * @param assignSeqId Force a flush, get it's sequenceId to preserve the guarantee that all the
+   *                    edits lower than the highest sequential ID from all the HFiles are flushed
+   *                    on disk.
+   * @return true if successful, false if failed recoverably
+   * @throws IOException if failed unrecoverably.
+   */
   public boolean bulkLoadHFiles(List<Pair<byte[], String>> familyPaths,
                                 boolean assignSeqId) throws IOException {
     return bulkLoadHFiles(familyPaths, assignSeqId, null);
@@ -3753,6 +3765,8 @@ public class HRegion implements HeapSize { // , Writable{
    */
   public boolean bulkLoadHFiles(List<Pair<byte[], String>> familyPaths, boolean assignSeqId,
       BulkLoadListener bulkLoadListener) throws IOException {
+    long seqId = -1;
+    Map<byte[], List<Path>> storeFiles = new TreeMap<byte[], List<Path>>(Bytes.BYTES_COMPARATOR);
     Preconditions.checkNotNull(familyPaths);
     // we need writeLock for multi-family bulk load
     startBulkRegionOperation(hasMultipleColumnFamilies(familyPaths));
@@ -3798,7 +3812,7 @@ public class HRegion implements HeapSize { // , Writable{
         StringBuilder list = new StringBuilder();
         for (Pair<byte[], String> p : failures) {
           list.append("\n").append(Bytes.toString(p.getFirst())).append(" : ")
-            .append(p.getSecond());
+              .append(p.getSecond());
         }
         // problem when validating
         LOG.warn("There was a recoverable bulk load failure likely due to a" +
@@ -3806,7 +3820,6 @@ public class HRegion implements HeapSize { // , Writable{
         return false;
       }
 
-      long seqId = -1;
       // We need to assign a sequential ID that's in between two memstores in order to preserve
       // the guarantee that all the edits lower than the highest sequential ID from all the
       // HFiles are flushed on disk. See HBASE-10958.
@@ -3828,11 +3841,19 @@ public class HRegion implements HeapSize { // , Writable{
         Store store = getStore(familyName);
         try {
           String finalPath = path;
-          if(bulkLoadListener != null) {
+          if (bulkLoadListener != null) {
             finalPath = bulkLoadListener.prepareBulkLoad(familyName, path);
           }
           store.bulkLoadHFile(finalPath, seqId);
-          if(bulkLoadListener != null) {
+          
+          if(storeFiles.containsKey(familyName)) {
+            storeFiles.get(familyName).add(new Path(finalPath));
+          } else {
+            List<Path> storeFileNames = new ArrayList<Path>();
+            storeFileNames.add(new Path(finalPath));
+            storeFiles.put(familyName, storeFileNames);
+          }
+          if (bulkLoadListener != null) {
             bulkLoadListener.doneBulkLoad(familyName, path);
           }
         } catch (IOException ioe) {
@@ -3841,20 +3862,38 @@ public class HRegion implements HeapSize { // , Writable{
 
           // TODO Need a better story for reverting partial failures due to HDFS.
           LOG.error("There was a partial failure due to IO when attempting to" +
-              " load " + Bytes.toString(p.getFirst()) + " : "+ p.getSecond(), ioe);
-          if(bulkLoadListener != null) {
+              " load " + Bytes.toString(p.getFirst()) + " : " + p.getSecond(), ioe);
+          if (bulkLoadListener != null) {
             try {
               bulkLoadListener.failedBulkLoad(familyName, path);
             } catch (Exception ex) {
-              LOG.error("Error while calling failedBulkLoad for family "+
-                  Bytes.toString(familyName)+" with path "+path, ex);
+              LOG.error("Error while calling failedBulkLoad for family " +
+                  Bytes.toString(familyName) + " with path " + path, ex);
             }
           }
           throw ioe;
         }
       }
+
       return true;
     } finally {
+      if (log != null && !storeFiles.isEmpty()) {
+        // write a bulk load even when not all hfiles are loaded
+        try {
+          WALProtos.BulkLoadDescriptor loadDescriptor = ProtobufUtil.toBulkLoadDescriptor(this
+              .getRegionInfo().getTable(), HBaseZeroCopyByteString.wrap(this.getRegionInfo()
+              .getEncodedNameAsBytes()), storeFiles, seqId);
+          HLogUtil.writeBulkLoadMarkerAndSync(log, this.htableDescriptor, getRegionInfo(),
+            loadDescriptor, sequenceId);
+        } catch (IOException ioe) {
+          if (this.rsServices != null) {
+            // Have to abort region server because some hfiles has been loaded but we can't write
+            // the event into WAL
+            this.rsServices.abort("Failed to write bulk load event into WAL.", ioe);
+          }
+        }
+      }
+    
       closeBulkRegionOperation();
     }
   }
@@ -5076,8 +5115,6 @@ public class HRegion implements HeapSize { // , Writable{
         doProcessRowWithTimeout(
             processor, now, this, null, null, timeout);
         processor.postProcess(this, walEdit, true);
-      } catch (IOException e) {
-        throw e;
       } finally {
         closeRegionOperation();
       }
@@ -5177,8 +5214,6 @@ public class HRegion implements HeapSize { // , Writable{
       // 14. Run post-process hook
       processor.postProcess(this, walEdit, walSyncSuccessful);
 
-    } catch (IOException e) {
-      throw e;
     } finally {
       closeRegionOperation();
       if (!mutations.isEmpty() &&
@@ -6156,7 +6191,7 @@ public class HRegion implements HeapSize { // , Writable{
   }
 
   /**
-   * A mocked list implementaion - discards all updates.
+   * A mocked list implementation - discards all updates.
    */
   private static final List<Cell> MOCKED_LIST = new AbstractList<Cell>() {
 

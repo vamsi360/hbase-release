@@ -17,11 +17,7 @@
  */
 package org.apache.hadoop.hbase.regionserver;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -55,12 +51,23 @@ import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.CompactRegionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.BulkLoadHFileRequest;
+import org.apache.hadoop.hbase.regionserver.wal.HLog;
+import org.apache.hadoop.hbase.regionserver.wal.HLogKey;
+import org.apache.hadoop.hbase.regionserver.wal.TestWALActionsListener;
+import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 /**
  * Tests bulk loading of HFiles and shows the atomicity or lack of atomicity of
@@ -284,7 +291,11 @@ public class TestHRegionServerBulkLoad {
 
     UTIL.startMiniCluster(1);
     try {
+      HLog log = UTIL.getHBaseCluster().getRegionServer(0).getWAL();
+      FindBulkHBaseListener listener = new FindBulkHBaseListener();
+      log.registerWALActionsListener(listener);
       runAtomicBulkloadTest(TABLE_NAME, millisToRun, numScanners);
+      assertThat(listener.isFound(), is(true));
     } finally {
       UTIL.shutdownMiniCluster();
     }
@@ -340,5 +351,24 @@ public class TestHRegionServerBulkLoad {
     UTIL = new HBaseTestingUtility(c);
   }
 
+  static class FindBulkHBaseListener extends TestWALActionsListener.DummyWALActionsListener {
+    private boolean found = false;
+
+    @Override
+    public void visitLogEntryBeforeWrite(HTableDescriptor htd, HLogKey logKey, WALEdit logEdit) {
+      for (KeyValue kv : logEdit.getKeyValues()) {
+        for (Map.Entry entry : kv.toStringMap().entrySet()) {
+          if (entry.getValue().equals(Bytes.toString(WALEdit.BULK_LOAD))) {
+            found = true;
+          }
+        }
+      }
+    }
+
+    public boolean isFound() {
+      return found;
+    }
+  }
 }
+
 

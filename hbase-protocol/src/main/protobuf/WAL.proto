@@ -22,6 +22,7 @@ option java_generate_equals_and_hash = true;
 option optimize_for = SPEED;
 
 import "HBase.proto";
+import "Client.proto";
 
 message WALHeader {
   optional bool has_compression = 1;
@@ -118,6 +119,12 @@ message FlushDescriptor {
   repeated StoreFlushDescriptor store_flushes = 5;
 }
 
+message StoreDescriptor {
+  required bytes family_name = 1;
+  required string store_home_dir = 2; //relative to region dir
+  repeated string store_file = 3; // relative to store dir
+}
+
 /**
  * Special WAL entry to hold all related to a region event (open/close).
  */
@@ -127,18 +134,22 @@ message RegionEventDescriptor {
     REGION_CLOSE = 1;
   }
 
-  message StoreDescriptor {
-    required bytes family_name = 1;
-    required string store_home_dir = 2; //relative to region dir
-    repeated string store_file = 3; // relative to store dir
-  }
-
   required EventType event_type = 1;
   required bytes table_name = 2;
   required bytes encoded_region_name = 3;
   optional uint64 log_sequence_number = 4;
   repeated StoreDescriptor stores = 5;
   optional ServerName server = 6;  // Server who opened the region
+}
+
+/**
+ * Special WAL entry used for HBASE-11567 (Write bulk load events to WAL)
+ */
+message BulkLoadDescriptor {
+  required TableName table_name = 1;
+  required bytes encoded_region_name = 2;
+  repeated StoreDescriptor stores = 3;
+  required int64 bulkload_seq_num = 4;
 }
 
 /**

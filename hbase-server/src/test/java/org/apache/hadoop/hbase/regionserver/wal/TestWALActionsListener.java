@@ -125,7 +125,7 @@ public class TestWALActionsListener {
   /**
    * Just counts when methods are called
    */
-  static class DummyWALActionsListener implements WALActionsListener {
+  public static class DummyWALActionsListener implements WALActionsListener {
     public int preLogRollCounter = 0;
     public int postLogRollCounter = 0;
     public int closedCount = 0;
