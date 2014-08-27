@@ -744,18 +744,28 @@ public class HStore implements Store {
   }
 
   @Override
-  public void bulkLoadHFile(String srcPathStr, long seqNum) throws IOException {
+  public Path bulkLoadHFile(String srcPathStr, long seqNum) throws IOException {
     Path srcPath = new Path(srcPathStr);
     Path dstPath = fs.bulkLoadStoreFile(getColumnFamilyName(), srcPath, seqNum);
 
-    StoreFile sf = createStoreFileAndReader(dstPath);
+    LOG.info("Loaded HFile " + srcPath + " into store '" + getColumnFamilyName() + "' as "
+        + dstPath + " - updating store file list.");
+
+    bulkLoadHFile(dstPath);
+
+    LOG.info("Successfully loaded store file " + srcPath + " into store " + this
+        + " (new location: " + dstPath + ")");
+
+    return dstPath;
+  }
+
+  @Override
+  public void bulkLoadHFile(Path bulkloadHfilePath) throws IOException {
+    StoreFile sf = createStoreFileAndReader(bulkloadHfilePath);
 
     StoreFile.Reader r = sf.getReader();
     this.storeSize += r.length();
     this.totalUncompressedBytes += r.getTotalUncompressedBytes();
-
-    LOG.info("Loaded HFile " + srcPath + " into store '" + getColumnFamilyName() +
-        "' as " + dstPath + " - updating store file list.");
 
     // Append the new storefile into the list
     this.lock.writeLock().lock();
@@ -770,12 +780,11 @@ public class HStore implements Store {
       this.lock.writeLock().unlock();
     }
     notifyChangedReadersObservers();
-    LOG.info("Successfully loaded store file " + srcPath
-        + " into store " + this + " (new location: " + dstPath + ")");
+    LOG.info("Loaded HFile " + bulkloadHfilePath + " into store '" + getColumnFamilyName());
     if (LOG.isTraceEnabled()) {
       String traceMessage = "BULK LOAD time,size,store size,store files ["
-          + EnvironmentEdgeManager.currentTimeMillis() + "," + r.length() + "," + storeSize
-          + "," + storeEngine.getStoreFileManager().getStorefileCount() + "]";
+          + EnvironmentEdgeManager.currentTimeMillis() + "," + r.length() + "," + storeSize + ","
+          + storeEngine.getStoreFileManager().getStorefileCount() + "]";
       LOG.trace(traceMessage);
     }
   }

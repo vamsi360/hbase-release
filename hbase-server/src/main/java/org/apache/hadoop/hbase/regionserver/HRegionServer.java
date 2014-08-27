@@ -195,6 +195,7 @@ import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.Regio
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerStartupResponse;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerStatusService;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRSFatalErrorRequest;
+import org.apache.hadoop.hbase.protobuf.generated.WALProtos.BulkLoadDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor;
@@ -4419,6 +4420,11 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
             RegionEventDescriptor regionEvent = WALEdit.getRegionEventDescriptor(metaCell);
             if (regionEvent != null) {
               region.replayWALRegionEventMarker(regionEvent);
+              continue;
+            }
+            BulkLoadDescriptor bulkLoadEvent = WALEdit.getBulkLoadDescriptor(metaCell);
+            if (bulkLoadEvent != null) {
+              region.replayWALBulkLoadEventMarker(bulkLoadEvent);
               continue;
             }
           }

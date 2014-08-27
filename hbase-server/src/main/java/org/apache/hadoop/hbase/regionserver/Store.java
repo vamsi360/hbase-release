@@ -243,7 +243,7 @@ public interface Store extends HeapSize, StoreConfigInformation {
    * @param srcPathStr
    * @param sequenceId sequence Id associated with the HFile
    */
-  void bulkLoadHFile(String srcPathStr, long sequenceId) throws IOException;
+  Path bulkLoadHFile(String srcPathStr, long sequenceId) throws IOException;
 
   // General accessors into the state of the store
   // TODO abstract some of this out into a metrics class
@@ -388,4 +388,6 @@ public interface Store extends HeapSize, StoreConfigInformation {
     * @throws IOException
     */
   void refreshStoreFiles(Collection<String> newFiles) throws IOException;
+
+  void bulkLoadHFile(Path dstPath) throws IOException;
 }
