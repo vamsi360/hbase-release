@@ -140,6 +140,12 @@ public class MetricsSource {
     incrLogEditsFiltered(1);
   }
 
+  /** Increment the number of log edits filtered out from the ReplicationEndpoint
+   * (as opposed to from the ReplicationSource). */
+  public void incrLogEditsFilteredFromEndpoint(long delta) {
+    rms.incCounters(logEditsFilteredKey, delta);
+  }
+
   /**
    * Convience method to apply changes to metrics do to shipping a batch of logs.
    *

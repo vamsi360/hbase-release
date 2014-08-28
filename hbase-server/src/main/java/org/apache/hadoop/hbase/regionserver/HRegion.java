@@ -61,7 +61,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.google.protobuf.ByteString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -1298,7 +1297,7 @@ public class HRegion implements HeapSize { // , Writable{
 
         // close each store in parallel
         for (final Store store : stores.values()) {
-          if (store.getFlushableSize() != 0 && writestate.readOnly) {
+          if (store.getFlushableSize() != 0 && !writestate.readOnly) {
             LOG.warn("store.getFlushableSize for " + store + " is not zero! It's "
                 + store.getFlushableSize() + ". Maybe a coprocessor "
                 + "operation failed and "
@@ -4550,7 +4549,6 @@ public class HRegion implements HeapSize { // , Writable{
             finalPath = bulkLoadListener.prepareBulkLoad(familyName, path);
           }
           Path commitedStoreFile = store.bulkLoadHFile(finalPath, seqId);
-          
           if(storeFiles.containsKey(familyName)) {
             storeFiles.get(familyName).add(commitedStoreFile);
           } else {
@@ -4598,7 +4596,7 @@ public class HRegion implements HeapSize { // , Writable{
           }
         }
       }
-    
+
       closeBulkRegionOperation();
     }
   }

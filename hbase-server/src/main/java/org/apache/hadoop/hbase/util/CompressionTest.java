@@ -28,6 +28,7 @@ import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.io.hfile.AbstractHFileWriter;
@@ -82,7 +83,7 @@ public class CompressionTest {
         return ; // already passed test, dont do it again.
       } else {
         // failed.
-        throw new IOException("Compression algorithm '" + algo.getName() + "'" +
+        throw new DoNotRetryIOException("Compression algorithm '" + algo.getName() + "'" +
         " previously failed test.");
       }
     }
@@ -93,7 +94,7 @@ public class CompressionTest {
       compressionTestResults[algo.ordinal()] = true; // passes
     } catch (Throwable t) {
       compressionTestResults[algo.ordinal()] = false; // failure
-      throw new IOException(t);
+      throw new DoNotRetryIOException(t);
     }
   }
 
