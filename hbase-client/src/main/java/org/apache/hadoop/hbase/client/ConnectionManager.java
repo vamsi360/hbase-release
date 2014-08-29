@@ -1264,7 +1264,6 @@ class ConnectionManager {
           metaLocation = metaLocations == null ? null : metaLocations.getDefaultRegionLocation();
           // If null still, go around again.
           if (metaLocation == null) continue;
-          ClientService.BlockingInterface service = getClient(metaLocation.getServerName());
 
           Result regionInfoRow;
           // This block guards against two threads trying to load the meta
@@ -1296,9 +1295,23 @@ class ConnectionManager {
           }
 
           // Query the meta region for the location of the meta region
-          regionInfoRow = ProtobufUtil.getRowOrBefore(service,
-              metaLocation.getRegionInfo().getRegionName(), metaKey,
-              HConstants.CATALOG_FAMILY);
+          if (conf.getBoolean(HConstants.USE_META_REPLICAS,
+              HConstants.DEFAULT_USE_META_REPLICAS)) {
+            MetaRpcCallableWithReplicas m = new MetaRpcCallableWithReplicas(getBatchPool(), this,
+               metaKey,
+               conf.getInt(HConstants.HBASE_RPC_TIMEOUT_KEY, HConstants.DEFAULT_HBASE_RPC_TIMEOUT),
+               conf.getInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER,
+               HConstants.DEFAULT_HBASE_CLIENT_RETRIES_NUMBER),
+               conf.getInt("hbase.client.primaryCallTimeout.get", 10000));
+            regionInfoRow = m.call();
+          } else {
+            metaLocation = metaLocations.getDefaultRegionLocation();
+            if (metaLocation == null) return null;
+            ClientService.BlockingInterface service = getClient(metaLocation.getServerName());
+            regionInfoRow = ProtobufUtil.getRowOrBefore(service,
+                metaLocation.getRegionInfo().getRegionName(), metaKey,
+                HConstants.CATALOG_FAMILY);
+          }
 
           if (regionInfoRow == null) {
             throw new TableNotFoundException(tableName);

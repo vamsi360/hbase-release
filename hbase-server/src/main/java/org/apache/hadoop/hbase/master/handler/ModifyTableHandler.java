@@ -101,7 +101,7 @@ public class ModifyTableHandler extends TableEventHandler {
         tableRows.add(result.getRow());
       }
       MetaEditor.removeRegionReplicasFromMeta(tableRows, newReplicaCount,
-          oldReplicaCount - newReplicaCount, masterServices.getCatalogTracker());
+          oldReplicaCount - newReplicaCount, masterServices.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID));
     } finally {
       if (htable != null) {
         htable.close();

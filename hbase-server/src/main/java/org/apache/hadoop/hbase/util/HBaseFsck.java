@@ -74,6 +74,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
 import org.apache.hadoop.hbase.catalog.MetaReader;
+import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -107,6 +108,7 @@ import org.apache.hadoop.hbase.util.hbck.TableIntegrityErrorHandlerImpl;
 import org.apache.hadoop.hbase.util.hbck.TableLockChecker;
 import org.apache.hadoop.hbase.zookeeper.MetaRegionTracker;
 import org.apache.hadoop.hbase.zookeeper.ZKTableReadOnly;
+import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.security.AccessControlException;
@@ -1472,28 +1474,30 @@ public class HBaseFsck extends Configured {
    * Record the location of the hbase:meta region as found in ZooKeeper.
    */
   private boolean recordMetaRegion() throws IOException {
-    HRegionLocation metaLocation = connection.locateRegion(
-      TableName.META_TABLE_NAME, HConstants.EMPTY_START_ROW);
-
+    RegionLocations rl = ((ClusterConnection)connection).locateRegion(TableName.META_TABLE_NAME,
+        HConstants.EMPTY_START_ROW, false, false);
+    for (HRegionLocation metaLocation : rl.getRegionLocations()) {
+      
     // Check if Meta region is valid and existing
-    if (metaLocation == null || metaLocation.getRegionInfo() == null ||
-        metaLocation.getHostname() == null) {
-      errors.reportError(ERROR_CODE.NULL_META_REGION,
-        "META region or some of its attributes are null.");
-      return false;
-    }
-    ServerName sn;
-    try {
-      sn = getMetaRegionServerName();
-    } catch (KeeperException e) {
-      throw new IOException(e);
-    }
-    MetaEntry m = new MetaEntry(metaLocation.getRegionInfo(), sn, System.currentTimeMillis());
-    HbckInfo hbckInfo = regionInfoMap.get(metaLocation.getRegionInfo().getEncodedName());
-    if (hbckInfo == null) {
-      regionInfoMap.put(metaLocation.getRegionInfo().getEncodedName(), new HbckInfo(m));
-    } else {
-      hbckInfo.metaEntry = m;
+      if (metaLocation == null || metaLocation.getRegionInfo() == null ||
+          metaLocation.getHostname() == null) {
+        errors.reportError(ERROR_CODE.NULL_META_REGION,
+            "META region or some of its attributes are null.");
+        return false;
+      }
+      ServerName sn;
+      try {
+        sn = getMetaRegionServerName(metaLocation.getRegionInfo().getReplicaId());
+      } catch (KeeperException e) {
+        throw new IOException(e);
+      }
+      MetaEntry m = new MetaEntry(metaLocation.getRegionInfo(), sn, System.currentTimeMillis());
+      HbckInfo hbckInfo = regionInfoMap.get(metaLocation.getRegionInfo().getEncodedName());
+      if (hbckInfo == null) {
+        regionInfoMap.put(metaLocation.getRegionInfo().getEncodedName(), new HbckInfo(m));
+      } else {
+        hbckInfo.metaEntry = m;
+      }
     }
     return true;
   }
@@ -1514,12 +1518,12 @@ public class HBaseFsck extends Configured {
     });
   }
 
-  private ServerName getMetaRegionServerName()
+  private ServerName getMetaRegionServerName(int replicaId)
   throws IOException, KeeperException {
     ZooKeeperWatcher zkw = createZooKeeperWatcher();
     ServerName sn = null;
     try {
-      sn = MetaRegionTracker.getMetaRegionLocation(zkw);
+      sn = MetaRegionTracker.getMetaRegionLocation(zkw, replicaId);
     } finally {
       zkw.close();
     }
@@ -2848,50 +2852,104 @@ public class HBaseFsck extends Configured {
     */
   boolean checkMetaRegion() throws IOException, KeeperException, InterruptedException {
     List<HbckInfo> metaRegions = Lists.newArrayList();
+    
     for (HbckInfo value : regionInfoMap.values()) {
       if (value.metaEntry != null && value.metaEntry.isMetaRegion()) {
         metaRegions.add(value);
       }
     }
-
-    // There will be always one entry in regionInfoMap corresponding to hbase:meta
-    // Check the deployed servers. It should be exactly one server.
-    List<ServerName> servers = new ArrayList<ServerName>();
-    HbckInfo metaHbckInfo = null;
-    if (!metaRegions.isEmpty()) {
-      metaHbckInfo = metaRegions.get(0);
+    // There will be always entries in regionInfoMap corresponding to hbase:meta & its replicas
+    // Check the deployed servers. It should be exactly one server for each replica.
+    boolean noProblem = true;
+    for (HbckInfo metaHbckInfo : metaRegions) {
+      List<ServerName> servers = new ArrayList<ServerName>();
       servers = metaHbckInfo.deployedOn;
-    }
-    if (servers.size() != 1) {
-      if (servers.size() == 0) {
-        errors.reportError(ERROR_CODE.NO_META_REGION, "hbase:meta is not found on any region.");
-        if (shouldFixAssignments()) {
-          errors.print("Trying to fix a problem with hbase:meta..");
-          setShouldRerun();
-          // try to fix it (treat it as unassigned region)
-          HBaseFsckRepair.fixUnassigned(admin, HRegionInfo.FIRST_META_REGIONINFO);
-          HBaseFsckRepair.waitUntilAssigned(admin, HRegionInfo.FIRST_META_REGIONINFO);
-        }
-      } else if (servers.size() > 1) {
-        errors
-            .reportError(ERROR_CODE.MULTI_META_REGION, "hbase:meta is found on more than one region.");
-        if (shouldFixAssignments()) {
-          if (metaHbckInfo == null) {
-            errors.print(
-              "Unable to fix problem with hbase:meta due to hbase:meta region info missing");
-            return false;
+      if (servers.size() != 1) {
+        noProblem = false;
+        if (servers.size() == 0) {
+          assignMetaReplica(metaHbckInfo.getReplicaId());
+        } else if (servers.size() > 1) {
+          errors
+          .reportError(ERROR_CODE.MULTI_META_REGION, "hbase:meta, replicaId " +
+                       metaHbckInfo.getReplicaId() + " is found on more than one region.");
+          if (shouldFixAssignments()) {
+            errors.print("Trying to fix a problem with hbase:meta, replicaId " +
+                         metaHbckInfo.getReplicaId() +"..");
+            setShouldRerun();
+            // try fix it (treat is a dupe assignment)
+            HBaseFsckRepair.fixMultiAssignment(admin, metaHbckInfo.metaEntry, servers);
           }
-          errors.print("Trying to fix a problem with hbase:meta..");
-          setShouldRerun();
-          // try fix it (treat is a dupe assignment)
-          HBaseFsckRepair.fixMultiAssignment(admin, metaHbckInfo.metaEntry, servers);
         }
       }
-      // rerun hbck with hopefully fixed META
-      return false;
     }
-    // no errors, so continue normally
-    return true;
+
+    int metaReplication = admin.getTableDescriptor(TableName.META_TABLE_NAME).
+        getRegionReplication();
+    if (metaReplication > metaRegions.size()) {
+      noProblem = false;
+      errors.reportError(ERROR_CODE.NO_META_REGION, "Some hbase:meta region replica(s)" +
+          " are not found on any region server.");
+      if (shouldFixAssignments()) {
+        errors.print("Trying to deploy all replicas of hbase:meta..");
+        setShouldRerun();
+        // unassign everything and assign again. There may be replicaIds which are
+        // not sequential and that may lead to issues later on. Instead of trying
+        // to figure out the holes and such, easier it is to unassign everything.
+        // This is a little dumb
+        unassignAndAssign(metaRegions, metaReplication);
+      }
+    }
+    
+    if (metaReplication < metaRegions.size()) {
+      noProblem = false;
+      errors.reportError(ERROR_CODE.SHOULD_NOT_BE_DEPLOYED,
+          "hbase:meta replicas are deployed in excess. Configured " + metaReplication +
+          ", deployed " + metaRegions.size());
+      if (shouldFixAssignments()) {
+        errors.print("Trying to undeploy extra replicas of hbase:meta..");
+        setShouldRerun();
+        // unassign everything and assign again. There may be replicaIds which are
+        // not sequential and that may lead to issues later on. Instead of trying
+        // to figure out the holes and such, easier it is to unassign everything.
+        // This is a little dumb
+        unassignAndAssign(metaRegions, metaReplication);
+      }
+    }
+    // if noProblem is false, rerun hbck with hopefully fixed META
+    // if noProblem is true, no errors, so continue normally
+    return noProblem;
+  }
+
+  private void unassignAndAssign(List<HbckInfo> metaRegions, int actualMetaReplication)
+      throws IOException, InterruptedException, KeeperException {
+    for (HbckInfo hi : metaRegions) {
+      if (hi.metaEntry.getReplicaId() != HRegionInfo.DEFAULT_REPLICA_ID) unassignMetaReplica(hi);
+    }
+    for (int i = 1; i < actualMetaReplication; i++) {
+      assignMetaReplica(i);
+    }
+  }
+
+  private void unassignMetaReplica(HbckInfo hi) throws IOException, InterruptedException,
+  KeeperException {
+    undeployRegions(hi);
+    ZooKeeperWatcher zkw = createZooKeeperWatcher();
+    ZKUtil.deleteNode(zkw, zkw.getZNodeForReplica(hi.metaEntry.getReplicaId()));  
+  }
+
+  private void assignMetaReplica(int replicaId)
+      throws IOException, KeeperException, InterruptedException {
+    errors.reportError(ERROR_CODE.NO_META_REGION, "hbase:meta, replicaId " +
+        replicaId +" is not found on any region.");
+    if (shouldFixAssignments()) {
+      errors.print("Trying to fix a problem with hbase:meta..");
+      setShouldRerun();
+      // try to fix it (treat it as unassigned region)
+      HRegionInfo h = RegionReplicaUtil.getRegionInfoForReplica(
+          HRegionInfo.FIRST_META_REGIONINFO, replicaId);
+      HBaseFsckRepair.fixUnassigned(admin, h);
+      HBaseFsckRepair.waitUntilAssigned(admin, h);
+    }
   }
 
   /**

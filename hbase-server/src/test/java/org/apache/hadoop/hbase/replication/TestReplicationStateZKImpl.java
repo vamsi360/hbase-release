@@ -142,7 +142,7 @@ public class TestReplicationStateZKImpl extends TestReplicationStateBasic {
     }
 
     @Override
-    public CatalogTracker getCatalogTracker() {
+    public CatalogTracker getCatalogTracker(int replicaId) {
       return null;
     }
 

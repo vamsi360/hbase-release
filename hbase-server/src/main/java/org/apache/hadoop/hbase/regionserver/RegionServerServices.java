@@ -109,7 +109,7 @@ public interface RegionServerServices
   /**
    * @return The RegionServer's CatalogTracker
    */
-  CatalogTracker getCatalogTracker();
+  CatalogTracker getCatalogTracker(int replicaId);
 
   /**
    * @return set of recovering regions on the hosting region server

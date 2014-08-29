@@ -144,7 +144,21 @@ public class MetaScanner {
       if (row != null) {
         // Scan starting at a particular row in a particular table
         byte[] searchRow = HRegionInfo.createRegionName(tableName, row, HConstants.NINES, false);
-        Result startRowResult = metaTable.getRowOrBefore(searchRow, HConstants.CATALOG_FAMILY);
+        Result startRowResult;
+        if (configuration.getBoolean(HConstants.USE_META_REPLICAS,
+            HConstants.DEFAULT_USE_META_REPLICAS)) {
+          MetaRpcCallableWithReplicas m = new MetaRpcCallableWithReplicas(metaTable.getPool(), connection,
+                        searchRow,
+                        configuration.getInt(HConstants.HBASE_RPC_TIMEOUT_KEY,
+                            HConstants.DEFAULT_HBASE_RPC_TIMEOUT),
+                        configuration.getInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER,
+                        HConstants.DEFAULT_HBASE_CLIENT_RETRIES_NUMBER),
+                        configuration.getInt("hbase.client.primaryCallTimeout.get", 10000));
+          startRowResult = m.call();
+        } else {
+          startRowResult = metaTable.getRowOrBefore(searchRow, HConstants.CATALOG_FAMILY);
+        }
+
         if (startRowResult == null) {
           throw new TableNotFoundException("Cannot find row in "+ TableName
               .META_TABLE_NAME.getNameAsString()+" for table: "
@@ -170,6 +184,10 @@ public class MetaScanner {
         HConstants.DEFAULT_HBASE_META_SCANNER_CACHING);
       if (rowUpperLimit <= scannerCaching) {
           scan.setSmall(true);
+      }
+      if (configuration.getBoolean(HConstants.USE_META_REPLICAS,
+          HConstants.DEFAULT_USE_META_REPLICAS)) {
+        scan.setConsistency(Consistency.TIMELINE);
       }
       int rows = Math.min(rowLimit, scannerCaching);
       scan.setCaching(rows);

@@ -1770,7 +1770,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
   }
 
   @Override
-  public CatalogTracker getCatalogTracker() {
+  public CatalogTracker getCatalogTracker(int replicaId) {
     return this.catalogTracker;
   }
 
@@ -1820,7 +1820,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
 
     // Update ZK, or META
     if (r.getRegionInfo().isMetaRegion()) {
-      MetaRegionTracker.setMetaLocation(getZooKeeper(),
+      MetaRegionTracker.setMetaLocation(getZooKeeper(), r.getRegionInfo().getReplicaId(),
           this.serverNameFromMasterPOV);
     } else {
       MetaEditor.updateRegionLocation(ct, r.getRegionInfo(),

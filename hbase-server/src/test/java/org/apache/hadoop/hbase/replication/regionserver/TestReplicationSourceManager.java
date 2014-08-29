@@ -431,7 +431,7 @@ public class TestReplicationSourceManager {
     }
 
     @Override
-    public CatalogTracker getCatalogTracker() {
+    public CatalogTracker getCatalogTracker(int replicaId) {
       return null; // To change body of implemented methods use File | Settings | File Templates.
     }
 

@@ -41,7 +41,7 @@ public class TestClockSkewDetection {
     final Configuration conf = HBaseConfiguration.create();
     ServerManager sm = new ServerManager(new Server() {
       @Override
-      public CatalogTracker getCatalogTracker() {
+      public CatalogTracker getCatalogTracker(int replicaId) {
         return null;
       }
 

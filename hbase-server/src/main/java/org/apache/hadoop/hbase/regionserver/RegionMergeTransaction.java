@@ -317,10 +317,10 @@ public class RegionMergeTransaction {
     // rollback
     if (!testing) {
       if (metaEntries.isEmpty()) {
-        MetaEditor.mergeRegions(server.getCatalogTracker(), mergedRegion.getRegionInfo(), region_a
+        MetaEditor.mergeRegions(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), mergedRegion.getRegionInfo(), region_a
             .getRegionInfo(), region_b.getRegionInfo(), server.getServerName());
       } else {
-        mergeRegionsAndPutMetaEntries(server.getCatalogTracker(), mergedRegion.getRegionInfo(),
+        mergeRegionsAndPutMetaEntries(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), mergedRegion.getRegionInfo(),
           region_a.getRegionInfo(), region_b.getRegionInfo(), server.getServerName(), metaEntries);
       }
     }
@@ -548,7 +548,7 @@ public class RegionMergeTransaction {
 
     if (services != null) {
       try {
-        services.postOpenDeployTasks(merged, server.getCatalogTracker());
+        services.postOpenDeployTasks(merged, server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID));
         services.addToOnlineRegions(merged);
       } catch (KeeperException ke) {
         throw new IOException(ke);
@@ -927,7 +927,7 @@ public class RegionMergeTransaction {
     // Get merge regions if it is a merged region and already has merge
     // qualifier
     Pair<HRegionInfo, HRegionInfo> mergeRegions = MetaReader
-        .getRegionsFromMergeQualifier(services.getCatalogTracker(), regionName);
+        .getRegionsFromMergeQualifier(services.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), regionName);
     if (mergeRegions != null &&
         (mergeRegions.getFirst() != null || mergeRegions.getSecond() != null)) {
       // It has merge qualifier

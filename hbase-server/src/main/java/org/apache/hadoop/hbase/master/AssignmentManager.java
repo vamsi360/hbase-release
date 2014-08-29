@@ -419,7 +419,7 @@ public class AssignmentManager extends ZooKeeperListener {
   public Pair<Integer, Integer> getReopenStatus(TableName tableName)
       throws IOException {
     List <HRegionInfo> hris =
-      MetaReader.getTableRegions(this.server.getCatalogTracker(), tableName, true);
+      MetaReader.getTableRegions(this.server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), tableName, true);
     Integer pending = 0;
     for (HRegionInfo hri : hris) {
       String name = hri.getEncodedName();
@@ -683,7 +683,7 @@ public class AssignmentManager extends ZooKeeperListener {
       if (regionInfo.isMetaRegion()) {
         // If it's meta region, reset the meta location.
         // So that master knows the right meta region server.
-        MetaRegionTracker.setMetaLocation(watcher, sn);
+        MetaRegionTracker.setMetaLocation(watcher, regionInfo.getReplicaId(), sn);
       } else {
         // No matter the previous server is online or offline,
         // we need to reset the last region server of the region.
@@ -2504,7 +2504,7 @@ public class AssignmentManager extends ZooKeeperListener {
   }
 
   /**
-   * Assigns the hbase:meta region.
+   * Assigns the hbase:meta region or a replica
    * <p>
    * Assumes that hbase:meta is currently closed and is not being actively served by
    * any RegionServer.
@@ -2513,9 +2513,9 @@ public class AssignmentManager extends ZooKeeperListener {
    * hbase:meta to a random RegionServer.
    * @throws KeeperException
    */
-  public void assignMeta() throws KeeperException {
-    MetaRegionTracker.deleteMetaLocation(this.watcher);
-    assign(HRegionInfo.FIRST_META_REGIONINFO, true);
+  public void assignMeta(HRegionInfo hri) throws KeeperException {
+    MetaRegionTracker.deleteMetaLocation(this.watcher, hri.getReplicaId());
+    assign(hri, true);
   }
 
   /**
@@ -3195,6 +3195,15 @@ public class AssignmentManager extends ZooKeeperListener {
 
   public boolean isCarryingMeta(ServerName serverName) {
     return isCarryingRegion(serverName, HRegionInfo.FIRST_META_REGIONINFO);
+  }
+
+  public boolean isCarryingMetaReplica(ServerName serverName, int replicaId) {
+    return isCarryingRegion(serverName,
+        RegionReplicaUtil.getRegionInfoForReplica(HRegionInfo.FIRST_META_REGIONINFO, replicaId));
+  }
+
+  public boolean isCarryingMetaReplica(ServerName serverName, HRegionInfo metaHri) {
+    return isCarryingRegion(serverName, metaHri);
   }
 
   /**

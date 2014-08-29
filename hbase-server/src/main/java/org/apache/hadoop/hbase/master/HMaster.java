@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +74,9 @@ import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.ConnectionUtils;
+import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.MetaScanner;
+import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitor;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitorBase;
 import org.apache.hadoop.hbase.client.Result;
@@ -322,6 +325,9 @@ MasterServices, Server {
   AssignmentManager assignmentManager;
   // manager of catalog regions
   private CatalogTracker catalogTracker;
+  // Map of replicaId to CatalogTracker
+  private Map<Integer, CatalogTracker> replicaIdToCatalogTracker =
+      new HashMap<Integer, CatalogTracker>();
   // Cluster status zk tracker and local setter
   private ClusterStatusTracker clusterStatusTracker;
 
@@ -631,7 +637,7 @@ MasterServices, Server {
       stopServiceThreads();
       // Stop services started for both backup and active masters
       if (this.activeMasterManager != null) this.activeMasterManager.stop();
-      if (this.catalogTracker != null) this.catalogTracker.stop();
+      for (CatalogTracker c : this.replicaIdToCatalogTracker.values()) c.stop();
       if (this.serverManager != null) this.serverManager.stop();
       if (this.assignmentManager != null) this.assignmentManager.stop();
       if (this.fileSystemManager != null) this.fileSystemManager.stop();
@@ -672,7 +678,9 @@ MasterServices, Server {
   void initializeZKBasedSystemTrackers() throws IOException,
       InterruptedException, KeeperException {
     this.catalogTracker = createCatalogTracker(this.zooKeeper, this.conf, this);
+    replicaIdToCatalogTracker.put(0, this.catalogTracker);
     this.catalogTracker.start();
+    createCatalogTrackersForReplicas(this.zooKeeper, this.conf, this);
 
     this.balancer = LoadBalancerFactory.getLoadBalancer(conf);
     this.loadBalancerTracker = new LoadBalancerTracker(zooKeeper, this);
@@ -724,6 +732,18 @@ MasterServices, Server {
       final Configuration conf, Abortable abortable)
   throws IOException {
     return new CatalogTracker(zk, conf, abortable);
+  }
+
+  private void createCatalogTrackersForReplicas(final ZooKeeperWatcher zk,
+      final Configuration conf, Abortable abortable) throws IOException, InterruptedException {
+    int numReplicas = conf.getInt(HConstants.META_REPLICAS_NUM,
+        HConstants.DEFAULT_META_REPLICA_NUM);
+    for (int i = 1; i < numReplicas; i++) {
+      CatalogTracker c = new CatalogTracker(zk, conf, HConnectionManager.getConnection(conf),
+          abortable, i);
+      replicaIdToCatalogTracker.put(i, c);
+      c.start();
+    }
   }
 
   // Check if we should stop every 100ms
@@ -795,6 +815,9 @@ MasterServices, Server {
     this.tableDescriptors =
       new FSTableDescriptors(this.fileSystemManager.getFileSystem(),
       this.fileSystemManager.getRootDir());
+    // set the META's descriptor to the correct replication
+    HTableDescriptor.META_TABLEDESC.setRegionReplication(conf.getInt(HConstants.META_REPLICAS_NUM,
+        HConstants.DEFAULT_META_REPLICA_NUM));
 
     // publish cluster ID
     status.setStatus("Publishing Cluster ID in ZooKeeper");
@@ -878,7 +901,8 @@ MasterServices, Server {
 
     // Make sure meta assigned before proceeding.
     status.setStatus("Assigning Meta Region");
-    assignMeta(status, previouslyFailedMetaRSs);
+    assignMeta(status, previouslyFailedMetaRSs, HRegionInfo.DEFAULT_REPLICA_ID,
+        this.catalogTracker);
     // check if master is shutting down because above assignMeta could return even hbase:meta isn't
     // assigned when master is shutting down
     if(this.stopped) return;
@@ -927,6 +951,14 @@ MasterServices, Server {
     status.markComplete("Initialization successful");
     LOG.info("Master has completed initialization");
     initialized = true;
+
+    // assign the meta replicas
+    Set<ServerName> EMPTY_SET = new HashSet<ServerName>();
+    for (Map.Entry<Integer, CatalogTracker> m : replicaIdToCatalogTracker.entrySet()) {
+      if (m.getKey() != HRegionInfo.DEFAULT_REPLICA_ID) {
+        assignMeta(status, EMPTY_SET, m.getKey(), m.getValue());
+      }
+    }
     // clear the dead servers with same host name and port of online server because we are not
     // removing dead server with same hostname and port of rs which is trying to check in before
     // master initialization. See HBASE-5916.
@@ -980,11 +1012,14 @@ MasterServices, Server {
    * Check <code>hbase:meta</code> is assigned. If not, assign it.
    * @param status MonitoredTask
    * @param previouslyFailedMetaRSs
+   * @param replicaId the replicaId of the meta region we are trying to assign
+   * @param catalogTracker
    * @throws InterruptedException
    * @throws IOException
    * @throws KeeperException
    */
-  void assignMeta(MonitoredTask status, Set<ServerName> previouslyFailedMetaRSs)
+  void assignMeta(MonitoredTask status, Set<ServerName> previouslyFailedMetaRSs,
+      int replicaId, CatalogTracker catalogTracker)
       throws InterruptedException, IOException, KeeperException {
     // Work on meta region
     int assigned = 0;
@@ -992,11 +1027,12 @@ MasterServices, Server {
     status.setStatus("Assigning hbase:meta region");
 
     RegionStates regionStates = assignmentManager.getRegionStates();
-    regionStates.createRegionState(HRegionInfo.FIRST_META_REGIONINFO);
-    boolean rit = this.assignmentManager
-      .processRegionInTransitionAndBlockUntilAssigned(HRegionInfo.FIRST_META_REGIONINFO);
-    boolean metaRegionLocation = this.catalogTracker.verifyMetaRegionLocation(timeout);
-    ServerName currentMetaServer = this.catalogTracker.getMetaLocation();
+    HRegionInfo hri = RegionReplicaUtil.getRegionInfoForReplica(HRegionInfo.FIRST_META_REGIONINFO,
+        replicaId);
+    regionStates.createRegionState(hri);
+    boolean rit = this.assignmentManager.processRegionInTransitionAndBlockUntilAssigned(hri);
+    boolean metaRegionLocation = catalogTracker.verifyMetaRegionLocation(timeout);
+    ServerName currentMetaServer = catalogTracker.getMetaLocation();
     if (!metaRegionLocation) {
       // Meta location is not verified. It should be in transition, or offline.
       // We will wait for it to be assigned in enableSSHandWaitForMeta below.
@@ -1015,20 +1051,20 @@ MasterServices, Server {
             LOG.info("Forcing expire of " + currentMetaServer);
             serverManager.expireServer(currentMetaServer);
           }
-          splitMetaLogBeforeAssignment(currentMetaServer);
-          previouslyFailedMetaRSs.add(currentMetaServer);
+          if (replicaId == HRegionInfo.DEFAULT_REPLICA_ID) {
+            splitMetaLogBeforeAssignment(currentMetaServer);
+            previouslyFailedMetaRSs.add(currentMetaServer);
+          }
         }
-        assignmentManager.assignMeta();
+        assignmentManager.assignMeta(hri);
       }
     } else {
       // Region already assigned. We didn't assign it. Add to in-memory state.
-      regionStates.updateRegionState(
-        HRegionInfo.FIRST_META_REGIONINFO, State.OPEN, currentMetaServer);
-      this.assignmentManager.regionOnline(
-        HRegionInfo.FIRST_META_REGIONINFO, currentMetaServer);
+      regionStates.updateRegionState(hri, State.OPEN, currentMetaServer);
+      this.assignmentManager.regionOnline(hri, currentMetaServer);
     }
 
-    enableMeta(TableName.META_TABLE_NAME);
+    if (replicaId == HRegionInfo.DEFAULT_REPLICA_ID) enableMeta(TableName.META_TABLE_NAME);
 
     if ((RecoveryMode.LOG_REPLAY == this.getMasterFileSystem().getLogRecoveryMode())
         && (!previouslyFailedMetaRSs.isEmpty())) {
@@ -1041,9 +1077,9 @@ MasterServices, Server {
     // if the meta region server is died at this time, we need it to be re-assigned
     // by SSH so that system tables can be assigned.
     // No need to wait for meta is assigned = 0 when meta is just verified.
-    enableServerShutdownHandler(assigned != 0);
+    if (replicaId == HRegionInfo.DEFAULT_REPLICA_ID) enableServerShutdownHandler(assigned != 0);
 
-    LOG.info("hbase:meta assigned=" + assigned + ", rit=" + rit +
+    LOG.info("hbase:meta with replicaId " + replicaId + " assigned=" + assigned + ", rit=" + rit +
       ", location=" + catalogTracker.getMetaLocation());
     status.setStatus("META assigned.");
   }
@@ -2155,7 +2191,7 @@ MasterServices, Server {
     if (isCatalogTable(tableName)) {
       throw new IOException("Can't modify catalog tables");
     }
-    if (!MetaReader.tableExists(getCatalogTracker(), tableName)) {
+    if (!MetaReader.tableExists(getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), tableName)) {
       throw new TableNotFoundException(tableName);
     }
     if (!getAssignmentManager().getZKTable().
@@ -2415,8 +2451,8 @@ MasterServices, Server {
   }
 
   @Override
-  public CatalogTracker getCatalogTracker() {
-    return catalogTracker;
+  public CatalogTracker getCatalogTracker(int replicaId) {
+    return replicaIdToCatalogTracker.get(replicaId);
   }
 
   @Override
@@ -2501,7 +2537,9 @@ MasterServices, Server {
     // If no region server is online then master may stuck waiting on hbase:meta to come on line.
     // See HBASE-8422.
     if (this.catalogTracker != null && this.serverManager.getOnlineServers().isEmpty()) {
-      this.catalogTracker.stop();
+      for (CatalogTracker c : replicaIdToCatalogTracker.values()) {
+        c.stop();
+      }
     }
   }
 

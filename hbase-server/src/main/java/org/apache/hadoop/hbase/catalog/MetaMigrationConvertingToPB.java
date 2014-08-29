@@ -75,7 +75,7 @@ public class MetaMigrationConvertingToPB {
       migrateSplitIfNecessary(r, p, HConstants.SPLITA_QUALIFIER);
       migrateSplitIfNecessary(r, p, HConstants.SPLITB_QUALIFIER);
 
-      MetaEditor.putToCatalogTable(this.services.getCatalogTracker(), p);
+      MetaEditor.putToCatalogTable(this.services.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), p);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Migrated " + Bytes.toString(p.getRow()));
       }
@@ -128,7 +128,7 @@ public class MetaMigrationConvertingToPB {
    */
   public static long updateMetaIfNecessary(final MasterServices services)
   throws IOException {
-    if (isMetaTableUpdated(services.getCatalogTracker())) {
+    if (isMetaTableUpdated(services.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID))) {
       LOG.info("META already up-to date with PB serialization");
       return 0;
     }
@@ -150,7 +150,7 @@ public class MetaMigrationConvertingToPB {
   static long updateMeta(final MasterServices masterServices) throws IOException {
     LOG.info("Starting update of META");
     ConvertToPBMetaVisitor v = new ConvertToPBMetaVisitor(masterServices);
-    MetaReader.fullScan(masterServices.getCatalogTracker(), v);
+    MetaReader.fullScan(masterServices.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), v);
     LOG.info("Finished update of META. Total rows updated:" + v.numMigratedRows);
     return v.numMigratedRows;
   }

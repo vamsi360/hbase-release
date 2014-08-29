@@ -1169,6 +1169,7 @@ public class HRegion implements HeapSize { // , Writable{
       "hbase.regionserver.optionalcacheflushinterval";
   /** Default interval for the memstore flush */
   public static final int DEFAULT_CACHE_FLUSH_INTERVAL = 3600000;
+  public static final int META_CACHE_FLUSH_INTERVAL = 300000; // 5 minutes
 
   /** Conf key to force a flush if there are already enough changes for one region in memstore */
   public static final String MEMSTORE_FLUSH_PER_CHANGES =
@@ -1761,18 +1762,23 @@ public class HRegion implements HeapSize { // , Writable{
           && (this.completeSequenceId + this.flushPerChanges < this.sequenceId.get())) {
       return true;
     }
-    if (flushCheckInterval <= 0) { //disabled
+    long modifiedFlushCheckInterval = flushCheckInterval;
+    if (getRegionInfo().isMetaRegion() &&
+        getRegionInfo().getReplicaId() == HRegionInfo.DEFAULT_REPLICA_ID) {
+      modifiedFlushCheckInterval = META_CACHE_FLUSH_INTERVAL;
+    }
+    if (modifiedFlushCheckInterval <= 0) { //disabled
       return false;
     }
     long now = EnvironmentEdgeManager.currentTimeMillis();
     //if we flushed in the recent past, we don't need to do again now
-    if ((now - getLastFlushTime() < flushCheckInterval)) {
+    if ((now - getLastFlushTime() < modifiedFlushCheckInterval)) {
       return false;
     }
     //since we didn't flush in the recent past, flush now if certain conditions
     //are met. Return true on first such memstore hit.
     for (Store s : this.getStores().values()) {
-      if (s.timeOfOldestEdit() < now - flushCheckInterval) {
+      if (s.timeOfOldestEdit() < now - modifiedFlushCheckInterval) {
         // we have an old enough edit in the memstore, flush
         return true;
       }

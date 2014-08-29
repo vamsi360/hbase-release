@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.catalog;
 
 import com.google.common.base.Stopwatch;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -29,6 +30,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.client.RetriesExhaustedException;
 import org.apache.hadoop.hbase.ipc.RpcClient.FailedServerException;
 import org.apache.hadoop.hbase.ipc.ServerNotRunningYetException;
@@ -110,13 +112,11 @@ public class CatalogTracker {
   private final HConnection connection;
   private final ZooKeeperWatcher zookeeper;
   private final MetaRegionTracker metaRegionTracker;
+  private final byte[] metaRegionName;
   private boolean instantiatedzkw = false;
   private Abortable abortable;
 
   private boolean stopped = false;
-
-  static final byte [] META_REGION_NAME =
-    HRegionInfo.FIRST_META_REGIONINFO.getRegionName();
 
   /**
    * Constructs a catalog tracker. Find current state of catalog tables.
@@ -148,11 +148,12 @@ public class CatalogTracker {
   public CatalogTracker(final ZooKeeperWatcher zk, final Configuration conf,
       Abortable abortable)
   throws IOException {
-    this(zk, conf, HConnectionManager.getConnection(conf), abortable);
+    this(zk, conf, HConnectionManager.getConnection(conf), abortable,
+        HRegionInfo.DEFAULT_REPLICA_ID);
   }
 
   public CatalogTracker(final ZooKeeperWatcher zk, final Configuration conf,
-      HConnection connection, Abortable abortable)
+      HConnection connection, Abortable abortable, int replicaId)
   throws IOException {
     this.connection = connection;
     if (abortable == null) {
@@ -181,7 +182,11 @@ public class CatalogTracker {
     } else {
       this.zookeeper = zk;
     }
-    this.metaRegionTracker = new MetaRegionTracker(zookeeper, throwableAborter);
+    String znode = zookeeper.getZNodeForReplica(replicaId);
+    this.metaRegionTracker = new MetaRegionTracker(zookeeper, throwableAborter, znode,
+        HRegionInfo.DEFAULT_REPLICA_ID);
+    this.metaRegionName = RegionReplicaUtil.getRegionInfoForReplica(
+        HRegionInfo.FIRST_META_REGIONINFO, replicaId).getRegionName();
   }
 
   /**
@@ -445,7 +450,7 @@ public class CatalogTracker {
     }
     return (service == null)? false:
       verifyRegionLocation(service,
-          this.metaRegionTracker.getMetaRegionLocation(), META_REGION_NAME);
+          this.metaRegionTracker.getMetaRegionLocation(), metaRegionName);
   }
 
   public HConnection getConnection() {

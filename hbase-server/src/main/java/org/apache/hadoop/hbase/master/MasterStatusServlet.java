@@ -19,7 +19,6 @@
 package org.apache.hadoop.hbase.master;
 
 import java.io.IOException;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,11 +31,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.tmpl.master.MasterStatusTmpl;
+
 import com.google.protobuf.ServiceException;
 
 /**
@@ -98,7 +99,8 @@ public class MasterStatusServlet extends HttpServlet {
 
   private ServerName getMetaLocationOrNull(HMaster master) {
     try {
-      return (master.getCatalogTracker() == null) ? null : master.getCatalogTracker().getMetaLocation();
+      return (master.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID) == null) ? null 
+          : master.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID).getMetaLocation();
     } catch (InterruptedException e) {
       LOG.warn("Unable to get meta location", e);
       return null;

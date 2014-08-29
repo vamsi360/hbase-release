@@ -678,8 +678,8 @@ public class MasterFileSystem {
       throws IOException {
     if (!this.master.isStopped()) {
       try {
-        this.master.getCatalogTracker().waitForMeta();
-        return MetaReader.getServerUserRegions(this.master.getCatalogTracker(), serverName);
+        this.master.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID).waitForMeta();
+        return MetaReader.getServerUserRegions(this.master.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), serverName);
       } catch (InterruptedException e) {
         throw (InterruptedIOException)new InterruptedIOException().initCause(e);
       }

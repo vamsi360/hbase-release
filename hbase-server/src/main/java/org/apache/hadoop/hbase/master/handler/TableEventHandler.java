@@ -124,7 +124,7 @@ public abstract class TableEventHandler extends EventHandler {
           tableName);
 
       List<HRegionInfo> hris =
-        MetaReader.getTableRegions(this.server.getCatalogTracker(),
+        MetaReader.getTableRegions(this.server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
           tableName);
       handleTableOperation(hris);
       if (eventType.isOnlineSchemaChangeSupported() && this.masterServices.

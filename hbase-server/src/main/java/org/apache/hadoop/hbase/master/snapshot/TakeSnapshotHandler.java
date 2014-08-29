@@ -167,7 +167,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
       monitor.rethrowException();
 
       List<Pair<HRegionInfo, ServerName>> regionsAndLocations =
-          MetaReader.getTableRegionsAndLocations(this.server.getCatalogTracker(),
+          MetaReader.getTableRegionsAndLocations(this.server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
               snapshotTable, false);
 
       // run the snapshot

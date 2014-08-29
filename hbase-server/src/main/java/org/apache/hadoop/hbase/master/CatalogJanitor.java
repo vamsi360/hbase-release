@@ -199,7 +199,7 @@ public class CatalogJanitor extends Chore {
           + " from fs because merged region no longer holds references");
       HFileArchiver.archiveRegion(this.services.getConfiguration(), fs, regionA);
       HFileArchiver.archiveRegion(this.services.getConfiguration(), fs, regionB);
-      MetaEditor.deleteMergeQualifiers(server.getCatalogTracker(), mergedRegion);
+      MetaEditor.deleteMergeQualifiers(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), mergedRegion);
       return true;
     }
     return false;
@@ -331,7 +331,7 @@ public class CatalogJanitor extends Chore {
       FileSystem fs = this.services.getMasterFileSystem().getFileSystem();
       if (LOG.isTraceEnabled()) LOG.trace("Archiving parent region: " + parent);
       HFileArchiver.archiveRegion(this.services.getConfiguration(), fs, parent);
-      MetaEditor.deleteRegion(this.server.getCatalogTracker(), parent);
+      MetaEditor.deleteRegion(this.server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), parent);
       result = true;
     }
     return result;
@@ -404,7 +404,7 @@ public class CatalogJanitor extends Chore {
     // Get merge regions if it is a merged region and already has merge
     // qualifier
     Pair<HRegionInfo, HRegionInfo> mergeRegions = MetaReader
-        .getRegionsFromMergeQualifier(this.services.getCatalogTracker(),
+        .getRegionsFromMergeQualifier(this.services.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
             region.getRegionName());
     if (mergeRegions == null
         || (mergeRegions.getFirst() == null && mergeRegions.getSecond() == null)) {

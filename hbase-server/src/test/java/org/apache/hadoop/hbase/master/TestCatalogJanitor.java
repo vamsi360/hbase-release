@@ -144,7 +144,7 @@ public class TestCatalogJanitor {
     }
 
     @Override
-    public CatalogTracker getCatalogTracker() {
+    public CatalogTracker getCatalogTracker(int replicaId) {
       return this.ct;
     }
 
@@ -239,11 +239,6 @@ public class TestCatalogJanitor {
 
     @Override
     public ZooKeeperWatcher getZooKeeper() {
-      return null;
-    }
-
-    @Override
-    public CatalogTracker getCatalogTracker() {
       return null;
     }
 
@@ -397,6 +392,12 @@ public class TestCatalogJanitor {
     public boolean isInitialized() {
       // Auto-generated method stub
       return false;
+    }
+
+    @Override
+    public CatalogTracker getCatalogTracker(int replicaId) {
+      // TODO Auto-generated method stub
+      return null;
     }
   }
 

@@ -88,7 +88,7 @@ public class RpcRetryingCallerWithReadReplicas {
 
     public ReplicaRegionServerCallable(int id, HRegionLocation location) {
       super(RpcRetryingCallerWithReadReplicas.this.cConnection,
-          RpcRetryingCallerWithReadReplicas.this.tableName, get.getRow());
+          RpcRetryingCallerWithReadReplicas.this.tableName, getRowKey());
       this.id = id;
       this.location = location;
     }
@@ -105,7 +105,7 @@ public class RpcRetryingCallerWithReadReplicas {
       }
 
       if (reload || location == null) {
-        RegionLocations rl = getRegionLocations(false, id, cConnection, tableName, get.getRow());
+        RegionLocations rl = getRegionLocations(false, id, cConnection, tableName, getRowKey());
         location = id < rl.size() ? rl.getRegionLocation(id) : null;
       }
 
@@ -171,10 +171,10 @@ public class RpcRetryingCallerWithReadReplicas {
    */
   public synchronized Result call()
       throws DoNotRetryIOException, InterruptedIOException, RetriesExhaustedException {
-    boolean isTargetReplicaSpecified = (get.getReplicaId() >= 0);
+    boolean isTargetReplicaSpecified = (get != null && get.getReplicaId() >= 0);
 
     RegionLocations rl = getRegionLocations(true, (isTargetReplicaSpecified ? get.getReplicaId()
-        : RegionReplicaUtil.DEFAULT_REPLICA_ID), cConnection, tableName, get.getRow());
+        : RegionReplicaUtil.DEFAULT_REPLICA_ID), cConnection, tableName, getRowKey());
 
     BoundedCompletionService<Result> cs = new BoundedCompletionService<Result>(pool, rl.size());
 
@@ -266,6 +266,10 @@ public class RpcRetryingCallerWithReadReplicas {
     throw new RetriesExhaustedException(retries, exceptions);
   }
 
+  protected byte[] getRowKey() {
+    return get.getRow();
+  }
+
   /**
    * Creates the calls and submit them
    *
@@ -275,7 +279,7 @@ public class RpcRetryingCallerWithReadReplicas {
    * @param max        - the id of the last replica, inclusive.
    * @return the number of submitted calls
    */
-  private int addCallsForReplica(BoundedCompletionService<Result> cs,
+  protected int addCallsForReplica(BoundedCompletionService<Result> cs,
                                   RegionLocations rl, int min, int max) {
     for (int id = min; id <= max; id++) {
       HRegionLocation hrl = rl.getRegionLocation(id);

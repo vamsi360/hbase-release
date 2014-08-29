@@ -80,7 +80,7 @@ public class TableNamespaceManager {
   }
 
   public void start() throws IOException {
-    if (!MetaReader.tableExists(masterServices.getCatalogTracker(),
+    if (!MetaReader.tableExists(masterServices.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
         TableName.NAMESPACE_TABLE_NAME)) {
       LOG.info("Namespace table not found. Creating...");
       createNamespaceTable(masterServices);

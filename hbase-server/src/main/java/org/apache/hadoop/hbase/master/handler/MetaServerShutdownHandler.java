@@ -26,9 +26,11 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.executor.EventType;
 import org.apache.hadoop.hbase.master.AssignmentManager;
 import org.apache.hadoop.hbase.master.DeadServer;
@@ -60,14 +62,40 @@ public class MetaServerShutdownHandler extends ServerShutdownHandler {
 
   @Override
   public void process() throws IOException {
-    boolean gotException = true; 
+    AssignmentManager am = this.services.getAssignmentManager();
+    int replicaCount = services.getConfiguration().getInt(HConstants.META_REPLICAS_NUM,
+        HConstants.DEFAULT_META_REPLICA_NUM);
+    boolean gotException = true;
+    for (int i = 0; i < replicaCount; i++) {
+      HRegionInfo metaHri =
+          RegionReplicaUtil.getRegionInfoForReplica(HRegionInfo.FIRST_META_REGIONINFO, i);
+      if (am.isCarryingMetaReplica(serverName, metaHri)) {
+        try {
+          gotException = processMetaServerShutdown(metaHri, am);
+        } finally {
+          if (gotException) {
+            // If we had an exception, this.deadServers.finish will be skipped in super.process()
+            this.deadServers.finish(serverName);
+            break; //TODO: CROSSCHECK
+          }     
+        }
+      }
+    }
+    super.process();
+    // Clear this counter on successful handling.
+    this.eventExceptionCount.set(0);
+  }
+
+  private boolean processMetaServerShutdown(HRegionInfo metaHri, AssignmentManager am)
+      throws IOException {
+    boolean gotException = true;
     try {
-      AssignmentManager am = this.services.getAssignmentManager();
+      int replicaId = metaHri.getReplicaId();
       this.services.getMasterFileSystem().setLogRecoveryMode();
       boolean distributedLogReplay = 
         (this.services.getMasterFileSystem().getLogRecoveryMode() == RecoveryMode.LOG_REPLAY);
       try {
-        if (this.shouldSplitHlog) {
+        if (replicaId == HRegionInfo.DEFAULT_REPLICA_ID && this.shouldSplitHlog) {
           LOG.info("Splitting hbase:meta logs for " + serverName);
           if (distributedLogReplay) {
             Set<HRegionInfo> regions = new HashSet<HRegionInfo>();
@@ -87,23 +115,24 @@ public class MetaServerShutdownHandler extends ServerShutdownHandler {
       // Assign meta if we were carrying it.
       // Check again: region may be assigned to other where because of RIT
       // timeout
-      if (am.isCarryingMeta(serverName)) {
-        LOG.info("Server " + serverName + " was carrying META. Trying to assign.");
-        am.regionOffline(HRegionInfo.FIRST_META_REGIONINFO);
-        verifyAndAssignMetaWithRetries();
-      } else if (!this.services.getCatalogTracker().isMetaLocationAvailable()) {
+      if (am.isCarryingMetaReplica(serverName, metaHri)) {
+        LOG.info("Server " + serverName + " was carrying META., replicaId " + replicaId +
+            " Trying to assign.");
+        am.regionOffline(metaHri);
+        verifyAndAssignMetaWithRetries(metaHri);
+      } else if (!this.services.getCatalogTracker(replicaId).isMetaLocationAvailable()) {
         // the meta location as per master is null. This could happen in case when meta assignment
         // in previous run failed, while meta znode has been updated to null. We should try to
         // assign the meta again.
-        verifyAndAssignMetaWithRetries();
+        verifyAndAssignMetaWithRetries(metaHri);
       } else {
         LOG.info("META has been assigned to otherwhere, skip assigning.");
       }
 
       try {
-        if (this.shouldSplitHlog && distributedLogReplay) {
-          if (!am.waitOnRegionToClearRegionsInTransition(HRegionInfo.FIRST_META_REGIONINFO,
-            regionAssignmentWaitTimeout)) {
+        if (replicaId == HRegionInfo.DEFAULT_REPLICA_ID && this.shouldSplitHlog &&
+            distributedLogReplay) {
+          if (!am.waitOnRegionToClearRegionsInTransition(metaHri, regionAssignmentWaitTimeout)) {
             // Wait here is to avoid log replay hits current dead server and incur a RPC timeout
             // when replay happens before region assignment completes.
             LOG.warn("Region " + HRegionInfo.FIRST_META_REGIONINFO.getEncodedName()
@@ -123,15 +152,12 @@ public class MetaServerShutdownHandler extends ServerShutdownHandler {
 
       gotException = false;
     } finally {
-      if (gotException){
-        // If we had an exception, this.deadServers.finish will be skipped in super.process()
-        this.deadServers.finish(serverName);
-      }     
+      if (gotException) {
+        LOG.warn("Got an exception while processing meta SSH for " + metaHri + " that was on " +
+                  serverName);
+      }
     }
-
-    super.process();
-    // Clear this counter on successful handling.
-    this.eventExceptionCount.set(0);
+    return gotException;
   }
 
   @Override
@@ -146,22 +172,25 @@ public class MetaServerShutdownHandler extends ServerShutdownHandler {
    * Under some scenarios, the hbase:meta region can be opened twice, so it seemed online
    * in two regionserver at the same time.
    * If the hbase:meta region has been assigned, so the operation can be canceled.
+   * @param metaHri
    * @throws InterruptedException
    * @throws IOException
    * @throws KeeperException
    */
-  private void verifyAndAssignMeta()
+  private void verifyAndAssignMeta(HRegionInfo metaHri)
       throws InterruptedException, IOException, KeeperException {
+    int replicaId = metaHri.getReplicaId();
     long timeout = this.server.getConfiguration().
         getLong("hbase.catalog.verification.timeout", 1000);
-    if (!this.server.getCatalogTracker().verifyMetaRegionLocation(timeout)) {
-      this.services.getAssignmentManager().assignMeta();
-    } else if (serverName.equals(server.getCatalogTracker().getMetaLocation())) {
-      throw new IOException("hbase:meta is onlined on the dead server "
+    if (!this.services.getCatalogTracker(replicaId).verifyMetaRegionLocation(timeout)) {
+      this.services.getAssignmentManager().assignMeta(metaHri);
+    } else if (serverName.equals(services.getCatalogTracker(replicaId).getMetaLocation())) {
+      throw new IOException("hbase:meta, replicaId " + replicaId + " is onlined on the dead server "
           + serverName);
     } else {
-      LOG.info("Skip assigning hbase:meta, because it is online on the "
-          + server.getCatalogTracker().getMetaLocation());
+      LOG.info("Skip assigning hbase:meta, replicaId " + replicaId +
+          ", because it is online on the "
+          + server.getCatalogTracker(replicaId).getMetaLocation());
     }
   }
 
@@ -169,7 +198,7 @@ public class MetaServerShutdownHandler extends ServerShutdownHandler {
    * Failed many times, shutdown processing
    * @throws IOException
    */
-  private void verifyAndAssignMetaWithRetries() throws IOException {
+  protected void verifyAndAssignMetaWithRetries(HRegionInfo metaHri) throws IOException {
     int iTimes = this.server.getConfiguration().getInt(
         "hbase.catalog.verification.retries", 10);
 
@@ -179,7 +208,7 @@ public class MetaServerShutdownHandler extends ServerShutdownHandler {
     int iFlag = 0;
     while (true) {
       try {
-        verifyAndAssignMeta();
+        verifyAndAssignMeta(metaHri);
         break;
       } catch (KeeperException e) {
         this.server.abort("In server shutdown processing, assigning meta", e);

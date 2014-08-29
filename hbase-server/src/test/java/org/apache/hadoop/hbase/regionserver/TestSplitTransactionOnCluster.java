@@ -814,7 +814,7 @@ public class TestSplitTransactionOnCluster {
       admin.setBalancerRunning(false, true);
       // Turn off the meta scanner so it don't remove parent on us.
       cluster.getMaster().setCatalogJanitorEnabled(false);
-      boolean tableExists = MetaReader.tableExists(regionServer.getCatalogTracker(),
+      boolean tableExists = MetaReader.tableExists(regionServer.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
           tableName);
       assertEquals("The specified table should present.", true, tableExists);
       final HRegion region = findSplittableRegion(regions);
@@ -826,7 +826,7 @@ public class TestSplitTransactionOnCluster {
       } catch (IOException e) {
 
       }
-      tableExists = MetaReader.tableExists(regionServer.getCatalogTracker(),
+      tableExists = MetaReader.tableExists(regionServer.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
           tableName);
       assertEquals("The specified table should present.", true, tableExists);
     } finally {

@@ -270,7 +270,7 @@ ClientProtos.ClientService.BlockingInterface, RegionServerServices {
   }
 
   @Override
-  public CatalogTracker getCatalogTracker() {
+  public CatalogTracker getCatalogTracker(int replicaId) {
     // TODO Auto-generated method stub
     return null;
   }

@@ -632,7 +632,7 @@ public class TestAssignmentManager {
     // Make it so we can get a catalogtracker from servermanager.. .needed
     // down in guts of server shutdown handler.
     Mockito.when(ct.getConnection()).thenReturn(connection);
-    Mockito.when(this.server.getCatalogTracker()).thenReturn(ct);
+    Mockito.when(this.server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID)).thenReturn(ct);
 
     // Now make a server shutdown handler instance and invoke process.
     // Have it that SERVERNAME_A died.

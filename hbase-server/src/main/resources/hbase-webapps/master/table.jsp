@@ -29,6 +29,7 @@
   import="org.apache.hadoop.hbase.ServerName"
   import="org.apache.hadoop.hbase.ServerLoad"
   import="org.apache.hadoop.hbase.RegionLoad"
+  import="org.apache.hadoop.hbase.HConstants"
   import="org.apache.hadoop.hbase.master.HMaster" 
   import="org.apache.hadoop.hbase.util.Bytes"
   import="org.apache.hadoop.hbase.util.FSUtils"
@@ -51,9 +52,10 @@
   } else {
     tableHeader = "<h2>Table Regions</h2><table class=\"table table-striped\"><tr><th>Name</th><th>Region Server</th><th>Start Key</th><th>End Key</th><th>Requests</th></tr>";
   }
-  ServerName rl = master.getCatalogTracker().getMetaLocation();
   boolean showFragmentation = conf.getBoolean("hbase.master.ui.fragmentation.enabled", false);
   boolean readOnly = conf.getBoolean("hbase.master.ui.readonly", false);
+  int numMetaReplicas = conf.getInt(HConstants.META_REPLICAS_NUM,
+                        HConstants.DEFAULT_META_REPLICA_NUM);
   Map<String, Integer> frags = null;
   if (showFragmentation) {
       frags = FSUtils.getTableFragmentation(master);
@@ -201,10 +203,10 @@
 %>
 <%= tableHeader %>
 <%
-  // NOTE: Presumes one meta region only.
-  HRegionInfo meta = HRegionInfo.FIRST_META_REGIONINFO;
-  ServerName metaLocation = master.getCatalogTracker().waitForMeta(1);
-  for (int i = 0; i < 1; i++) {
+  // NOTE: Presumes meta with one or more replicas
+  for (int i = 0; i < numMetaReplicas; i++) {
+    HRegionInfo meta = RegionReplicaUtil.getRegionInfoForReplica(HRegionInfo.FIRST_META_REGIONINFO, i);
+    ServerName metaLocation = master.getCatalogTracker(i).waitForMeta(1);
     String url = "//" + metaLocation.getHostname() + ":" + master.getRegionServerInfoPort(metaLocation) + "/";
 %>
 <tr>

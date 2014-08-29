@@ -1140,7 +1140,7 @@ public class AccessController extends BaseRegionObserver
   @Override
   public void postStartMaster(ObserverContext<MasterCoprocessorEnvironment> ctx)
       throws IOException {
-    if (!MetaReader.tableExists(ctx.getEnvironment().getMasterServices().getCatalogTracker(),
+    if (!MetaReader.tableExists(ctx.getEnvironment().getMasterServices().getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
         AccessControlLists.ACL_TABLE_NAME)) {
       // initialize the ACL storage table
       AccessControlLists.init(ctx.getEnvironment().getMasterServices());

@@ -108,7 +108,7 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
   @Override
   protected void handleTableOperation(List<HRegionInfo> hris) throws IOException {
     MasterFileSystem fileSystemManager = masterServices.getMasterFileSystem();
-    CatalogTracker catalogTracker = masterServices.getCatalogTracker();
+    CatalogTracker catalogTracker = masterServices.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID);
     FileSystem fs = fileSystemManager.getFileSystem();
     Path rootDir = fileSystemManager.getRootDir();
     TableName tableName = hTableDescriptor.getTableName();

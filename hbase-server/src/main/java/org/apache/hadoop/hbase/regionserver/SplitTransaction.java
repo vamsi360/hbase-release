@@ -283,11 +283,11 @@ public class SplitTransaction {
     // and assign the parent region.
     if (!testing) {
       if (metaEntries == null || metaEntries.isEmpty()) {
-        MetaEditor.splitRegion(server.getCatalogTracker(),
+        MetaEditor.splitRegion(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
             parent.getRegionInfo(), daughterRegions.getFirst().getRegionInfo(),
             daughterRegions.getSecond().getRegionInfo(), server.getServerName());
       } else {
-        offlineParentInMetaAndputMetaEntries(server.getCatalogTracker(),
+        offlineParentInMetaAndputMetaEntries(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
           parent.getRegionInfo(), daughterRegions.getFirst().getRegionInfo(), daughterRegions
               .getSecond().getRegionInfo(), server.getServerName(), metaEntries);
       }
@@ -412,10 +412,10 @@ public class SplitTransaction {
       if (services != null) {
         try {
           // add 2nd daughter first (see HBASE-4335)
-          services.postOpenDeployTasks(b, server.getCatalogTracker());
+          services.postOpenDeployTasks(b, server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID));
           // Should add it to OnlineRegions
           services.addToOnlineRegions(b);
-          services.postOpenDeployTasks(a, server.getCatalogTracker());
+          services.postOpenDeployTasks(a, server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID));
           services.addToOnlineRegions(a);
         } catch (KeeperException ke) {
           throw new IOException(ke);

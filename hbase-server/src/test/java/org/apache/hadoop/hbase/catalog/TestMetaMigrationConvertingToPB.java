@@ -182,9 +182,9 @@ public class TestMetaMigrationConvertingToPB {
   public void testMetaUpdatedFlagInROOT() throws Exception {
     HMaster master = TEST_UTIL.getMiniHBaseCluster().getMaster();
     boolean metaUpdated = MetaMigrationConvertingToPB.
-      isMetaTableUpdated(master.getCatalogTracker());
+      isMetaTableUpdated(master.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID));
     assertEquals(true, metaUpdated);
-    verifyMetaRowsAreUpdated(master.getCatalogTracker());
+    verifyMetaRowsAreUpdated(master.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID));
   }
 
   @Test
@@ -203,7 +203,7 @@ public class TestMetaMigrationConvertingToPB {
         htd.getTableName().getName(),
         regionNames);
     CatalogTracker ct =
-      TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker();
+      TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID);
     // Erase the current version of root meta for this test.
     undoVersionInRoot(ct);
     MetaReader.fullScanMetaAndPrint(ct);
@@ -219,7 +219,7 @@ public class TestMetaMigrationConvertingToPB {
     // Assert that the flag in ROOT is updated to reflect the correct status
     boolean metaUpdated =
         MetaMigrationConvertingToPB.isMetaTableUpdated(
-        TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker());
+        TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID));
     assertEquals(true, metaUpdated);
     verifyMetaRowsAreUpdated(ct);
   }
@@ -250,7 +250,7 @@ public class TestMetaMigrationConvertingToPB {
     createMultiRegionsWithWritableSerialization(conf,
         htd.getTableName().getName(), 10);
     CatalogTracker ct =
-      TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker();
+      TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID);
     // Erase the current version of root meta for this test.
     undoVersionInRoot(ct);
 
@@ -264,7 +264,7 @@ public class TestMetaMigrationConvertingToPB {
 
     // Assert that the flag in ROOT is updated to reflect the correct status
     boolean metaUpdated = MetaMigrationConvertingToPB.
-      isMetaTableUpdated(TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker());
+      isMetaTableUpdated(TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID));
     assertEquals(true, metaUpdated);
 
     verifyMetaRowsAreUpdated(ct);

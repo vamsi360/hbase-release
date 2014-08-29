@@ -33,15 +33,21 @@ import junit.framework.TestCase;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HBaseTestCase;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValueTestUtil;
 import org.apache.hadoop.hbase.MediumTests;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdge;
@@ -920,6 +926,33 @@ public class TestMemStore extends TestCase {
     } finally {
       EnvironmentEdgeManager.reset();
     }
+  }
+
+  public void testShouldFlushMeta() throws Exception {
+    // write an edit in the META and ensure the shouldFlush (that the periodic memstore
+    // flusher invokes) returns true after META_CACHE_FLUSH_INTERVAL (even though
+    // the MEMSTORE_PERIODIC_FLUSH_INTERVAL is set to a higher value)
+    Configuration conf = new Configuration();
+    conf.setInt(HRegion.MEMSTORE_PERIODIC_FLUSH_INTERVAL, HRegion.META_CACHE_FLUSH_INTERVAL * 10);
+    HBaseTestingUtility hbaseUtility = HBaseTestingUtility.createLocalHTU(conf);
+    Path testDir = hbaseUtility.getDataTestDir();
+    EnvironmentEdgeForMemstoreTest edge = new EnvironmentEdgeForMemstoreTest();
+    EnvironmentEdgeManager.injectEdge(edge);
+    edge.setCurrentTimeMillis(1234);
+
+    HRegion meta = HRegion.createHRegion(HRegionInfo.FIRST_META_REGIONINFO, testDir,
+        conf, HTableDescriptor.META_TABLEDESC);
+    HRegionInfo hri = new HRegionInfo(TableName.valueOf("testShouldFlushMeta"),
+        Bytes.toBytes("row_0200"), Bytes.toBytes("row_0300"));
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf("testShouldFlushMeta"));
+    desc.addFamily(new HColumnDescriptor("foo".getBytes()));
+    HRegion r =
+        HRegion.createHRegion(hri, testDir, conf, desc);
+    HRegion.addRegionToMETA(meta, r);
+    edge.setCurrentTimeMillis(1234 + 100);
+    assertTrue(meta.shouldFlush() == false);
+    edge.setCurrentTimeMillis(edge.currentTimeMillis() + HRegion.META_CACHE_FLUSH_INTERVAL + 1);
+    assertTrue(meta.shouldFlush() == true);
   }
 
   private class EnvironmentEdgeForMemstoreTest implements EnvironmentEdge {

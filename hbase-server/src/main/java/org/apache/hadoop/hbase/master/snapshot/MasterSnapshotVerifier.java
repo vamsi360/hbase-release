@@ -147,7 +147,7 @@ public final class MasterSnapshotVerifier {
    * @throws IOException if we can't reach hbase:meta or read the files from the FS
    */
   private void verifyRegions(Path snapshotDir) throws IOException {
-    List<HRegionInfo> regions = MetaReader.getTableRegions(this.services.getCatalogTracker(),
+    List<HRegionInfo> regions = MetaReader.getTableRegions(this.services.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
         tableName);
     // Remove the non-default regions
     RegionReplicaUtil.removeNonDefaultRegions(regions);

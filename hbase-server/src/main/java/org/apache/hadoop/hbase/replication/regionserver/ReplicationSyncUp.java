@@ -145,7 +145,7 @@ public class ReplicationSyncUp extends Configured implements Tool {
     }
 
     @Override
-    public CatalogTracker getCatalogTracker() {
+    public CatalogTracker getCatalogTracker(int replicaId) {
       return null;
     }
 

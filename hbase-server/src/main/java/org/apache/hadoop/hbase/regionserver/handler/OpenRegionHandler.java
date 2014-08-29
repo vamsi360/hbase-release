@@ -323,7 +323,7 @@ public class OpenRegionHandler extends EventHandler {
     public void run() {
       try {
         this.services.postOpenDeployTasks(this.region,
-          this.server.getCatalogTracker());
+          this.server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID));
       } catch (KeeperException e) {
         server.abort("Exception running postOpenDeployTasks; region=" +
             this.region.getRegionInfo().getEncodedName(), e);

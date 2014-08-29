@@ -120,7 +120,7 @@ public class TestCatalogTracker {
   private CatalogTracker constructAndStartCatalogTracker(final HConnection c)
   throws IOException, InterruptedException {
     CatalogTracker ct = new CatalogTracker(this.watcher, UTIL.getConfiguration(),
-      c, this.abortable);
+      c, this.abortable, HRegionInfo.DEFAULT_REPLICA_ID);
     ct.start();
     return ct;
   }

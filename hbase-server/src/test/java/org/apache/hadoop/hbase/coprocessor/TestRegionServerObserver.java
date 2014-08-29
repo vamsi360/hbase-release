@@ -161,7 +161,7 @@ public class TestRegionServerObserver {
       mergedRegion = rmt.stepsBeforePONR(rs, rs, false);
       rmt.prepareMutationsForMerge(mergedRegion.getRegionInfo(), regionA.getRegionInfo(),
         regionB.getRegionInfo(), rs.getServerName(), metaEntries);
-      MetaEditor.mutateMetaTable(rs.getCatalogTracker(), metaEntries);
+      MetaEditor.mutateMetaTable(rs.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), metaEntries);
     }
 
     @Override

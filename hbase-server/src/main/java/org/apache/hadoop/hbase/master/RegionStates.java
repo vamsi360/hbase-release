@@ -828,7 +828,7 @@ public class RegionStates {
 
     try {
       Pair<HRegionInfo, ServerName> p =
-        MetaReader.getRegion(server.getCatalogTracker(), regionName);
+        MetaReader.getRegion(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), regionName);
       HRegionInfo hri = p == null ? null : p.getFirst();
       if (hri != null) {
         createRegionState(hri);

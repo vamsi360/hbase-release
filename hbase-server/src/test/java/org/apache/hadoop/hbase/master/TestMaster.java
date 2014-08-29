@@ -72,7 +72,7 @@ public class TestMaster {
     ht.close();
 
     List<Pair<HRegionInfo, ServerName>> tableRegions =
-      MetaReader.getTableRegionsAndLocations(m.getCatalogTracker(), TABLENAME);
+      MetaReader.getTableRegionsAndLocations(m.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), TABLENAME);
     LOG.info("Regions after load: " + Joiner.on(',').join(tableRegions));
     assertEquals(1, tableRegions.size());
     assertArrayEquals(HConstants.EMPTY_START_ROW,
@@ -89,7 +89,7 @@ public class TestMaster {
       Thread.sleep(100);
     }
     LOG.info("Making sure we can call getTableRegions while opening");
-    tableRegions = MetaReader.getTableRegionsAndLocations(m.getCatalogTracker(),
+    tableRegions = MetaReader.getTableRegionsAndLocations(m.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
         TABLENAME, false);
 
     LOG.info("Regions: " + Joiner.on(',').join(tableRegions));
@@ -100,7 +100,7 @@ public class TestMaster {
         m.getTableRegionForRow(TABLENAME, Bytes.toBytes("cde"));
     LOG.info("Result is: " + pair);
     Pair<HRegionInfo, ServerName> tableRegionFromName =
-        MetaReader.getRegion(m.getCatalogTracker(),
+        MetaReader.getRegion(m.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
             pair.getFirst().getRegionName());
     assertEquals(tableRegionFromName.getFirst(), pair.getFirst());
   }

@@ -209,7 +209,7 @@ public class TestHFileCleaner {
     }
 
     @Override
-    public CatalogTracker getCatalogTracker() {
+    public CatalogTracker getCatalogTracker(int replicaId) {
       return null;
     }
 

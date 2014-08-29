@@ -38,6 +38,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -693,7 +694,7 @@ public class SnapshotManager extends MasterProcedureManager implements Stoppable
     SnapshotReferenceUtil.verifySnapshot(master.getConfiguration(), fs, snapshotDir, fsSnapshot);
 
     // Execute the restore/clone operation
-    if (MetaReader.tableExists(master.getCatalogTracker(), tableName)) {
+    if (MetaReader.tableExists(master.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), tableName)) {
       if (master.getAssignmentManager().getZKTable().isEnabledTable(
           TableName.valueOf(fsSnapshot.getTable()))) {
         throw new UnsupportedOperationException("Table '" +

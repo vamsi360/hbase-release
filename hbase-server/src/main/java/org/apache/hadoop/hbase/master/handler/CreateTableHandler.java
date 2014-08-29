@@ -78,7 +78,7 @@ public class CreateTableHandler extends EventHandler {
     this.hTableDescriptor = hTableDescriptor;
     this.conf = conf;
     this.newRegions = newRegions;
-    this.catalogTracker = masterServices.getCatalogTracker();
+    this.catalogTracker = masterServices.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID);
     this.assignmentManager = masterServices.getAssignmentManager();
     this.tableLockManager = masterServices.getTableLockManager();
 

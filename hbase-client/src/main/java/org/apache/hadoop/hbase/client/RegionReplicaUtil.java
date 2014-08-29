@@ -23,6 +23,7 @@ import java.util.Iterator;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.TableName;
 
 /**
  * Utility methods which contain the logic for regions and replicas.
@@ -47,9 +48,13 @@ public class RegionReplicaUtil {
     if (regionInfo.getReplicaId() == replicaId) {
       return regionInfo;
     }
-    HRegionInfo replicaInfo = new HRegionInfo(regionInfo.getTable(), regionInfo.getStartKey(),
-      regionInfo.getEndKey(), regionInfo.isSplit(), regionInfo.getRegionId(), replicaId);
-
+    HRegionInfo replicaInfo;
+    if (regionInfo.isMetaRegion()) { 
+      replicaInfo = new HRegionInfo(regionInfo.getRegionId(), regionInfo.getTable(), replicaId);
+    } else {
+      replicaInfo = new HRegionInfo(regionInfo.getTable(), regionInfo.getStartKey(),
+        regionInfo.getEndKey(), regionInfo.isSplit(), regionInfo.getRegionId(), replicaId);
+    }
     replicaInfo.setOffline(regionInfo.isOffline());
     return replicaInfo;
   }

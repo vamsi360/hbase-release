@@ -208,7 +208,7 @@ public class TestMasterNoCluster {
         HConnection connection =
           HConnectionTestingUtility.getMockedConnectionAndDecorate(TESTUTIL.getConfiguration(),
             rs0, rs0, rs0.getServerName(), HRegionInfo.FIRST_META_REGIONINFO);
-        return new CatalogTracker(zk, conf, connection, abortable);
+        return new CatalogTracker(zk, conf, connection, abortable, HRegionInfo.DEFAULT_REPLICA_ID);
       }
 
       @Override
@@ -298,7 +298,7 @@ public class TestMasterNoCluster {
         HConnection connection =
           HConnectionTestingUtility.getMockedConnectionAndDecorate(TESTUTIL.getConfiguration(),
             rs0, rs0, rs0.getServerName(), HRegionInfo.FIRST_META_REGIONINFO);
-        return new CatalogTracker(zk, conf, connection, abortable);
+        return new CatalogTracker(zk, conf, connection, abortable, HRegionInfo.DEFAULT_REPLICA_ID);
       }
 
       @Override
@@ -364,7 +364,7 @@ public class TestMasterNoCluster {
 
     HMaster master = new HMaster(conf) {
       @Override
-      void assignMeta(MonitoredTask status, Set<ServerName> previouslyFailedMeatRSs) {
+      void assignMeta(MonitoredTask status, Set<ServerName> previouslyFailedMeatRSs, int replicaId, CatalogTracker catalogTracker) {
       }
 
       @Override
@@ -394,7 +394,7 @@ public class TestMasterNoCluster {
         HConnection connection =
           HConnectionTestingUtility.getMockedConnectionAndDecorate(TESTUTIL.getConfiguration(),
             rs0, rs0, rs0.getServerName(), HRegionInfo.FIRST_META_REGIONINFO);
-        return new CatalogTracker(zk, conf, connection, abortable);
+        return new CatalogTracker(zk, conf, connection, abortable, HRegionInfo.DEFAULT_REPLICA_ID);
       }
 
       @Override

@@ -166,10 +166,10 @@ public class ServerShutdownHandler extends EventHandler {
       NavigableMap<HRegionInfo, Result> hris = null;
       while (!this.server.isStopped()) {
         try {
-          this.server.getCatalogTracker().waitForMeta();
+          this.server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID).waitForMeta();
           // Skip getting user regions if the server is stopped.
           if (!this.server.isStopped()) {
-            hris = MetaReader.getServerUserRegions(this.server.getCatalogTracker(),
+            hris = MetaReader.getServerUserRegions(this.server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
                 this.serverName);
           }
           break;
@@ -235,7 +235,7 @@ public class ServerShutdownHandler extends EventHandler {
           Lock lock = am.acquireRegionLock(encodedName);
           try {
             RegionState rit = regionStates.getRegionTransitionState(hri);
-            if (processDeadRegion(hri, e.getValue(), am, server.getCatalogTracker())) {
+            if (processDeadRegion(hri, e.getValue(), am, server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID))) {
               ServerName addressFromAM = regionStates.getRegionServerOfRegion(hri);
               if (addressFromAM != null && !addressFromAM.equals(this.serverName)) {
                 // If this region is in transition on the dead server, it must be
