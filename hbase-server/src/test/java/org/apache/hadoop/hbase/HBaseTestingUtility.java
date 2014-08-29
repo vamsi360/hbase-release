@@ -55,6 +55,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Waiter.Predicate;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
+import org.apache.hadoop.hbase.client.Consistency;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
@@ -955,7 +956,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
     miniClusterRunning = false;
     LOG.info("Minicluster is down");
   }
-  
+
   /**
    * @return True if we removed the test dirs
    * @throws IOException
@@ -1861,6 +1862,25 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
       Put put = new Put(data);
       put.add(f, null, data);
       t.put(put);
+    }
+  }
+
+  public void verifyNumericRows(HTableInterface table, final byte[] f, int startRow, int endRow,
+      int replicaId)
+      throws IOException {
+    for (int i = startRow; i < endRow; i++) {
+      String failMsg = "Failed verification of row :" + i;
+      byte[] data = Bytes.toBytes(String.valueOf(i));
+      Get get = new Get(data);
+      get.setReplicaId(replicaId);
+      get.setConsistency(Consistency.TIMELINE);
+      Result result = table.get(get);
+      assertTrue(failMsg, result.containsColumn(f, null));
+      assertEquals(failMsg, result.getColumnCells(f, null).size(), 1);
+      Cell cell = result.getColumnLatestCell(f, null);
+      assertTrue(failMsg,
+        Bytes.equals(data, 0, data.length, cell.getValueArray(), cell.getValueOffset(),
+          cell.getValueLength()));
     }
   }
 

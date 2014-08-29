@@ -60,7 +60,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.hfile.HFile;
 import org.apache.hadoop.hbase.io.hfile.HFileContext;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutationProto.MutationType;
@@ -253,7 +252,7 @@ public class TestHRegionReplayEvents {
     primaryRegion.flushcache();
 
     // now replay the edits and the flush marker
-    HLog.Reader reader = createWALReaderForPrimary();
+    reader = createWALReaderForPrimary();
 
     LOG.info("-- Replaying edits and flush events in secondary");
     while (true) {
@@ -408,7 +407,7 @@ public class TestHRegionReplayEvents {
     int numRows = 200;
 
     // now replay the edits and the flush marker
-    HLog.Reader reader =  createWALReaderForPrimary();
+    reader =  createWALReaderForPrimary();
 
     LOG.info("-- Replaying edits and flush events in secondary");
 
@@ -513,7 +512,7 @@ public class TestHRegionReplayEvents {
     int numRows = 300;
 
     // now replay the edits and the flush marker
-    HLog.Reader reader =  createWALReaderForPrimary();
+    reader =  createWALReaderForPrimary();
 
     LOG.info("-- Replaying edits and flush events in secondary");
     FlushDescriptor startFlushDesc = null;
@@ -605,7 +604,7 @@ public class TestHRegionReplayEvents {
     int numRows = 300;
 
     // now replay the edits and the flush marker
-    HLog.Reader reader =  createWALReaderForPrimary();
+    reader =  createWALReaderForPrimary();
 
     LOG.info("-- Replaying edits and flush events in secondary");
     FlushDescriptor startFlushDesc = null;
@@ -714,7 +713,7 @@ public class TestHRegionReplayEvents {
     int numRows = droppableMemstore ? 100 : 200;
 
     // now replay the edits and the flush marker
-    HLog.Reader reader =  createWALReaderForPrimary();
+    reader =  createWALReaderForPrimary();
 
     LOG.info("-- Replaying edits and flush events in secondary");
     FlushDescriptor commitFlushDesc = null;
@@ -807,7 +806,7 @@ public class TestHRegionReplayEvents {
     primaryRegion = HRegion.openHRegion(rootDir, primaryHri, htd, walPrimary, CONF, rss, null);
 
     // now replay the edits and the flush marker
-    HLog.Reader reader =  createWALReaderForPrimary();
+    reader =  createWALReaderForPrimary();
     List<RegionEventDescriptor> regionEvents = Lists.newArrayList();
 
     LOG.info("-- Replaying edits and region events in secondary");
@@ -891,7 +890,7 @@ public class TestHRegionReplayEvents {
     primaryRegion = HRegion.openHRegion(rootDir, primaryHri, htd, walPrimary, CONF, rss, null);
 
     // now replay the edits and the flush marker
-    HLog.Reader reader =  createWALReaderForPrimary();
+    reader =  createWALReaderForPrimary();
     List<RegionEventDescriptor> regionEvents = Lists.newArrayList();
 
     LOG.info("-- Replaying edits and region events in secondary");
@@ -973,7 +972,7 @@ public class TestHRegionReplayEvents {
     primaryRegion = HRegion.openHRegion(rootDir, primaryHri, htd, walPrimary, CONF, rss, null);
 
     // now replay the edits and the flush marker
-    HLog.Reader reader =  createWALReaderForPrimary();
+    reader =  createWALReaderForPrimary();
     List<RegionEventDescriptor> regionEvents = Lists.newArrayList();
     List<HLog.Entry> edits = Lists.newArrayList();
 
@@ -1032,7 +1031,7 @@ public class TestHRegionReplayEvents {
     primaryRegion.flushcache();
 
     // now replay the flush marker
-    HLog.Reader reader =  createWALReaderForPrimary();
+    reader =  createWALReaderForPrimary();
 
     long flushSeqId = -1;
     LOG.info("-- Replaying flush events in secondary");
@@ -1163,7 +1162,7 @@ public class TestHRegionReplayEvents {
     // close the region and open again.
     primaryRegion.close();
     primaryRegion = HRegion.openHRegion(rootDir, primaryHri, htd, walPrimary, CONF, rss, null);
-    
+
     // bulk load a file into primary region
     Random random = new Random();
     byte[] randomValues = new byte[20];
@@ -1173,14 +1172,14 @@ public class TestHRegionReplayEvents {
     List<Pair<byte[], String>> familyPaths = new ArrayList<Pair<byte[], String>>();
     int expectedLoadFileCount = 0;
     for (byte[] family : families) {
-      familyPaths.add(new Pair<byte[], String>(family, createHFileForFamilies(testFolder, family, 
+      familyPaths.add(new Pair<byte[], String>(family, createHFileForFamilies(testFolder, family,
         randomValues)));
       expectedLoadFileCount++;
     }
     primaryRegion.bulkLoadHFiles(familyPaths, false);
 
     // now replay the edits and the bulk load marker
-    HLog.Reader reader = createWALReaderForPrimary();
+    reader = createWALReaderForPrimary();
 
     LOG.info("-- Replaying edits and region events in secondary");
     BulkLoadDescriptor bulkloadEvent = null;
@@ -1221,7 +1220,208 @@ public class TestHRegionReplayEvents {
     }
   }
 
-  private String createHFileForFamilies(TemporaryFolder testFolder, byte[] family, 
+  /**
+   * Tests the reads enabled flag for the region. When unset all reads should be rejected
+   */
+  @Test
+  public void testRegionReadsEnabledFlag() throws IOException {
+
+    putDataByReplay(secondaryRegion, 0, 100, cq, families);
+
+    verifyData(secondaryRegion, 0, 100, cq, families);
+
+    // now disable reads
+    secondaryRegion.setReadsEnabled(false);
+    try {
+      verifyData(secondaryRegion, 0, 100, cq, families);
+      fail("Should have failed with IOException");
+    } catch(IOException ex) {
+      // expected
+    }
+
+    // verify that we can still replay data
+    putDataByReplay(secondaryRegion, 100, 100, cq, families);
+
+    // now enable reads again
+    secondaryRegion.setReadsEnabled(true);
+    verifyData(secondaryRegion, 0, 200, cq, families);
+  }
+
+  /**
+   * Tests the case where a request for flush cache is sent to the region, but region cannot flush.
+   * It should write the flush request marker instead.
+   */
+  @Test
+  public void testWriteFlushRequestMarker() throws IOException {
+    // primary region is empty at this point. Request a flush with writeFlushRequestWalMarker=false
+    FlushResult result = primaryRegion.flushcache(false);
+    assertNotNull(result);
+    assertEquals(result.result, FlushResult.Result.CANNOT_FLUSH_MEMSTORE_EMPTY);
+    assertFalse(result.wroteFlushWalMarker);
+
+    // request flush again, but this time with writeFlushRequestWalMarker = true
+    result = primaryRegion.flushcache(true);
+    assertNotNull(result);
+    assertEquals(result.result, FlushResult.Result.CANNOT_FLUSH_MEMSTORE_EMPTY);
+    assertTrue(result.wroteFlushWalMarker);
+
+    List<FlushDescriptor> flushes = Lists.newArrayList();
+    reader = createWALReaderForPrimary();
+    while (true) {
+      HLog.Entry entry = reader.next();
+      if (entry == null) {
+        break;
+      }
+      FlushDescriptor flush = WALEdit.getFlushDescriptor(entry.getEdit().getKeyValues().get(0));
+      if (flush != null) {
+        flushes.add(flush);
+      }
+    }
+
+    assertEquals(1, flushes.size());
+    assertNotNull(flushes.get(0));
+    assertEquals(FlushDescriptor.FlushAction.CANNOT_FLUSH, flushes.get(0).getAction());
+  }
+
+  /**
+   * Test the case where the secondary region replica is not in reads enabled state because it is
+   * waiting for a flush or region open marker from primary region. Replaying CANNOT_FLUSH
+   * flush marker entry should restore the reads enabled status in the region and allow the reads
+   * to continue.
+   */
+  @Test
+  public void testReplayingFlushRequestRestoresReadsEnabledState() throws IOException {
+    disableReads(secondaryRegion);
+
+    // Test case 1: Test that replaying CANNOT_FLUSH request marker assuming this came from
+    // triggered flush restores readsEnabled
+    primaryRegion.flushcache(true);
+    reader = createWALReaderForPrimary();
+    while (true) {
+      HLog.Entry entry = reader.next();
+      if (entry == null) {
+        break;
+      }
+      FlushDescriptor flush = WALEdit.getFlushDescriptor(entry.getEdit().getKeyValues().get(0));
+      if (flush != null) {
+        secondaryRegion.replayWALFlushMarker(flush, entry.getKey().getLogSeqNum());
+      }
+    }
+
+    // now reads should be enabled
+    secondaryRegion.get(new Get(Bytes.toBytes(0)));
+  }
+
+  /**
+   * Test the case where the secondary region replica is not in reads enabled state because it is
+   * waiting for a flush or region open marker from primary region. Replaying flush start and commit
+   * entries should restore the reads enabled status in the region and allow the reads
+   * to continue.
+   */
+  @Test
+  public void testReplayingFlushRestoresReadsEnabledState() throws IOException {
+    // Test case 2: Test that replaying FLUSH_START and FLUSH_COMMIT markers assuming these came
+    // from triggered flush restores readsEnabled
+    disableReads(secondaryRegion);
+
+    // put some data in primary
+    putData(primaryRegion, Durability.SYNC_WAL, 0, 100, cq, families);
+    primaryRegion.flushcache();
+
+    reader = createWALReaderForPrimary();
+    while (true) {
+      HLog.Entry entry = reader.next();
+      if (entry == null) {
+        break;
+      }
+      FlushDescriptor flush = WALEdit.getFlushDescriptor(entry.getEdit().getKeyValues().get(0));
+      if (flush != null) {
+        secondaryRegion.replayWALFlushMarker(flush, entry.getKey().getLogSeqNum());
+      } else {
+        replayEdit(secondaryRegion, entry);
+      }
+    }
+
+    // now reads should be enabled
+    verifyData(secondaryRegion, 0, 100, cq, families);
+  }
+
+  /**
+   * Test the case where the secondary region replica is not in reads enabled state because it is
+   * waiting for a flush or region open marker from primary region. Replaying flush start and commit
+   * entries should restore the reads enabled status in the region and allow the reads
+   * to continue.
+   */
+  @Test
+  public void testReplayingFlushWithEmptyMemstoreRestoresReadsEnabledState() throws IOException {
+    // Test case 2: Test that replaying FLUSH_START and FLUSH_COMMIT markers assuming these came
+    // from triggered flush restores readsEnabled
+    disableReads(secondaryRegion);
+
+    // put some data in primary
+    putData(primaryRegion, Durability.SYNC_WAL, 0, 100, cq, families);
+    primaryRegion.flushcache();
+
+    reader = createWALReaderForPrimary();
+    while (true) {
+      HLog.Entry entry = reader.next();
+      if (entry == null) {
+        break;
+      }
+      FlushDescriptor flush = WALEdit.getFlushDescriptor(entry.getEdit().getKeyValues().get(0));
+      if (flush != null) {
+        secondaryRegion.replayWALFlushMarker(flush, entry.getKey().getLogSeqNum());
+      }
+    }
+
+    // now reads should be enabled
+    verifyData(secondaryRegion, 0, 100, cq, families);
+  }
+
+  /**
+   * Test the case where the secondary region replica is not in reads enabled state because it is
+   * waiting for a flush or region open marker from primary region. Replaying region open event
+   * entry from primary should restore the reads enabled status in the region and allow the reads
+   * to continue.
+   */
+  @Test
+  public void testReplayingRegionOpenEventRestoresReadsEnabledState() throws IOException {
+    // Test case 3: Test that replaying region open event markers restores readsEnabled
+    disableReads(secondaryRegion);
+
+    primaryRegion.close();
+    primaryRegion = HRegion.openHRegion(rootDir, primaryHri, htd, walPrimary, CONF, rss, null);
+
+    reader = createWALReaderForPrimary();
+    while (true) {
+      HLog.Entry entry = reader.next();
+      if (entry == null) {
+        break;
+      }
+
+      RegionEventDescriptor regionEventDesc
+        = WALEdit.getRegionEventDescriptor(entry.getEdit().getKeyValues().get(0));
+
+      if (regionEventDesc != null) {
+        secondaryRegion.replayWALRegionEventMarker(regionEventDesc);
+      }
+    }
+
+    // now reads should be enabled
+    secondaryRegion.get(new Get(Bytes.toBytes(0)));
+  }
+
+  private void disableReads(HRegion region) {
+    region.setReadsEnabled(false);
+    try {
+      verifyData(region, 0, 1, cq, families);
+      fail("Should have failed with IOException");
+    } catch(IOException ex) {
+      // expected
+    }
+  }
+
+  private String createHFileForFamilies(TemporaryFolder testFolder, byte[] family,
       byte[] valueBytes) throws IOException {
     HFile.WriterFactory hFileFactory = HFile.getWriterFactoryNoCache(TEST_UTIL.getConfiguration());
     // TODO We need a way to do this without creating files

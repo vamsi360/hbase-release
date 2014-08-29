@@ -88,6 +88,7 @@ import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.Append;
+import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.ConnectionUtils;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
@@ -98,6 +99,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.RpcRetryingCallerFactory;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.DroppedSnapshotException;
@@ -118,6 +120,7 @@ import org.apache.hadoop.hbase.ipc.PayloadCarryingRpcController;
 import org.apache.hadoop.hbase.ipc.PriorityFunction;
 import org.apache.hadoop.hbase.ipc.RpcCallContext;
 import org.apache.hadoop.hbase.ipc.RpcClient;
+import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.ipc.RpcServer.BlockingServiceAndInterface;
 import org.apache.hadoop.hbase.ipc.RpcServerInterface;
@@ -199,6 +202,7 @@ import org.apache.hadoop.hbase.protobuf.generated.WALProtos.BulkLoadDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor;
+import org.apache.hadoop.hbase.regionserver.HRegion.FlushResult;
 import org.apache.hadoop.hbase.regionserver.HRegion.Operation;
 import org.apache.hadoop.hbase.regionserver.Leases.LeaseStillHeldException;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionProgress;
@@ -206,6 +210,7 @@ import org.apache.hadoop.hbase.regionserver.handler.CloseMetaHandler;
 import org.apache.hadoop.hbase.regionserver.handler.CloseRegionHandler;
 import org.apache.hadoop.hbase.regionserver.handler.OpenMetaHandler;
 import org.apache.hadoop.hbase.regionserver.handler.OpenRegionHandler;
+import org.apache.hadoop.hbase.regionserver.handler.RegionReplicaFlushHandler;
 import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.regionserver.wal.HLogFactory;
 import org.apache.hadoop.hbase.regionserver.wal.HLogKey;
@@ -393,6 +398,9 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
   // unit tests.
   RpcServerInterface rpcServer;
 
+  private RpcRetryingCallerFactory rpcRetryingCallerFactory;
+  private RpcControllerFactory rpcControllerFactory;
+
   private final InetSocketAddress isa;
   private UncaughtExceptionHandler uncaughtExceptionHandler;
 
@@ -449,6 +457,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
   // A sleeper that sleeps for msgInterval.
   private final Sleeper sleeper;
 
+  private final int operationTimeout;
   private final int rpcTimeout;
 
   private final RegionServerAccounting regionServerAccounting;
@@ -567,6 +576,10 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     this.numRegionsToReport = conf.getInt(
       "hbase.regionserver.numregionstoreport", 10);
 
+    this.operationTimeout = conf.getInt(
+      HConstants.HBASE_CLIENT_OPERATION_TIMEOUT,
+      HConstants.DEFAULT_HBASE_CLIENT_OPERATION_TIMEOUT);
+
     this.rpcTimeout = conf.getInt(
       HConstants.HBASE_RPC_SHORTOPERATION_TIMEOUT_KEY,
       HConstants.DEFAULT_HBASE_RPC_SHORTOPERATION_TIMEOUT);
@@ -617,6 +630,9 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
 
     this.rpcServer.setErrorHandler(this);
     this.startcode = System.currentTimeMillis();
+
+    rpcControllerFactory = RpcControllerFactory.instantiate(this.conf);
+    rpcRetryingCallerFactory = RpcRetryingCallerFactory.instantiate(this.conf);
 
     // login the zookeeper client principal (if using security)
     ZKUtil.loginClient(this.conf, "hbase.zookeeper.client.keytab.file",
@@ -1633,6 +1649,11 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     }
     this.service.startExecutorService(ExecutorType.RS_LOG_REPLAY_OPS,
       conf.getInt("hbase.regionserver.wal.max.splitters", SplitLogWorker.DEFAULT_MAX_SPLITTERS));
+    if (ServerRegionReplicaUtil.isRegionReplicaWaitForPrimaryFlushEnabled(conf)) {
+      this.service.startExecutorService(ExecutorType.RS_REGION_REPLICA_FLUSH_OPS,
+        conf.getInt("hbase.regionserver.region.replica.flusher.threads",
+          conf.getInt("hbase.regionserver.executor.openregion.threads", 3)));
+    }
 
     Threads.setDaemonThreadRunning(this.hlogRoller.getThread(), n + ".logRoller",
         uncaughtExceptionHandler);
@@ -1826,8 +1847,35 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       MetaEditor.updateRegionLocation(ct, r.getRegionInfo(),
         this.serverNameFromMasterPOV, openSeqNum);
     }
+
+    triggerFlushInPrimaryRegion(r);
+
     LOG.info("Finished post open deploy task for " + r.getRegionNameAsString());
 
+  }
+
+  /**
+   * Trigger a flush in the primary region replica if this region is a secondary replica. Does not
+   * block this thread. See RegionReplicaFlushHandler for details.
+   */
+  void triggerFlushInPrimaryRegion(final HRegion region) {
+    if (ServerRegionReplicaUtil.isDefaultReplica(region.getRegionInfo())) {
+      return;
+    }
+    if (!ServerRegionReplicaUtil.isRegionReplicaReplicationEnabled(getConfiguration()) ||
+        !ServerRegionReplicaUtil.isRegionReplicaWaitForPrimaryFlushEnabled(
+          getConfiguration())) {
+      region.setReadsEnabled(true);
+      return;
+    }
+
+    region.setReadsEnabled(false); // disable reads before marking the region as opened.
+    // RegionReplicaFlushHandler might reset this.
+
+    // submit it to be handled by one of the handlers so that we do not block OpenRegionHandler
+    this.service.submit(
+      new RegionReplicaFlushHandler(this, (ClusterConnection)catalogTracker.getConnection(),
+        rpcRetryingCallerFactory, rpcControllerFactory, operationTimeout, region));
   }
 
   @Override
@@ -3854,12 +3902,15 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       }
       FlushRegionResponse.Builder builder = FlushRegionResponse.newBuilder();
       if (shouldFlush) {
-        boolean result = region.flushcache().isCompactionNeeded();
-        if (result) {
+        boolean writeFlushWalMarker =  request.hasWriteFlushWalMarker() ?
+            request.getWriteFlushWalMarker() : false;
+            FlushResult result = region.flushcache(writeFlushWalMarker);
+        if (result.isCompactionNeeded()) {
           this.compactSplitThread.requestSystemCompaction(region,
               "Compaction through user triggered flush");
         }
-        builder.setFlushed(result);
+        builder.setFlushed(result.isFlushSucceeded());
+        builder.setWroteFlushWalMarker(result.wroteFlushWalMarker);
       }
       builder.setLastFlushTime(region.getLastFlushTime());
       return builder.build();
@@ -4414,7 +4465,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
             }
             FlushDescriptor flushDesc = WALEdit.getFlushDescriptor(metaCell);
             if (flushDesc != null) {
-              region.replayWALFlushMarker(flushDesc);
+              region.replayWALFlushMarker(flushDesc, replaySeqId);
               continue;
             }
             RegionEventDescriptor regionEvent = WALEdit.getRegionEventDescriptor(metaCell);

@@ -55,7 +55,7 @@ public class RemoveColumnAction extends Action {
     HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
     HColumnDescriptor[] columnDescriptors = tableDescriptor.getColumnFamilies();
 
-    if (columnDescriptors.length <= 1) {
+    if (columnDescriptors.length <= (protectedColumns == null ? 1 : protectedColumns.size())) {
       return;
     }
 
