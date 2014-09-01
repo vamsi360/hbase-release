@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.chaos.monkies.PolicyBasedChaosMonkey;
 import org.apache.hadoop.hbase.chaos.policies.PeriodicRandomActionPolicy;
 import org.apache.hadoop.hbase.chaos.policies.Policy;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.ipc.RpcClient;
 import org.apache.hadoop.hbase.regionserver.DisabledRegionSplitPolicy;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
@@ -148,7 +149,7 @@ public class IntegrationTestRegionReplicaPerf extends IntegrationTestBase {
       conf.getLong("hbase.regionserver.storefile.refresh.period", 0) > 0);
 
     // enable client-side settings
-    conf.setBoolean("hbase.ipc.client.allowsInterrupt", true);
+    conf.setBoolean(RpcClient.SPECIFIC_WRITE_THREAD, true);
     // TODO: expose these settings to CLI override
     conf.setLong("hbase.client.primaryCallTimeout.get", primaryTimeout);
     conf.setLong("hbase.client.primaryCallTimeout.multiget", primaryTimeout);

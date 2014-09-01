@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellScannable;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -53,18 +54,18 @@ import com.google.protobuf.ServiceException;
 class MultiServerCallable<R> extends RegionServerCallable<MultiResponse> {
   private final MultiAction<R> multiAction;
   private final boolean cellBlock;
-  private RpcControllerFactory rpcFactory;
+  private final PayloadCarryingRpcController controller;
 
   MultiServerCallable(final ClusterConnection connection, final TableName tableName,
       final ServerName location, RpcControllerFactory rpcFactory, final MultiAction<R> multi) {
     super(connection, tableName, null);
-    this.rpcFactory = rpcFactory;
     this.multiAction = multi;
     // RegionServerCallable has HRegionLocation field, but this is a multi-region request.
     // Using region info from parent HRegionLocation would be a mistake for this class; so
     // we will store the server here, and throw if someone tries to obtain location/regioninfo.
     this.location = new HRegionLocation(null, location);
     this.cellBlock = isCellBlock();
+    controller = rpcFactory.newController();
   }
 
   @Override
@@ -119,7 +120,7 @@ class MultiServerCallable<R> extends RegionServerCallable<MultiResponse> {
 
     // Controller optionally carries cell data over the proxy/service boundary and also
     // optionally ferries cell response data back out again.
-    PayloadCarryingRpcController controller = rpcFactory.newController(cells);
+    if (cells != null) controller.setCellScanner(CellUtil.createCellScanner(cells));
     controller.setPriority(getTableName());
     ClientProtos.MultiResponse responseProto;
     ClientProtos.MultiRequest requestProto = multiRequestBuilder.build();
@@ -128,9 +129,13 @@ class MultiServerCallable<R> extends RegionServerCallable<MultiResponse> {
     } catch (ServiceException e) {
       throw ProtobufUtil.getRemoteException(e);
     }
+    if (responseProto == null) return null; // Occurs on cancel
     return ResponseConverter.getResults(requestProto, responseProto, controller.cellScanner());
   }
 
+  public void startCancel() {
+    controller.startCancel();
+  }
 
 
   /**

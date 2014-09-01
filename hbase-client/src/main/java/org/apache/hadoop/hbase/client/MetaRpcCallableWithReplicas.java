@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.util.BoundedCompletionService;
 
@@ -37,12 +38,15 @@ class MetaRpcCallableWithReplicas extends RpcRetryingCallerWithReadReplicas {
   ClusterConnection cConnection;
   RegionLocations metaLocations;
   byte[] metaKey;
+  int rpcTimeout;
 
   public MetaRpcCallableWithReplicas(ExecutorService pool, ClusterConnection cConnection,
       byte[] metaKey, int rpcTimeout, int retries, int timeBeforeReplicas) {
-    super(TableName.META_TABLE_NAME, cConnection, null, pool, retries,
+    super(RpcControllerFactory.instantiate(cConnection.getConfiguration()),
+        TableName.META_TABLE_NAME, cConnection, null, pool, retries,
         rpcTimeout, timeBeforeReplicas);
     this.metaKey = metaKey;
+    this.rpcTimeout = rpcTimeout;
   }
 
   @Override
@@ -50,17 +54,16 @@ class MetaRpcCallableWithReplicas extends RpcRetryingCallerWithReadReplicas {
     return metaKey;
   }
 
-  protected int addCallsForReplica(BoundedCompletionService<Result> cs,
+  @Override
+  protected void addCallsForReplica(ResultBoundedCompletionService cs,
       RegionLocations rl, int min, int max) {
     for (int id = min; id <= max; id++) {
       HRegionLocation hrl = rl.getRegionLocation(id);
       MetaServerCallable callOnReplica = new MetaServerCallable(id, hrl);
-      RetryingRPC retryingOnReplica = new RetryingRPC(callOnReplica);
       // this would retry internally (RetryingRPC#call). But when the RPC succeeds with
       // one of the other replicas the retry would be interrupted
-      cs.submit(retryingOnReplica);
+      cs.submit(callOnReplica, rpcTimeout);
     }
-    return max - min + 1;
   }
 
   class MetaServerCallable extends ReplicaRegionServerCallable {

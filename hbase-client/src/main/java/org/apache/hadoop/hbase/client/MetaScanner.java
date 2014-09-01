@@ -147,7 +147,8 @@ public class MetaScanner {
         Result startRowResult;
         if (configuration.getBoolean(HConstants.USE_META_REPLICAS,
             HConstants.DEFAULT_USE_META_REPLICAS)) {
-          MetaRpcCallableWithReplicas m = new MetaRpcCallableWithReplicas(metaTable.getPool(), connection,
+          MetaRpcCallableWithReplicas m = new MetaRpcCallableWithReplicas(metaTable.getPool(),
+                        connection,
                         searchRow,
                         configuration.getInt(HConstants.HBASE_RPC_TIMEOUT_KEY,
                             HConstants.DEFAULT_HBASE_RPC_TIMEOUT),

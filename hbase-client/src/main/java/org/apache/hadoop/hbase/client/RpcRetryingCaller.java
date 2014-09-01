@@ -25,6 +25,7 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -63,6 +64,7 @@ public class RpcRetryingCaller<T> {
 
   private final long pause;
   private final int retries;
+  private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
   public RpcRetryingCaller(long pause, int retries) {
     this.pause = pause;
@@ -90,6 +92,13 @@ public class RpcRetryingCaller<T> {
     return callWithRetries(callable, HConstants.DEFAULT_HBASE_CLIENT_OPERATION_TIMEOUT);
   }
 
+  public void cancel(){
+    cancelled.set(true);
+    synchronized (cancelled){
+      cancelled.notifyAll();
+    }
+  }
+
   /**
    * Retries if invocation fails.
    * @param callTimeout Timeout for this call
@@ -114,9 +123,11 @@ public class RpcRetryingCaller<T> {
         return callable.call();
       } catch (Throwable t) {
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Call exception, tries=" + tries + ", retries=" + retries + ", retryTime=" +
-              (EnvironmentEdgeManager.currentTimeMillis() - this.globalStartTime) + "ms", t);
+          LOG.trace("Call exception, tries=" + tries + ", retries=" + retries + ", started=" +
+              (EnvironmentEdgeManager.currentTimeMillis() - this.globalStartTime) + " ms ago, "
+              + "cancelled=" + cancelled.get(), t);
         }
+
         // translateException throws exception when should not retry: i.e. when request is bad.
         t = translateException(t);
         callable.throwable(t, retries != 1);
@@ -144,7 +155,13 @@ public class RpcRetryingCaller<T> {
         afterCall();
       }
       try {
-        Thread.sleep(expectedSleep);
+        if (expectedSleep > 0) {
+          synchronized (cancelled) {
+            if (cancelled.get()) return null;
+            cancelled.wait(expectedSleep);
+          }
+        }
+        if (cancelled.get()) return null;
       } catch (InterruptedException e) {
         throw new InterruptedIOException("Interrupted after " + tries + " tries  on " + retries);
       }
