@@ -856,7 +856,8 @@ public class HTable implements HTableInterface {
 
     // Call that takes into account the replica
     RpcRetryingCallerWithReadReplicas callable = new RpcRetryingCallerWithReadReplicas(
-        tableName, this.connection, get, pool, retries, operationTimeout, primaryCallTimeoutMicroSecond);
+        rpcControllerFactory, tableName, this.connection, get, pool, retries,
+        operationTimeout, primaryCallTimeoutMicroSecond);
     return callable.call();
   }
 
