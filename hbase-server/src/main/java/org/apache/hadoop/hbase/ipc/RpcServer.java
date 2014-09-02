@@ -53,8 +53,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1110,6 +1108,43 @@ public class RpcServer implements RpcServerInterface {
     }
   }
 
+  // Wrapper around the linkedlist methods. This is a stop gap until we drop support
+  // for JDK6. When we drop support for JDK6, we can drop this class and instead use
+  // the class ConcurrentLinkedDeque
+  static class SynchronizedLinkedList<T> {
+    LinkedList<T> l = new LinkedList<T>();
+
+    T peekFirst() {
+      synchronized (this.l) {
+        return l.peekFirst();
+      }
+    }
+
+    boolean isEmpty() {
+      synchronized (this.l) {
+        return l.isEmpty();
+      }
+    }
+
+    T pollFirst() {
+      synchronized (this.l) {
+        return l.pollFirst();
+      }
+    }
+
+    void addFirst(T call) {
+      synchronized (this.l) {
+        l.addFirst(call);
+      }
+    }
+
+    void addLast(T call) {
+      synchronized (this.l) {
+        l.addLast(call);
+      }
+    }
+  }
+
   /** Reads calls from a connection and queues them for handling. */
   @edu.umd.cs.findbugs.annotations.SuppressWarnings(
       value="VO_VOLATILE_INCREMENT",
@@ -1122,7 +1157,10 @@ public class RpcServer implements RpcServerInterface {
     protected SocketChannel channel;
     private ByteBuffer data;
     private ByteBuffer dataLengthBuffer;
-    protected final ConcurrentLinkedDeque<Call> responseQueue = new ConcurrentLinkedDeque<Call>();
+    //protected final ConcurrentLinkedDeque<Call> responseQueue = new ConcurrentLinkedDeque<Call>();
+    //commented out the above usage of JDK7 API due to the fact we need to work with both
+    //JDK6 and JDK7.
+    protected final SynchronizedLinkedList<Call> responseQueue = new SynchronizedLinkedList<Call>();
     private final Lock responseWriteLock = new ReentrantLock();
     private Counter rpcCount = new Counter(); // number of outstanding rpcs
     private long lastContact;
