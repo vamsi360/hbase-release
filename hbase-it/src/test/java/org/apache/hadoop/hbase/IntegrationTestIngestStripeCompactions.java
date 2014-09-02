@@ -38,7 +38,7 @@ public class IntegrationTestIngestStripeCompactions extends IntegrationTestInges
     HTableDescriptor htd = new HTableDescriptor(getTablename());
     htd.setConfiguration(StoreEngine.STORE_ENGINE_CLASS_KEY, StripeStoreEngine.class.getName());
     htd.setConfiguration(HStore.BLOCKING_STOREFILES_KEY, "100");
-    HColumnDescriptor hcd = new HColumnDescriptor(LoadTestTool.COLUMN_FAMILY);
+    HColumnDescriptor hcd = new HColumnDescriptor(LoadTestTool.DEFAULT_COLUMN_FAMILY);
     HBaseTestingUtility.createPreSplitLoadTestTable(util.getConfiguration(), htd, hcd);
   }
 }

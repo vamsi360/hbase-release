@@ -115,8 +115,8 @@ class ScannerCallableWithReplicas implements RetryingCallable<Result[]> {
     if (currentScannerCallable != null && currentScannerCallable.closed) {
       // For closing we target that exact scanner (and not do replica fallback like in
       // the case of normal reads)
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Closing scanner " + currentScannerCallable.scannerId);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Closing scanner " + currentScannerCallable.scannerId);
       }
       Result[] r = currentScannerCallable.call();
       currentScannerCallable = null;
@@ -210,15 +210,15 @@ class ScannerCallableWithReplicas implements RetryingCallable<Result[]> {
       currentScannerCallable = scanner;
       // store where to start the replica scanner from if we need to.
       if (result != null && result.length != 0) this.lastResult = result[result.length - 1];
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Setting current scanner as " + currentScannerCallable.scannerId +
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Setting current scanner as " + currentScannerCallable.scannerId +
             " associated with " + currentScannerCallable.getHRegionInfo().getReplicaId());
       }
       // close all outstanding replica scanners but the one we heard back from
       outstandingCallables.remove(scanner);
       for (ScannerCallable s : outstandingCallables) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Closing scanner " + s.scannerId +
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Closing scanner " + s.scannerId +
               " because this was slow and another replica succeeded");
         }
         // Submit the "close" to the pool since this might take time, and we don't

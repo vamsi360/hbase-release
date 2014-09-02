@@ -28,11 +28,13 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.LoadTestTool;
+import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 /**
@@ -43,8 +45,8 @@ import com.google.common.collect.Sets;
 public class IntegrationTestIngest extends IntegrationTestBase {
   public static final char HIPHEN = '-';
   private static final int SERVER_COUNT = 1; // number of slaves for the smallest cluster
-  private static final long DEFAULT_RUN_TIME = 20 * 60 * 1000;
-  private static final long JUNIT_RUN_TIME = 10 * 60 * 1000;
+  protected static final long DEFAULT_RUN_TIME = 20 * 60 * 1000;
+  protected static final long JUNIT_RUN_TIME = 10 * 60 * 1000;
 
   /** A soft limit on how long we should run */
   protected static final String RUN_TIME_KEY = "hbase.%s.runtime";
@@ -64,6 +66,7 @@ public class IntegrationTestIngest extends IntegrationTestBase {
   protected LoadTestTool loadTool;
 
   protected String[] LOAD_TEST_TOOL_INIT_ARGS = {
+      LoadTestTool.OPT_COLUMN_FAMILIES,
       LoadTestTool.OPT_COMPRESSION,
       LoadTestTool.OPT_DATA_BLOCK_ENCODING,
       LoadTestTool.OPT_INMEMORY,
@@ -76,7 +79,7 @@ public class IntegrationTestIngest extends IntegrationTestBase {
   public void setUpCluster() throws Exception {
     util = getTestingUtil(getConf());
     LOG.debug("Initializing/checking cluster has " + SERVER_COUNT + " servers");
-    util.initializeCluster(SERVER_COUNT);
+    util.initializeCluster(getMinServerCount());
     LOG.debug("Done initializing/checking cluster");
     cluster = util.getHBaseClusterInterface();
     deleteTableIfNecessary();
@@ -85,6 +88,10 @@ public class IntegrationTestIngest extends IntegrationTestBase {
     // Initialize load test tool before we start breaking things;
     // LoadTestTool init, even when it is a no-op, is very fragile.
     initTable();
+  }
+
+  protected int getMinServerCount() {
+    return SERVER_COUNT;
   }
 
   protected void initTable() throws IOException {
@@ -122,7 +129,11 @@ public class IntegrationTestIngest extends IntegrationTestBase {
 
   @Override
   protected Set<String> getColumnFamilies() {
-    return Sets.newHashSet(Bytes.toString(LoadTestTool.COLUMN_FAMILY));
+    Set<String> families = Sets.newHashSet();
+    for (byte[] f : loadTool.getColumnFamilies()) {
+      families.add(Bytes.toString(f));
+    }
+    return families;
   }
 
   private void deleteTableIfNecessary() throws IOException {
@@ -197,6 +208,8 @@ public class IntegrationTestIngest extends IntegrationTestBase {
     List<String> args = new ArrayList<String>();
     args.add("-tn");
     args.add(getTablename());
+    args.add("-families");
+    args.add(getColumnFamiliesAsString());
     args.add(mode);
     args.add(modeSpecificArg);
     args.add("-start_key");
@@ -206,6 +219,14 @@ public class IntegrationTestIngest extends IntegrationTestBase {
     args.add("-skip_init");
 
     return args.toArray(new String[args.size()]);
+  }
+
+  private String getColumnFamiliesAsString() {
+    List<String> families = Lists.newArrayList();
+    for (byte[] f : loadTool.getColumnFamilies()) {
+      families.add(Bytes.toString(f));
+    }
+    return StringUtils.join(",", families);
   }
 
   /** Estimates a data size based on the cluster size */

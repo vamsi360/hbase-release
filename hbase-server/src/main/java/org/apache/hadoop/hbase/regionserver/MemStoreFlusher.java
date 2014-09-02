@@ -207,7 +207,8 @@ class MemStoreFlusher implements FlushRequester {
 
       Preconditions.checkState(regionToFlush.memstoreSize.get() > 0);
 
-      LOG.info("Flush of region " + regionToFlush + " due to global heap pressure");
+      LOG.info("Flush of region " + regionToFlush + " due to global heap pressure. memstore size=" +
+          StringUtils.humanReadableInt(server.getRegionServerAccounting().getGlobalMemstoreSize()));
       flushedOne = flushRegion(regionToFlush, true);
       if (!flushedOne) {
         LOG.info("Excluding unflushable region " + regionToFlush +
@@ -321,6 +322,7 @@ class MemStoreFlusher implements FlushRequester {
       getGlobalMemstoreSize() >= globalMemStoreLimitLowMark;
   }
 
+  @Override
   public void requestFlush(HRegion r) {
     synchronized (regionsInQueue) {
       if (!regionsInQueue.containsKey(r)) {
@@ -333,6 +335,7 @@ class MemStoreFlusher implements FlushRequester {
     }
   }
 
+  @Override
   public void requestDelayedFlush(HRegion r, long delay) {
     synchronized (regionsInQueue) {
       if (!regionsInQueue.containsKey(r)) {

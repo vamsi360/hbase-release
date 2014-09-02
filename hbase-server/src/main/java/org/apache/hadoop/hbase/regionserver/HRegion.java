@@ -61,7 +61,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.google.protobuf.ByteString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -435,6 +434,7 @@ public class HRegion implements HeapSize { // , Writable{
     final Result result;
     final String failureReason;
     final long flushSequenceId;
+    final boolean wroteFlushWalMarker;
 
     /**
      * Convenience constructor to use when the flush is successful, the failure message is set to
@@ -444,7 +444,7 @@ public class HRegion implements HeapSize { // , Writable{
      *                        memstores.
      */
     FlushResult(Result result, long flushSequenceId) {
-      this(result, flushSequenceId, null);
+      this(result, flushSequenceId, null, false);
       assert result == Result.FLUSHED_NO_COMPACTION_NEEDED || result == Result
           .FLUSHED_COMPACTION_NEEDED;
     }
@@ -454,8 +454,8 @@ public class HRegion implements HeapSize { // , Writable{
      * @param result Expecting CANNOT_FLUSH_MEMSTORE_EMPTY or CANNOT_FLUSH.
      * @param failureReason Reason why we couldn't flush.
      */
-    FlushResult(Result result, String failureReason) {
-      this(result, -1, failureReason);
+    FlushResult(Result result, String failureReason, boolean wroteFlushMarker) {
+      this(result, -1, failureReason, wroteFlushMarker);
       assert result == Result.CANNOT_FLUSH_MEMSTORE_EMPTY || result == Result.CANNOT_FLUSH;
     }
 
@@ -465,10 +465,12 @@ public class HRegion implements HeapSize { // , Writable{
      * @param flushSequenceId Generated sequence id if the memstores were flushed else -1.
      * @param failureReason Reason why we couldn't flush, or null.
      */
-    FlushResult(Result result, long flushSequenceId, String failureReason) {
+    FlushResult(Result result, long flushSequenceId, String failureReason,
+      boolean wroteFlushMarker) {
       this.result = result;
       this.flushSequenceId = flushSequenceId;
       this.failureReason = failureReason;
+      this.wroteFlushWalMarker = wroteFlushMarker;
     }
 
     /**
@@ -1298,7 +1300,7 @@ public class HRegion implements HeapSize { // , Writable{
 
         // close each store in parallel
         for (final Store store : stores.values()) {
-          if (store.getFlushableSize() != 0 && writestate.readOnly) {
+          if (store.getFlushableSize() != 0 && !writestate.readOnly) {
             LOG.warn("store.getFlushableSize for " + store + " is not zero! It's "
                 + store.getFlushableSize() + ". Maybe a coprocessor "
                 + "operation failed and "
@@ -1687,11 +1689,35 @@ public class HRegion implements HeapSize { // , Writable{
    * because a Snapshot was not properly persisted.
    */
   public FlushResult flushcache() throws IOException {
+    return flushcache(false);
+  }
+
+  /**
+   * Flush the cache.
+   *
+   * When this method is called the cache will be flushed unless:
+   * <ol>
+   *   <li>the cache is empty</li>
+   *   <li>the region is closed.</li>
+   *   <li>a flush is already in progress</li>
+   *   <li>writes are disabled</li>
+   * </ol>
+   *
+   * <p>This method may block for some time, so it should not be called from a
+   * time-sensitive thread.
+   *
+   * @return true if the region needs compacting
+   *
+   * @throws IOException general io exceptions
+   * @throws DroppedSnapshotException Thrown when replay of hlog is required
+   * because a Snapshot was not properly persisted.
+   */
+  public FlushResult flushcache(boolean writeFlushRequestWalMarker) throws IOException {
     // fail-fast instead of waiting on the lock
     if (this.closing.get()) {
       String msg = "Skipping flush on " + this + " because closing";
       LOG.debug(msg);
-      return new FlushResult(FlushResult.Result.CANNOT_FLUSH, msg);
+      return new FlushResult(FlushResult.Result.CANNOT_FLUSH, msg, false);
     }
     MonitoredTask status = TaskMonitor.get().createStatus("Flushing " + this);
     status.setStatus("Acquiring readlock on region");
@@ -1702,7 +1728,7 @@ public class HRegion implements HeapSize { // , Writable{
         String msg = "Skipping flush on " + this + " because closed";
         LOG.debug(msg);
         status.abort(msg);
-        return new FlushResult(FlushResult.Result.CANNOT_FLUSH, msg);
+        return new FlushResult(FlushResult.Result.CANNOT_FLUSH, msg, false);
       }
       if (coprocessorHost != null) {
         status.setStatus("Running coprocessor pre-flush hooks");
@@ -1727,11 +1753,11 @@ public class HRegion implements HeapSize { // , Writable{
               + (writestate.flushing ? "already flushing"
               : "writes not enabled");
           status.abort(msg);
-          return new FlushResult(FlushResult.Result.CANNOT_FLUSH, msg);
+          return new FlushResult(FlushResult.Result.CANNOT_FLUSH, msg, false);
         }
       }
       try {
-        FlushResult fs = internalFlushCache(status);
+        FlushResult fs = internalFlushCache(status, writeFlushRequestWalMarker);
 
         if (coprocessorHost != null) {
           status.setStatus("Running post-flush coprocessor hooks");
@@ -1823,7 +1849,28 @@ public class HRegion implements HeapSize { // , Writable{
    */
   protected FlushResult internalFlushCache(MonitoredTask status)
       throws IOException {
-    return internalFlushCache(this.log, -1, status);
+    return internalFlushCache(status, false);
+  }
+
+  /**
+   * Flush the memstore. Flushing the memstore is a little tricky. We have a lot of updates in the
+   * memstore, all of which have also been written to the log. We need to write those updates in the
+   * memstore out to disk, while being able to process reads/writes as much as possible during the
+   * flush operation.
+   * <p>This method may block for some time.  Every time you call it, we up the regions
+   * sequence id even if we don't flush; i.e. the returned region id will be at least one larger
+   * than the last edit applied to this region. The returned id does not refer to an actual edit.
+   * The returned id can be used for say installing a bulk loaded file just ahead of the last hfile
+   * that was the result of this flush, etc.
+   * @return object describing the flush's state
+   *
+   * @throws IOException general io exceptions
+   * @throws DroppedSnapshotException Thrown when replay of hlog is required
+   * because a Snapshot was not properly persisted.
+   */
+  protected FlushResult internalFlushCache(MonitoredTask status, boolean writeFlushWalMarker)
+      throws IOException {
+    return internalFlushCache(this.log, -1, status, writeFlushWalMarker);
   }
 
   /**
@@ -1838,7 +1885,21 @@ public class HRegion implements HeapSize { // , Writable{
   protected FlushResult internalFlushCache(
       final HLog wal, final long myseqid, MonitoredTask status)
   throws IOException {
-    PrepareFlushResult result = internalPrepareFlushCache(wal, myseqid, status, false, null);
+    return internalFlushCache(wal, myseqid, status, false);
+  }
+
+  /**
+   * @param wal Null if we're NOT to go via hlog/wal.
+   * @param myseqid The seqid to use if <code>wal</code> is null writing out flush file.
+   * @return object describing the flush's state
+   * @throws IOException
+   * @see #internalFlushCache(MonitoredTask)
+   */
+  protected FlushResult internalFlushCache(
+      final HLog wal, final long myseqid, MonitoredTask status, boolean writeFlushWalMarker)
+  throws IOException {
+    PrepareFlushResult result = internalPrepareFlushCache(wal, myseqid, status, false, null,
+      writeFlushWalMarker);
     if (result.result == null) {
       return internalFlushCacheAndCommit(wal, status, result);
     } else {
@@ -1848,7 +1909,7 @@ public class HRegion implements HeapSize { // , Writable{
 
   protected PrepareFlushResult internalPrepareFlushCache(
       final HLog wal, final long myseqid, MonitoredTask status, boolean isReplay,
-      Set<byte[]> families)
+      Set<byte[]> families, boolean writeFlushWalMarker)
   throws IOException {
     if (this.rsServices != null && this.rsServices.isAborted()) {
       // Don't flush when server aborting, it's unsafe
@@ -1862,7 +1923,8 @@ public class HRegion implements HeapSize { // , Writable{
         LOG.debug("Empty memstore size for the current region "+this);
       }
       return new PrepareFlushResult(
-        new FlushResult(FlushResult.Result.CANNOT_FLUSH_MEMSTORE_EMPTY, "Nothing to flush"));
+        new FlushResult(FlushResult.Result.CANNOT_FLUSH_MEMSTORE_EMPTY, "Nothing to flush",
+          writeFlushRequestMarkerToWAL(wal, writeFlushWalMarker)));
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Started memstore flush for " + this +
@@ -1905,7 +1967,8 @@ public class HRegion implements HeapSize { // , Writable{
           String msg = "Flush will not be started for ["
               + this.getRegionInfo().getEncodedName() + "] - because the WAL is closing.";
           status.setStatus(msg);
-          return new PrepareFlushResult(new FlushResult(FlushResult.Result.CANNOT_FLUSH, msg));
+          return new PrepareFlushResult(new FlushResult(FlushResult.Result.CANNOT_FLUSH,
+            msg, false));
         }
         flushSeqId = this.sequenceId.incrementAndGet();
       } else {
@@ -1918,7 +1981,8 @@ public class HRegion implements HeapSize { // , Writable{
               + "] - because requested flush seqId " + flushSeqId
               +  " is smaller than what is in the memstore with seqId " + currentSeqId;
           status.setStatus(msg);
-          return new PrepareFlushResult(new FlushResult(FlushResult.Result.CANNOT_FLUSH, msg));
+          return new PrepareFlushResult(new FlushResult(FlushResult.Result.CANNOT_FLUSH, msg,
+            writeFlushRequestMarkerToWAL(wal, writeFlushWalMarker)));
         }
       }
 
@@ -1990,6 +2054,27 @@ public class HRegion implements HeapSize { // , Writable{
 
     return new PrepareFlushResult(storeFlushCtxs, committedFiles, startTime, flushSeqId,
       totalFlushableSize);
+  }
+
+  /**
+   * Writes a marker to WAL indicating a flush is requested but cannot be complete due to various
+   * reasons. Ignores exceptions from WAL. Returns whether the write succeeded.
+   * @param wal
+   * @return
+   */
+  private boolean writeFlushRequestMarkerToWAL(HLog wal, boolean writeFlushWalMarker) {
+    if (writeFlushWalMarker && wal != null && !writestate.readOnly) {
+      FlushDescriptor desc = ProtobufUtil.toFlushDescriptor(FlushAction.CANNOT_FLUSH,
+        getRegionInfo(), -1, new TreeMap<byte[], List<Path>>());
+      try {
+        HLogUtil.writeFlushMarker(wal, this.htableDescriptor, getRegionInfo(),
+          desc, sequenceId, true);
+        return true;
+      } catch (IOException e) {
+        LOG.warn("Received exception while trying to write the flush request to wal", e);
+      }
+    }
+    return false;
   }
 
   protected FlushResult internalFlushCacheAndCommit(
@@ -3210,7 +3295,8 @@ public class HRegion implements HeapSize { // , Writable{
 
   protected void checkReadsEnabled() throws IOException {
     if (!this.writestate.readsEnabled) {
-      throw new IOException ("The region's reads are disabled. Cannot serve the request");
+      throw new IOException ("The region's reads are disabled "
+        + getRegionInfo().getEncodedName() + ". Cannot serve the request");
     }
   }
 
@@ -3735,7 +3821,7 @@ public class HRegion implements HeapSize { // , Writable{
     }
   }
 
-  void replayWALFlushMarker(FlushDescriptor flush) throws IOException {
+  void replayWALFlushMarker(FlushDescriptor flush, long replaySeqId) throws IOException {
     checkTargetRegion(flush.getEncodedRegionName().toByteArray(),
       "Flush marker from WAL ", flush);
 
@@ -3759,6 +3845,9 @@ public class HRegion implements HeapSize { // , Writable{
         break;
       case ABORT_FLUSH:
         replayWALFlushAbortMarker(flush);
+        break;
+      case CANNOT_FLUSH:
+        replayWALFlushCannotFlushMarker(flush, replaySeqId);
         break;
       default:
         LOG.warn("Received a flush event with unknown action, ignoring. "
@@ -3813,13 +3902,18 @@ public class HRegion implements HeapSize { // , Writable{
 
           // invoke prepareFlushCache. Send null as wal since we do not want the flush events in wal
           PrepareFlushResult prepareResult = internalPrepareFlushCache(null,
-            flushSeqId, status, true, families);
+            flushSeqId, status, true, families, false);
           if (prepareResult.result == null) {
             // save the PrepareFlushResult so that we can use it later from commit flush
             this.writestate.flushing = true;
             this.prepareFlushResult = prepareResult;
             status.markComplete("Flush prepare successful");
           } else {
+            // special case empty memstore empty. We will still save the flush result in this case
+            if (prepareResult.result.result == FlushResult.Result.CANNOT_FLUSH_MEMSTORE_EMPTY) {
+              this.writestate.flushing = true;
+              this.prepareFlushResult = prepareResult;
+            }
             status.abort("Flush prepare failed with " + prepareResult.result);
             // nothing much to do. prepare flush failed because of some reason.
           }
@@ -3930,6 +4024,12 @@ public class HRegion implements HeapSize { // , Writable{
             this.prepareFlushResult = null;
             writestate.flushing = false;
           }
+          // If we were waiting for observing a flush or region opening event for not showing
+          // partial data after a secondary region crash, we can allow reads now. We can only make
+          // sure that we are not showing partial data (for example skipping some previous edits)
+          // until we observe a full flush start and flush commit. So if we were not able to find
+          // a previous flush we will not enable reads now.
+          this.setReadsEnabled(true);
         } else {
           // There is no corresponding prepare snapshot from before.
           // We will pick up the new flushed file
@@ -3983,7 +4083,7 @@ public class HRegion implements HeapSize { // , Writable{
       }
       List<String> flushFiles = storeFlush.getFlushOutputList();
       StoreFlushContext ctx = null;
-      if (prepareFlushResult == null) {
+      if (prepareFlushResult == null || prepareFlushResult.storeFlushCtxs == null) {
         ctx = store.createFlushContext(flush.getFlushSequenceNumber());
       } else {
         ctx = prepareFlushResult.storeFlushCtxs.get(family);
@@ -4044,6 +4144,24 @@ public class HRegion implements HeapSize { // , Writable{
     // that will drop the snapshot
   }
 
+  private void replayWALFlushCannotFlushMarker(FlushDescriptor flush, long replaySeqId) {
+    synchronized (writestate) {
+      if (this.lastReplayedOpenRegionSeqId > replaySeqId) {
+        LOG.warn("Skipping replaying flush event :" + TextFormat.shortDebugString(flush)
+          + " because its sequence id " + replaySeqId + " is smaller than this regions "
+          + "lastReplayedOpenRegionSeqId of " + lastReplayedOpenRegionSeqId);
+        return;
+      }
+
+      // If we were waiting for observing a flush or region opening event for not showing partial
+      // data after a secondary region crash, we can allow reads now. This event means that the
+      // primary was not able to flush because memstore is empty when we requested flush. By the
+      // time we observe this, we are guaranteed to have up to date seqId with our previous
+      // assignment.
+      this.setReadsEnabled(true);
+    }
+  }
+
   @VisibleForTesting
   PrepareFlushResult getPrepareFlushResult() {
     return prepareFlushResult;
@@ -4081,7 +4199,7 @@ public class HRegion implements HeapSize { // , Writable{
         // region open event's seqid. Since this is the first event that the region puts (after
         // possibly flushing recovered.edits), after seeing this event, we can ignore every edit
         // smaller than this seqId
-        if (this.lastReplayedOpenRegionSeqId < regionEvent.getLogSequenceNumber()) {
+        if (this.lastReplayedOpenRegionSeqId <= regionEvent.getLogSequenceNumber()) {
           this.lastReplayedOpenRegionSeqId = regionEvent.getLogSequenceNumber();
         } else {
           LOG.warn("Skipping replaying region event :" + TextFormat.shortDebugString(regionEvent)
@@ -4111,7 +4229,8 @@ public class HRegion implements HeapSize { // , Writable{
           if (writestate.flushing) {
             // only drop memstore snapshots if they are smaller than last flush for the store
             if (this.prepareFlushResult.flushSeqId <= storeSeqId) {
-              StoreFlushContext ctx = this.prepareFlushResult.storeFlushCtxs.get(family);
+              StoreFlushContext ctx = this.prepareFlushResult.storeFlushCtxs == null ?
+                  null : this.prepareFlushResult.storeFlushCtxs.get(family);
               if (ctx != null) {
                 long snapshotSize = store.getFlushableSize();
                 ctx.abort();
@@ -4155,6 +4274,10 @@ public class HRegion implements HeapSize { // , Writable{
         // there may be some in-flight transactions, but they won't be made visible since they are
         // either greater than flush seq number or they were already dropped via flush.
         //TODO: getMVCC().advanceMemstoreReadPointIfNeeded(this.lastFlushSeqId);
+
+        // If we were waiting for observing a flush or region opening event for not showing partial
+        // data after a secondary region crash, we can allow reads now.
+        this.setReadsEnabled(true);
 
         // C. Finally notify anyone waiting on memstore to clear:
         // e.g. checkResources().
@@ -4550,7 +4673,6 @@ public class HRegion implements HeapSize { // , Writable{
             finalPath = bulkLoadListener.prepareBulkLoad(familyName, path);
           }
           Path commitedStoreFile = store.bulkLoadHFile(finalPath, seqId);
-          
           if(storeFiles.containsKey(familyName)) {
             storeFiles.get(familyName).add(commitedStoreFile);
           } else {
@@ -4598,7 +4720,7 @@ public class HRegion implements HeapSize { // , Writable{
           }
         }
       }
-    
+
       closeBulkRegionOperation();
     }
   }

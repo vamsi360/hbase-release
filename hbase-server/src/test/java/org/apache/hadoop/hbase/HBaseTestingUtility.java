@@ -55,6 +55,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Waiter.Predicate;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
+import org.apache.hadoop.hbase.client.Consistency;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
@@ -955,7 +956,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
     miniClusterRunning = false;
     LOG.info("Minicluster is down");
   }
-  
+
   /**
    * @return True if we removed the test dirs
    * @throws IOException
@@ -1861,6 +1862,25 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
       Put put = new Put(data);
       put.add(f, null, data);
       t.put(put);
+    }
+  }
+
+  public void verifyNumericRows(HTableInterface table, final byte[] f, int startRow, int endRow,
+      int replicaId)
+      throws IOException {
+    for (int i = startRow; i < endRow; i++) {
+      String failMsg = "Failed verification of row :" + i;
+      byte[] data = Bytes.toBytes(String.valueOf(i));
+      Get get = new Get(data);
+      get.setReplicaId(replicaId);
+      get.setConsistency(Consistency.TIMELINE);
+      Result result = table.get(get);
+      assertTrue(failMsg, result.containsColumn(f, null));
+      assertEquals(failMsg, result.getColumnCells(f, null).size(), 1);
+      Cell cell = result.getColumnLatestCell(f, null);
+      assertTrue(failMsg,
+        Bytes.equals(data, 0, data.length, cell.getValueArray(), cell.getValueOffset(),
+          cell.getValueLength()));
     }
   }
 
@@ -3257,6 +3277,29 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    * @return the number of regions the table was split into
    */
   public static int createPreSplitLoadTestTable(Configuration conf,
+      TableName tableName, byte[][] columnFamilies, Algorithm compression,
+      DataBlockEncoding dataBlockEncoding, int numRegionsPerServer, int regionReplication,
+      Durability durability)
+          throws IOException {
+    HTableDescriptor desc = new HTableDescriptor(tableName);
+    desc.setDurability(durability);
+    desc.setRegionReplication(regionReplication);
+    HColumnDescriptor[] hcds = new HColumnDescriptor[columnFamilies.length];
+    for (int i = 0; i < columnFamilies.length; i++) {
+      HColumnDescriptor hcd = new HColumnDescriptor(columnFamilies[i]);
+      hcd.setDataBlockEncoding(dataBlockEncoding);
+      hcd.setCompressionType(compression);
+      hcds[i] = hcd;
+    }
+    return createPreSplitLoadTestTable(conf, desc, hcds, numRegionsPerServer);
+  }
+
+  /**
+   * Creates a pre-split table for load testing. If the table already exists,
+   * logs a warning and continues.
+   * @return the number of regions the table was split into
+   */
+  public static int createPreSplitLoadTestTable(Configuration conf,
       HTableDescriptor desc, HColumnDescriptor hcd) throws IOException {
     return createPreSplitLoadTestTable(conf, desc, hcd, DEFAULT_REGIONS_PER_SERVER);
   }
@@ -3268,8 +3311,21 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    */
   public static int createPreSplitLoadTestTable(Configuration conf,
       HTableDescriptor desc, HColumnDescriptor hcd, int numRegionsPerServer) throws IOException {
-    if (!desc.hasFamily(hcd.getName())) {
-      desc.addFamily(hcd);
+    return createPreSplitLoadTestTable(conf, desc, new HColumnDescriptor[] {hcd},
+        numRegionsPerServer);
+  }
+
+  /**
+   * Creates a pre-split table for load testing. If the table already exists,
+   * logs a warning and continues.
+   * @return the number of regions the table was split into
+   */
+  public static int createPreSplitLoadTestTable(Configuration conf,
+      HTableDescriptor desc, HColumnDescriptor[] hcds, int numRegionsPerServer) throws IOException {
+    for (HColumnDescriptor hcd : hcds) {
+      if (!desc.hasFamily(hcd.getName())) {
+        desc.addFamily(hcd);
+      }
     }
 
     int totalNumberOfRegions = 0;
