@@ -1111,34 +1111,34 @@ public class RpcServer implements RpcServerInterface {
   // Wrapper around the linkedlist methods. This is a stop gap until we drop support
   // for JDK6. When we drop support for JDK6, we can drop this class and instead use
   // the class ConcurrentLinkedDeque
-  static class SynchronizedLinkedList<T> {
+  private static class SynchronizedLinkedList<T> {
     LinkedList<T> l = new LinkedList<T>();
 
-    T peekFirst() {
+    private T peekFirst() {
       synchronized (this.l) {
         return l.peekFirst();
       }
     }
 
-    boolean isEmpty() {
+    private boolean isEmpty() {
       synchronized (this.l) {
         return l.isEmpty();
       }
     }
 
-    T pollFirst() {
+    private T pollFirst() {
       synchronized (this.l) {
         return l.pollFirst();
       }
     }
 
-    void addFirst(T call) {
+    private void addFirst(T call) {
       synchronized (this.l) {
         l.addFirst(call);
       }
     }
 
-    void addLast(T call) {
+    private void addLast(T call) {
       synchronized (this.l) {
         l.addLast(call);
       }
