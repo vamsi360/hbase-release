@@ -366,6 +366,7 @@ public abstract class CoprocessorHost<E extends CoprocessorEnvironment> {
       Collections.synchronizedList(new ArrayList<HTableInterface>());
     private int seq;
     private Configuration conf;
+    private ClassLoader classLoader;
 
     /**
      * Constructor
@@ -375,6 +376,7 @@ public abstract class CoprocessorHost<E extends CoprocessorEnvironment> {
     public Environment(final Coprocessor impl, final int priority,
         final int seq, final Configuration conf) {
       this.impl = impl;
+      this.classLoader = impl.getClass().getClassLoader();
       this.priority = priority;
       this.state = Coprocessor.State.INSTALLED;
       this.seq = seq;
@@ -439,7 +441,7 @@ public abstract class CoprocessorHost<E extends CoprocessorEnvironment> {
 
     @Override
     public ClassLoader getClassLoader() {
-      return impl.getClass().getClassLoader();
+      return classLoader;
     }
 
     @Override
