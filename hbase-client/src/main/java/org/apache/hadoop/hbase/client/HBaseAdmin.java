@@ -1887,10 +1887,10 @@ public class HBaseAdmin implements Abortable, Closeable {
       final byte[] encodedNameOfRegionB, final boolean forcible)
       throws IOException {
     Pair<HRegionInfo, ServerName> pair = getRegion(encodedNameOfRegionA, new CatalogTracker(conf));
-    if (pair.getFirst().getReplicaId() != HRegionInfo.DEFAULT_REPLICA_ID)
+    if (pair != null && pair.getFirst().getReplicaId() != HRegionInfo.DEFAULT_REPLICA_ID)
       throw new IllegalArgumentException("Can't invoke merge on non-default regions directly");
     pair = getRegion(encodedNameOfRegionB, new CatalogTracker(conf));
-    if (pair.getFirst().getReplicaId() != HRegionInfo.DEFAULT_REPLICA_ID)
+    if (pair != null && pair.getFirst().getReplicaId() != HRegionInfo.DEFAULT_REPLICA_ID)
       throw new IllegalArgumentException("Can't invoke merge on non-default regions directly");
     MasterKeepAliveConnection master = connection
         .getKeepAliveMasterService();
