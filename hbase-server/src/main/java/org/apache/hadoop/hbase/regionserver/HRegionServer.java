@@ -104,6 +104,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.DroppedSnapshotException;
 import org.apache.hadoop.hbase.exceptions.FailedSanityCheckException;
+import org.apache.hadoop.hbase.exceptions.MergeRegionException;
 import org.apache.hadoop.hbase.exceptions.OperationConflictException;
 import org.apache.hadoop.hbase.exceptions.OutOfOrderScannerNextException;
 import org.apache.hadoop.hbase.exceptions.RegionMovedException;
@@ -3941,6 +3942,10 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       checkOpen();
       requestCount.increment();
       HRegion region = getRegion(request.getRegion());
+      if (region.getRegionInfo().getReplicaId() != HRegionInfo.DEFAULT_REPLICA_ID) {
+        throw new IOException("Can't split replicas directly. "
+              + "Replicas are auto-split when their primary is split.");
+      }
       region.startRegionOperation(Operation.SPLIT_REGION);
       LOG.info("Splitting " + region.getRegionNameAsString());
       region.flushcache();
@@ -3973,6 +3978,9 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       requestCount.increment();
       HRegion regionA = getRegion(request.getRegionA());
       HRegion regionB = getRegion(request.getRegionB());
+      if (regionA.getRegionInfo().getReplicaId() != HRegionInfo.DEFAULT_REPLICA_ID ||
+          regionB.getRegionInfo().getReplicaId() != HRegionInfo.DEFAULT_REPLICA_ID)
+        throw new ServiceException(new MergeRegionException("Can't merge non-default replicas"));
       boolean forcible = request.getForcible();
       regionA.startRegionOperation(Operation.MERGE_REGION);
       regionB.startRegionOperation(Operation.MERGE_REGION);
