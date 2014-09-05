@@ -80,7 +80,7 @@ public class LoadTestTool extends AbstractHBaseTool {
   public static byte[] DEFAULT_COLUMN_FAMILY = Bytes.toBytes("test_cf");
 
   /** Column families used by the test */
-  protected static final byte[][] DEFAULT_COLUMN_FAMILIES = { DEFAULT_COLUMN_FAMILY };
+  public static final byte[][] DEFAULT_COLUMN_FAMILIES = { DEFAULT_COLUMN_FAMILY };
 
   /** The default data size if not specified */
   protected static final int DEFAULT_DATA_SIZE = 64;

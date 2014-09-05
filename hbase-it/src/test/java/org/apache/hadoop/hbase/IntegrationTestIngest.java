@@ -34,7 +34,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 /**
@@ -130,9 +129,20 @@ public class IntegrationTestIngest extends IntegrationTestBase {
   @Override
   protected Set<String> getColumnFamilies() {
     Set<String> families = Sets.newHashSet();
-    for (byte[] f : loadTool.getColumnFamilies()) {
-      families.add(Bytes.toString(f));
+    String clazz = this.getClass().getSimpleName();
+    // parse conf for getting the column famly names because LTT is not initialized yet.
+    String familiesString = getConf().get(
+      String.format("%s.%s", clazz, LoadTestTool.OPT_COLUMN_FAMILIES));
+    if (familiesString == null) {
+      for (byte[] family : LoadTestTool.DEFAULT_COLUMN_FAMILIES) {
+        families.add(Bytes.toString(family));
+      }
+    } else {
+       for (String family : familiesString.split(",")) {
+         families.add(family);
+       }
     }
+
     return families;
   }
 
@@ -222,11 +232,7 @@ public class IntegrationTestIngest extends IntegrationTestBase {
   }
 
   private String getColumnFamiliesAsString() {
-    List<String> families = Lists.newArrayList();
-    for (byte[] f : loadTool.getColumnFamilies()) {
-      families.add(Bytes.toString(f));
-    }
-    return StringUtils.join(",", families);
+    return StringUtils.join(",", getColumnFamilies());
   }
 
   /** Estimates a data size based on the cluster size */

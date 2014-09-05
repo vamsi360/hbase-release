@@ -20,10 +20,12 @@ package org.apache.hadoop.hbase;
 
 import java.io.IOException;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.regionserver.HStore;
 import org.apache.hadoop.hbase.regionserver.StoreEngine;
 import org.apache.hadoop.hbase.regionserver.StripeStoreEngine;
 import org.apache.hadoop.hbase.util.LoadTestTool;
+import org.apache.hadoop.util.ToolRunner;
 import org.junit.experimental.categories.Category;
 
 /**
@@ -40,5 +42,12 @@ public class IntegrationTestIngestStripeCompactions extends IntegrationTestInges
     htd.setConfiguration(HStore.BLOCKING_STOREFILES_KEY, "100");
     HColumnDescriptor hcd = new HColumnDescriptor(LoadTestTool.DEFAULT_COLUMN_FAMILY);
     HBaseTestingUtility.createPreSplitLoadTestTable(util.getConfiguration(), htd, hcd);
+  }
+
+  public static void main(String[] args) throws Exception {
+    Configuration conf = HBaseConfiguration.create();
+    IntegrationTestingUtility.setUseDistributedCluster(conf);
+    int ret = ToolRunner.run(conf, new IntegrationTestIngestStripeCompactions(), args);
+    System.exit(ret);
   }
 }
