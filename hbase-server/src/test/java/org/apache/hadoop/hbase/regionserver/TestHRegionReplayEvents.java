@@ -177,6 +177,10 @@ public class TestHRegionReplayEvents {
 
   @After
   public void tearDown() throws Exception {
+    if (reader != null) {
+      reader.close();
+    }
+
     if (primaryRegion != null) {
       HRegion.closeHRegion(primaryRegion);
     }
@@ -189,10 +193,6 @@ public class TestHRegionReplayEvents {
     }
     if (walSecondary != null) {
       walSecondary.close();
-    }
-
-    if (reader != null) {
-      reader.close();
     }
 
     EnvironmentEdgeManagerTestHelper.reset();
@@ -312,7 +312,7 @@ public class TestHRegionReplayEvents {
     primaryRegion.compactStore(Bytes.toBytes("cf1"));
 
     // now replay the edits and the flush marker
-    HLog.Reader reader = HLogFactory.createReader(TEST_UTIL.getTestFileSystem(),
+    reader = HLogFactory.createReader(TEST_UTIL.getTestFileSystem(),
       TEST_UTIL.getTestFileSystem().listStatus(new Path(logDir, "walsPrimary"))[0].getPath(),
       TEST_UTIL.getConfiguration());
 

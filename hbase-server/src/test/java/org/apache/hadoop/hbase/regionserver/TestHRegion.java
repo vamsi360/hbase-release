@@ -817,6 +817,7 @@ public class TestHRegion {
           flushDescriptors.add(entry);
         }
       }
+      reader.close();
 
       assertEquals(3 * 2, flushDescriptors.size()); // START_FLUSH and COMMIT_FLUSH per flush
 
