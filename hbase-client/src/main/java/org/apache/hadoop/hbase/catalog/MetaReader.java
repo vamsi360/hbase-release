@@ -745,7 +745,14 @@ public class MetaReader {
         break;
       }
 
-      locations.add(getRegionLocation(r, regionInfo, replicaId));
+      HRegionLocation location = getRegionLocation(r, regionInfo, replicaId);
+      // In case the region replica is newly created, it's location might be null. We usually do not
+      // have HRL's in RegionLocations object with null ServerName. They are handled as null HRLs.
+      if (location == null || location.getServerName() == null) {
+        locations.add(null);
+      } else {
+        locations.add(location);
+      }
     }
 
     return new RegionLocations(locations);

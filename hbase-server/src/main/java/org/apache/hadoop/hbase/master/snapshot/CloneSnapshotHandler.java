@@ -137,9 +137,10 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
   }
 
   @Override
-  protected void addRegionsToMeta(final CatalogTracker ct, final List<HRegionInfo> regionInfos)
+  protected void addRegionsToMeta(final CatalogTracker ct, final List<HRegionInfo> regionInfos,
+      int regionReplication)
       throws IOException {
-    super.addRegionsToMeta(ct, regionInfos);
+    super.addRegionsToMeta(ct, regionInfos, regionReplication);
     metaChanges.updateMetaParentRegions(ct, regionInfos);
   }
 

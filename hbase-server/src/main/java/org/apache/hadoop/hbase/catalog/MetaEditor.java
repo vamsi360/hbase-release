@@ -293,12 +293,18 @@ public class MetaEditor extends MetaReader {
    * @throws IOException if problem connecting or updating meta
    */
   public static void addRegionsToMeta(CatalogTracker catalogTracker,
-      List<HRegionInfo> regionInfos)
+      List<HRegionInfo> regionInfos, int regionReplication)
   throws IOException {
     List<Put> puts = new ArrayList<Put>();
     for (HRegionInfo regionInfo : regionInfos) {
       if (RegionReplicaUtil.isDefaultReplica(regionInfo)) {
-        puts.add(makePutFromRegionInfo(regionInfo));
+        Put put = makePutFromRegionInfo(regionInfo);
+        // Add empty locations for region replicas so that number of replicas can be cached
+        // whenever the primary region is looked up from meta
+        for (int i = 1; i < regionReplication; i++) {
+          addEmptyLocation(put, i);
+        }
+        puts.add(put);
       }
     }
     putsToMetaTable(catalogTracker, puts);
@@ -537,14 +543,14 @@ public class MetaEditor extends MetaReader {
    * @throws IOException
    */
   public static void overwriteRegions(CatalogTracker catalogTracker,
-      List<HRegionInfo> regionInfos) throws IOException {
+      List<HRegionInfo> regionInfos, int regionReplication) throws IOException {
     deleteRegions(catalogTracker, regionInfos);
     // Why sleep? This is the easiest way to ensure that the previous deletes does not
     // eclipse the following puts, that might happen in the same ts from the server.
     // See HBASE-9906, and HBASE-9879. Once either HBASE-9879, HBASE-8770 is fixed,
     // or HBASE-9905 is fixed and meta uses seqIds, we do not need the sleep.
     Threads.sleep(20);
-    addRegionsToMeta(catalogTracker, regionInfos);
+    addRegionsToMeta(catalogTracker, regionInfos, regionReplication);
     LOG.info("Overwritten " + regionInfos);
   }
 
@@ -570,6 +576,13 @@ public class MetaEditor extends MetaReader {
   throws IOException {
     p.addImmutable(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER,
         hri.toByteArray());
+    return p;
+  }
+
+  public static Put addEmptyLocation(final Put p, int replicaId){
+    p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getServerColumn(replicaId), null);
+    p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getStartCodeColumn(replicaId), null);
+    p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getSeqNumColumn(replicaId), null);
     return p;
   }
 

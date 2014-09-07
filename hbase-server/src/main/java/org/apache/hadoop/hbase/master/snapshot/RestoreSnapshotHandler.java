@@ -156,9 +156,10 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
       // in the snapshot folder.
       hris.clear();
       if (metaChanges.hasRegionsToAdd()) hris.addAll(metaChanges.getRegionsToAdd());
-      MetaEditor.addRegionsToMeta(catalogTracker, hris);
+      MetaEditor.addRegionsToMeta(catalogTracker, hris, hTableDescriptor.getRegionReplication());
       if (metaChanges.hasRegionsToRestore()) {
-        MetaEditor.overwriteRegions(catalogTracker, metaChanges.getRegionsToRestore());
+        MetaEditor.overwriteRegions(catalogTracker, metaChanges.getRegionsToRestore(),
+          hTableDescriptor.getRegionReplication());
       }
       metaChanges.updateMetaParentRegions(catalogTracker, hris);
 
