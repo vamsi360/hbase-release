@@ -2144,6 +2144,8 @@ public class HStore implements Store {
         StoreFileInfo storeFileInfo = fs.getStoreFileInfo(getColumnFamilyName(), file);
         StoreFile storeFile = createStoreFileAndReader(storeFileInfo);
         storeFiles.add(storeFile);
+        HStore.this.storeSize += storeFile.getReader().length();
+        HStore.this.totalUncompressedBytes += storeFile.getReader().getTotalUncompressedBytes();
         if (LOG.isInfoEnabled()) {
           LOG.info("Region: " + HStore.this.getRegionInfo().getEncodedName() +
             " added " + storeFile + ", entries=" + storeFile.getReader().getEntries() +

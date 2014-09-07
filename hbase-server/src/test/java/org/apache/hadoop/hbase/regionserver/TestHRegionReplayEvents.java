@@ -335,6 +335,8 @@ public class TestHRegionReplayEvents {
         long storeMemstoreSize = store.getMemStoreSize();
         long regionMemstoreSize = secondaryRegion.getMemstoreSize().get();
         long storeFlushableSize = store.getFlushableSize();
+        long storeSize = store.getSize();
+        long storeSizeUncompressed = store.getStoreSizeUncompressed();
         if (flushDesc.getAction() == FlushAction.START_FLUSH) {
           LOG.info("-- Replaying flush start in secondary");
           PrepareFlushResult result = secondaryRegion.replayWALFlushStartMarker(flushDesc);
@@ -362,6 +364,11 @@ public class TestHRegionReplayEvents {
           // assert that the region memstore is smaller now
           long newRegionMemstoreSize = secondaryRegion.getMemstoreSize().get();
           assertTrue(regionMemstoreSize > newRegionMemstoreSize);
+
+          // assert that the store sizes are bigger
+          assertTrue(store.getSize() > storeSize);
+          assertTrue(store.getStoreSizeUncompressed() > storeSizeUncompressed);
+          assertEquals(store.getSize(), store.getStorefilesSize());
         }
         // after replay verify that everything is still visible
         verifyData(secondaryRegion, 0, lastReplayed+1, cq, families);
