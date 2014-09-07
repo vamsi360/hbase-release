@@ -279,6 +279,8 @@ public class HBaseFsck extends Configured {
     setConf(HBaseConfiguration.create(getConf()));
     // disable blockcache for tool invocation, see HBASE-10500
     getConf().setFloat(HConstants.HFILE_BLOCK_CACHE_SIZE_KEY, 0);
+    // Disable usage of meta replicas in hbck
+    getConf().setBoolean(HConstants.USE_META_REPLICAS, false);
     errors = getErrorReporter(conf);
 
     int numThreads = conf.getInt("hbasefsck.numthreads", MAX_NUM_THREADS);

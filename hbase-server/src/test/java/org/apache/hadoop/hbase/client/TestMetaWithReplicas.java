@@ -141,7 +141,7 @@ public class TestMetaWithReplicas {
     // location of the test table's region
     ZooKeeperWatcher zkw = util.getZooKeeperWatcher();
     Configuration conf = new Configuration(util.getConfiguration());
-    conf.setBoolean("hbase.cache.meta.location.enabled", false);
+    //conf.setBoolean("hbase.cache.meta.location.enabled", false);
     conf.setBoolean(HConstants.USE_META_REPLICAS, true);
 
     String baseZNode = conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,

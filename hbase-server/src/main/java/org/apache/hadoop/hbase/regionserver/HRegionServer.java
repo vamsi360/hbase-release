@@ -564,6 +564,8 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         HConstants.DEFAULT_HBASE_CLIENT_RETRIES_NUMBER);
     this.threadWakeFrequency = conf.getInt(HConstants.THREAD_WAKE_FREQUENCY, 10 * 1000);
     this.msgInterval = conf.getInt("hbase.regionserver.msginterval", 3 * 1000);
+    // Disable usage of meta replicas in the regionserver
+    this.conf.setBoolean(HConstants.USE_META_REPLICAS, false);
 
     this.sleeper = new Sleeper(this.msgInterval, this);
 
@@ -1785,7 +1787,8 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     //currently, we don't care about the region as much as we care about the
     //table.. (hence checking the tablename below)
     //_ROOT_ and hbase:meta regions have separate WAL.
-    if (regionInfo != null && regionInfo.isMetaTable()) {
+    if (regionInfo != null && regionInfo.isMetaTable() &&
+        regionInfo.getReplicaId() == HRegionInfo.DEFAULT_REPLICA_ID) {
       return getMetaWAL();
     }
     return this.hlog;
