@@ -261,7 +261,7 @@ public class IntegrationTestImportTsv implements Configurable, Tool {
       final String table = format("%s-%s-child", NAME, context.getJobID());
       final String cf = "FAM";
       String fileLocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
-      conf.set(ImportTsv.CREDENTIALS_LOCATION, fileLocation);
+      conf.set(ImportTsv.CREDENTIALS_LOCATION, "file:///"+fileLocation);
       String[] args = {
           "-D" + ImportTsv.COLUMNS_CONF_KEY + "=HBASE_ROW_KEY,FAM:A,FAM:B",
           "-D" + ImportTsv.SEPARATOR_CONF_KEY + "=\u001b",
