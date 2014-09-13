@@ -3801,18 +3801,25 @@ public class HRegion implements HeapSize { // , Writable{
       "Compaction marker from WAL ", compaction);
 
     if (replaySeqId < lastReplayedOpenRegionSeqId) {
-      LOG.warn("Skipping replaying compaction event :" + TextFormat.shortDebugString(compaction)
-        + " because its sequence id is smaller than this regions lastReplayedOpenRegionSeqId "
-        + " of " + lastReplayedOpenRegionSeqId);
+      LOG.warn(getRegionInfo().getEncodedName() + " : "
+          + "Skipping replaying compaction event :" + TextFormat.shortDebugString(compaction)
+          + " because its sequence id is smaller than this regions lastReplayedOpenRegionSeqId "
+          + " of " + lastReplayedOpenRegionSeqId);
       return;
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(getRegionInfo().getEncodedName() + " : "
+          + "Replaying compaction marker " + TextFormat.shortDebugString(compaction));
     }
 
     startRegionOperation(Operation.REPLAY_EVENT);
     try {
       Store store = this.getStore(compaction.getFamilyName().toByteArray());
       if (store == null) {
-        LOG.warn("Found Compaction WAL edit for deleted family:" +
-            Bytes.toString(compaction.getFamilyName().toByteArray()));
+        LOG.warn(getRegionInfo().getEncodedName() + " : "
+            + "Found Compaction WAL edit for deleted family:"
+            + Bytes.toString(compaction.getFamilyName().toByteArray()));
         return;
       }
       store.replayCompactionMarker(compaction, pickCompactionFiles, removeFiles);
@@ -3830,7 +3837,8 @@ public class HRegion implements HeapSize { // , Writable{
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Replaying flush marker " + TextFormat.shortDebugString(flush));
+      LOG.debug(getRegionInfo().getEncodedName() + " : "
+          + "Replaying flush marker " + TextFormat.shortDebugString(flush));
     }
 
     startRegionOperation(Operation.REPLAY_EVENT); // use region close lock to guard against close
@@ -3850,8 +3858,9 @@ public class HRegion implements HeapSize { // , Writable{
         replayWALFlushCannotFlushMarker(flush, replaySeqId);
         break;
       default:
-        LOG.warn("Received a flush event with unknown action, ignoring. "
-            + TextFormat.shortDebugString(flush));
+        LOG.warn(getRegionInfo().getEncodedName() + " : " +
+          "Received a flush event with unknown action, ignoring. " +
+          TextFormat.shortDebugString(flush));
         break;
       }
     } finally {
@@ -3872,8 +3881,9 @@ public class HRegion implements HeapSize { // , Writable{
       byte[] family = storeFlush.getFamilyName().toByteArray();
       Store store = getStore(family);
       if (store == null) {
-        LOG.warn("Received a flush start marker from primary, but the family is not found. Ignoring"
-          + " StoreFlushDescriptor:" + TextFormat.shortDebugString(storeFlush));
+        LOG.warn(getRegionInfo().getEncodedName() + " : "
+            + "Received a flush start marker from primary, but the family is not found. Ignoring"
+            + " StoreFlushDescriptor:" + TextFormat.shortDebugString(storeFlush));
         continue;
       }
       families.add(family);
@@ -3886,9 +3896,10 @@ public class HRegion implements HeapSize { // , Writable{
     synchronized (writestate) {
       try {
         if (flush.getFlushSequenceNumber() < lastReplayedOpenRegionSeqId) {
-          LOG.warn("Skipping replaying flush event :" + TextFormat.shortDebugString(flush)
-            + " because its sequence id is smaller than this regions lastReplayedOpenRegionSeqId "
-            + " of " + lastReplayedOpenRegionSeqId);
+          LOG.warn(getRegionInfo().getEncodedName() + " : "
+              + "Skipping replaying flush event :" + TextFormat.shortDebugString(flush)
+              + " because its sequence id is smaller than this regions lastReplayedOpenRegionSeqId "
+              + " of " + lastReplayedOpenRegionSeqId);
           return null;
         }
         if (numMutationsWithoutWAL.get() > 0) {
@@ -3922,20 +3933,23 @@ public class HRegion implements HeapSize { // , Writable{
           // we already have an active snapshot.
           if (flush.getFlushSequenceNumber() == this.prepareFlushResult.flushSeqId) {
             // They define the same flush. Log and continue.
-            LOG.warn("Received a flush prepare marker with the same seqId: " +
+            LOG.warn(getRegionInfo().getEncodedName() + " : "
+                + "Received a flush prepare marker with the same seqId: " +
                 + flush.getFlushSequenceNumber() + " before clearing the previous one with seqId: "
                 + prepareFlushResult.flushSeqId + ". Ignoring");
             // ignore
           } else if (flush.getFlushSequenceNumber() < this.prepareFlushResult.flushSeqId) {
             // We received a flush with a smaller seqNum than what we have prepared. We can only
             // ignore this prepare flush request.
-            LOG.warn("Received a flush prepare marker with a smaller seqId: " +
+            LOG.warn(getRegionInfo().getEncodedName() + " : "
+                + "Received a flush prepare marker with a smaller seqId: " +
                 + flush.getFlushSequenceNumber() + " before clearing the previous one with seqId: "
                 + prepareFlushResult.flushSeqId + ". Ignoring");
             // ignore
           } else {
             // We received a flush with a larger seqNum than what we have prepared
-            LOG.warn("Received a flush prepare marker with a larger seqId: " +
+            LOG.warn(getRegionInfo().getEncodedName() + " : "
+                + "Received a flush prepare marker with a larger seqId: " +
                 + flush.getFlushSequenceNumber() + " before clearing the previous one with seqId: "
                 + prepareFlushResult.flushSeqId + ". Ignoring");
             // We do not have multiple active snapshots in the memstore or a way to merge current
@@ -3970,7 +3984,8 @@ public class HRegion implements HeapSize { // , Writable{
     synchronized (writestate) {
       try {
         if (flush.getFlushSequenceNumber() < lastReplayedOpenRegionSeqId) {
-          LOG.warn("Skipping replaying flush event :" + TextFormat.shortDebugString(flush)
+          LOG.warn(getRegionInfo().getEncodedName() + " : "
+            + "Skipping replaying flush event :" + TextFormat.shortDebugString(flush)
             + " because its sequence id is smaller than this regions lastReplayedOpenRegionSeqId "
             + " of " + lastReplayedOpenRegionSeqId);
           return;
@@ -3993,7 +4008,8 @@ public class HRegion implements HeapSize { // , Writable{
             // we received a flush commit with a smaller seqId than what we have prepared
             // we will pick the flush file up from this commit (if we have not seen it), but we
             // will not drop the memstore
-            LOG.warn("Received a flush commit marker with smaller seqId: "
+            LOG.warn(getRegionInfo().getEncodedName() + " : "
+                + "Received a flush commit marker with smaller seqId: "
                 + flush.getFlushSequenceNumber() + " than what we have prepared with seqId: "
                 + prepareFlushResult.flushSeqId + ". Picking up new file, but not dropping prepared"
                 +" memstore snapshot");
@@ -4007,7 +4023,8 @@ public class HRegion implements HeapSize { // , Writable{
             // we will pick the flush file for this. We will also obtain the updates lock and
             // look for contents of the memstore to see whether we have edits after this seqId.
             // If not, we will drop all the memstore edits and the snapshot as well.
-            LOG.warn("Received a flush commit marker with larger seqId: "
+            LOG.warn(getRegionInfo().getEncodedName() + " : "
+                + "Received a flush commit marker with larger seqId: "
                 + flush.getFlushSequenceNumber() + " than what we have prepared with seqId: " +
                 prepareFlushResult.flushSeqId + ". Picking up new file and dropping prepared"
                 +" memstore snapshot");
@@ -4077,8 +4094,9 @@ public class HRegion implements HeapSize { // , Writable{
       byte[] family = storeFlush.getFamilyName().toByteArray();
       Store store = getStore(family);
       if (store == null) {
-        LOG.warn("Received a flush commit marker from primary, but the family is not found." +
-            "Ignoring StoreFlushDescriptor:" + storeFlush);
+        LOG.warn(getRegionInfo().getEncodedName() + " : "
+            + "Received a flush commit marker from primary, but the family is not found."
+            + "Ignoring StoreFlushDescriptor:" + storeFlush);
         continue;
       }
       List<String> flushFiles = storeFlush.getFlushOutputList();
@@ -4090,7 +4108,8 @@ public class HRegion implements HeapSize { // , Writable{
       }
 
       if (ctx == null) {
-        LOG.warn("Unexpected: flush commit marker received from store "
+        LOG.warn(getRegionInfo().getEncodedName() + " : "
+            + "Unexpected: flush commit marker received from store "
             + Bytes.toString(family) + " but no associated flush context. Ignoring");
         continue;
       }
@@ -4111,7 +4130,8 @@ public class HRegion implements HeapSize { // , Writable{
       long currentSeqId = getSequenceId().get();
       if (seqId >= currentSeqId) {
         // then we can drop the memstore contents since everything is below this seqId
-        LOG.info("Dropping memstore contents as well since replayed flush seqId: "
+        LOG.info(getRegionInfo().getEncodedName() + " : "
+            + "Dropping memstore contents as well since replayed flush seqId: "
             + seqId + " is greater than current seqId:" + currentSeqId);
 
         // Prepare flush (take a snapshot) and then abort (drop the snapshot)
@@ -4123,7 +4143,8 @@ public class HRegion implements HeapSize { // , Writable{
           dropStoreMemstoreContentsForSeqId(store, currentSeqId);
         }
       } else {
-        LOG.info("Not dropping memstore contents since replayed flush seqId: "
+        LOG.info(getRegionInfo().getEncodedName() + " : "
+            + "Not dropping memstore contents since replayed flush seqId: "
             + seqId + " is smaller than current seqId:" + currentSeqId);
       }
     } finally {
@@ -4147,7 +4168,8 @@ public class HRegion implements HeapSize { // , Writable{
   private void replayWALFlushCannotFlushMarker(FlushDescriptor flush, long replaySeqId) {
     synchronized (writestate) {
       if (this.lastReplayedOpenRegionSeqId > replaySeqId) {
-        LOG.warn("Skipping replaying flush event :" + TextFormat.shortDebugString(flush)
+        LOG.warn(getRegionInfo().getEncodedName() + " : "
+          + "Skipping replaying flush event :" + TextFormat.shortDebugString(flush)
           + " because its sequence id " + replaySeqId + " is smaller than this regions "
           + "lastReplayedOpenRegionSeqId of " + lastReplayedOpenRegionSeqId);
         return;
@@ -4182,13 +4204,15 @@ public class HRegion implements HeapSize { // , Writable{
         return;
       }
       if (regionEvent.getEventType() != EventType.REGION_OPEN) {
-        LOG.warn("Unknown region event received, ignoring :"
+        LOG.warn(getRegionInfo().getEncodedName() + " : "
+            + "Unknown region event received, ignoring :"
             + TextFormat.shortDebugString(regionEvent));
         return;
       }
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Replaying region open event marker " + TextFormat.shortDebugString(regionEvent));
+        LOG.debug(getRegionInfo().getEncodedName() + " : "
+          + "Replaying region open event marker " + TextFormat.shortDebugString(regionEvent));
       }
 
       // we will use writestate as a coarse-grain lock for all the replay events
@@ -4202,7 +4226,8 @@ public class HRegion implements HeapSize { // , Writable{
         if (this.lastReplayedOpenRegionSeqId <= regionEvent.getLogSequenceNumber()) {
           this.lastReplayedOpenRegionSeqId = regionEvent.getLogSequenceNumber();
         } else {
-          LOG.warn("Skipping replaying region event :" + TextFormat.shortDebugString(regionEvent)
+          LOG.warn(getRegionInfo().getEncodedName() + " : "
+            + "Skipping replaying region event :" + TextFormat.shortDebugString(regionEvent)
             + " because its sequence id is smaller than this regions lastReplayedOpenRegionSeqId "
             + " of " + lastReplayedOpenRegionSeqId);
           return;
@@ -4215,7 +4240,8 @@ public class HRegion implements HeapSize { // , Writable{
           byte[] family = storeDescriptor.getFamilyName().toByteArray();
           Store store = getStore(family);
           if (store == null) {
-            LOG.warn("Received a region open marker from primary, but the family is not found. "
+            LOG.warn(getRegionInfo().getEncodedName() + " : "
+                + "Received a region open marker from primary, but the family is not found. "
                 + "Ignoring. StoreDescriptor:" + storeDescriptor);
             continue;
           }
@@ -4299,7 +4325,8 @@ public class HRegion implements HeapSize { // , Writable{
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Replaying bulkload event marker " + TextFormat.shortDebugString(bulkLoadEvent));
+      LOG.debug(getRegionInfo().getEncodedName() + " : "
+          +"Replaying bulkload event marker " + TextFormat.shortDebugString(bulkLoadEvent));
     }
     // check if mutliple families involved
     boolean multipleFamilies = false;
@@ -4326,7 +4353,8 @@ public class HRegion implements HeapSize { // , Writable{
         // smaller than this seqId
         if (bulkLoadEvent.getBulkloadSeqNum() >= 0
             && this.lastReplayedOpenRegionSeqId >= bulkLoadEvent.getBulkloadSeqNum()) {
-          LOG.warn("Skipping replaying bulkload event :"
+          LOG.warn(getRegionInfo().getEncodedName() + " : "
+              + "Skipping replaying bulkload event :"
               + TextFormat.shortDebugString(bulkLoadEvent)
               + " because its sequence id is smaller than this region's lastReplayedOpenRegionSeqId"
               + " =" + lastReplayedOpenRegionSeqId);
@@ -4338,7 +4366,8 @@ public class HRegion implements HeapSize { // , Writable{
           family = storeDescriptor.getFamilyName().toByteArray();
           Store store = getStore(family);
           if (store == null) {
-            LOG.warn("Received a bulk load marker from primary, but the family is not found. "
+            LOG.warn(getRegionInfo().getEncodedName() + " : "
+                + "Received a bulk load marker from primary, but the family is not found. "
                 + "Ignoring. StoreDescriptor:" + storeDescriptor);
             continue;
           }
@@ -4350,8 +4379,8 @@ public class HRegion implements HeapSize { // , Writable{
             if (fs.getFileSystem().exists(storeFilePath)) {
               store.bulkLoadHFile(storeFilePath);
             } else {
-              LOG.info(storeFilePath + " doesn't exist any more. Skip loading it into region="
-                  + this.getRegionInfo().getEncodedName());
+              LOG.warn(getRegionInfo().getEncodedName() + " : " + storeFilePath + " doesn't exist "
+                  +"any more. Skip loading the file");
             }
           }
         }
