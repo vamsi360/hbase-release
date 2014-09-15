@@ -4122,7 +4122,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
               "regions. First region:" + regionName.toStringUtf8() + " , other region:"
               + entry.getKey().getEncodedRegionName());
         }
-        if (nonceManager != null) {
+        if (nonceManager != null && isPrimary) {
           long nonceGroup = entry.getKey().hasNonceGroup()
               ? entry.getKey().getNonceGroup() : HConstants.NO_NONCE;
           long nonce = entry.getKey().hasNonce() ? entry.getKey().getNonce() : HConstants.NO_NONCE;
