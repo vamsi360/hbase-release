@@ -65,6 +65,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.RegionServerCallable;
 import org.apache.hadoop.hbase.client.RpcRetryingCallerFactory;
 import org.apache.hadoop.hbase.client.coprocessor.SecureBulkLoadClient;
+import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.io.HalfStoreFileReader;
 import org.apache.hadoop.hbase.io.Reference;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
@@ -253,21 +254,21 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
 
       //If using secure bulk load
       //prepare staging directory and token
-      if (userProvider.isHBaseSecurityEnabled()) {
-        FileSystem fs = FileSystem.get(getConf());
-        //This condition is here for unit testing
-        //Since delegation token doesn't work in mini cluster
-        if (userProvider.isHadoopSecurityEnabled()) {
-          userToken = userProvider.getCurrent().getToken("HDFS_DELEGATION_TOKEN",
-                                                         fs.getCanonicalServiceName());
-          if (userToken == null) {
-            hasForwardedToken = false;
-            userToken = fs.getDelegationToken("renewer");
-          } else {
-            hasForwardedToken = true;
-            LOG.info("Use the existing token: " + userToken);
-          }
+      FileSystem fs = FileSystem.get(getConf());
+      //This condition is here for unit testing
+      //Since delegation token doesn't work in mini cluster
+      if (userProvider.isHadoopSecurityEnabled()) {
+        userToken = userProvider.getCurrent().getToken("HDFS_DELEGATION_TOKEN",
+                                                       fs.getCanonicalServiceName());
+        if (userToken == null) {
+          hasForwardedToken = false;
+          userToken = fs.getDelegationToken("renewer");
+        } else {
+          hasForwardedToken = true;
+          LOG.info("Use the existing token: " + userToken);
         }
+      }
+      if(isSecureBulkLoadEndpointAvailable()) {
         bulkToken = new SecureBulkLoadClient(table).prepareBulkLoad(table.getName());
       }
 
@@ -299,7 +300,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
       }
 
     } finally {
-      if (userProvider.isHBaseSecurityEnabled()) {
+      if (userProvider.isHadoopSecurityEnabled()) {
         if (userToken != null && !hasForwardedToken) {
           try {
             userToken.cancel(getConf());
@@ -307,9 +308,9 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
             LOG.warn("Failed to cancel HDFS delegation token.", e);
           }
         }
-        if(bulkToken != null) {
-          new SecureBulkLoadClient(table).cleanupBulkLoad(bulkToken);
-        }
+      }
+      if(bulkToken != null) {
+        new SecureBulkLoadClient(table).cleanupBulkLoad(bulkToken);
       }
       pool.shutdown();
       if (queue != null && !queue.isEmpty()) {
@@ -567,7 +568,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
           LOG.debug("Going to connect to server " + getLocation() + " for row "
               + Bytes.toStringBinary(getRow()) + " with hfile group " + famPaths);
           byte[] regionName = getLocation().getRegionInfo().getRegionName();
-          if(!userProvider.isHBaseSecurityEnabled()) {
+          if(!isSecureBulkLoadEndpointAvailable()) {
             success = ProtobufUtil.bulkLoadHFile(getStub(), famPaths, regionName, assignSeqIds);
           } else {
             HTable table = new HTable(conn.getConfiguration(), getTableName());
@@ -625,6 +626,11 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     }
   }
 
+  private boolean isSecureBulkLoadEndpointAvailable() {
+    String classes = getConf().get(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY, "");
+    return classes.contains("org.apache.hadoop.hbase.security.access.SecureBulkLoadEndpoint");
+  }
+  
   /**
    * Split a storefile into a top and bottom half, maintaining
    * the metadata, recreating bloom filters, etc.
