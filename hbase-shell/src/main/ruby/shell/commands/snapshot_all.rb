@@ -34,7 +34,7 @@ EOF
       end
 
       def command(regex = ".*")
-        now = Time.now.strftime("%Y-%d-%m")
+        now = Time.now.strftime("%Y%m%d")
 
         list = admin.list(regex)
         list.each do |table|
