@@ -23,13 +23,11 @@ module Shell
     class SnapshotRestore < Command
       def help
         return <<-EOF
-Use snapshot to restore selected tables.
-Optional regular expression parameter could be used to filter the output
-by table name.
+Use snapshot to restore tables.
+Date parameter (in the form YYYY-mm-dd) is used to filter the snapshots
 
 Examples:
-  hbase> snapshot_restore
-  hbase> snapshot_restore 'abc.*'
+  hbase> snapshot_restore '2014-17-09'
 EOF
       end
 
