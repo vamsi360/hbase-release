@@ -50,10 +50,18 @@ public class StorefileRefresherChore extends Chore {
   public static final String REGIONSERVER_STOREFILE_REFRESH_PERIOD
     = "hbase.regionserver.storefile.refresh.period";
   static final int DEFAULT_REGIONSERVER_STOREFILE_REFRESH_PERIOD = 0; //disabled by default
+  /**
+   * Whether all storefiles should be refreshed, as opposed to just hbase:meta's
+   * Meta region doesn't have WAL replication for replicas enabled yet
+   */
+  public static final String ENABLE_STOREFILE_REFRESHER_FOR_ALL_STORES
+    = "hbase.regionserver.storefile.refresh.all";
+  static final boolean DEFAULT_ENABLE_STOREFILE_REFRESHER_FOR_ALL_STORES = true; //eanbled by default
 
   private HRegionServer regionServer;
   private long hfileTtl;
   private int period;
+  private boolean enableStoreScan = true;
 
   //ts of last time regions store files are refreshed
   private Map<String, Long> lastRefreshTimes; // encodedName -> long
@@ -64,6 +72,8 @@ public class StorefileRefresherChore extends Chore {
     this.regionServer = regionServer;
     this.hfileTtl = this.regionServer.getConfiguration().getLong(
       TimeToLiveHFileCleaner.TTL_CONF_KEY, TimeToLiveHFileCleaner.DEFAULT_TTL);
+    this.enableStoreScan = this.regionServer.getConfiguration().getBoolean(
+     ENABLE_STOREFILE_REFRESHER_FOR_ALL_STORES, DEFAULT_ENABLE_STOREFILE_REFRESHER_FOR_ALL_STORES);
     if (period > hfileTtl / 2) {
       throw new RuntimeException(REGIONSERVER_STOREFILE_REFRESH_PERIOD +
         " should be set smaller than half of " + TimeToLiveHFileCleaner.TTL_CONF_KEY);
@@ -78,6 +88,9 @@ public class StorefileRefresherChore extends Chore {
         // skip checking for this region if it can accept writes
         continue;
       }
+      // don't refresh unless enabled for all files, or it the meta region
+      // meta region don't have WAL replication for replicas enabled yet
+      if (!r.getRegionInfo().isMetaTable() && !enableStoreScan) continue;
       String encodedName = r.getRegionInfo().getEncodedName();
       long time = EnvironmentEdgeManager.currentTimeMillis();
       if (!lastRefreshTimes.containsKey(encodedName)) {

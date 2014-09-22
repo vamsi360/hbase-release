@@ -647,6 +647,7 @@ public class TestAssignmentManager {
     Mockito.when(services.getServerManager()).thenReturn(this.serverManager);
     Mockito.when(services.getZooKeeper()).thenReturn(this.watcher);
     Mockito.when(services.getMasterFileSystem()).thenReturn(fs);
+    Mockito.when(services.getConfiguration()).thenReturn(HTU.getConfiguration());
     ServerShutdownHandler handler = new ServerShutdownHandler(this.server,
       services, deadServers, SERVERNAME_A, false);
     am.failoverCleanupDone.set(true);

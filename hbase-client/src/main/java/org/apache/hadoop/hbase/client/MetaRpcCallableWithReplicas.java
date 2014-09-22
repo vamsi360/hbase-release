@@ -30,7 +30,6 @@ import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.util.BoundedCompletionService;
 
 @InterfaceAudience.Private
 class MetaRpcCallableWithReplicas extends RpcRetryingCallerWithReadReplicas {
@@ -55,14 +54,14 @@ class MetaRpcCallableWithReplicas extends RpcRetryingCallerWithReadReplicas {
   }
 
   @Override
-  protected void addCallsForReplica(ResultBoundedCompletionService cs,
+  protected void addCallsForReplica(ResultBoundedCompletionService<Result> cs,
       RegionLocations rl, int min, int max) {
     for (int id = min; id <= max; id++) {
       HRegionLocation hrl = rl.getRegionLocation(id);
       MetaServerCallable callOnReplica = new MetaServerCallable(id, hrl);
       // this would retry internally (RetryingRPC#call). But when the RPC succeeds with
       // one of the other replicas the retry would be interrupted
-      cs.submit(callOnReplica, rpcTimeout);
+      cs.submit(callOnReplica, rpcTimeout, id);
     }
   }
 
@@ -72,13 +71,16 @@ class MetaRpcCallableWithReplicas extends RpcRetryingCallerWithReadReplicas {
     }
     @Override
     public Result call() throws Exception {
+      if (controller.isCanceled()) {
+        return null;
+      }
       if (Thread.interrupted()) {
         throw new InterruptedIOException();
       }
-
+      controller.setCallTimeout(rpcTimeout);
       return ProtobufUtil.getRowOrBefore(getStub(),
           location.getRegionInfo().getRegionName(), metaKey,
-          HConstants.CATALOG_FAMILY);
+          HConstants.CATALOG_FAMILY, controller);
     }
   }
 }

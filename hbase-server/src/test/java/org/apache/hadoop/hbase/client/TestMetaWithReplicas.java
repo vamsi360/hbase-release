@@ -23,6 +23,7 @@ import static org.apache.hadoop.hbase.util.hbck.HbckTestingUtil.doFsck;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -38,6 +39,7 @@ import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.regionserver.StorefileRefresherChore;
@@ -64,6 +66,7 @@ public class TestMetaWithReplicas {
 
   @Before
   public void setup() throws Exception {
+    TEST_UTIL.getConfiguration().setInt("zookeeper.session.timeout", 30000);
     TEST_UTIL.getConfiguration().setInt(HConstants.META_REPLICAS_NUM, 3);
     TEST_UTIL.getConfiguration().setInt(
         StorefileRefresherChore.REGIONSERVER_STOREFILE_REFRESH_PERIOD, 1000);
@@ -134,6 +137,7 @@ public class TestMetaWithReplicas {
     // location of the test table's region
     shutdownMetaAndDoValidations(TEST_UTIL);
   } 
+
   public static void shutdownMetaAndDoValidations(HBaseTestingUtility util) throws Exception {
     // This test creates a table, flushes the meta (with 3 replicas), kills the
     // server holding the primary meta replica. Then it does a put/get into/from
@@ -141,7 +145,6 @@ public class TestMetaWithReplicas {
     // location of the test table's region
     ZooKeeperWatcher zkw = util.getZooKeeperWatcher();
     Configuration conf = new Configuration(util.getConfiguration());
-    //conf.setBoolean("hbase.cache.meta.location.enabled", false);
     conf.setBoolean(HConstants.USE_META_REPLICAS, true);
 
     String baseZNode = conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
@@ -153,10 +156,15 @@ public class TestMetaWithReplicas {
 
     byte[] TABLE = Bytes.toBytes("testShutdownHandling");
     byte[][] FAMILIES = new byte[][] { Bytes.toBytes("foo") };
+    if (util.getHBaseAdmin().tableExists(TABLE)) {
+      util.getHBaseAdmin().disableTable(TABLE);
+      util.getHBaseAdmin().deleteTable(TABLE);
+    }
     HTable htable = util.createTable(TABLE, FAMILIES, conf);
 
-    util.flush(TableName.META_TABLE_NAME);
-    Thread.sleep(5000);
+    util.getHBaseAdmin().flush(TableName.META_TABLE_NAME.getNameAsString());
+    Thread.sleep(conf.getInt(StorefileRefresherChore.REGIONSERVER_STOREFILE_REFRESH_PERIOD,
+        30000) * 3);
     CatalogTracker ct = new CatalogTracker(conf);
     List<HRegionInfo> regions = MetaReader.getTableRegions(ct, TableName.valueOf(TABLE));
     HRegionLocation hrl = MetaReader.getRegionLocation(ct, regions.get(0));
@@ -172,8 +180,9 @@ public class TestMetaWithReplicas {
         Thread.sleep(10);
         hrl = MetaReader.getRegionLocation(ct, regions.get(0));
       } while (primary.equals(hrl.getServerName()));
-      util.flush(TableName.META_TABLE_NAME);
-      Thread.sleep(5000);
+      util.getHBaseAdmin().flush(TableName.META_TABLE_NAME.getNameAsString());
+      Thread.sleep(conf.getInt(StorefileRefresherChore.REGIONSERVER_STOREFILE_REFRESH_PERIOD,
+          30000) * 3);
     }
     ServerName master = util.getHBaseClusterInterface().getClusterStatus().getMaster();
     // kill the master so that regionserver recovery is not triggered at all
@@ -207,6 +216,79 @@ public class TestMetaWithReplicas {
     htable = new HTable(conf, TABLE);
     r = htable.get(get);
     assertTrue(Arrays.equals(r.getRow(), row));
+  }
+
+  @Test
+  public void testAccessingUnknownTables() throws Exception {
+    Configuration conf = new Configuration(TEST_UTIL.getConfiguration());
+    conf.setBoolean(HConstants.USE_META_REPLICAS, true);
+    HTable table = new HTable(conf, TableName.valueOf("RandomTable"));
+    Get get = new Get(Bytes.toBytes("foo"));
+    try {
+      table.get(get);
+    } catch (TableNotFoundException t) {
+      return;
+    }
+    fail("Expected TableNotFoundException");
+  }
+
+  @Test
+  public void testMetaAddressChange() throws Exception {
+    // checks that even when the meta's location changes, the various
+    // caches update themselves. Uses the master operations to test
+    // this
+    Configuration conf = TEST_UTIL.getConfiguration();
+    ZooKeeperWatcher zkw = TEST_UTIL.getZooKeeperWatcher();
+    String baseZNode = conf.get(HConstants.ZOOKEEPER_ZNODE_PARENT,
+        HConstants.DEFAULT_ZOOKEEPER_ZNODE_PARENT);
+    String primaryMetaZnode = ZKUtil.joinZNode(baseZNode,
+        conf.get("zookeeper.znode.metaserver", "meta-region-server"));
+    // check that the data in the znode is parseable (this would also mean the znode exists)
+    byte[] data = ZKUtil.getData(zkw, primaryMetaZnode);
+    ServerName currentServer = ServerName.parseFrom(data);
+    Collection<ServerName> liveServers = TEST_UTIL.getHBaseAdmin().getClusterStatus().getServers();
+    ServerName moveToServer = null;
+    for (ServerName s : liveServers) {
+      if (!currentServer.equals(s)) {
+        moveToServer = s;
+      }
+    }
+    assert(moveToServer != null);
+    HTable table = TEST_UTIL.createTable("randomTable5678", "f");
+    assertTrue(TEST_UTIL.getHBaseAdmin().tableExists("randomTable5678"));
+    TEST_UTIL.getHBaseAdmin().move(HRegionInfo.FIRST_META_REGIONINFO.getEncodedNameAsBytes(),
+        Bytes.toBytes(moveToServer.getServerName()));
+    int i = 0;
+    do {
+      Thread.sleep(10);
+      data = ZKUtil.getData(zkw, primaryMetaZnode);
+      currentServer = ServerName.parseFrom(data);
+      i++;
+    } while (!moveToServer.equals(currentServer) && i < 1000); //wait for 10 seconds overall
+    assert(i != 1000);
+    TEST_UTIL.getHBaseAdmin().disableTable("randomTable5678");
+    assertTrue(TEST_UTIL.getHBaseAdmin().isTableDisabled("randomTable5678"));
+  }
+
+  @Test
+  public void testShutdownOfReplicaHolder() throws Exception {
+    // checks that the when the server holding meta replica is shut down, the meta replica
+    // can be recovered
+    RegionLocations rl = ConnectionManager.getConnectionInternal(TEST_UTIL.getConfiguration()).
+        locateRegion(TableName.META_TABLE_NAME, Bytes.toBytes(""), false, true);
+    HRegionLocation hrl = rl.getRegionLocation(1);
+    ServerName oldServer = hrl.getServerName();
+    TEST_UTIL.getHBaseClusterInterface().killRegionServer(oldServer);
+    int i = 0;
+    do {
+      LOG.debug("Waiting for the replica " + hrl.getRegionInfo() + " to come up");
+      Thread.sleep(30000); //wait for the detection/recovery
+      rl = ConnectionManager.getConnectionInternal(TEST_UTIL.getConfiguration()).
+          locateRegion(TableName.META_TABLE_NAME, Bytes.toBytes(""), false, true);
+      hrl = rl.getRegionLocation(1);
+      i++;
+    } while ((hrl == null || hrl.getServerName().equals(oldServer)) && i < 3);
+    assertTrue(i != 3);
   }
 
   @Test

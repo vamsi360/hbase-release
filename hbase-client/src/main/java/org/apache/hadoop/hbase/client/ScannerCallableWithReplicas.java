@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -39,7 +38,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.util.BoundedCompletionService;
 import org.apache.hadoop.hbase.util.Pair;
 /**
  * This class has the logic for handling scanners for regions with and without replicas.
@@ -135,8 +133,9 @@ class ScannerCallableWithReplicas implements RetryingCallable<Result[]> {
 
     // allocate a boundedcompletion pool of some multiple of number of replicas.
     // We want to accomodate some RPCs for redundant replica scans (but are still in progress)
-    BoundedCompletionService<Pair<Result[], ScannerCallable>> cs =
-        new BoundedCompletionService<Pair<Result[], ScannerCallable>>(pool, rl.size() * 5);
+    ResultBoundedCompletionService<Pair<Result[], ScannerCallable>> cs =
+        new ResultBoundedCompletionService<Pair<Result[], ScannerCallable>>(
+            new RpcRetryingCallerFactory(ScannerCallableWithReplicas.this.conf), pool, rl.size() * 5);
 
     List<ExecutionException> exceptions = null;
     int submitted = 0, completed = 0;
@@ -193,7 +192,7 @@ class ScannerCallableWithReplicas implements RetryingCallable<Result[]> {
     } finally {
       // We get there because we were interrupted or because one or more of the
       // calls succeeded or failed. In all case, we stop all our tasks.
-      cs.cancelAll(true);
+      cs.cancelAll();
     }
 
     if (exceptions != null && !exceptions.isEmpty()) {
@@ -243,15 +242,15 @@ class ScannerCallableWithReplicas implements RetryingCallable<Result[]> {
   }
 
   private int addCallsForCurrentReplica(
-      BoundedCompletionService<Pair<Result[], ScannerCallable>> cs, RegionLocations rl) {
+      ResultBoundedCompletionService<Pair<Result[], ScannerCallable>> cs, RegionLocations rl) {
     RetryingRPC retryingOnReplica = new RetryingRPC(currentScannerCallable);
     outstandingCallables.add(currentScannerCallable);
-    cs.submit(retryingOnReplica);
+    cs.submit(retryingOnReplica, scannerTimeout, currentScannerCallable.id);
     return 1;
   }
 
   private int addCallsForOtherReplicas(
-      BoundedCompletionService<Pair<Result[], ScannerCallable>> cs, RegionLocations rl, int min,
+      ResultBoundedCompletionService<Pair<Result[], ScannerCallable>> cs, RegionLocations rl, int min,
       int max) {
     if (scan.getConsistency() == Consistency.STRONG) {
       return 0; // not scheduling on other replicas for strong consistency
@@ -266,32 +265,74 @@ class ScannerCallableWithReplicas implements RetryingCallable<Result[]> {
       }
       outstandingCallables.add(s);
       RetryingRPC retryingOnReplica = new RetryingRPC(s);
-      cs.submit(retryingOnReplica);
+      cs.submit(retryingOnReplica, scannerTimeout, id);
     }
     return max - min + 1;
   }
 
-  class RetryingRPC implements Callable<Pair<Result[], ScannerCallable>> {
+  class RetryingRPC implements CancellableCallable<Pair<Result[], ScannerCallable>> {
     final ScannerCallable callable;
+    RpcRetryingCaller<Result[]> caller;
+    private volatile boolean canceled = false;
 
     RetryingRPC(ScannerCallable callable) {
       this.callable = callable;
-    }
-
-    @Override
-    public Pair<Result[], ScannerCallable> call() throws IOException {
       // For the Consistency.STRONG (default case), we reuse the caller
       // to keep compatibility with what is done in the past
       // For the Consistency.TIMELINE case, we can't reuse the caller
       // since we could be making parallel RPCs (caller.callWithRetries is synchronized
       // and we can't invoke it multiple times at the same time)
-      RpcRetryingCaller<Result[]> caller = ScannerCallableWithReplicas.this.caller;
+      this.caller = ScannerCallableWithReplicas.this.caller;
       if (scan.getConsistency() == Consistency.TIMELINE) {
-        caller = new RpcRetryingCallerFactory(ScannerCallableWithReplicas.this.conf).
+        this.caller = new RpcRetryingCallerFactory(ScannerCallableWithReplicas.this.conf).
             <Result[]>newCaller();
       }
-      Result[] res = caller.callWithRetries(callable, scannerTimeout);
-      return new Pair<Result[], ScannerCallable>(res, callable);
+    }
+
+    @Override
+    public Pair<Result[], ScannerCallable> call() throws IOException {
+      // since the retries is done within the ResultBoundedCompletionService,
+      // we don't invoke callWithRetries here
+      if (canceled) {
+        return null;
+      }
+      Result[] res = this.caller.callWithoutRetries(this.callable, scannerTimeout);
+      return new Pair<Result[], ScannerCallable>(res, this.callable);
+    }
+
+    @Override
+    public void prepare(boolean reload) throws IOException {
+      if (canceled) return;
+
+      if (Thread.interrupted()) {
+        throw new InterruptedIOException();
+      }
+
+      callable.prepare(reload);
+    }
+
+    @Override
+    public void throwable(Throwable t, boolean retrying) {
+      callable.throwable(t, retrying);
+    }
+
+    @Override
+    public String getExceptionMessageAdditionalDetail() {
+      return callable.getExceptionMessageAdditionalDetail();
+    }
+
+    @Override
+    public long sleep(long pause, int tries) {
+      return callable.sleep(pause, tries);
+    }
+
+    @Override
+    public void startCancel() {
+      canceled = true;
+      caller.cancel();
+      if (callable.getController() != null) {
+        callable.getController().startCancel();
+      }
     }
   }
 

@@ -167,7 +167,7 @@ public class ClientSmallScanner extends ClientScanner {
       ScanRequest request = RequestConverter.buildScanRequest(getLocation()
           .getRegionInfo().getRegionName(), getScan(), getCaching(), true);
       ScanResponse response = null;
-      PayloadCarryingRpcController controller = controllerFactory.newController();
+      controller = controllerFactory.newController();
       try {
         controller.setPriority(getTableName());
         response = getStub().scan(controller, request);

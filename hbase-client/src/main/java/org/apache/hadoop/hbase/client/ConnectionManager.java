@@ -1162,7 +1162,7 @@ public class ConnectionManager {
         // Check the cache again for a hit in case some other thread made the
         // same query while we were waiting on the lock.
         locations = getCachedLocation(tableName, metaCacheKey);
-        if (locations != null) {
+        if (locations != null && locations.getRegionLocation(replicaId) != null) {
           return locations;
         }
         // Look up from zookeeper
