@@ -17,12 +17,17 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import java.io.IOException;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.security.User;
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Utility used by client connections.
@@ -92,5 +97,32 @@ public class ConnectionUtils {
     int retries = hcRetries * serversideMultiplier;
     c.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, retries);
     log.debug(sn + " HConnection server-to-server retries=" + retries);
+  }
+
+  /**
+   * Setup the connection class, so that it will not depend on master being online. Used for testing
+   * @param conf configuration to set
+   */
+  @VisibleForTesting
+  public static void setupMasterlessConnection(Configuration conf) {
+    conf.set(HConnection.HBASE_CLIENT_CONNECTION_IMPL,
+      MasterlessConnection.class.getName());
+  }
+
+  /**
+   * Some tests shut down the master. But table availability is a master RPC which is performed on
+   * region re-lookups.
+   */
+  static class MasterlessConnection extends ConnectionManager.HConnectionImplementation {
+    MasterlessConnection(Configuration conf, boolean managed,
+      ExecutorService pool, User user) throws IOException {
+      super(conf, managed, pool, user);
+    }
+
+    @Override
+    public boolean isTableDisabled(TableName tableName) throws IOException {
+      // treat all tables as enabled
+      return false;
+    }
   }
 }

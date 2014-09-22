@@ -288,7 +288,11 @@ public class RpcRetryingCallerWithReadReplicas {
       throws RetriesExhaustedException, DoNotRetryIOException, InterruptedIOException {
     RegionLocations rl;
     try {
-      rl = cConnection.locateRegion(tableName, row, useCache, true, replicaId);
+      if (!useCache) {
+        rl = cConnection.relocateRegion(tableName, row, replicaId);
+      } else {
+        rl = cConnection.locateRegion(tableName, row, useCache, true, replicaId);
+      }
     } catch (DoNotRetryIOException e) {
       throw e;
     } catch (RetriesExhaustedException e) {
