@@ -1150,7 +1150,7 @@ public class ConnectionManager {
       RegionLocations locations = null;
       if (useCache) {
         locations = getCachedLocation(tableName, metaCacheKey);
-        if (locations != null) {
+        if (locations != null && locations.getRegionLocation(replicaId) != null) {
           return locations;
         }
       } else {
