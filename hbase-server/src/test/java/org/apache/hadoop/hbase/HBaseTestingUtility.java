@@ -2759,11 +2759,10 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
   throws InterruptedException, IOException {
     long startWait = System.currentTimeMillis();
     waitTableAvailable(admin, table, timeoutMillis);
-    long remainder = System.currentTimeMillis() - startWait;
     while (!admin.isTableEnabled(table)) {
       assertTrue("Timed out waiting for table to become available and enabled " +
          Bytes.toStringBinary(table),
-         System.currentTimeMillis() - remainder < timeoutMillis);
+         System.currentTimeMillis() - startWait < timeoutMillis);
       Thread.sleep(200);
     }
     // Finally make sure all regions are fully open and online out on the cluster. Regions may be
