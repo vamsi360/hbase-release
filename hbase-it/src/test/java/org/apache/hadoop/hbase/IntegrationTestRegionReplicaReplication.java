@@ -197,7 +197,7 @@ public class IntegrationTestRegionReplicaReplication extends IntegrationTestInge
 
       args = Lists.newArrayList(getArgsForLoadTestTool("", "", startKey, numKeys));
       args.add("-update");
-      args.add(String.format("%s:%s", updatePercent, writeThreads));
+      args.add(String.format("%s:%s:1", updatePercent, writeThreads));
       args.add("-updater");
       args.add(DelayingMultiThreadedUpdater.class.getName()); // inject updater class
       args.add("-read");
