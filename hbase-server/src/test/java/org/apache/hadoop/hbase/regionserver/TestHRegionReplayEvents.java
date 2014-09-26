@@ -82,7 +82,6 @@ import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.util.StringUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -204,16 +203,16 @@ public class TestHRegionReplayEvents {
     return name.getMethodName();
   }
 
-  // TODO: Some of the test cases are as follows:
-  // DONE 1. replay flush start marker again
-  // DONE 2. replay flush with smaller seqId than what is there in memstore snapshot
+  // Some of the test cases are as follows:
+  // 1. replay flush start marker again
+  // 2. replay flush with smaller seqId than what is there in memstore snapshot
   // 3. replay flush with larger seqId than what is there in memstore snapshot
-  // DONE 4. replay flush commit without flush prepare. non droppable memstore
-  // DONE 5. replay flush commit without flush prepare. droppable memstore
-  // DONE 6. replay open region event
-  // 7. replay open region event after flush start (maybe multiple stores partial flush)
-  // DONE 8. replay flush form an earlier seqId (test ignoring seqIds)
-  // DONE 9. start flush does not prevent region from closing.
+  // 4. replay flush commit without flush prepare. non droppable memstore
+  // 5. replay flush commit without flush prepare. droppable memstore
+  // 6. replay open region event
+  // 7. replay open region event after flush start
+  // 8. replay flush form an earlier seqId (test ignoring seqIds)
+  // 9. start flush does not prevent region from closing.
 
   @Test
   public void testRegionReplicaSecondaryCannotFlush() throws IOException {
@@ -603,12 +602,10 @@ public class TestHRegionReplayEvents {
    * larger than the previous flush start marker.
    */
   @Test
-  @Ignore // TODO: this is failing for now, because the way the test is written, we do not pick up
-  // the flushed file
   public void testReplayFlushCommitMarkerLargerThanFlushStartMarker() throws IOException {
-    // load some data to primary and flush. 2 flushes and some more unflushed data
-    putDataWithFlushes(primaryRegion, 100, 200, 100);
-    int numRows = 300;
+    // load some data to primary and flush. 1 flush and some more unflushed data
+    putDataWithFlushes(primaryRegion, 100, 100, 100);
+    int numRows = 200;
 
     // now replay the edits and the flush marker
     reader =  createWALReaderForPrimary();
@@ -627,7 +624,6 @@ public class TestHRegionReplayEvents {
       = WALEdit.getFlushDescriptor(entry.getEdit().getKeyValues().get(0));
       if (flushDesc != null) {
         if (flushDesc.getAction() == FlushAction.START_FLUSH) {
-          // only replay the first flush start marker
           if (startFlushDesc == null) {
             LOG.info("-- Replaying flush start in secondary");
             startFlushDesc = flushDesc;
@@ -636,7 +632,12 @@ public class TestHRegionReplayEvents {
           }
         } else if (flushDesc.getAction() == FlushAction.COMMIT_FLUSH) {
           // do not replay any flush commit yet
-          commitFlushDesc = flushDesc; // hold on to the second flush commit marker
+          // hold on to the flush commit marker but simulate a larger
+          // flush commit seqId
+          commitFlushDesc =
+              FlushDescriptor.newBuilder(flushDesc)
+              .setFlushSequenceNumber(flushDesc.getFlushSequenceNumber() + 50)
+              .build();
         }
         // after replay verify that everything is still visible
         verifyData(secondaryRegion, 0, lastReplayed+1, cq, families);
@@ -646,7 +647,7 @@ public class TestHRegionReplayEvents {
     }
 
     // at this point, there should be some data (rows 0-100) in memstore snapshot
-    // and some more data in memstores (rows 100-300)
+    // and some more data in memstores (rows 100-200)
     verifyData(secondaryRegion, 0, numRows, cq, families);
 
     // no store files in the region
@@ -803,7 +804,6 @@ public class TestHRegionReplayEvents {
    * Tests replaying region open markers from primary region. Checks whether the files are picked up
    */
   @Test
-  @Ignore // TODO
   public void testReplayRegionOpenEvent() throws IOException {
     putDataWithFlushes(primaryRegion, 100, 0, 100); // no flush
     int numRows = 100;
@@ -872,9 +872,6 @@ public class TestHRegionReplayEvents {
 
     assertNull(secondaryRegion.getPrepareFlushResult()); //prepare snapshot should be dropped if any
 
-    assertEquals(secondaryRegion.getMVCC().memstoreReadPoint(),
-      primaryRegion.getMVCC().memstoreReadPoint());
-
     LOG.info("-- Verifying edits from secondary");
     verifyData(secondaryRegion, 0, numRows, cq, families);
 
@@ -887,7 +884,6 @@ public class TestHRegionReplayEvents {
    * flush commit
    */
   @Test
-  @Ignore // TODO
   public void testReplayRegionOpenEventAfterFlushStart() throws IOException {
     putDataWithFlushes(primaryRegion, 100, 100, 100);
     int numRows = 200;
@@ -954,9 +950,6 @@ public class TestHRegionReplayEvents {
     assertTrue(newRegionMemstoreSize == 0);
 
     assertNull(secondaryRegion.getPrepareFlushResult()); //prepare snapshot should be dropped if any
-
-    assertEquals(secondaryRegion.getMVCC().memstoreReadPoint(),
-      primaryRegion.getMVCC().memstoreReadPoint());
 
     LOG.info("-- Verifying edits from secondary");
     verifyData(secondaryRegion, 0, numRows, cq, families);
@@ -1028,7 +1021,6 @@ public class TestHRegionReplayEvents {
   }
 
   @Test
-  @Ignore // TODO
   public void testReplayFlushSeqIds() throws IOException {
     // load some data to primary and flush
     int start = 0;
@@ -1063,16 +1055,11 @@ public class TestHRegionReplayEvents {
       // else do not replay
     }
 
-    // assert that the newly picked up flush file is visible
-    long readPoint = secondaryRegion.getMVCC().memstoreReadPoint();
-    assertEquals(flushSeqId, readPoint);
-
     // after replay verify that everything is still visible
     verifyData(secondaryRegion, 0, 100, cq, families);
   }
 
   @Test
-  @Ignore // TODO
   public void testSeqIdsFromReplay() throws IOException {
     // test the case where seqId's coming from replayed WALEdits are made persisted with their
     // original seqIds and they are made visible through mvcc read point upon replay
@@ -1091,13 +1078,10 @@ public class TestHRegionReplayEvents {
       replay(region, put, origSeqId);
 
       // read point should have advanced to this seqId
-      readPoint = region.getMVCC().memstoreReadPoint();
-      assertTrue(readPoint == origSeqId);
+      assertGet(region, family, row);
 
       // region seqId should have advanced at least to this seqId
       assertEquals(origSeqId, region.getSequenceId().get());
-
-      assertGet(region, family, row);
 
       // replay an entry that is smaller than current read point
       // caution: adding an entry below current read point might cause partial dirty reads. Normal
@@ -1105,9 +1089,6 @@ public class TestHRegionReplayEvents {
       put = new Put(row2).add(family, row2, row2);
       put.setDurability(Durability.SKIP_WAL);
       replay(region, put, origSeqId - 50);
-
-      readPoint = region.getMVCC().memstoreReadPoint();
-      assertTrue(readPoint == origSeqId);
 
       assertGet(region, family, row2);
     } finally {
