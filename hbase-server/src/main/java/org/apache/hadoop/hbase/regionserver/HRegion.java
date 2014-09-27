@@ -4261,8 +4261,8 @@ public class HRegion implements HeapSize { // , Writable{
                 long snapshotSize = store.getFlushableSize();
                 ctx.abort();
                 this.addAndGetGlobalMemstoreSize(-snapshotSize);
+                this.prepareFlushResult.storeFlushCtxs.remove(family);
               }
-              this.prepareFlushResult.storeFlushCtxs.remove(family);
             }
           }
 
