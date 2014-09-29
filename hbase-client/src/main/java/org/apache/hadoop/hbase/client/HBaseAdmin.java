@@ -223,7 +223,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     this.retryLongerMultiplier = this.conf.getInt(
         "hbase.client.retries.longer.multiplier", 10);
     this.operationTimeout = this.conf.getInt(HConstants.HBASE_CLIENT_OPERATION_TIMEOUT,
-      HConstants.DEFAULT_HBASE_CLIENT_OPERATION_TIMEOUT);
+      600000);
     
     this.rpcCallerFactory = RpcRetryingCallerFactory.instantiate(this.conf);
   }
