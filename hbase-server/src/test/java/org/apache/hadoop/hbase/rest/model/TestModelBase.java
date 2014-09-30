@@ -28,7 +28,6 @@ import org.apache.hadoop.hbase.util.Base64;
 import org.codehaus.jackson.jaxrs.JacksonJaxbJsonProvider;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
-import org.codehaus.jackson.map.DeserializationConfig;
 import org.junit.experimental.categories.Category;
 
 import javax.ws.rs.core.MediaType;
@@ -59,7 +58,6 @@ public abstract class TestModelBase<T> extends TestCase {
     context = new JAXBContextResolver().getContext(clazz);
     mapper = new JacksonJaxbJsonProvider().locateMapper(clazz,
         MediaType.APPLICATION_JSON_TYPE);
-    mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 
   protected abstract T buildTestModel();
