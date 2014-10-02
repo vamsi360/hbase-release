@@ -407,7 +407,26 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public HTableDescriptor getTableDescriptor(final TableName tableName)
   throws TableNotFoundException, IOException {
-    return this.connection.getHTableDescriptor(tableName);
+    if (tableName.equals(TableName.META_TABLE_NAME)) {
+      return HTableDescriptor.META_TABLEDESC;
+    }
+    HTableDescriptor htd =
+        executeCallable(new MasterCallable<HTableDescriptor>(getConnection()) {
+          @Override
+          public HTableDescriptor call() throws ServiceException {
+            GetTableDescriptorsRequest req =
+                RequestConverter.buildGetTableDescriptorsRequest(tableName);
+            GetTableDescriptorsResponse htds = master.getTableDescriptors(null, req);
+            if (!htds.getTableSchemaList().isEmpty()) {
+              return HTableDescriptor.convert(htds.getTableSchemaList().get(0));
+            }
+            return null;
+          }
+        });
+    if (htd == null) {
+      throw new TableNotFoundException(tableName.getNameAsString());
+    }
+    return htd;
   }
 
   public HTableDescriptor getTableDescriptor(final byte[] tableName)
