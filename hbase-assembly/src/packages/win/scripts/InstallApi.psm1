@@ -22,7 +22,7 @@
 ###
 $ScriptDir = Resolve-Path (Split-Path $MyInvocation.MyCommand.Path)
 $FinalName = "hbase-@version@"
-$DefaultRoles = @("master","regionserver","hbrest")
+$DefaultRoles = @("master","regionserver","hbrest","thrift","thrift2")
 $WaitingTime = 10000
 
 ###############################################################################
@@ -55,28 +55,14 @@ function Install(
     if ( $component -eq "hbase" )
     {
         $HDP_INSTALL_PATH, $HDP_RESOURCES_DIR = Initialize-InstallationEnv $scriptDir "$FinalName.winpkg.log"
-        
-    Write-Log "Checking the JAVA Installation."
-    if( -not (Test-Path $ENV:JAVA_HOME\bin\java.exe))
-        {
-            Write-Log "JAVA_HOME not set properly; $ENV:JAVA_HOME\bin\java.exe does not exist" "Failure"
-            throw "Install: JAVA_HOME not set properly; $ENV:JAVA_HOME\bin\java.exe does not exist."
-        }
-        
-        Write-Log "Checking the Hadoop Installation."
-        if( -not (Test-Path $ENV:HADOOP_HOME\bin\winutils.exe))
-        {
-          
-          Write-Log "HADOOP_HOME not set properly; $ENV:HADOOP_HOME\bin\winutils.exe does not exist" "Failure"
-          throw "Install: HADOOP_HOME not set properly; $ENV:HADOOP_HOME\bin\winutils.exe does not exist."
-    }
 
         ### $HbaseInstallDir: the directory that contains the application, after unzipping
         $hbaseInstallToDir = Join-Path "$nodeInstallRoot" "$FinalName"
         $hbaseInstallToBin = Join-Path "$hbaseInstallToDir" "bin"
         Write-Log "hbaseInstallToDir: $hbaseInstallToDir"
+		Write-Log "hbaseInstallToBin: $hbaseInstallToBin"
         
-    Write-Log "Installing Apache hbase $FinalName to $hbaseInstallToDir"
+        Write-Log "Installing Apache HBase $FinalName to $hbaseInstallToDir"
 
         ### Create Node Install Root directory
         if( -not (Test-Path "$hbaseInstallToDir"))
@@ -93,7 +79,7 @@ function Install(
         {
             InstallBinaries $nodeInstallRoot $serviceCredential
         }
-		
+        
         Write-Log "Adding the HBase custom jars into HBASE_CLASSPATH if exists"
         if (Test-Path "$ENV:COMPONENT_RESOURCES_LOCATION")
         {
@@ -135,6 +121,16 @@ function Install(
                 hbrest
                 {
                     $cmd = "$hbaseInstallToBin\hbase.cmd --service rest start -p 8090 > `"$hbaseInstallToBin`"\hbrest.xml"
+                    break
+                }
+                thrift
+                {
+                    $cmd = "$hbaseInstallToBin\hbase.cmd --service thrift start > `"$hbaseInstallToBin`"\thrift.xml"
+                    break
+                }
+                thrift2
+                {
+                    $cmd = "$hbaseInstallToBin\hbase.cmd --service thrift2 start > `"$hbaseInstallToBin`"\thrift2.xml"
                     break
                 }
                 default
@@ -274,7 +270,7 @@ function Configure(
         ###
         ### Apply configuration changes to service xmls
         ###
-        foreach( $service in ("hbrest", "regionserver", "master"))
+        foreach( $service in ("hbrest", "regionserver", "master", "thrift", "thrift2"))
         {
             $serviceXmlFile = Join-Path $hbaseInstallToDir "bin\$service.xml"
             # Apply configs only if the service xml exist
@@ -328,8 +324,11 @@ function StartService(
 
         foreach ( $role in $roles.Split(" ") )
         {
-            Write-Log "Starting $role service"
-            Start-Service $role
+            if ( $role -ne "thrift" -and $role -ne "thrift2" )
+            {
+                Write-Log "Starting $role service"
+                Start-Service $role
+            }
         }
     }
     else
