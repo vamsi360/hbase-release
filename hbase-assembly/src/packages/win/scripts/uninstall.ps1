@@ -14,51 +14,40 @@
 ### limitations under the License.
 
 
-function Main
+function Main( $scriptDir )
 {
-	$HDP_INSTALL_PATH, $HDP_RESOURCES_DIR = Initialize-InstallationEnv $scriptDir "hbase-@version@.winpkg.log" $ENV:WINPKG_BIN
+    $FinalName = "hbase-@version@"
+    if ( -not (Test-Path ENV:WINPKG_LOG))
+    {
+        $ENV:WINPKG_LOG = "$FinalName.winpkg.log"
+    }
+    $HDP_INSTALL_PATH, $HDP_RESOURCES_DIR = Initialize-InstallationEnv $scriptDir "$FinalName.winpkg.log"
+	
+    Write-Log "Uninstalling Apache hbase hbase-@version@"
+    ###
+    ### Stop and delete services
+    ###
 
-
-	### $hadoopInstallDir: the directory that contains the appliation, after unzipping
-	$hbaseInstallDir = Join-Path "$ENV:HADOOP_NODE_INSTALL_ROOT" "hbase-@version@"
-	$hbaseInstallBin = Join-Path "$hbaseInstallDir" "bin"
-
-	###
-	### Stop and delete services
-	###
-
-	foreach( $service in ("master", "regionserver", "rest", "thrift", "thrift2"))
-	{
-		Write-Log "Stopping $service"
-		$s = Get-Service $service -ErrorAction SilentlyContinue
-
-		if( $s -ne $null )
-		{
-			Stop-Service $service
-			$cmd = "sc.exe delete $service"
-			Invoke-Cmd $cmd
-		}
-	}
-
-	Write-Log "Removing Hbase ($hbaseInstallDir)"
-	$cmd = "rd /s /q $hbaseInstallDir"
-	Invoke-Cmd $cmd
-	$cmd = "takeown /F $hbaseInstallDir /A /R /D Y"
-	Invoke-Cmd $cmd
-	$cmd = "rd /s /q $hbaseInstallDir"
-	Invoke-Cmd $cmd
+    Uninstall "hbase" $ENV:HADOOP_NODE_INSTALL_ROOT
+    Write-Log "Finished Uninstalling Apache hbase"    
 }
 
 try
 {
-	$scriptDir = Resolve-Path (Split-Path $MyInvocation.MyCommand.Path)
-	$utilsModule = Import-Module -Name "$scriptDir\..\resources\Winpkg.Utils.psm1" -ArgumentList ("HBASE") -PassThru
-	Main $scriptDir
+    $scriptDir = Resolve-Path (Split-Path $MyInvocation.MyCommand.Path)
+    $utilsModule = Import-Module -Name "$scriptDir\..\resources\Winpkg.Utils.psm1" -ArgumentList ("HBASE") -PassThru
+    $apiModule = Import-Module -Name "$scriptDir\InstallApi.psm1" -PassThru
+    Main $scriptDir
 }
 finally
 {
-	if( $utilsModule -ne $null )
-	{
-		Remove-Module $utilsModule
-	}
+    if( $apiModule -ne $null )
+    {        
+        Remove-Module $apiModule
+    }
+
+    if( $utilsModule -ne $null )
+    {
+        Remove-Module $utilsModule
+    }
 }
