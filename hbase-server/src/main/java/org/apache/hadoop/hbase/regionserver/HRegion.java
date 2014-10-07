@@ -142,6 +142,7 @@ import org.apache.hadoop.hbase.regionserver.wal.HLogUtil;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.ByteStringer;
 import org.apache.hadoop.hbase.util.CancelableProgressable;
 import org.apache.hadoop.hbase.util.ClassSize;
 import org.apache.hadoop.hbase.util.CompressionTest;
@@ -4737,7 +4738,7 @@ public class HRegion implements HeapSize { // , Writable{
         // write a bulk load even when not all hfiles are loaded
         try {
           WALProtos.BulkLoadDescriptor loadDescriptor = ProtobufUtil.toBulkLoadDescriptor(this
-              .getRegionInfo().getTable(), HBaseZeroCopyByteString.wrap(this.getRegionInfo()
+              .getRegionInfo().getTable(), ByteStringer.wrap(this.getRegionInfo()
               .getEncodedNameAsBytes()), storeFiles, seqId);
           HLogUtil.writeBulkLoadMarkerAndSync(log, this.htableDescriptor, getRegionInfo(),
             loadDescriptor, sequenceId);
