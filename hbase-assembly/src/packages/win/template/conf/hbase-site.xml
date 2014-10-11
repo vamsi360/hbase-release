@@ -34,4 +34,8 @@
     <name>hbase.zookeeper.quorum</name>
     <value>localhost</value>
   </property>
+  <property>
+    <name>hbase.rest.port</name>
+    <value>8090</value>
+  </property>
 </configuration>

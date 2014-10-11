@@ -134,7 +134,7 @@ function Install(
                 }
                 hbrest
                 {
-                    $cmd = "$hbaseInstallToBin\hbase.cmd --service rest start -p 8090 > `"$hbaseInstallToBin`"\hbrest.xml"
+                    $cmd = "$hbaseInstallToBin\hbase.cmd --service rest start > `"$hbaseInstallToBin`"\hbrest.xml"
                     break
                 }
                 default
