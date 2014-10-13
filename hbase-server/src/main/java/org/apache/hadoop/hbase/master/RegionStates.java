@@ -410,7 +410,11 @@ public class RegionStates {
 
     ServerName oldServerName = regionAssignments.put(hri, serverName);
     if (!serverName.equals(oldServerName)) {
-      LOG.info("Onlined " + hri.getShortNameToLog() + " on " + serverName);
+      if (LOG.isDebugEnabled()) {
+        LOG.info("Onlined " + hri.getShortNameToLog() + " on " + serverName + " " + hri);
+      } else {
+        LOG.info("Onlined " + hri.getShortNameToLog() + " on " + serverName);
+      }
       addToServerHoldings(serverName, hri);
       addToReplicaMapping(hri);
       if (oldServerName != null) {

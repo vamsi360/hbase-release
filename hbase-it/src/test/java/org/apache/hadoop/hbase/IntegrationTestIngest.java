@@ -189,7 +189,12 @@ public class IntegrationTestIngest extends IntegrationTestBase {
         , startKey, numKeys));
       if (0 != ret) {
         String errorMsg = "Verification failed with error code " + ret;
-        LOG.error(errorMsg);
+        LOG.error(errorMsg + " Rerunning... ");
+        ret = loadTool.run(getArgsForLoadTestTool("-read", String.format("100:%d", readThreads)
+            , startKey, numKeys));
+        if (0 != ret) {
+          LOG.error("Rerun of Verification failed with error code " + ret);
+        }
         Assert.fail(errorMsg);
       }
       startKey += numKeys;

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -33,7 +34,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.catalog.MetaReader;
+import org.apache.hadoop.hbase.client.ClusterConnection;
+import org.apache.hadoop.hbase.client.ConnectionManager;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.Result;
@@ -322,10 +329,10 @@ public abstract class MultiThreadedAction {
   public boolean verifyResultAgainstDataGenerator(Result result, boolean verifyValues,
       boolean verifyCfAndColumnIntegrity) {
     String rowKeyStr = Bytes.toString(result.getRow());
-
     // See if we have any data at all.
     if (result.isEmpty()) {
       LOG.error("Error checking data for key [" + rowKeyStr + "], no data returned");
+      printLocations(result);
       return false;
     }
 
@@ -338,6 +345,7 @@ public abstract class MultiThreadedAction {
     if (verifyCfAndColumnIntegrity && (expectedCfs.length != result.getMap().size())) {
       LOG.error("Error checking data for key [" + rowKeyStr
         + "], bad family count: " + result.getMap().size());
+      printLocations(result);
       return false;
     }
 
@@ -348,6 +356,7 @@ public abstract class MultiThreadedAction {
       if (columnValues == null) {
         LOG.error("Error checking data for key [" + rowKeyStr
           + "], no data for family [" + cfStr + "]]");
+        printLocations(result);
         return false;
       }
 
@@ -356,6 +365,7 @@ public abstract class MultiThreadedAction {
         if (!columnValues.containsKey(MUTATE_INFO)) {
           LOG.error("Error checking data for key [" + rowKeyStr + "], column family ["
             + cfStr + "], column [" + Bytes.toString(MUTATE_INFO) + "]; value is not found");
+          printLocations(result);
           return false;
         }
 
@@ -372,6 +382,7 @@ public abstract class MultiThreadedAction {
               if (columnValues.containsKey(column)) {
                 LOG.error("Error checking data for key [" + rowKeyStr + "], column family ["
                   + cfStr + "], column [" + mutate.getKey() + "]; should be deleted");
+                printLocations(result);
                 return false;
               }
               byte[] hashCodeBytes = Bytes.toBytes(hashCode);
@@ -384,6 +395,7 @@ public abstract class MultiThreadedAction {
         if (!columnValues.containsKey(INCREMENT)) {
           LOG.error("Error checking data for key [" + rowKeyStr + "], column family ["
             + cfStr + "], column [" + Bytes.toString(INCREMENT) + "]; value is not found");
+          printLocations(result);
           return false;
         }
         long currentValue = Bytes.toLong(columnValues.remove(INCREMENT));
@@ -394,6 +406,7 @@ public abstract class MultiThreadedAction {
           if (extra != 0 && (amount == 0 || extra % amount != 0)) {
             LOG.error("Error checking data for key [" + rowKeyStr + "], column family ["
               + cfStr + "], column [increment], extra [" + extra + "], amount [" + amount + "]");
+            printLocations(result);
             return false;
           }
           if (amount != 0 && extra != amount) {
@@ -414,6 +427,7 @@ public abstract class MultiThreadedAction {
           }
           LOG.error("Error checking data for key [" + rowKeyStr
             + "], bad columns for family [" + cfStr + "]: " + colsStr);
+          printLocations(result);
           return false;
         }
         // See if values check out.
@@ -461,6 +475,7 @@ public abstract class MultiThreadedAction {
                   + column + "]; mutation [" + mutation + "], hashCode ["
                   + hashCode + "], verificationNeeded ["
                   + verificationNeeded + "]");
+                printLocations(result);
                 return false;
               }
             } // end of mutation checking
@@ -469,6 +484,7 @@ public abstract class MultiThreadedAction {
               LOG.error("Error checking data for key [" + rowKeyStr + "], column family ["
                 + cfStr + "], column [" + column + "], mutation [" + mutation
                 + "]; value of length " + bytes.length);
+              printLocations(result);
               return false;
             }
           }
@@ -476,6 +492,20 @@ public abstract class MultiThreadedAction {
       }
     }
     return true;
+  }
+
+  private void printLocations(Result r) {
+    RegionLocations rl = null;
+    LOG.info("FAILED FOR " + r + " Stale " + r.isStale());
+    try {
+      rl = ((ClusterConnection)connection).locateRegion(tableName, r.getRow(), true, true);
+    } catch (IOException e) {
+      LOG.warn("Couldn't get locations for row " + Bytes.toString(r.getRow()));
+    }
+    HRegionLocation locations[] = rl.getRegionLocations();
+    for (HRegionLocation h : locations) {
+      LOG.info("LOCATION " + h);
+    }
   }
 
   // Parse mutate info into a map of <column name> => <update action>
