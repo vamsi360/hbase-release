@@ -81,7 +81,7 @@ function Install(
         }
         
         Write-Log "Adding the HBase custom jars into HBASE_CLASSPATH if exists"
-        if (Test-Path "$ENV:COMPONENT_RESOURCES_LOCATION")
+        if ((Test-Path ENV:COMPONENT_RESOURCES_LOCATION) -and (Test-Path $ENV:COMPONENT_RESOURCES_LOCATION ))
         {
             $hbaseResourceDir = Join-Path "$ENV:COMPONENT_RESOURCES_LOCATION" "HBase\*"
             [Environment]::SetEnvironmentVariable( "HBASE_CLASSPATH", $ENV:HBASE_CLASSPATH + ";" + $hbaseResourceDir, [EnvironmentVariableTarget]::Machine )
