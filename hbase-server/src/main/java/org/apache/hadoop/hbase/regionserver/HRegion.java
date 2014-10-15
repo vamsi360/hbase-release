@@ -4275,14 +4275,16 @@ public class HRegion implements HeapSize { // , Writable{
         // prepareFlushResult
         if (writestate.flushing) {
           boolean canDrop = true;
-          for (Entry<byte[], StoreFlushContext> entry
-              : prepareFlushResult.storeFlushCtxs.entrySet()) {
-            Store store = getStore(entry.getKey());
-            if (store == null) {
-              continue;
-            }
-            if (store.getSnapshotSize() > 0) {
-              canDrop = false;
+          if (prepareFlushResult.storeFlushCtxs != null) {
+            for (Entry<byte[], StoreFlushContext> entry
+                : prepareFlushResult.storeFlushCtxs.entrySet()) {
+              Store store = getStore(entry.getKey());
+              if (store == null) {
+                continue;
+              }
+              if (store.getSnapshotSize() > 0) {
+                canDrop = false;
+              }
             }
           }
 
