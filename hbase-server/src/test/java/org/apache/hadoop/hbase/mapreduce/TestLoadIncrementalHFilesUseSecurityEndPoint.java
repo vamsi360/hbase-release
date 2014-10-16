@@ -34,5 +34,6 @@ public class TestLoadIncrementalHFilesUseSecurityEndPoint extends TestLoadIncrem
     util.getConfiguration().set(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY,
       "org.apache.hadoop.hbase.security.access.SecureBulkLoadEndpoint");
     util.startMiniCluster();
+    setupNamespace();
   }
 }
