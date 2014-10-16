@@ -31,17 +31,14 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
-import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.Mutation;
-import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.regionserver.RegionMergeTransaction;
@@ -160,7 +157,8 @@ public class TestRegionServerObserver {
       }
       mergedRegion = rmt.stepsBeforePONR(rs, rs, false);
       rmt.prepareMutationsForMerge(mergedRegion.getRegionInfo(), regionA.getRegionInfo(),
-        regionB.getRegionInfo(), rs.getServerName(), metaEntries);
+        regionB.getRegionInfo(), rs.getServerName(), metaEntries,
+        regionA.getTableDesc().getRegionReplication());
       MetaEditor.mutateMetaTable(rs.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), metaEntries);
     }
 

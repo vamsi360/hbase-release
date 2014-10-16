@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
+import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.executor.EventType;
@@ -285,11 +286,13 @@ public class SplitTransaction {
       if (metaEntries == null || metaEntries.isEmpty()) {
         MetaEditor.splitRegion(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
             parent.getRegionInfo(), daughterRegions.getFirst().getRegionInfo(),
-            daughterRegions.getSecond().getRegionInfo(), server.getServerName());
+            daughterRegions.getSecond().getRegionInfo(), server.getServerName(),
+            parent.getTableDesc().getRegionReplication());
       } else {
         offlineParentInMetaAndputMetaEntries(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
           parent.getRegionInfo(), daughterRegions.getFirst().getRegionInfo(), daughterRegions
-              .getSecond().getRegionInfo(), server.getServerName(), metaEntries);
+              .getSecond().getRegionInfo(), server.getServerName(), metaEntries,
+              parent.getTableDesc().getRegionReplication());
       }
     }
     return daughterRegions;
@@ -582,7 +585,7 @@ public class SplitTransaction {
 
   private void offlineParentInMetaAndputMetaEntries(CatalogTracker catalogTracker,
       HRegionInfo parent, HRegionInfo splitA, HRegionInfo splitB,
-      ServerName serverName, List<Mutation> metaEntries) throws IOException {
+      ServerName serverName, List<Mutation> metaEntries, int regionReplication) throws IOException {
     List<Mutation> mutations = metaEntries;
     HRegionInfo copyOfParent = new HRegionInfo(parent);
     copyOfParent.setOffline(true);
@@ -592,7 +595,7 @@ public class SplitTransaction {
     Put putParent = MetaEditor.makePutFromRegionInfo(copyOfParent);
     MetaEditor.addDaughtersToPut(putParent, splitA, splitB);
     mutations.add(putParent);
-    
+
     //Puts for daughters
     Put putA = MetaEditor.makePutFromRegionInfo(splitA);
     Put putB = MetaEditor.makePutFromRegionInfo(splitB);
@@ -601,6 +604,14 @@ public class SplitTransaction {
     addLocation(putB, serverName, 1);
     mutations.add(putA);
     mutations.add(putB);
+
+    // Add empty locations for region replicas of daughters so that number of replicas can be
+    // cached whenever the primary region is looked up from meta
+    for (int i = 1; i < regionReplication; i++) {
+      addEmptyLocation(putA, i);
+      addEmptyLocation(putB, i);
+    }
+
     MetaEditor.mutateMetaTable(catalogTracker, mutations);
   }
 
@@ -611,6 +622,13 @@ public class SplitTransaction {
       Bytes.toBytes(sn.getStartcode()));
     p.addImmutable(HConstants.CATALOG_FAMILY, HConstants.SEQNUM_QUALIFIER,
         Bytes.toBytes(openSeqNum));
+    return p;
+  }
+
+  private static Put addEmptyLocation(final Put p, int replicaId){
+    p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getServerColumn(replicaId), null);
+    p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getStartCodeColumn(replicaId), null);
+    p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getSeqNumColumn(replicaId), null);
     return p;
   }
 
@@ -771,6 +789,7 @@ public class SplitTransaction {
       this.family = family;
     }
 
+    @Override
     public Void call() throws IOException {
       splitStoreFile(family, sf);
       return null;

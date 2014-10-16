@@ -63,10 +63,10 @@ import org.apache.zookeeper.data.Stat;
  * transaction, {@link #execute(Server, RegionServerServices)} to run the
  * transaction and {@link #rollback(Server, RegionServerServices)} to cleanup if
  * execute fails.
- * 
+ *
  * <p>
  * Here is an example of how you would use this class:
- * 
+ *
  * <pre>
  *  RegionMergeTransaction mt = new RegionMergeTransaction(this.conf, parent, midKey)
  *  if (!mt.prepare(services)) return;
@@ -318,10 +318,12 @@ public class RegionMergeTransaction {
     if (!testing) {
       if (metaEntries.isEmpty()) {
         MetaEditor.mergeRegions(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), mergedRegion.getRegionInfo(), region_a
-            .getRegionInfo(), region_b.getRegionInfo(), server.getServerName());
+            .getRegionInfo(), region_b.getRegionInfo(), server.getServerName(),
+            region_a.getTableDesc().getRegionReplication());
       } else {
         mergeRegionsAndPutMetaEntries(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID), mergedRegion.getRegionInfo(),
-          region_a.getRegionInfo(), region_b.getRegionInfo(), server.getServerName(), metaEntries);
+          region_a.getRegionInfo(), region_b.getRegionInfo(), server.getServerName(), metaEntries,
+          region_a.getTableDesc().getRegionReplication());
       }
     }
     return mergedRegion;
@@ -329,13 +331,15 @@ public class RegionMergeTransaction {
 
   private void mergeRegionsAndPutMetaEntries(CatalogTracker catalogTracker,
       HRegionInfo mergedRegion, HRegionInfo regionA, HRegionInfo regionB, ServerName serverName,
-      List<Mutation> metaEntries) throws IOException {
-    prepareMutationsForMerge(mergedRegion, regionA, regionB, serverName, metaEntries);
+      List<Mutation> metaEntries, int regionReplication) throws IOException {
+    prepareMutationsForMerge(mergedRegion, regionA, regionB, serverName, metaEntries,
+      regionReplication);
     MetaEditor.mutateMetaTable(catalogTracker, metaEntries);
   }
 
   public void prepareMutationsForMerge(HRegionInfo mergedRegion, HRegionInfo regionA,
-      HRegionInfo regionB, ServerName serverName, List<Mutation> mutations) throws IOException {
+      HRegionInfo regionB, ServerName serverName, List<Mutation> mutations, int regionReplication)
+          throws IOException {
     HRegionInfo copyOfMerged = new HRegionInfo(mergedRegion);
 
     // Put for parent
@@ -348,6 +352,13 @@ public class RegionMergeTransaction {
     Delete deleteB = MetaEditor.makeDeleteFromRegionInfo(regionB);
     mutations.add(deleteA);
     mutations.add(deleteB);
+
+    // Add empty locations for region replicas of the merged region so that number of replicas can
+    // be cached whenever the primary region is looked up from meta
+    for (int i = 1; i < regionReplication; i++) {
+      addEmptyLocation(putOfMerged, i);
+    }
+
     // The merged is a new region, openSeqNum = 1 is fine.
     addLocation(putOfMerged, serverName, 1);
   }
@@ -358,6 +369,13 @@ public class RegionMergeTransaction {
     p.add(HConstants.CATALOG_FAMILY, HConstants.STARTCODE_QUALIFIER, Bytes.toBytes(sn
         .getStartcode()));
     p.add(HConstants.CATALOG_FAMILY, HConstants.SEQNUM_QUALIFIER, Bytes.toBytes(openSeqNum));
+    return p;
+  }
+
+  private static Put addEmptyLocation(final Put p, int replicaId){
+    p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getServerColumn(replicaId), null);
+    p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getStartCodeColumn(replicaId), null);
+    p.addImmutable(HConstants.CATALOG_FAMILY, MetaReader.getSeqNumColumn(replicaId), null);
     return p;
   }
 

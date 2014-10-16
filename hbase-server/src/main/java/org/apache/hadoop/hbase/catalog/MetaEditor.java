@@ -343,7 +343,7 @@ public class MetaEditor extends MetaReader {
    */
   public static void mergeRegions(final CatalogTracker catalogTracker,
       HRegionInfo mergedRegion, HRegionInfo regionA, HRegionInfo regionB,
-      ServerName sn) throws IOException {
+      ServerName sn, int regionReplication) throws IOException {
     HTable meta = MetaReader.getMetaHTable(catalogTracker);
     try {
       HRegionInfo copyOfMerged = new HRegionInfo(mergedRegion);
@@ -361,6 +361,12 @@ public class MetaEditor extends MetaReader {
 
       // The merged is a new region, openSeqNum = 1 is fine.
       addLocation(putOfMerged, sn, 1, mergedRegion.getReplicaId());
+
+      // Add empty locations for region replicas of the merged region so that number of replicas can
+      // be cached whenever the primary region is looked up from meta
+      for (int i = 1; i < regionReplication; i++) {
+        addEmptyLocation(putOfMerged, i);
+      }
 
       byte[] tableRow = Bytes.toBytes(mergedRegion.getRegionNameAsString()
           + HConstants.DELIMITER);
@@ -383,7 +389,7 @@ public class MetaEditor extends MetaReader {
    */
   public static void splitRegion(final CatalogTracker catalogTracker,
       HRegionInfo parent, HRegionInfo splitA, HRegionInfo splitB,
-      ServerName sn) throws IOException {
+      ServerName sn, int regionReplication) throws IOException {
     HTable meta = MetaReader.getMetaHTable(catalogTracker);
     try {
       HRegionInfo copyOfParent = new HRegionInfo(parent);
@@ -400,6 +406,13 @@ public class MetaEditor extends MetaReader {
 
       addLocation(putA, sn, 1, splitA.getReplicaId()); //new regions, openSeqNum = 1 is fine.
       addLocation(putB, sn, 1, splitB.getReplicaId());
+
+      // Add empty locations for region replicas of daughters so that number of replicas can be
+      // cached whenever the primary region is looked up from meta
+      for (int i = 1; i < regionReplication; i++) {
+        addEmptyLocation(putA, i);
+        addEmptyLocation(putB, i);
+      }
 
       byte[] tableRow = Bytes.toBytes(parent.getRegionNameAsString() + HConstants.DELIMITER);
       multiMutate(meta, tableRow, putParent, putA, putB);
