@@ -343,6 +343,24 @@ public class MetaEditor extends MetaReader {
    */
   public static void mergeRegions(final CatalogTracker catalogTracker,
       HRegionInfo mergedRegion, HRegionInfo regionA, HRegionInfo regionB,
+      ServerName sn) throws IOException {
+    mergeRegions(catalogTracker, mergedRegion, regionA, regionB, sn, 1);
+  }
+
+  /**
+   * Merge the two regions into one in an atomic operation. Deletes the two
+   * merging regions in hbase:meta and adds the merged region with the information of
+   * two merging regions.
+   * @param catalogTracker the catalog tracker
+   * @param mergedRegion the merged region
+   * @param regionA
+   * @param regionB
+   * @param sn the location of the region
+   * @param regionReplication the replication for the table in question
+   * @throws IOException
+   */
+  public static void mergeRegions(final CatalogTracker catalogTracker,
+      HRegionInfo mergedRegion, HRegionInfo regionA, HRegionInfo regionB,
       ServerName sn, int regionReplication) throws IOException {
     HTable meta = MetaReader.getMetaHTable(catalogTracker);
     try {
@@ -386,6 +404,24 @@ public class MetaEditor extends MetaReader {
    * @param splitA Split daughter region A
    * @param splitB Split daughter region A
    * @param sn the location of the region
+   */
+  public static void splitRegion(final CatalogTracker catalogTracker,
+      HRegionInfo parent, HRegionInfo splitA, HRegionInfo splitB,
+      ServerName sn) throws IOException {
+    splitRegion(catalogTracker, parent, splitA, splitB, sn, 1);
+  }
+
+  /**
+   * Splits the region into two in an atomic operation. Offlines the parent
+   * region with the information that it is split into two, and also adds
+   * the daughter regions. Does not add the location information to the daughter
+   * regions since they are not open yet.
+   * @param catalogTracker the catalog tracker
+   * @param parent the parent region which is split
+   * @param splitA Split daughter region A
+   * @param splitB Split daughter region A
+   * @param sn the location of the region
+   * @param regionReplication the replication for the table in question
    */
   public static void splitRegion(final CatalogTracker catalogTracker,
       HRegionInfo parent, HRegionInfo splitA, HRegionInfo splitB,
