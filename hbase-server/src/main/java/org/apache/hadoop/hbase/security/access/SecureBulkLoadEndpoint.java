@@ -300,7 +300,8 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
   private Path createStagingDir(Path baseDir,
                                 User user,
                                 TableName tableName) throws IOException {
-    String randomDir = user.getShortName()+"__"+ tableName +"__"+
+    String tblName = tableName.getNameAsString().replace(":", "_");
+    String randomDir = user.getShortName()+"__"+ tblName +"__"+
         (new BigInteger(RANDOM_WIDTH, random).toString(RANDOM_RADIX));
     return createStagingDir(baseDir, user, tableName, randomDir);
   }
