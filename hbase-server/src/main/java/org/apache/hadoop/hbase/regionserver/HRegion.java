@@ -3702,7 +3702,14 @@ public class HRegion implements HeapSize { // , Writable{
           if (firstSeqIdInLog == -1) {
             firstSeqIdInLog = key.getLogSeqNum();
           }
-          currentEditSeqId = key.getLogSeqNum();
+          if (currentEditSeqId > key.getLogSeqNum()){
+            // when this condition is true, it means we have a serious defect because we need to
+            // maintain increasing SeqId for WAL edits per region
+            LOG.error("Found decreasing SeqId. PreId=" + currentEditSeqId + " key=" + key + 
+              "; edit=" + val);
+          } else {
+            currentEditSeqId = key.getLogSeqNum();
+          }
           boolean flush = false;
           for (KeyValue kv: val.getKeyValues()) {
             // Check this edit is for me. Also, guard against writing the special
