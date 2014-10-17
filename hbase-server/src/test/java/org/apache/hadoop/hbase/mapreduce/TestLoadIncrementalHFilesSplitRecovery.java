@@ -144,12 +144,14 @@ public class TestLoadIncrementalHFilesSplitRecovery {
       throws IOException {
     try {
       LOG.info("Creating table " + table);
-      HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(table));
+      TableName tableName = TableName.valueOf(table);
+      HTableDescriptor htd = new HTableDescriptor(tableName);
       for (int i = 0; i < cfs; i++) {
         htd.addFamily(new HColumnDescriptor(family(i)));
       }
 
       util.getHBaseAdmin().createTable(htd, SPLIT_KEYS);
+      util.waitUntilAllRegionsAssigned(tableName);
     } catch (TableExistsException tee) {
       LOG.info("Table " + table + " already exists");
     }
