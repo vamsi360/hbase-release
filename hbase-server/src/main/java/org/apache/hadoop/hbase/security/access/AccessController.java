@@ -62,6 +62,7 @@ import org.apache.hadoop.hbase.client.Query;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
+import org.apache.hadoop.hbase.coprocessor.BulkLoadObserver;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorException;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorService;
 import org.apache.hadoop.hbase.coprocessor.EndpointObserver;
@@ -84,6 +85,8 @@ import org.apache.hadoop.hbase.protobuf.ResponseConverter;
 import org.apache.hadoop.hbase.protobuf.generated.AccessControlProtos;
 import org.apache.hadoop.hbase.protobuf.generated.AccessControlProtos.AccessControlService;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
+import org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos.CleanupBulkLoadRequest;
+import org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos.PrepareBulkLoadRequest;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.MiniBatchOperationInProgress;
@@ -147,7 +150,7 @@ import com.google.protobuf.Service;
  */
 public class AccessController extends BaseRegionObserver
     implements MasterObserver, RegionServerObserver,
-      AccessControlService.Interface, CoprocessorService, EndpointObserver {
+      AccessControlService.Interface, CoprocessorService, EndpointObserver, BulkLoadObserver {
 
   public static final Log LOG = LogFactory.getLog(AccessController.class);
 
@@ -1993,7 +1996,11 @@ public class AccessController extends BaseRegionObserver
    * @throws IOException
    */
   //TODO this should end up as a coprocessor hook
-  public void prePrepareBulkLoad(RegionCoprocessorEnvironment e) throws IOException {
+  @Override
+  public void prePrepareBulkLoad(ObserverContext<RegionCoprocessorEnvironment> ctx,
+                                 PrepareBulkLoadRequest request) throws IOException {
+    RegionCoprocessorEnvironment e = ctx.getEnvironment();
+
     AuthResult authResult = hasSomeAccess(e, "prePrepareBulkLoad", Action.WRITE);
     logResult(authResult);
     if (!authResult.isAllowed()) {
@@ -2009,7 +2016,11 @@ public class AccessController extends BaseRegionObserver
    * @throws IOException
    */
   //TODO this should end up as a coprocessor hook
-  public void preCleanupBulkLoad(RegionCoprocessorEnvironment e) throws IOException {
+  @Override
+  public void preCleanupBulkLoad(ObserverContext<RegionCoprocessorEnvironment> ctx,
+                                 CleanupBulkLoadRequest request) throws IOException {
+    RegionCoprocessorEnvironment e = ctx.getEnvironment();
+
     AuthResult authResult = hasSomeAccess(e, "preCleanupBulkLoad", Action.WRITE);
     logResult(authResult);
     if (!authResult.isAllowed()) {

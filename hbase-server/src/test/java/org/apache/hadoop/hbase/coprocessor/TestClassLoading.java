@@ -24,6 +24,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
+import org.apache.hadoop.hbase.coprocessor.MasterObserver;
+import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.TestServerCustomProtocol;
 import org.apache.hadoop.hbase.util.ClassLoaderTestHelper;
@@ -527,6 +530,28 @@ public class TestClassLoading {
         java.util.Arrays.toString(
             TEST_UTIL.getHBaseCluster().getMaster().getCoprocessors());
     assertEquals(loadedMasterCoprocessorsVerify, loadedMasterCoprocessors);
+  }
+
+  @Test
+  public void testFindCoprocessors() {
+    // HBASE 12277:
+    CoprocessorHost masterCpHost =
+                             TEST_UTIL.getHBaseCluster().getMaster().getCoprocessorHost();
+
+    List<MasterObserver> masterObservers = masterCpHost.findCoprocessors(MasterObserver.class);
+
+    assertTrue(masterObservers != null && masterObservers.size() > 0);
+    assertEquals(masterCoprocessor.getSimpleName(),
+                 masterObservers.get(0).getClass().getSimpleName());
+
+    for (HRegion region :
+                TEST_UTIL.getHBaseCluster().getRegionServer(0).getOnlineRegionsLocalContext()) {
+      CoprocessorHost regionCpHost = region.getCoprocessorHost();
+
+      List<RegionObserver> regionObservers = regionCpHost.findCoprocessors(RegionObserver.class);
+
+      assertTrue(regionObservers != null && regionObservers.size() > 0);
+    }
   }
 
   private void waitForTable(TableName name) throws InterruptedException, IOException {
