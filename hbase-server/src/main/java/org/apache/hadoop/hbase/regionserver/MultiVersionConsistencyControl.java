@@ -141,6 +141,18 @@ public class MultiVersionConsistencyControl {
   }
 
   /**
+   * Advances the current read point to be given readPoint if it is smaller than
+   * that.
+   */
+  void advanceMemstoreReadPointIfNeeded(long readPoint) {
+    synchronized (writeQueue) {
+      if (this.memstoreRead < readPoint) {
+        memstoreRead = readPoint;
+      }
+    }
+  }
+
+  /**
    * Wait for the global readPoint to advance upto
    * the specified transaction number.
    */

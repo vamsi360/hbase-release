@@ -42,9 +42,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.DroppedSnapshotException;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.RemoteExceptionHandler;
+import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.HasThread;
+import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.util.StringUtils;
 import org.cliffc.high_scale_lib.Counter;
@@ -65,6 +67,8 @@ import org.cloudera.htrace.TraceScope;
 @InterfaceAudience.Private
 class MemStoreFlusher implements FlushRequester {
   static final Log LOG = LogFactory.getLog(MemStoreFlusher.class);
+
+  private Configuration conf;
   // These two data members go together.  Any entry in the one must have
   // a corresponding entry in the other.
   private final BlockingQueue<FlushQueueEntry> flushQueue =
@@ -121,6 +125,7 @@ class MemStoreFlusher implements FlushRequester {
       ", globalMemStoreLimitLowMark=" +
       StringUtils.humanReadableInt(this.globalMemStoreLimitLowMark) +
       ", maxHeap=" + StringUtils.humanReadableInt(max));
+    this.conf = conf;
   }
 
   /**
@@ -165,6 +170,9 @@ class MemStoreFlusher implements FlushRequester {
 
     Set<HRegion> excludedRegions = new HashSet<HRegion>();
 
+    double secondaryMultiplier
+      = ServerRegionReplicaUtil.getRegionReplicaStoreFileRefreshMultiplier(conf);
+
     boolean flushedOne = false;
     while (!flushedOne) {
       // Find the biggest region that doesn't have too many storefiles
@@ -174,8 +182,11 @@ class MemStoreFlusher implements FlushRequester {
       // Find the biggest region, total, even if it might have too many flushes.
       HRegion bestAnyRegion = getBiggestMemstoreRegion(
           regionsBySize, excludedRegions, false);
+      // Find the biggest region that is a secondary region
+      HRegion bestSecondaryRegion = getBiggestMemstoreOfSecondaryRegion(regionsBySize,
+        excludedRegions);
 
-      if (bestAnyRegion == null) {
+      if (bestAnyRegion == null && bestSecondaryRegion == null) {
         LOG.error("Above memory mark but there are no flushable regions!");
         return false;
       }
@@ -205,11 +216,25 @@ class MemStoreFlusher implements FlushRequester {
         }
       }
 
-      Preconditions.checkState(regionToFlush.memstoreSize.get() > 0);
+      Preconditions.checkState(
+        (regionToFlush != null && regionToFlush.memstoreSize.get() > 0) ||
+        (bestSecondaryRegion != null && bestSecondaryRegion.memstoreSize.get() > 0));
 
-      LOG.info("Flush of region " + regionToFlush + " due to global heap pressure. memstore size=" +
-          StringUtils.humanReadableInt(server.getRegionServerAccounting().getGlobalMemstoreSize()));
-      flushedOne = flushRegion(regionToFlush, true);
+      if (regionToFlush == null ||
+          (ServerRegionReplicaUtil.isRegionReplicaStoreFileRefreshEnabled(conf) &&
+              bestSecondaryRegion.memstoreSize.get()
+              > secondaryMultiplier * regionToFlush.memstoreSize.get())) {
+        LOG.info("Refreshing storefiles of region " + regionToFlush +
+          " due to global heap pressure. memstore size=" + StringUtils.humanReadableInt(
+            server.getRegionServerAccounting().getGlobalMemstoreSize()));
+        flushedOne = refreshStoreFilesAndReclaimMemory(bestSecondaryRegion);
+      } else {
+        LOG.info("Flush of region " + regionToFlush + " due to global heap pressure. " +
+            "memstore size=" + StringUtils.humanReadableInt(
+              server.getRegionServerAccounting().getGlobalMemstoreSize()));
+        flushedOne = flushRegion(regionToFlush, true);
+      }
+
       if (!flushedOne) {
         LOG.info("Excluding unflushable region " + regionToFlush +
           " - trying to find a different region to flush.");
@@ -304,6 +329,34 @@ class MemStoreFlusher implements FlushRequester {
       }
     }
     return null;
+  }
+
+  private HRegion getBiggestMemstoreOfSecondaryRegion(SortedMap<Long, HRegion> regionsBySize,
+      Set<HRegion> excludedRegions) {
+    synchronized (regionsInQueue) {
+      for (HRegion region : regionsBySize.values()) {
+        if (excludedRegions.contains(region)) {
+          continue;
+        }
+
+        if (region.writestate.flushing
+            || RegionReplicaUtil.isDefaultReplica(region.getRegionInfo())) {
+          continue;
+        }
+
+        return region;
+      }
+    }
+    return null;
+  }
+
+  private boolean refreshStoreFilesAndReclaimMemory(HRegion region) {
+    try {
+      return region.refreshStoreFiles();
+    } catch (IOException e) {
+      LOG.warn("Refreshing store files failed with exception", e);
+    }
+    return false;
   }
 
   /**
