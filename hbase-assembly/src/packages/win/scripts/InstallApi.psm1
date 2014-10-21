@@ -214,9 +214,8 @@ function Uninstall(
         ###
         ### Removing HBASE installation environment variables
         ###
-        Write-Log "Removing HBASE_HOME, HBASE_LOG_DIR, and HBASE_CONF_DIR environment variables at machine scope"
+        Write-Log "Removing HBASE_HOME, and HBASE_CONF_DIR environment variables at machine scope"
         [Environment]::SetEnvironmentVariable( "HBASE_HOME", $null, [EnvironmentVariableTarget]::Machine )
-        [Environment]::SetEnvironmentVariable( "HBASE_LOG_DIR", $null, [EnvironmentVariableTarget]::Machine )
         [Environment]::SetEnvironmentVariable( "HBASE_CONF_DIR", $null, [EnvironmentVariableTarget]::Machine )
     }
     else
@@ -499,7 +498,6 @@ function InstallBinaries(
 
     GiveFullPermissions "$hbaseLogsDir" "Users"
 
-    [Environment]::SetEnvironmentVariable( "HBASE_LOG_DIR", "$ENV:HBASE_HOME\logs", [EnvironmentVariableTarget]::Machine )
     [Environment]::SetEnvironmentVariable( "HBASE_CONF_DIR", "$ENV:HBASE_HOME\conf", [EnvironmentVariableTarget]::Machine )
 
     Write-Log "Installation of Apache HBase binaries completed"
