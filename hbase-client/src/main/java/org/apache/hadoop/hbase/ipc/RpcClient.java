@@ -352,6 +352,7 @@ public class RpcClient {
     protected Socket socket = null;                 // connected socket
     protected DataInputStream in;
     protected DataOutputStream out; // Warning: can be locked inside a class level lock.
+    private Object outLock = new Object();
     private InetSocketAddress server;             // server ip:port
     private String serverPrincipal;  // server's krb5 principal name
     private AuthMethod authMethod; // authentication method
@@ -1011,7 +1012,7 @@ public class RpcClient {
      * Write the connection header.
      */
     private synchronized void writeConnectionHeader() throws IOException {
-      synchronized (this.out) {
+      synchronized (this.outLock) {
         this.out.writeInt(this.header.getSerializedSize());
         this.header.writeTo(this.out);
         this.out.flush();
@@ -1032,8 +1033,8 @@ public class RpcClient {
       }
 
       // close the streams and therefore the socket
-      if (this.out != null) {
-        synchronized(this.out) {
+      synchronized(this.outLock) {
+        if (this.out != null) {
           IOUtils.closeStream(out);
           this.out = null;
         }
@@ -1097,7 +1098,7 @@ public class RpcClient {
       //  know where we stand, we have to close the connection.
       checkIsOpen();
       IOException writeException = null;
-      synchronized (this.out) {
+      synchronized (this.outLock) {
         if (Thread.interrupted()) throw new InterruptedIOException();
 
         calls.put(call.id, call); // We put first as we don't want the connection to become idle.

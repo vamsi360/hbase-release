@@ -252,9 +252,13 @@ public class JenkinsHash extends Hash {
     FileInputStream in = new FileInputStream(args[0]);
     byte[] bytes = new byte[512];
     int value = 0;
-    JenkinsHash hash = new JenkinsHash();
-    for (int length = in.read(bytes); length > 0; length = in.read(bytes)) {
-      value = hash.hash(bytes, length, value);
+    try {
+      JenkinsHash hash = new JenkinsHash();
+      for (int length = in.read(bytes); length > 0; length = in.read(bytes)) {
+        value = hash.hash(bytes, length, value);
+      }
+    } finally {
+      in.close();
     }
     System.out.println(Math.abs(value));
   }

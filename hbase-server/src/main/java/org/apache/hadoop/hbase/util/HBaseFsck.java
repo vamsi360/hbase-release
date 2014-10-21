@@ -2817,7 +2817,12 @@ public class HBaseFsck extends Configured {
     HTableDescriptor[] htd = new HTableDescriptor[0];
     try {
       LOG.info("getHTableDescriptors == tableNames => " + tableNames);
-      htd = new HBaseAdmin(getConf()).getTableDescriptorsByTableName(tableNames);
+      HBaseAdmin admin = new HBaseAdmin(getConf());
+      try {
+        htd = admin.getTableDescriptorsByTableName(tableNames);
+      } finally {
+        admin.close();
+      }
     } catch (IOException e) {
       LOG.debug("Exception getting table descriptors", e);
     }
@@ -2915,7 +2920,13 @@ public class HBaseFsck extends Configured {
   KeeperException {
     undeployRegions(hi);
     ZooKeeperWatcher zkw = createZooKeeperWatcher();
-    ZKUtil.deleteNode(zkw, zkw.getZNodeForReplica(hi.metaEntry.getReplicaId()));  
+    try {
+      ZKUtil.deleteNode(zkw, zkw.getZNodeForReplica(hi.metaEntry.getReplicaId()));
+    } finally {
+      if (zkw != null) {
+        zkw.close();
+      }
+    }
   }
 
   private void assignMetaReplica(int replicaId)

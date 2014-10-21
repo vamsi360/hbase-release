@@ -67,6 +67,7 @@ public class MasterStatusServlet extends HttpServlet {
     if(master.isActiveMaster()) {
       if (master.getServerManager() == null) {
         response.sendError(503, "Master not ready");
+        admin.close();
         return;
       }
       metaLocation = getMetaLocationOrNull(master);

@@ -1416,16 +1416,22 @@ public class VisibilityController extends BaseRegionObserver implements MasterOb
     performACLCheck();
     RegionScanner scanner = this.regionEnv.getRegion().getScanner(s);
     List<Cell> results = new ArrayList<Cell>(1);
-    while (true) {
-      scanner.next(results);
-      if (results.isEmpty()) break;
-      Cell cell = results.get(0);
-      int ordinal = Bytes.toInt(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
-      String label = this.visibilityManager.getLabel(ordinal);
-      if (label != null) {
-        auths.add(label);
+    try {
+      while (true) {
+        scanner.next(results);
+        if (results.isEmpty()) break;
+        Cell cell = results.get(0);
+        int ordinal = Bytes.toInt(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
+        String label = this.visibilityManager.getLabel(ordinal);
+        if (label != null) {
+          auths.add(label);
+        }
+        results.clear();
       }
-      results.clear();
+    } finally {
+      if (scanner != null) {
+        scanner.close();
+      }
     }
     return auths;
   }

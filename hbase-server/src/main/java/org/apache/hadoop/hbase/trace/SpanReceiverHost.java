@@ -47,9 +47,6 @@ public class SpanReceiverHost {
   }
 
   public static SpanReceiverHost getInstance(Configuration conf) {
-    if (SingleTonholder.INSTANCE.host != null) {
-      return SingleTonholder.INSTANCE.host;
-    }
     synchronized (SingleTonholder.INSTANCE.lock) {
       if (SingleTonholder.INSTANCE.host != null) {
         return SingleTonholder.INSTANCE.host;
