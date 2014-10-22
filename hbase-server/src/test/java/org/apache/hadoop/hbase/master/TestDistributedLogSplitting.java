@@ -50,6 +50,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -248,7 +249,15 @@ public class TestDistributedLogSplitting {
       Path editsdir =
         HLogUtil.getRegionDirRecoveredEditsDir(HRegion.getRegionDir(tdir, hri.getEncodedName()));
       LOG.debug("checking edits dir " + editsdir);
-      FileStatus[] files = fs.listStatus(editsdir);
+      FileStatus[] files = fs.listStatus(editsdir, new PathFilter() {
+        @Override
+        public boolean accept(Path p) {
+          if (p.getName().endsWith(HLog.SEQUENCE_ID_FILE_SUFFIX)) {
+            return false;
+          }
+          return true;
+        }
+      });
       assertTrue(files.length > 1);
       for (int i = 0; i < files.length; i++) {
         int c = countHLog(files[i].getPath(), fs, conf);
@@ -826,7 +835,15 @@ public class TestDistributedLogSplitting {
         HLogUtil.getRegionDirRecoveredEditsDir(HRegion.getRegionDir(tdir, hri.getEncodedName()));
       LOG.debug("checking edits dir " + editsdir);
       if(!fs.exists(editsdir)) continue;
-      FileStatus[] files = fs.listStatus(editsdir);
+      FileStatus[] files = fs.listStatus(editsdir, new PathFilter() {
+        @Override
+        public boolean accept(Path p) {
+          if (p.getName().endsWith(HLog.SEQUENCE_ID_FILE_SUFFIX)) {
+            return false;
+          }
+          return true;
+        }
+      });
       if(files != null) {
         for(FileStatus file : files) {
           int c = countHLog(file.getPath(), fs, conf);
@@ -1355,6 +1372,48 @@ public class TestDistributedLogSplitting {
     ht.close();
   }
 
+  @Test(timeout = 300000)
+  public void testReadWriteSeqIdFiles() throws Exception {
+    LOG.info("testReadWriteSeqIdFiles");
+    startCluster(2);
+    final ZooKeeperWatcher zkw = new ZooKeeperWatcher(conf, "table-creation", null);
+    HTable ht = installTable(zkw, "table", "family", 10);
+    FileSystem fs = master.getMasterFileSystem().getFileSystem();
+    Path tableDir = FSUtils.getTableDir(FSUtils.getRootDir(conf), TableName.valueOf("table"));
+    List<Path> regionDirs = FSUtils.getRegionDirs(fs, tableDir);
+    // clean existing SeqId file
+    Path editsdir = HLogUtil.getRegionDirRecoveredEditsDir(regionDirs.get(0));
+    if(fs.exists(editsdir)){
+      FileStatus[] files = FSUtils.listStatus(fs, editsdir);
+      for(FileStatus file : files){
+        fs.delete(file.getPath(), false);
+      }
+    }
+    HLogUtil.writeRegionOpenSequenceIdFile(fs, regionDirs.get(0) , 1L, 1000L);
+    // current SeqId file has seqid=1001
+    HLogUtil.writeRegionOpenSequenceIdFile(fs, regionDirs.get(0) , 1L, 1000L);
+    // current SeqId file has seqid=2001
+    assertEquals(3001, HLogUtil.writeRegionOpenSequenceIdFile(fs, regionDirs.get(0) , 3L, 1000L));
+    
+    FileStatus[] files = FSUtils.listStatus(fs, editsdir, new PathFilter() {
+      @Override
+      public boolean accept(Path p) {
+        if (p.getName().endsWith(HLog.SEQUENCE_ID_FILE_SUFFIX)) {
+          return true;
+        }
+        return false;
+      }
+    });
+    // only one seqid file should exist
+    assertEquals(1, files.length);
+    
+    // verify all seqId files aren't treated as recovered.edits files
+    NavigableSet<Path> recoveredEdits = HLogUtil.getSplitEditFilesSorted(fs, regionDirs.get(0));
+    assertEquals(0, recoveredEdits.size());
+    
+    ht.close();
+  } 
+  
   HTable installTable(ZooKeeperWatcher zkw, String tname, String fname, int nrs) throws Exception {
     return installTable(zkw, tname, fname, nrs, 0);
   }

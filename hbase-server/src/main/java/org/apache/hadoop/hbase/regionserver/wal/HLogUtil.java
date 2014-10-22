@@ -35,7 +35,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -45,6 +44,7 @@ import org.apache.hadoop.hbase.protobuf.generated.WALProtos;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor;
+import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor.EventType;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
 
@@ -95,7 +95,7 @@ public class HLogUtil {
   public static Path getRegionDirRecoveredEditsDir(final Path regiondir) {
     return new Path(regiondir, HConstants.RECOVERED_EDITS_DIR);
   }
-
+  
   /**
    * Move aside a bad edits file.
    *
@@ -341,6 +341,67 @@ public class HLogUtil {
     }
     
     return trx;
+  }
+  
+  /**
+   * Create a file with name as region open sequence id
+   * @param fs
+   * @param regiondir
+   * @param newSeqId
+   * @param saftyBumper
+   * @return long new sequence Id value
+   * @throws IOException
+   */
+  public static long writeRegionOpenSequenceIdFile(final FileSystem fs, final Path regiondir,
+      long newSeqId, long saftyBumper) throws IOException {
+
+    Path editsdir = HLogUtil.getRegionDirRecoveredEditsDir(regiondir);
+    long maxSeqId = 0;
+    FileStatus[] files = null;
+    if (fs.exists(editsdir)) {
+      files = FSUtils.listStatus(fs, editsdir, new PathFilter() {
+        @Override
+        public boolean accept(Path p) {
+          if (p.getName().endsWith(HLog.SEQUENCE_ID_FILE_SUFFIX)) {
+            return true;
+          }
+          return false;
+        }
+      });
+      if (files != null) {
+        for (FileStatus status : files) {
+          String fileName = status.getPath().getName();
+          try {
+            Long tmpSeqId =
+                Long.parseLong(fileName.substring(0, fileName.length()
+                    - HLog.SEQUENCE_ID_FILE_SUFFIX.length()));
+            maxSeqId = Math.max(tmpSeqId, maxSeqId);
+          } catch (NumberFormatException ex) {
+            LOG.warn("Invalid SeqId File Name=" + fileName);
+          }
+        }
+      }
+    }
+    if (maxSeqId > newSeqId) {
+      newSeqId = maxSeqId;
+    }
+    newSeqId += saftyBumper; // bump up SeqId
+
+    // write a new seqId file
+    Path newSeqIdFile = new Path(editsdir, newSeqId + HLog.SEQUENCE_ID_FILE_SUFFIX);
+    if (!fs.createNewFile(newSeqIdFile) && !fs.exists(newSeqIdFile)) {
+      throw new IOException("Failed to create SeqId file:" + newSeqIdFile);
+    }
+    // remove old ones
+    if (files != null) {
+      for (FileStatus status : files) {
+        if(newSeqIdFile.equals(status.getPath())){
+          continue;
+        }
+        fs.delete(status.getPath(), false);
+      }
+    }
+    return newSeqId;
   }
 
 }

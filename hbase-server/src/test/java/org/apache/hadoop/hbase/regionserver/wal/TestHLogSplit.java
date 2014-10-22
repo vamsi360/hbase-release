@@ -54,6 +54,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -64,6 +65,7 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos.SplitLogTask.RecoveryMode;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.regionserver.wal.HLog.Entry;
 import org.apache.hadoop.hbase.regionserver.wal.HLog.Reader;
 import org.apache.hadoop.hbase.regionserver.wal.HLogSplitter.CorruptedLogFileException;
@@ -1372,7 +1374,15 @@ public class TestHLogSplit {
     @SuppressWarnings("deprecation")
     Path editsdir = HLogUtil.getRegionDirRecoveredEditsDir(HRegion.getRegionDir(tdir,
       Bytes.toString(region.getBytes())));
-    FileStatus [] files = this.fs.listStatus(editsdir);
+    FileStatus [] files = this.fs.listStatus(editsdir, new PathFilter() {
+      @Override
+      public boolean accept(Path p) {
+        if (p.getName().endsWith(HLog.SEQUENCE_ID_FILE_SUFFIX)) {
+          return false;
+        }
+        return true;
+      }
+    });
     Path[] paths = new Path[files.length];
     for (int i = 0; i < files.length; i++) {
       paths[i] = files[i].getPath();

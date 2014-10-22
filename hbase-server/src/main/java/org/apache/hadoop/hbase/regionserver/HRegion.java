@@ -814,12 +814,13 @@ public class HRegion implements HeapSize { // , Writable{
     // Use maximum of log sequenceid or that which was found in stores
     // (particularly if no recovered edits, seqid will be -1).
     long nextSeqid = maxSeqId + 1;
-    if (this.isRecovering) {
-      // In distributedLogReplay mode, we don't know the last change sequence number because region
-      // is opened before recovery completes. So we add a safety bumper to avoid new sequence number
-      // overlaps used sequence numbers
-      nextSeqid += this.flushPerChanges + 10000000; // add another extra 10million
-    }
+    
+    // In distributedLogReplay mode, we don't know the last change sequence number because region
+    // is opened before recovery completes. So we add a safety bumper to avoid new sequence number
+    // overlaps used sequence numbers
+    nextSeqid = HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(), 
+          this.fs.getRegionDir(), nextSeqid, 
+          (this.isRecovering ? (this.flushPerChanges + 10000000) : 0));
 
     LOG.info("Onlined " + this.getRegionInfo().getShortNameToLog() +
       "; next sequenceid=" + nextSeqid);
@@ -946,6 +947,10 @@ public class HRegion implements HeapSize { // , Writable{
       getRegionServerServices().getServerName(), storeFiles);
     HLogUtil.writeRegionEventMarker(log, getTableDesc(), getRegionInfo(), regionEventDesc,
       getSequenceId());
+    
+    // Store SeqId in HDFS when a region closes
+    HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(), 
+      this.fs.getRegionDir(), getSequenceId().get(), 0);    
   }
 
   /**
@@ -3705,7 +3710,7 @@ public class HRegion implements HeapSize { // , Writable{
           if (currentEditSeqId > key.getLogSeqNum()){
             // when this condition is true, it means we have a serious defect because we need to
             // maintain increasing SeqId for WAL edits per region
-            LOG.error("Found decreasing SeqId. PreId=" + currentEditSeqId + " key=" + key + 
+            LOG.warn("Found decreasing SeqId. PreId=" + currentEditSeqId + " key=" + key + 
               "; edit=" + val);
           } else {
             currentEditSeqId = key.getLogSeqNum();
