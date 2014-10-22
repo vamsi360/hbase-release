@@ -162,7 +162,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.protobuf.Descriptors;
-import com.google.protobuf.HBaseZeroCopyByteString;
 import com.google.protobuf.Message;
 import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
@@ -2596,6 +2595,14 @@ public class HRegion implements HeapSize { // , Writable{
   public OperationStatus[] batchReplay(HLogSplitter.MutationReplay[] mutations, long replaySeqId)
       throws IOException {
     if (replaySeqId < lastReplayedOpenRegionSeqId) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(getRegionInfo().getEncodedName() + " : "
+          + "Skipping " + mutations.length + " mutations with replaySeqId=" + replaySeqId
+          + " which is < than lastReplayedOpenRegionSeqId=" + lastReplayedOpenRegionSeqId);
+        for (MutationReplay mut : mutations) {
+          LOG.trace(getRegionInfo().getEncodedName() + " : Skipping : " + mut.mutation);
+        }
+      }
       // ignore these entries silently
       OperationStatus[] statuses = new OperationStatus[mutations.length];
       for (int i = 0; i < statuses.length; i++) {
@@ -3307,6 +3314,9 @@ public class HRegion implements HeapSize { // , Writable{
   }
 
   public void setReadsEnabled(boolean readsEnabled) {
+    if (readsEnabled && !this.writestate.readsEnabled) {
+      LOG.info(getRegionInfo().getEncodedName() + " : Enabling reads for region.");
+    }
     this.writestate.setReadsEnabled(readsEnabled);
   }
 
