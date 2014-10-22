@@ -4154,7 +4154,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
           walEntries.add(walEntry);
         }
         mutations.addAll(edits);
-        replaySeqId = entry.getKey().getLogSequenceNumber(); // TODO: do we need orig seq number?
+        replaySeqId = Math.max(replaySeqId, entry.getKey().getLogSequenceNumber());
       }
 
       if (!mutations.isEmpty()) {
