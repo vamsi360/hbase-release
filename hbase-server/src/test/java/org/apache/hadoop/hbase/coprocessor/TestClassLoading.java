@@ -543,15 +543,6 @@ public class TestClassLoading {
     assertTrue(masterObservers != null && masterObservers.size() > 0);
     assertEquals(masterCoprocessor.getSimpleName(),
                  masterObservers.get(0).getClass().getSimpleName());
-
-    for (HRegion region :
-                TEST_UTIL.getHBaseCluster().getRegionServer(0).getOnlineRegionsLocalContext()) {
-      CoprocessorHost regionCpHost = region.getCoprocessorHost();
-
-      List<RegionObserver> regionObservers = regionCpHost.findCoprocessors(RegionObserver.class);
-
-      assertTrue(regionObservers != null && regionObservers.size() > 0);
-    }
   }
 
   private void waitForTable(TableName name) throws InterruptedException, IOException {
