@@ -949,8 +949,12 @@ public class HRegion implements HeapSize { // , Writable{
       getSequenceId());
 
     // Store SeqId in HDFS when a region closes
-    HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(),
-      this.fs.getRegionDir(), getSequenceId().get(), 0);
+    // checking region folder exists is due to many tests which delete the table folder while a 
+    // table is still online
+    if(this.fs.getFileSystem().exists(this.fs.getRegionDir())){
+      HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(), 
+        this.fs.getRegionDir(), getSequenceId().get(), 0);
+    }
   }
 
   /**

@@ -28,6 +28,8 @@ import java.io.IOException;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -35,6 +37,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.junit.AfterClass;
@@ -121,7 +124,15 @@ public class TestTableDeleteFamilyHandler {
     FileStatus[] fileStatus = fs.listStatus(tableDir);
     for (int i = 0; i < fileStatus.length; i++) {
       if (fileStatus[i].isDir() == true) {
-        FileStatus[] cf = fs.listStatus(fileStatus[i].getPath());
+        FileStatus[] cf = fs.listStatus(fileStatus[i].getPath(), new PathFilter() {
+          @Override
+          public boolean accept(Path p) {
+            if (p.getName().contains(HConstants.RECOVERED_EDITS_DIR)) {
+              return false;
+            }
+            return true;
+          }
+        });
         int k = 1;
         for (int j = 0; j < cf.length; j++) {
           if (cf[j].isDir() == true
@@ -148,7 +159,15 @@ public class TestTableDeleteFamilyHandler {
     fileStatus = fs.listStatus(tableDir);
     for (int i = 0; i < fileStatus.length; i++) {
       if (fileStatus[i].isDir() == true) {
-        FileStatus[] cf = fs.listStatus(fileStatus[i].getPath());
+        FileStatus[] cf = fs.listStatus(fileStatus[i].getPath(), new PathFilter() {
+          @Override
+          public boolean accept(Path p) {
+            if (p.getName().endsWith(HLog.SEQUENCE_ID_FILE_SUFFIX)) {
+              return false;
+            }
+            return true;
+          }
+        });
         for (int j = 0; j < cf.length; j++) {
           if (cf[j].isDir() == true) {
             assertFalse(cf[j].getPath().getName().equals("cf2"));

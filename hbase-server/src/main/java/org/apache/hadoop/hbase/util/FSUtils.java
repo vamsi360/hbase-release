@@ -1534,6 +1534,9 @@ public abstract class FSUtils {
       FileStatus[] familyDirs = fs.listStatus(dd, df);
       for (FileStatus familyDir : familyDirs) {
         Path family = familyDir.getPath();
+        if(family.getName().equals(HConstants.RECOVERED_EDITS_DIR)){
+          continue;
+        }
         // now in family, iterate over the StoreFiles and
         // put in map
         FileStatus[] familyStatus = fs.listStatus(family);

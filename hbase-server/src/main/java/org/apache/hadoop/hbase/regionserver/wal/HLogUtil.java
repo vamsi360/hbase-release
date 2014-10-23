@@ -233,6 +233,10 @@ public class HLogUtil {
           if (p.getName().endsWith(HLog.RECOVERED_LOG_TMPFILE_SUFFIX)) {
             result = false;
           }
+          // Skip SeqId Files
+          if (p.getName().endsWith(HLog.SEQUENCE_ID_FILE_SUFFIX)) {
+            result = false;
+          }
         } catch (IOException e) {
           LOG.warn("Failed isFile check on " + p);
         }

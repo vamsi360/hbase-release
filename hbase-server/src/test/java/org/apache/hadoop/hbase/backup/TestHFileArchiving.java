@@ -44,6 +44,7 @@ import org.apache.hadoop.hbase.regionserver.ConstantSizeRegionSplitPolicy;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
+import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.HFileArchiveTestingUtil;
@@ -144,7 +145,15 @@ public class TestHFileArchiving {
     assertTrue(fs.exists(archiveDir));
 
     // check to make sure the store directory was copied
-    FileStatus[] stores = fs.listStatus(archiveDir);
+    FileStatus[] stores = fs.listStatus(archiveDir, new PathFilter() {
+      @Override
+      public boolean accept(Path p) {
+        if (p.getName().contains(HConstants.RECOVERED_EDITS_DIR)) {
+          return false;
+        }
+        return true;
+      }
+    });
     assertTrue(stores.length == 1);
 
     // make sure we archived the store files
@@ -412,7 +421,15 @@ public class TestHFileArchiving {
    * @throws IOException
    */
   private List<String> getAllFileNames(final FileSystem fs, Path archiveDir) throws IOException {
-    FileStatus[] files = FSUtils.listStatus(fs, archiveDir, null);
+    FileStatus[] files = FSUtils.listStatus(fs, archiveDir, new PathFilter() {
+      @Override
+      public boolean accept(Path p) {
+        if (p.getName().contains(HConstants.RECOVERED_EDITS_DIR)) {
+          return false;
+        }
+        return true;
+      }
+    });
     return recurseOnFiles(fs, files, new ArrayList<String>());
   }
 
