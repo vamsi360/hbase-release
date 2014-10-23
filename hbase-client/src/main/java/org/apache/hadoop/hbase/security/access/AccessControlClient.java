@@ -56,6 +56,13 @@ import com.google.protobuf.ByteString;
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
 public class AccessControlClient {
+  public static final TableName ACL_TABLE_NAME =
+      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "acl");
+
+  private static HTable getAclTable(Configuration conf) throws IOException {
+    return new HTable(conf, ACL_TABLE_NAME);
+  }
+  
   /**
    * Grants permission on the specified table for the specified user
    * @param conf
@@ -123,12 +130,10 @@ public class AccessControlClient {
 
   public static boolean isAccessControllerRunning(Configuration conf)
       throws MasterNotRunningException, ZooKeeperConnectionException, IOException {
-    TableName aclTableName = TableName
-        .valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "acl");
     HBaseAdmin ha = null;
     try {
       ha = new HBaseAdmin(conf);
-      return ha.isTableAvailable(aclTableName.getNameAsString());
+      return ha.isTableAvailable(ACL_TABLE_NAME);
     } finally {
       if (ha != null) {
         ha.close();
@@ -214,16 +219,14 @@ public class AccessControlClient {
     HTable ht = null;
     HBaseAdmin ha = null;
     try {
-      TableName aclTableName =
-          TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "acl");
       ha = new HBaseAdmin(conf);
-      ht = new HTable(conf, aclTableName.getName());
+      ht = new HTable(conf, ACL_TABLE_NAME);
       CoprocessorRpcChannel service = ht.coprocessorService(HConstants.EMPTY_START_ROW);
       BlockingInterface protocol =
           AccessControlProtos.AccessControlService.newBlockingStub(service);
       HTableDescriptor[] htds = null;
       
-      if (tableRegex != null) {
+      if (tableRegex != null && !tableRegex.isEmpty()) {
         htds = ha.listTables(Pattern.compile(tableRegex));
         for (HTableDescriptor hd: htds) {
           permList.addAll(ProtobufUtil.getUserPermissions(protocol, hd.getTableName()));
