@@ -511,11 +511,11 @@ public class HRegion implements HeapSize { // , Writable{
     final long totalFlushableSize;
 
     /** Constructs an early exit case */
-    PrepareFlushResult(FlushResult result) {
+    PrepareFlushResult(FlushResult result, long flushSeqId) {
       this.result = result;
       this.storeFlushCtxs = null;
       this.committedFiles = null;
-      this.flushSeqId = 0;
+      this.flushSeqId = Math.max(0, flushSeqId);
       this.startTime = 0;
       totalFlushableSize = 0;
     }
@@ -786,6 +786,7 @@ public class HRegion implements HeapSize { // , Writable{
     // Initialize all the HStores
     status.setStatus("Initializing all the Stores");
     long maxSeqId = initializeRegionStores(reporter, status);
+    this.lastReplayedOpenRegionSeqId = maxSeqId;
 
     this.writestate.setReadOnly(ServerRegionReplicaUtil.isReadOnly(this));
     this.writestate.flushRequested = false;
@@ -813,12 +814,12 @@ public class HRegion implements HeapSize { // , Writable{
     // Use maximum of log sequenceid or that which was found in stores
     // (particularly if no recovered edits, seqid will be -1).
     long nextSeqid = maxSeqId + 1;
-    
+
     // In distributedLogReplay mode, we don't know the last change sequence number because region
     // is opened before recovery completes. So we add a safety bumper to avoid new sequence number
     // overlaps used sequence numbers
-    nextSeqid = HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(), 
-          this.fs.getRegionDir(), nextSeqid, 
+    nextSeqid = HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(),
+          this.fs.getRegionDir(), nextSeqid,
           (this.isRecovering ? (this.flushPerChanges + 10000000) : 0));
 
     LOG.info("Onlined " + this.getRegionInfo().getShortNameToLog() +
@@ -946,10 +947,10 @@ public class HRegion implements HeapSize { // , Writable{
       getRegionServerServices().getServerName(), storeFiles);
     HLogUtil.writeRegionEventMarker(log, getTableDesc(), getRegionInfo(), regionEventDesc,
       getSequenceId());
-    
+
     // Store SeqId in HDFS when a region closes
-    HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(), 
-      this.fs.getRegionDir(), getSequenceId().get(), 0);    
+    HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(),
+      this.fs.getRegionDir(), getSequenceId().get(), 0);
   }
 
   /**
@@ -1929,7 +1930,7 @@ public class HRegion implements HeapSize { // , Writable{
       }
       return new PrepareFlushResult(
         new FlushResult(FlushResult.Result.CANNOT_FLUSH_MEMSTORE_EMPTY, "Nothing to flush",
-          writeFlushRequestMarkerToWAL(wal, writeFlushWalMarker)));
+          writeFlushRequestMarkerToWAL(wal, writeFlushWalMarker)), myseqid);
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Started memstore flush for " + this +
@@ -1973,7 +1974,7 @@ public class HRegion implements HeapSize { // , Writable{
               + this.getRegionInfo().getEncodedName() + "] - because the WAL is closing.";
           status.setStatus(msg);
           return new PrepareFlushResult(new FlushResult(FlushResult.Result.CANNOT_FLUSH,
-            msg, false));
+            msg, false), myseqid);
         }
         flushSeqId = this.sequenceId.incrementAndGet();
       } else {
@@ -1987,7 +1988,7 @@ public class HRegion implements HeapSize { // , Writable{
               +  " is smaller than what is in the memstore with seqId " + currentSeqId;
           status.setStatus(msg);
           return new PrepareFlushResult(new FlushResult(FlushResult.Result.CANNOT_FLUSH, msg,
-            writeFlushRequestMarkerToWAL(wal, writeFlushWalMarker)));
+            writeFlushRequestMarkerToWAL(wal, writeFlushWalMarker)), myseqid);
         }
       }
 
@@ -3720,7 +3721,7 @@ public class HRegion implements HeapSize { // , Writable{
           if (currentEditSeqId > key.getLogSeqNum()){
             // when this condition is true, it means we have a serious defect because we need to
             // maintain increasing SeqId for WAL edits per region
-            LOG.warn("Found decreasing SeqId. PreId=" + currentEditSeqId + " key=" + key + 
+            LOG.warn("Found decreasing SeqId. PreId=" + currentEditSeqId + " key=" + key +
               "; edit=" + val);
           } else {
             currentEditSeqId = key.getLogSeqNum();
@@ -3942,11 +3943,19 @@ public class HRegion implements HeapSize { // , Writable{
             this.writestate.flushing = true;
             this.prepareFlushResult = prepareResult;
             status.markComplete("Flush prepare successful");
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(getRegionInfo().getEncodedName() + " : "
+                + " Prepared flush with seqId:" + flush.getFlushSequenceNumber());
+            }
           } else {
             // special case empty memstore empty. We will still save the flush result in this case
             if (prepareResult.result.result == FlushResult.Result.CANNOT_FLUSH_MEMSTORE_EMPTY) {
               this.writestate.flushing = true;
               this.prepareFlushResult = prepareResult;
+              if (LOG.isDebugEnabled()) {
+                LOG.debug(getRegionInfo().getEncodedName() + " : "
+                  + " Prepared empty flush with seqId:" + flush.getFlushSequenceNumber());
+              }
             }
             status.abort("Flush prepare failed with " + prepareResult.result);
             // nothing much to do. prepare flush failed because of some reason.
@@ -4017,6 +4026,11 @@ public class HRegion implements HeapSize { // , Writable{
         if (writestate.flushing) {
           PrepareFlushResult prepareFlushResult = this.prepareFlushResult;
           if (flush.getFlushSequenceNumber() == prepareFlushResult.flushSeqId) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(getRegionInfo().getEncodedName() + " : "
+                  + "Received a flush commit marker with seqId:" + flush.getFlushSequenceNumber()
+                  + " and a previous prepared snapshot was found");
+            }
             // great this is the regular case where we received commit flush after prepare flush
             // corresponding to the same seqId.
             replayFlushInStores(flush, prepareFlushResult, true);
@@ -4071,6 +4085,9 @@ public class HRegion implements HeapSize { // , Writable{
           // a previous flush we will not enable reads now.
           this.setReadsEnabled(true);
         } else {
+          LOG.warn(getRegionInfo().getEncodedName() + " : "
+              + "Received a flush commit marker with seqId:" + flush.getFlushSequenceNumber()
+              + ", but no previous prepared snapshot was found");
           // There is no corresponding prepare snapshot from before.
           // We will pick up the new flushed file
           replayFlushInStores(flush, null, false);
