@@ -393,7 +393,7 @@ public class HLogUtil {
 
     // write a new seqId file
     Path newSeqIdFile = new Path(editsdir, newSeqId + HLog.SEQUENCE_ID_FILE_SUFFIX);
-    if (!fs.createNewFile(newSeqIdFile) && !fs.exists(newSeqIdFile)) {
+    if (!fs.exists(newSeqIdFile) && !fs.createNewFile(newSeqIdFile)) {
       throw new IOException("Failed to create SeqId file:" + newSeqIdFile);
     }
     // remove old ones
