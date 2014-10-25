@@ -22,6 +22,8 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -39,7 +41,7 @@ import org.apache.hadoop.hbase.util.SimpleByteRange;
  */
 @InterfaceAudience.Private
 class VisibilityLabelFilter extends FilterBase {
-
+  private static final Log LOG = LogFactory.getLog(VisibilityLabelFilter.class);
   private final BitSet authLabels;
   private final Map<ByteRange, Integer> cfVsMaxVersions;
   private final ByteRange curFamily;
@@ -77,6 +79,8 @@ class VisibilityLabelFilter extends FilterBase {
     }
     curQualMetVersions++;
     if (curQualMetVersions > curFamilyMaxVersions) {
+      LOG.info("skip(1) key=" + Bytes.toStringBinary(cell.getRowArray(), cell.getRowOffset(), 
+        cell.getRowLength()));
       return ReturnCode.SKIP;
     }
 
@@ -98,11 +102,15 @@ class VisibilityLabelFilter extends FilterBase {
             // ie. to check BitSet corresponding bit is 0
             int temp = -currLabelOrdinal;
             if (this.authLabels.get(temp)) {
+              LOG.info("skip(2) key=" + Bytes.toStringBinary(cell.getRowArray(), cell.getRowOffset(), 
+                cell.getRowLength()));
               includeKV = false;
               break;
             }
           } else {
             if (!this.authLabels.get(currLabelOrdinal)) {
+              LOG.info("skip(3) key=" + Bytes.toStringBinary(cell.getRowArray(), cell.getRowOffset(), 
+                cell.getRowLength()));
               includeKV = false;
               break;
             }
