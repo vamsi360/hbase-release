@@ -168,6 +168,25 @@ public class PerformanceEvaluation extends Configured implements Tool {
     ROWS
   }
 
+  protected static class RunResult implements Comparable<RunResult> {
+    public RunResult(long duration, DescriptiveStatistics ds) {
+      this.duration = duration;
+      this.ds = ds;
+    }
+
+    public final long duration;
+    public final DescriptiveStatistics ds;
+
+    @Override
+    public String toString() {
+      return Long.toString(duration);
+    }
+
+    @Override public int compareTo(RunResult o) {
+      return Long.compare(this.duration, o.duration);
+    }
+  }
+
   /**
    * Constructor
    * @param conf Configuration object
@@ -246,12 +265,12 @@ public class PerformanceEvaluation extends Configured implements Tool {
       Configuration conf = HBaseConfiguration.create(context.getConfiguration());
 
       // Evaluation task
-      long elapsedTime = this.pe.runOneClient(this.cmd, conf, opts, status);
+      RunResult result = this.pe.runOneClient(this.cmd, conf, opts, status);
       // Collect how much time the thing took. Report as map output and
       // to the ELAPSED_TIME counter.
-      context.getCounter(Counter.ELAPSED_TIME).increment(elapsedTime);
+      context.getCounter(Counter.ELAPSED_TIME).increment(result.duration);
       context.getCounter(Counter.ROWS).increment(opts.perClientRunRows);
-      context.write(new LongWritable(opts.startRow), new LongWritable(elapsedTime));
+      context.write(new LongWritable(opts.startRow), new LongWritable(result.duration));
       context.progress();
     }
   }
@@ -356,56 +375,54 @@ public class PerformanceEvaluation extends Configured implements Tool {
 
   /*
    * Run all clients in this vm each to its own thread.
-   * @param cmd Command to run.
-   * @throws IOException
    */
-  static long doLocalClients(final TestOptions opts, final Configuration conf)
+  static RunResult[] doLocalClients(final TestOptions opts, final Configuration conf)
       throws IOException, InterruptedException {
     final Class<? extends Test> cmd = determineCommandClass(opts.cmdName);
     assert cmd != null;
-    Future<Long>[] threads = new Future[opts.numClientThreads];
-    long[] timings = new long[opts.numClientThreads];
+    Future<RunResult>[] threads = new Future[opts.numClientThreads];
+    RunResult[] results = new RunResult[opts.numClientThreads];
     ExecutorService pool = Executors.newFixedThreadPool(opts.numClientThreads,
       new ThreadFactoryBuilder().setNameFormat("TestClient-%s").build());
     for (int i = 0; i < threads.length; i++) {
       final int index = i;
-      threads[i] = pool.submit(new Callable<Long>() {
+      threads[i] = pool.submit(new Callable<RunResult>() {
         @Override
-        public Long call() throws Exception {
+        public RunResult call() throws Exception {
           TestOptions threadOpts = new TestOptions(opts);
           threadOpts.startRow = index * threadOpts.perClientRunRows;
-          long elapsedTime = runOneClient(cmd, conf, threadOpts, new Status() {
+          RunResult run = runOneClient(cmd, conf, threadOpts, new Status() {
             public void setStatus(final String msg) throws IOException {
               LOG.info("client-" + Thread.currentThread().getName() + " " + msg);
             }
           });
-          LOG.info("Finished " + Thread.currentThread().getName() + " in " + elapsedTime +
+          LOG.info("Finished " + Thread.currentThread().getName() + " in " + run.duration +
             "ms over " + threadOpts.perClientRunRows + " rows");
-          return elapsedTime;
+          return run;
         }
       });
     }
     pool.shutdown();
     for (int i = 0; i < threads.length; i++) {
       try {
-        timings[i] = threads[i].get();
+        results[i] = threads[i].get();
       } catch (ExecutionException e) {
         throw new IOException(e.getCause());
       }
     }
     final String test = cmd.getSimpleName();
     LOG.info("[" + test + "] Summary of timings (ms): "
-             + Arrays.toString(timings));
-    Arrays.sort(timings);
+             + Arrays.toString(results));
+    Arrays.sort(results);
     long total = 0;
-    for (int i = 0; i < timings.length; i++) {
-      total += timings[i];
+    for (int i = 0; i < results.length; i++) {
+      total += results[i].duration;
     }
     LOG.info("[" + test + "]"
-      + "\tMin: " + timings[0] + "ms"
-      + "\tMax: " + timings[timings.length - 1] + "ms"
-      + "\tAvg: " + (total / timings.length) + "ms");
-    return total;
+      + "\tMin: " + results[0] + "ms"
+      + "\tMax: " + results[results.length - 1] + "ms"
+      + "\tAvg: " + (total / results.length) + "ms");
+    return results;
   }
 
   /*
@@ -597,6 +614,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
     private final Status status;
     protected HConnection connection;
     protected HTableInterface table;
+    protected DescriptiveStatistics ds = null;
 
     /**
      * Note that all subclasses of this class must provide a public contructor
@@ -606,6 +624,13 @@ public class PerformanceEvaluation extends Configured implements Tool {
       this.conf = conf;
       this.opts = options;
       this.status = status;
+    }
+
+    /**
+     * Populated by testTakedown. Only implemented by RandomReadTest at the moment.
+     */
+    public DescriptiveStatistics getDs() {
+      return ds;
     }
 
     private String generateStatus(final int sr, final int i, final int lr) {
@@ -854,7 +879,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
       super.testTakedown();
       if (opts.reportLatency) {
         Arrays.sort(times);
-        DescriptiveStatistics ds = new DescriptiveStatistics();
+        ds = new DescriptiveStatistics();
         for (double t : times) {
           ds.addValue(t);
         }
@@ -1090,7 +1115,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
     return format(random.nextInt(Integer.MAX_VALUE) % totalRows);
   }
 
-  static long runOneClient(final Class<? extends Test> cmd, Configuration conf, TestOptions opts,
+  static RunResult runOneClient(final Class<? extends Test> cmd, Configuration conf, TestOptions opts,
     final Status status)
       throws IOException {
     status.setStatus("Start " + cmd + " at offset " + opts.startRow + " for " +
@@ -1115,7 +1140,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
     status.setStatus("Finished " + cmd + " in " + totalElapsedTime +
       "ms at offset " + opts.startRow + " for " + opts.perClientRunRows + " rows" +
       " (" + calculateMbps((int)(opts.perClientRunRows * opts.sampleRate), totalElapsedTime) + ")");
-    return totalElapsedTime;
+    return new RunResult(totalElapsedTime, t.getDs());
   }
 
   private void runTest(final Class<? extends Test> cmd, TestOptions opts) throws IOException,

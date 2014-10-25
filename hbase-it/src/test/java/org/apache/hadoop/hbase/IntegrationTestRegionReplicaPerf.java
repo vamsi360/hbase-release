@@ -25,7 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.chaos.actions.MoveRandomRegionOfTableAction;
-import org.apache.hadoop.hbase.chaos.actions.RestartRsHoldingTableAction;
+import org.apache.hadoop.hbase.chaos.actions.RestartRandomRsExceptMetaAction;
 import org.apache.hadoop.hbase.chaos.monkies.PolicyBasedChaosMonkey;
 import org.apache.hadoop.hbase.chaos.policies.PeriodicRandomActionPolicy;
 import org.apache.hadoop.hbase.chaos.policies.Policy;
@@ -37,15 +37,12 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.experimental.categories.Category;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -72,6 +69,24 @@ public class IntegrationTestRegionReplicaPerf extends IntegrationTestBase {
   private static final String NUM_RS_KEY = "numRs";
   private static final String NUM_RS_DEFAULT = "" + 3;
 
+  /** Extract a descriptive statistic from a {@link com.yammer.metrics.core.Histogram}. */
+  private enum Stat {
+    STDEV {
+      @Override
+      double apply(DescriptiveStatistics stats) {
+        return stats.getStandardDeviation();
+      }
+    },
+    FOUR_9S {
+      @Override
+      double apply(DescriptiveStatistics stats) {
+        return stats.getPercentile(99.99d);
+      }
+    };
+
+    abstract double apply(DescriptiveStatistics stats);
+  }
+
   private TableName tableName;
   private long sleepTime;
   private int replicaCount;
@@ -96,17 +111,21 @@ public class IntegrationTestRegionReplicaPerf extends IntegrationTestBase {
     public TimingResult call() throws Exception {
       PerformanceEvaluation.TestOptions opts = PerformanceEvaluation.parseOpts(argv);
       PerformanceEvaluation.checkTable(admin, opts);
+      PerformanceEvaluation.RunResult results[] = null;
       long numRows = opts.totalRows;
-      long elapsedTime;
+      long elapsedTime = 0;
       if (opts.nomapred) {
-        elapsedTime = PerformanceEvaluation.doLocalClients(opts, admin.getConfiguration());
+        results = PerformanceEvaluation.doLocalClients(opts, admin.getConfiguration());
+        for (PerformanceEvaluation.RunResult r : results) {
+          elapsedTime = Math.max(elapsedTime, r.duration);
+        }
       } else {
         Job job = PerformanceEvaluation.doMapReduce(opts, admin.getConfiguration());
         Counters counters = job.getCounters();
         numRows = counters.findCounter(PerformanceEvaluation.Counter.ROWS).getValue();
         elapsedTime = counters.findCounter(PerformanceEvaluation.Counter.ELAPSED_TIME).getValue();
       }
-      return new TimingResult(numRows, elapsedTime);
+      return new TimingResult(numRows, elapsedTime, results);
     }
   }
 
@@ -114,12 +133,14 @@ public class IntegrationTestRegionReplicaPerf extends IntegrationTestBase {
    * Record the results from a single {@link PerformanceEvaluation} job run.
    */
   static class TimingResult {
-    public long numRows;
-    public long elapsedTime;
+    public final long numRows;
+    public final long elapsedTime;
+    public final PerformanceEvaluation.RunResult results[];
 
-    public TimingResult(long numRows, long elapsedTime) {
+    public TimingResult(long numRows, long elapsedTime, PerformanceEvaluation.RunResult results[]) {
       this.numRows = numRows;
       this.elapsedTime = elapsedTime;
+      this.results = results;
     }
 
     @Override
@@ -161,7 +182,7 @@ public class IntegrationTestRegionReplicaPerf extends IntegrationTestBase {
   @Override
   public void setUpMonkey() throws Exception {
     Policy p = new PeriodicRandomActionPolicy(sleepTime,
-      new RestartRsHoldingTableAction(sleepTime, tableName.getNameAsString()),
+      new RestartRandomRsExceptMetaAction(sleepTime),
       new MoveRandomRegionOfTableAction(tableName.getNameAsString()));
     this.monkey = new PolicyBasedChaosMonkey(util, p);
     // don't start monkey right away
@@ -214,6 +235,39 @@ public class IntegrationTestRegionReplicaPerf extends IntegrationTestBase {
     return null;
   }
 
+  private static String dsToString(String desc, DescriptiveStatistics ds) {
+    return Objects.toStringHelper(desc)
+        .add("min", ds.getMin())
+        .add("max", ds.getMax())
+        .add("stdev", ds.getStandardDeviation())
+        .add("mean", ds.getMean())
+        .add("80%", ds.getPercentile(80d))
+        .add("90%", ds.getPercentile(90d))
+        .add("95%", ds.getPercentile(95d))
+        .add("99%", ds.getPercentile(99d))
+        .add("99.9%", ds.getPercentile(99.9d))
+        .add("99.99%", ds.getPercentile(99.99d))
+        .add("99.999%", ds.getPercentile(99.999d))
+        .add("99.9999%", ds.getPercentile(99.9999d))
+        .toString();
+  }
+
+  /** Compute the mean of the given {@code stat} from a timing results. */
+  private static double calcMean(String desc, Stat stat, List<TimingResult> results) {
+    double sum = 0;
+    int count = 0;
+
+    for (TimingResult tr : results) {
+      for (PerformanceEvaluation.RunResult r : tr.results) {
+        assertNotNull("One of the run results is missing detailed run data.", r.ds);
+        sum += stat.apply(r.ds);
+        count += 1;
+        LOG.debug(dsToString(desc, r.ds));
+      }
+    }
+    return sum / count;
+  }
+
   public void test() throws Exception {
     int maxIters = 3;
     String replicas = "--replicas=" + replicaCount;
@@ -234,8 +288,8 @@ public class IntegrationTestRegionReplicaPerf extends IntegrationTestBase {
 
     // one last sanity check, then send in the clowns!
     assertEquals("Table must be created with DisabledRegionSplitPolicy. Broken test.",
-      DisabledRegionSplitPolicy.class.getName(),
-      util.getHBaseAdmin().getTableDescriptor(tableName).getRegionSplitPolicyClassName());
+        DisabledRegionSplitPolicy.class.getName(),
+        util.getHBaseAdmin().getTableDescriptor(tableName).getRegionSplitPolicyClassName());
     startMonkey();
 
     // collect a baseline without region replicas.
@@ -261,27 +315,36 @@ public class IntegrationTestRegionReplicaPerf extends IntegrationTestBase {
       Thread.sleep(5000l);
     }
 
-    DescriptiveStatistics withoutReplicaStats = new DescriptiveStatistics();
-    for (TimingResult tr : resultsWithoutReplica) {
-      withoutReplicaStats.addValue(tr.elapsedTime);
-    }
-    DescriptiveStatistics withReplicaStats = new DescriptiveStatistics();
-    for (TimingResult tr : resultsWithReplica) {
-      withReplicaStats.addValue(tr.elapsedTime);
-    }
+    // compare the average of the stdev and 99.99pct across runs to determine if region replicas
+    // are having an overall improvement on response variance experienced by clients.
+    double withoutReplicasStdevMean =
+        calcMean("withoutReplicas", Stat.STDEV, resultsWithoutReplica);
+    double withoutReplicas9999Mean =
+        calcMean("withoutReplicas", Stat.FOUR_9S, resultsWithoutReplica);
+    double withReplicasStdevMean =
+        calcMean("withReplicas", Stat.STDEV, resultsWithReplica);
+    double withReplicas9999Mean =
+        calcMean("withReplicas", Stat.FOUR_9S, resultsWithReplica);
 
-    LOG.info(Objects.toStringHelper("testName")
+    LOG.info(Objects.toStringHelper(this)
       .add("withoutReplicas", resultsWithoutReplica)
       .add("withReplicas", resultsWithReplica)
-      .add("withoutReplicasMean", withoutReplicaStats.getMean())
-      .add("withReplicasMean", withReplicaStats.getMean())
+      .add("withoutReplicasStdevMean", withoutReplicasStdevMean)
+      .add("withoutReplicas99.99Mean", withoutReplicas9999Mean)
+      .add("withReplicasStdevMean", withReplicasStdevMean)
+      .add("withReplicas99.99Mean", withReplicas9999Mean)
       .toString());
 
     assertTrue(
-      "Running with region replicas under chaos should be as fast or faster than without. "
-      + "withReplicas.mean: " + withReplicaStats.getMean() + "ms "
-      + "withoutReplicas.mean: " + withoutReplicaStats.getMean() + "ms.",
-      withReplicaStats.getMean() <= withoutReplicaStats.getMean());
+      "Running with region replicas under chaos should have less request variance than without. "
+      + "withReplicas.stdev.mean: " + withReplicasStdevMean + "ms "
+      + "withoutReplicas.stdev.mean: " + withoutReplicasStdevMean + "ms.",
+      withReplicasStdevMean <= withoutReplicasStdevMean);
+    assertTrue(
+        "Running with region replicas under chaos should improve 99.99pct latency. "
+            + "withReplicas.99.99.mean: " + withReplicas9999Mean + "ms "
+            + "withoutReplicas.99.99.mean: " + withoutReplicas9999Mean + "ms.",
+        withReplicas9999Mean <= withoutReplicas9999Mean);
   }
 
   public static void main(String[] args) throws Exception {
