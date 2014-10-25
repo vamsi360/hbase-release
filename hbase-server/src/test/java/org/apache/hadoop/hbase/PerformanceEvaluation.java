@@ -183,7 +183,9 @@ public class PerformanceEvaluation extends Configured implements Tool {
     }
 
     @Override public int compareTo(RunResult o) {
-      return Long.compare(this.duration, o.duration);
+      long x = this.duration;
+      long y = o.duration;
+      return (x < y) ? -1 : ((x == y) ? 0 : 1);
     }
   }
 
