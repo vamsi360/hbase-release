@@ -18,6 +18,8 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import org.cloudera.htrace.Trace;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RunnableFuture;
@@ -139,7 +141,7 @@ public class ResultBoundedCompletionService<V> {
 
   public void submit(CancellableCallable<V> task, int callTimeout, int id) {
     QueueingFuture<V> newFuture = new QueueingFuture<V>(task, callTimeout);
-    executor.execute(newFuture);
+    executor.execute(Trace.wrap(newFuture));
     tasks[id] = newFuture;
   }
 
