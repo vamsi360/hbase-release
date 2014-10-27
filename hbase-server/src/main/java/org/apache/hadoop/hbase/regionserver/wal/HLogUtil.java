@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -393,8 +394,14 @@ public class HLogUtil {
 
     // write a new seqId file
     Path newSeqIdFile = new Path(editsdir, newSeqId + HLog.SEQUENCE_ID_FILE_SUFFIX);
-    if (!fs.exists(newSeqIdFile) && !fs.createNewFile(newSeqIdFile)) {
-      throw new IOException("Failed to create SeqId file:" + newSeqIdFile);
+    if(newSeqId != maxSeqId) {
+      try {
+        if (!fs.createNewFile(newSeqIdFile)) {
+          throw new IOException("Failed to create SeqId file:" + newSeqIdFile);
+        }
+      } catch(FileAlreadyExistsException ignored){
+        // it's all right if newSeqIdFile already exists
+      }
     }
     // remove old ones
     if (files != null) {
