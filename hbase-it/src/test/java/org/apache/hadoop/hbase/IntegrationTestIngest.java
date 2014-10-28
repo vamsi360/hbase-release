@@ -189,8 +189,7 @@ public class IntegrationTestIngest extends IntegrationTestBase {
         , startKey, numKeys));
       if (0 != ret) {
         String errorMsg = "Verification failed with error code " + ret;
-        Thread.sleep(15 * 1000); // sleep 15 secs
-        LOG.error(errorMsg + " Rerunning after 15 secs sleep ... ");
+        LOG.error(errorMsg + " Rerunning... ");
         ret = loadTool.run(getArgsForLoadTestTool("-read", String.format("100:%d", readThreads)
             , startKey, numKeys));
         if (0 != ret) {
