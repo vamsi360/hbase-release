@@ -140,13 +140,15 @@ public abstract class IntegrationTestBase extends AbstractHBaseTool {
     }
     return util;
   }
-  
+
   public abstract void setUpCluster() throws Exception;
 
   public void cleanUpCluster() throws Exception {
-    LOG.debug("Restoring the cluster");
-    util.restoreCluster();
-    LOG.debug("Done restoring the cluster");
+    if (!util.isDistributedCluster() ||  (monkey != null && monkey.isDestructive())) {
+      LOG.debug("Restoring the cluster");
+      util.restoreCluster();
+      LOG.debug("Done restoring the cluster");
+    }
   }
 
   public abstract int runTestFromCommandLine() throws Exception;
