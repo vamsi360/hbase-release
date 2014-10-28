@@ -221,9 +221,10 @@ class MemStoreFlusher implements FlushRequester {
         (bestSecondaryRegion != null && bestSecondaryRegion.memstoreSize.get() > 0));
 
       if (regionToFlush == null ||
-          (ServerRegionReplicaUtil.isRegionReplicaStoreFileRefreshEnabled(conf) &&
-              bestSecondaryRegion.memstoreSize.get()
-              > secondaryMultiplier * regionToFlush.memstoreSize.get())) {
+          (bestSecondaryRegion != null &&
+           ServerRegionReplicaUtil.isRegionReplicaStoreFileRefreshEnabled(conf) &&
+           (bestSecondaryRegion.memstoreSize.get()
+               > secondaryMultiplier * regionToFlush.memstoreSize.get()))) {
         LOG.info("Refreshing storefiles of region " + regionToFlush +
           " due to global heap pressure. memstore size=" + StringUtils.humanReadableInt(
             server.getRegionServerAccounting().getGlobalMemstoreSize()));
