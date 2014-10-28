@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.KeyValue;
@@ -42,8 +40,6 @@ import org.apache.hadoop.hbase.util.Bytes;
  */
 @InterfaceAudience.Private
 public class VisibilityScanDeleteTracker extends ScanDeleteTracker {
-  
-  private static final Log LOG = LogFactory.getLog(VisibilityScanDeleteTracker.class);
 
   // Its better to track the visibility tags in delete based on each type.  Create individual
   // data structures for tracking each of them.  This would ensure that there is no tracking based
@@ -266,9 +262,6 @@ public class VisibilityScanDeleteTracker extends ScanDeleteTracker {
             + ", timestamp=" + timestamp + ", comparison result: " + ret);
       }
     }
-    
-    LOG.info("skip(d) key=" + Bytes.toStringBinary(cell.getRowArray(), cell.getRowOffset(), 
-      cell.getRowLength()));
     return DeleteResult.NOT_DELETED;
   }
 
