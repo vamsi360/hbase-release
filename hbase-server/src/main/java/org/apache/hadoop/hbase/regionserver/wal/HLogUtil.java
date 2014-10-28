@@ -396,11 +396,11 @@ public class HLogUtil {
     Path newSeqIdFile = new Path(editsdir, newSeqId + HLog.SEQUENCE_ID_FILE_SUFFIX);
     if(newSeqId != maxSeqId) {
       try {
-        if (!fs.createNewFile(newSeqIdFile)) {
+        if (!fs.createNewFile(newSeqIdFile) && !fs.exists(newSeqIdFile)) {
           throw new IOException("Failed to create SeqId file:" + newSeqIdFile);
         }
       } catch(FileAlreadyExistsException ignored){
-        // it's all right if newSeqIdFile already exists
+        // latest hdfs throws this exception. it's all right if newSeqIdFile already exists
       }
     }
     // remove old ones

@@ -818,9 +818,11 @@ public class HRegion implements HeapSize { // , Writable{
     // In distributedLogReplay mode, we don't know the last change sequence number because region
     // is opened before recovery completes. So we add a safety bumper to avoid new sequence number
     // overlaps used sequence numbers
-    nextSeqid = HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(),
-          this.fs.getRegionDir(), nextSeqid,
-          (this.isRecovering ? (this.flushPerChanges + 10000000) : 0));
+    if(this.writestate.writesEnabled) {
+      nextSeqid = HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(),
+            this.fs.getRegionDir(), nextSeqid,
+            (this.isRecovering ? (this.flushPerChanges + 10000000) : 0));
+    }
 
     LOG.info("Onlined " + this.getRegionInfo().getShortNameToLog() +
       "; next sequenceid=" + nextSeqid);
@@ -951,8 +953,8 @@ public class HRegion implements HeapSize { // , Writable{
     // Store SeqId in HDFS when a region closes
     // checking region folder exists is due to many tests which delete the table folder while a
     // table is still online
-    if(this.fs.getFileSystem().exists(this.fs.getRegionDir())){
-      HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(),
+    if(this.writestate.writesEnabled && this.fs.getFileSystem().exists(this.fs.getRegionDir())){
+      HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(), 
         this.fs.getRegionDir(), getSequenceId().get(), 0);
     }
   }
