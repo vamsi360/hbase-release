@@ -181,6 +181,7 @@ public class IntegrationTestRegionReplicaReplication extends IntegrationTestInge
       List<String> args = Lists.newArrayList(getArgsForLoadTestTool("", "", startKey, numKeys));
       args.add("-write");
       args.add(String.format("%d:%d:%d", colsPerKey, recordSize, writeThreads));
+      args.add("-" + LoadTestTool.OPT_MULTIPUT);
       args.add("-writer");
       args.add(DelayingMultiThreadedWriter.class.getName()); // inject writer class
       args.add("-read");

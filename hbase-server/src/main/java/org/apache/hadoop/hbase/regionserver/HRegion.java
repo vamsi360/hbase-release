@@ -4299,12 +4299,9 @@ public class HRegion implements HeapSize { // , Writable{
           List<String> storeFiles = storeDescriptor.getStoreFileList();
           store.refreshStoreFiles(storeFiles); // replace the files with the new ones
 
-          // find out the max seqId after updating store files
-          long storeSeqId = store.getMaxSequenceId();
-
           if (writestate.flushing) {
             // only drop memstore snapshots if they are smaller than last flush for the store
-            if (this.prepareFlushResult.flushSeqId <= storeSeqId) {
+            if (this.prepareFlushResult.flushSeqId <= regionEvent.getLogSequenceNumber()) {
               StoreFlushContext ctx = this.prepareFlushResult.storeFlushCtxs == null ?
                   null : this.prepareFlushResult.storeFlushCtxs.get(family);
               if (ctx != null) {
@@ -4317,7 +4314,7 @@ public class HRegion implements HeapSize { // , Writable{
           }
 
           // Drop the memstore contents if they are now smaller than the latest seen flushed file
-          dropMemstoreContentsForSeqId(storeSeqId, store);
+          dropMemstoreContentsForSeqId(regionEvent.getLogSequenceNumber(), store);
         }
 
         // if all stores ended up dropping their snapshots, we can safely drop the

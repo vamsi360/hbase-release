@@ -140,7 +140,7 @@ public class LoadTestTool extends AbstractHBaseTool {
   protected static final String OPT_KEY_WINDOW = "key_window";
   protected static final String OPT_WRITE = "write";
   protected static final String OPT_MAX_READ_ERRORS = "max_read_errors";
-  protected static final String OPT_MULTIPUT = "multiput";
+  public static final String OPT_MULTIPUT = "multiput";
   public static final String OPT_MULTIGET = "multiget_batchsize";
   protected static final String OPT_NUM_KEYS = "num_keys";
   protected static final String OPT_READ = "read";
