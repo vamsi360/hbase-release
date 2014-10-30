@@ -166,8 +166,7 @@ public class MiniZooKeeperCluster {
           standaloneServerFactory = new NIOServerCnxnFactory();
           standaloneServerFactory.configure(
             new InetSocketAddress(tentativePort),
-            configuration.getInt(HConstants.ZOOKEEPER_MAX_CLIENT_CNXNS,
-              1000));
+            configuration.getInt(HConstants.ZOOKEEPER_MAX_CLIENT_CNXNS, 1000));
         } catch (BindException e) {
           LOG.debug("Failed binding ZK Server to client port: " +
               tentativePort, e);
@@ -182,6 +181,7 @@ public class MiniZooKeeperCluster {
 
       // Start up this ZK server
       standaloneServerFactory.startup(server);
+      // Runs a 'stat' against the servers.
       if (!waitForServerUp(tentativePort, CONNECTION_TIMEOUT)) {
         throw new IOException("Waiting for startup of standalone server");
       }
@@ -197,8 +197,8 @@ public class MiniZooKeeperCluster {
     activeZKServerIndex = 0;
     started = true;
     clientPort = clientPortList.get(activeZKServerIndex);
-    LOG.info("Started MiniZK Cluster and connect 1 ZK server " +
-        "on client port: " + clientPort);
+    LOG.info("Started MiniZooKeeperCluster and ran successful 'stat' " +
+        "on client port=" + clientPort);
     return clientPort;
   }
 
