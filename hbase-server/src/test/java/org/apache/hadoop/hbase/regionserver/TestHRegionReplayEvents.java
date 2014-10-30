@@ -78,6 +78,7 @@ import org.apache.hadoop.hbase.regionserver.wal.HLogSplitter.MutationReplay;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManagerTestHelper;
+import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.util.StringUtils;
 import org.junit.After;
@@ -1433,6 +1434,11 @@ public class TestHRegionReplayEvents {
 
     LOG.info("-- Verifying edits from secondary");
     verifyData(secondaryRegion, 0, numRows, cq, families);
+
+    if (FSUtils.WINDOWS) {
+      // compaction cannot move files while they are open in secondary on windows. Skip remaining.
+      return;
+    }
 
     // Test case 3: compact primary files
     primaryRegion.compactStores();
