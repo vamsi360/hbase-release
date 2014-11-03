@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Assert;
 import org.junit.Test;
@@ -323,37 +322,5 @@ public class TestCellUtil {
     Assert.assertFalse(CellUtil.overlappingKeys(a,b, b, c));
     Assert.assertFalse(CellUtil.overlappingKeys(empty, b, b, c));
     Assert.assertFalse(CellUtil.overlappingKeys(empty, a, b, c));
-  }
-
-  @Test
-  public void testToString() {
-    String row = "test.row";
-    String family = "test.family";
-    String qualifier = "test.qualifier";
-    long timestamp = 42;
-    Type type = Type.Put;
-    String value = "test.value";
-    long seqId = 1042;
-
-    Cell cell = CellUtil.createCell(Bytes.toBytes(row), Bytes.toBytes(family),
-      Bytes.toBytes(qualifier), timestamp, type.getCode(), Bytes.toBytes(value), seqId);
-
-    String nonVerbose = CellUtil.toString(cell, false);
-    String verbose = CellUtil.toString(cell, true);
-
-    System.out.println("nonVerbose=" + nonVerbose);
-    System.out.println("verbose=" + verbose);
-
-    Assert.assertEquals(
-        String.format("%s/%s:%s/%d/%s/mvcc=%s/vlen=%s",
-          row, family, qualifier, timestamp,type.toString(), seqId, Bytes.toBytes(value).length),
-        nonVerbose);
-
-    Assert.assertEquals(
-      String.format("%s/%s:%s/%d/%s/mvcc=%s/%s",
-        row, family, qualifier, timestamp,type.toString(), seqId, value),
-      verbose);
-
-    // TODO: test with tags
   }
 }

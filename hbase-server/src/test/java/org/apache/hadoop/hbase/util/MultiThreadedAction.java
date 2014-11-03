@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -32,13 +33,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.ClusterConnection;
+import org.apache.hadoop.hbase.client.ConnectionManager;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.Result;
@@ -494,14 +496,7 @@ public abstract class MultiThreadedAction {
 
   private void printLocations(Result r) {
     RegionLocations rl = null;
-    if (r == null) {
-      LOG.info("FAILED FOR null Result");
-      return;
-    }
-    LOG.info("FAILED FOR " + resultToString(r) + " Stale " + r.isStale());
-    if (r.getRow() == null) {
-      return;
-    }
+    LOG.info("FAILED FOR " + r + " Stale " + r.isStale());
     try {
       rl = ((ClusterConnection)connection).locateRegion(tableName, r.getRow(), true, true);
     } catch (IOException e) {
@@ -511,27 +506,6 @@ public abstract class MultiThreadedAction {
     for (HRegionLocation h : locations) {
       LOG.info("LOCATION " + h);
     }
-  }
-
-  private String resultToString(Result result) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("cells=");
-    if(result.isEmpty()) {
-      sb.append("NONE");
-      return sb.toString();
-    }
-    sb.append("{");
-    boolean moreThanOne = false;
-    for(Cell cell : result.listCells()) {
-      if(moreThanOne) {
-        sb.append(", ");
-      } else {
-        moreThanOne = true;
-      }
-      sb.append(CellUtil.toString(cell, true));
-    }
-    sb.append("}");
-    return sb.toString();
   }
 
   // Parse mutate info into a map of <column name> => <update action>
