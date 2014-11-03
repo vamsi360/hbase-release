@@ -394,12 +394,12 @@ public final class CellUtil {
       // Serialization is probably preceded by a length (it is in the KeyValueCodec at least).
       Bytes.SIZEOF_INT;
   }
-  
-  
+
+
   /********************* tags *************************************/
   /**
    * Util method to iterate through the tags
-   * 
+   *
    * @param tags
    * @param offset
    * @param length
@@ -451,5 +451,50 @@ public final class CellUtil {
         end2) < 0)
         && (end1.length == 0 || start2.length == 0 || Bytes.compareTo(start2,
             end1) < 0);
+  }
+
+
+  /** Returns a string representation of the cell */
+  public static String toString(Cell cell, boolean verbose) {
+    if (cell == null) {
+      return "";
+    }
+    StringBuilder builder = new StringBuilder();
+    String row = Bytes.toStringBinary(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
+    String family = Bytes.toStringBinary(cell.getFamilyArray(), cell.getFamilyOffset(),
+      cell.getFamilyLength());
+    String qualifier = Bytes.toStringBinary(cell.getQualifierArray(), cell.getQualifierOffset(),
+      cell.getQualifierLength());
+    String ts = KeyValue.humanReadableTimestamp(cell.getTimestamp());
+    String type = Type.codeToType(cell.getTypeByte()).toString();
+    String mvcc = String.valueOf(cell.getMvccVersion());
+
+    String tag = null;
+    String value = null;
+    if (verbose) {
+      // TODO: pretty print tags as well
+      tag = Bytes.toStringBinary(cell.getTagsArray(), cell.getTagsOffset(), cell.getTagsLength());
+      value = Bytes.toStringBinary(cell.getValueArray(), cell.getValueOffset(),
+        cell.getValueLength());
+    }
+
+    builder
+      .append(row).append("/")
+      .append(family).append((family != null && family.length() > 0? ":" :""))
+      .append(qualifier).append("/")
+      .append(ts).append("/")
+      .append(type).append("/")
+      .append("mvcc=").append(mvcc).append("/"); // mvcc should be seqId now
+
+    if (tag != null && !tag.isEmpty()) {
+      builder.append(tag).append("/");
+    }
+    if (value != null) {
+      builder.append(value);
+    } else {
+      builder.append("vlen=").append(cell.getValueLength());
+    }
+
+    return builder.toString();
   }
 }
