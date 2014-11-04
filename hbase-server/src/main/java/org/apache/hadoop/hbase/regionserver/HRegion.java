@@ -954,7 +954,7 @@ public class HRegion implements HeapSize { // , Writable{
     // checking region folder exists is due to many tests which delete the table folder while a
     // table is still online
     if(this.writestate.writesEnabled && this.fs.getFileSystem().exists(this.fs.getRegionDir())){
-      HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(), 
+      HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(),
         this.fs.getRegionDir(), getSequenceId().get(), 0);
     }
   }
@@ -6367,8 +6367,9 @@ public class HRegion implements HeapSize { // , Writable{
                   && CellUtil.matchingQualifier(results.get(idx),kv)) {
                 oldKv = KeyValueUtil.ensureKeyValue(results.get(idx));
                 // allocate an empty kv once
+                long ts = Math.max(now, oldKv.getTimestamp());
                 newKV = new KeyValue(row.length, kv.getFamilyLength(),
-                    kv.getQualifierLength(), now, KeyValue.Type.Put,
+                    kv.getQualifierLength(), ts, KeyValue.Type.Put,
                     oldKv.getValueLength() + kv.getValueLength(),
                     oldKv.getTagsLengthUnsigned() + kv.getTagsLengthUnsigned());
                 // copy in the value
