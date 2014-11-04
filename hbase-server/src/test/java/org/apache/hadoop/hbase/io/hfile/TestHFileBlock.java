@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -88,6 +89,7 @@ public class TestHFileBlock {
 
   private static final int NUM_TEST_BLOCKS = 1000;
   private static final int NUM_READER_THREADS = 26;
+  private static final int MAXIMUM_RETRIES = 30;
 
   // Used to generate KeyValues
   private static int NUM_KEYVALUES = 50;
@@ -808,9 +810,53 @@ public class TestHFileBlock {
       }
 
       // Work is done, force to kill the threads to release resources
-      ((ExecutorService) exec).shutdownNow();
+      shutdownAndAwaitTermination((ExecutorService) exec);
 
       is.close();
+    }
+  }
+
+  /**
+   * Shutdown and wait for termination.  Retry if needed.
+   * Note: if retries were exhausted , the function would exit.
+   * It is not guaranteed the service is fully shutdown. 
+   * This is best effort operation.
+   */
+  private void shutdownAndAwaitTermination(ExecutorService execSvc) {
+    execSvc.shutdownNow();
+
+    int retries = 0;
+    while (retries <= MAXIMUM_RETRIES) {
+      // Wait a while for existing tasks to terminate
+      try {
+        while (!execSvc.awaitTermination(2, TimeUnit.SECONDS)) {
+          // if termination fails, retry multiple times before exiting.
+          retries++;
+          if (retries > MAXIMUM_RETRIES) {
+            // Reach to the retry limit, cannot wait forever; exiting now.
+            break;
+          }
+        }
+      }
+      catch (InterruptedException ie) {
+        // (Re-)Cancel if current thread also interrupted
+        execSvc.shutdownNow();
+
+        retries++;
+
+        if (detailedLogging) {
+          LOG.info("Shutdown interrupted. Retrying (Retry =" + retries + ").");
+        }
+      }
+
+      // If reaching here, either it is terminated or we go back to retry.
+      if (execSvc.isTerminated()) {
+        break;
+      }
+    }
+
+    if (detailedLogging && retries > MAXIMUM_RETRIES) {
+      LOG.info("Failed to shutdown and kill all threads after " + retries + "retries.");
     }
   }
 
