@@ -102,7 +102,8 @@ def getServerNameForRegion(admin, r)
     # Hack
     zkw = org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher.new(admin.getConfiguration(), "region_mover", nil)
     begin
-      tracker = org.apache.hadoop.hbase.zookeeper.MetaRegionTracker.new(zkw, RubyAbortable.new())
+      metaServerZnode = zkw.getZNodeForReplica(0)
+      tracker = org.apache.hadoop.hbase.zookeeper.MetaRegionTracker.new(zkw, RubyAbortable.new(), metaServerZnode, 0)
       tracker.start()
       while not tracker.isLocationAvailable()
         sleep 0.1
