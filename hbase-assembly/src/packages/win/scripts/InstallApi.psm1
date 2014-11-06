@@ -71,9 +71,9 @@ function Install(
             $cmd = "mkdir `"$hbaseInstallToDir`""
             Invoke-CmdChk $cmd
         }        
-
-        CheckRole $roles $DefaultRoles
-
+        if ($roles ) {
+            CheckRole $roles $DefaultRoles
+        }
         Write-Log "Checking the HBase Installation before copying the HBase bits"
         if( -not (Test-Path $ENV:HBASE_HOME\bin\hbase.cmd))
         {
