@@ -229,17 +229,21 @@ class MemStoreFlusher implements FlushRequester {
           " due to global heap pressure. memstore size=" + StringUtils.humanReadableInt(
             server.getRegionServerAccounting().getGlobalMemstoreSize()));
         flushedOne = refreshStoreFilesAndReclaimMemory(bestSecondaryRegion);
+        if (!flushedOne) {
+          LOG.info("Excluding unflushable region " + regionToFlush +
+            " - trying to find a different region to flush.");
+          excludedRegions.add(bestSecondaryRegion);
+        }
       } else {
         LOG.info("Flush of region " + regionToFlush + " due to global heap pressure. " +
             "memstore size=" + StringUtils.humanReadableInt(
               server.getRegionServerAccounting().getGlobalMemstoreSize()));
         flushedOne = flushRegion(regionToFlush, true);
-      }
-
-      if (!flushedOne) {
-        LOG.info("Excluding unflushable region " + regionToFlush +
-          " - trying to find a different region to flush.");
-        excludedRegions.add(regionToFlush);
+        if (!flushedOne) {
+          LOG.info("Excluding unflushable region " + regionToFlush +
+            " - trying to find a different region to flush.");
+          excludedRegions.add(regionToFlush);
+        }
       }
     }
     return true;
