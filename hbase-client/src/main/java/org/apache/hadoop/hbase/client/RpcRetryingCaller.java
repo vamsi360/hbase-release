@@ -61,14 +61,17 @@ public class RpcRetryingCaller<T> {
    * Start and end times for a single call.
    */
   private final static int MIN_RPC_TIMEOUT = 2000;
+  /** How many retries are allowed before we start to log */
+  private final int startLogErrorsCnt;
 
   private final long pause;
   private final int retries;
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
-  public RpcRetryingCaller(long pause, int retries) {
+  public RpcRetryingCaller(long pause, int retries, int startLogErrorsCnt) {
     this.pause = pause;
     this.retries = retries;
+    this.startLogErrorsCnt = startLogErrorsCnt;
   }
 
   private void beforeCall() {
@@ -122,10 +125,11 @@ public class RpcRetryingCaller<T> {
         callable.prepare(tries != 0); // if called with false, check table status on ZK
         return callable.call();
       } catch (Throwable t) {
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("Call exception, tries=" + tries + ", retries=" + retries + ", started=" +
+        if (tries > startLogErrorsCnt) {
+          LOG.info("Call exception, tries=" + tries + ", retries=" + retries + ", started=" +
               (EnvironmentEdgeManager.currentTimeMillis() - this.globalStartTime) + " ms ago, "
-              + "cancelled=" + cancelled.get(), t);
+              + "cancelled=" + cancelled.get() + ", msg="
+              + callable.getExceptionMessageAdditionalDetail());
         }
 
         // translateException throws exception when should not retry: i.e. when request is bad.
