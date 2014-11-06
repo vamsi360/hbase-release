@@ -191,7 +191,7 @@ public class TestRegionReplicaReplicationEndpoint {
     for (int i = 1; i < regionReplication; i++) {
       final HRegion region = regions[i];
       // wait until all the data is replicated to all secondary regions
-      Waiter.waitFor(HTU.getConfiguration(), 60000, new Waiter.Predicate<Exception>() {
+      Waiter.waitFor(HTU.getConfiguration(), 90000, new Waiter.Predicate<Exception>() {
         @Override
         public boolean evaluate() throws Exception {
           LOG.info("verifying replication for region replica:" + region.getRegionInfo());
@@ -224,7 +224,7 @@ public class TestRegionReplicaReplicationEndpoint {
     testRegionReplicaReplication(10);
   }
 
-  @Test (timeout = 60000)
+  @Test (timeout = 240000)
   public void testRegionReplicaReplicationForFlushAndCompaction() throws Exception {
     // Tests a table with region replication 3. Writes some data, and causes flushes and
     // compactions. Verifies that the data is readable from the replicas. Note that this
