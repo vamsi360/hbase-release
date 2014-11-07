@@ -164,7 +164,7 @@ public class TestMetaWithReplicas {
 
     util.getHBaseAdmin().flush(TableName.META_TABLE_NAME.getNameAsString());
     Thread.sleep(conf.getInt(StorefileRefresherChore.REGIONSERVER_STOREFILE_REFRESH_PERIOD,
-        30000) * 3);
+        30000) * 6);
     CatalogTracker ct = new CatalogTracker(conf);
     List<HRegionInfo> regions = MetaReader.getTableRegions(ct, TableName.valueOf(TABLE));
     HRegionLocation hrl = MetaReader.getRegionLocation(ct, regions.get(0));
