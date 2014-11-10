@@ -4273,7 +4273,7 @@ public class HRegion implements HeapSize { // , Writable{
         // region open event's seqid. Since this is the first event that the region puts (after
         // possibly flushing recovered.edits), after seeing this event, we can ignore every edit
         // smaller than this seqId
-        if (this.lastReplayedOpenRegionSeqId <= regionEvent.getLogSequenceNumber()) {
+        if (this.lastReplayedOpenRegionSeqId < regionEvent.getLogSequenceNumber()) {
           this.lastReplayedOpenRegionSeqId = regionEvent.getLogSequenceNumber();
         } else {
           LOG.warn(getRegionInfo().getEncodedName() + " : "
