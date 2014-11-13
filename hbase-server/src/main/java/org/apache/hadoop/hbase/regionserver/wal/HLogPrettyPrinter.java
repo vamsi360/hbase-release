@@ -47,15 +47,15 @@ import org.codehaus.jackson.map.ObjectMapper;
 /**
  * HLogPrettyPrinter prints the contents of a given HLog with a variety of
  * options affecting formatting and extent of content.
- *
+ * 
  * It targets two usage cases: pretty printing for ease of debugging directly by
  * humans, and JSON output for consumption by monitoring and/or maintenance
  * scripts.
- *
+ * 
  * It can filter by row, region, or sequence id.
- *
+ * 
  * It can also toggle output of values.
- *
+ * 
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
@@ -90,7 +90,7 @@ public class HLogPrettyPrinter {
 
   /**
    * Fully specified constructor.
-   *
+   * 
    * @param outputValues
    *          when true, enables output of values along with other log
    *          information
@@ -110,7 +110,7 @@ public class HLogPrettyPrinter {
    *          keeps a single list running for multiple files. if enabled, the
    *          endPersistentOutput() method must be used!
    * @param out
-   *          Specifies an alternative to stdout for the destination of this
+   *          Specifies an alternative to stdout for the destination of this 
    *          PrettyPrinter's output.
    */
   public HLogPrettyPrinter(boolean outputValues, boolean outputJSON,
@@ -159,7 +159,7 @@ public class HLogPrettyPrinter {
 
   /**
    * sets the region by which output will be filtered
-   *
+   * 
    * @param sequence
    *          when nonnegative, serves as a filter; only log entries with this
    *          sequence id will be printed
@@ -170,7 +170,7 @@ public class HLogPrettyPrinter {
 
   /**
    * sets the region by which output will be filtered
-   *
+   * 
    * @param region
    *          when not null, serves as a filter; only log entries from this
    *          region will be printed
@@ -181,7 +181,7 @@ public class HLogPrettyPrinter {
 
   /**
    * sets the region by which output will be filtered
-   *
+   * 
    * @param row
    *          when not null, serves as a filter; only log entries from this row
    *          will be printed
@@ -218,7 +218,7 @@ public class HLogPrettyPrinter {
   /**
    * reads a log file and outputs its contents, one transaction at a time, as
    * specified by the currently configured options
-   *
+   * 
    * @param conf
    *          the HBase configuration relevant to this log file
    * @param p
@@ -258,7 +258,7 @@ public class HLogPrettyPrinter {
         List<Map> actions = new ArrayList<Map>();
         for (KeyValue kv : edit.getKeyValues()) {
           // add atomic operation to txn
-          Map<String, Object> op =
+          Map<String, Object> op = 
             new HashMap<String, Object>(kv.toStringMap());
           if (outputValues)
             op.put("value", Bytes.toStringBinary(kv.getValue()));
@@ -313,7 +313,7 @@ public class HLogPrettyPrinter {
   /**
    * Pass one or more log file names and formatting options and it will dump out
    * a text version of the contents on <code>stdout</code>.
-   *
+   * 
    * @param args
    *          Command line arguments
    * @throws IOException
@@ -328,7 +328,7 @@ public class HLogPrettyPrinter {
     options.addOption("j", "json", false, "Output JSON");
     options.addOption("p", "printvals", false, "Print values");
     options.addOption("r", "region", true,
-        "Region to filter by. Pass encoded region name; e.g. '9192caead6a5a20acb4454ffbc79fa14'");
+        "Region to filter by. Pass region name; e.g. 'hbase:meta,,1'");
     options.addOption("s", "sequence", true,
         "Sequence to filter by. Pass sequence number.");
     options.addOption("w", "row", true, "Row to filter by. Pass row name.");

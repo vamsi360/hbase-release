@@ -821,7 +821,7 @@ public class HRegion implements HeapSize { // , Writable{
     if(this.writestate.writesEnabled) {
       nextSeqid = HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(),
             this.fs.getRegionDir(), nextSeqid,
-            (this.isRecovering ? (this.flushPerChanges + 10000000) : 1));
+            (this.isRecovering ? (this.flushPerChanges + 10000000) : 0));
     }
 
     LOG.info("Onlined " + this.getRegionInfo().getShortNameToLog() +
@@ -953,7 +953,7 @@ public class HRegion implements HeapSize { // , Writable{
     // Store SeqId in HDFS when a region closes
     // checking region folder exists is due to many tests which delete the table folder while a
     // table is still online
-    if(this.fs.getFileSystem().exists(this.fs.getRegionDir())){
+    if(this.writestate.writesEnabled && this.fs.getFileSystem().exists(this.fs.getRegionDir())){
       HLogUtil.writeRegionOpenSequenceIdFile(this.fs.getFileSystem(),
         this.fs.getRegionDir(), getSequenceId().get(), 0);
     }
@@ -3833,16 +3833,14 @@ public class HRegion implements HeapSize { // , Writable{
     if (replaySeqId < lastReplayedOpenRegionSeqId) {
       LOG.warn(getRegionInfo().getEncodedName() + " : "
           + "Skipping replaying compaction event :" + TextFormat.shortDebugString(compaction)
-          + " because its sequence id " + replaySeqId + " is smaller than this regions "
-          + "lastReplayedOpenRegionSeqId of " + lastReplayedOpenRegionSeqId);
+          + " because its sequence id is smaller than this regions lastReplayedOpenRegionSeqId "
+          + " of " + lastReplayedOpenRegionSeqId);
       return;
     }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(getRegionInfo().getEncodedName() + " : "
-          + "Replaying compaction marker " + TextFormat.shortDebugString(compaction)
-          + " with seqId=" + replaySeqId + " and lastReplayedOpenRegionSeqId="
-          + lastReplayedOpenRegionSeqId);
+          + "Replaying compaction marker " + TextFormat.shortDebugString(compaction));
     }
 
     startRegionOperation(Operation.REPLAY_EVENT);
@@ -3855,7 +3853,6 @@ public class HRegion implements HeapSize { // , Writable{
         return;
       }
       store.replayCompactionMarker(compaction, pickCompactionFiles, removeFiles);
-      logRegionFiles();
     } finally {
       closeRegionOperation(Operation.REPLAY_EVENT);
     }
@@ -3896,8 +3893,6 @@ public class HRegion implements HeapSize { // , Writable{
           TextFormat.shortDebugString(flush));
         break;
       }
-
-      logRegionFiles();
     } finally {
       closeRegionOperation(Operation.REPLAY_EVENT);
     }
@@ -4116,9 +4111,7 @@ public class HRegion implements HeapSize { // , Writable{
         // advance the mvcc read point so that the new flushed file is visible.
         // there may be some in-flight transactions, but they won't be made visible since they are
         // either greater than flush seq number or they were already dropped via flush.
-        for (Store s : stores.values()) {
-          getMVCC().advanceMemstoreReadPointIfNeeded(s.getMaxMemstoreTS());
-        }
+        //TODO getMVCC().advanceMemstoreReadPointIfNeeded(flush.getFlushSequenceNumber());
 
         // C. Finally notify anyone waiting on memstore to clear:
         // e.g. checkResources().
@@ -4344,22 +4337,9 @@ public class HRegion implements HeapSize { // , Writable{
         synchronized (this) {
           notifyAll(); // FindBugs NN_NAKED_NOTIFY
         }
-
-        logRegionFiles();
       }
     } finally {
       closeRegionOperation(Operation.REPLAY_EVENT);
-    }
-  }
-
-  private void logRegionFiles() {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace(getRegionInfo().getEncodedName() + " : Store files for region: ");
-      for (Store s : stores.values()) {
-        for (StoreFile sf : s.getStorefiles()) {
-          LOG.trace(getRegionInfo().getEncodedName() + " : " + sf);
-        }
-      }
     }
   }
 
@@ -4553,8 +4533,6 @@ public class HRegion implements HeapSize { // , Writable{
         synchronized (this) {
           notifyAll(); // FindBugs NN_NAKED_NOTIFY
         }
-
-        logRegionFiles();
       }
       return totalFreedSize > 0;
     } finally {
