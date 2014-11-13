@@ -299,7 +299,6 @@ public class TestWALReplay {
       // The regions opens with sequenceId as 1. With 6k edits, its sequence number reaches 6k + 1.
       // When opened, this region would apply 6k edits, and increment the sequenceId by 1
       assertTrue(seqid > sequenceId.get());
-      assertEquals(seqid - 1, sequenceId.get());
       LOG.debug("region.getOpenSeqNum(): " + region.getOpenSeqNum() + ", wal3.id: "
           + sequenceId.get());
 
@@ -836,7 +835,7 @@ public class TestWALReplay {
           long seqid = region.initialize();
           // We flushed during init.
           assertTrue("Flushcount=" + flushcount.get(), flushcount.get() > 0);
-          assertTrue(seqid - 1 == sequenceId.get());
+          assertTrue(seqid >= sequenceId.get());
 
           Get get = new Get(rowName);
           Result result = region.get(get);

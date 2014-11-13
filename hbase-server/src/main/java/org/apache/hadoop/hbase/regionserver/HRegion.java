@@ -577,6 +577,7 @@ public class HRegion implements HeapSize { // , Writable{
    * replication.
    */
   protected volatile long lastReplayedOpenRegionSeqId = -1L;
+  protected volatile long lastReplayedCompactionSeqId = -1L;
 
   /**
    * HRegion constructor. This constructor should only be used for testing and
@@ -3830,34 +3831,45 @@ public class HRegion implements HeapSize { // , Writable{
     checkTargetRegion(compaction.getEncodedRegionName().toByteArray(),
       "Compaction marker from WAL ", compaction);
 
-    if (replaySeqId < lastReplayedOpenRegionSeqId) {
-      LOG.warn(getRegionInfo().getEncodedName() + " : "
-          + "Skipping replaying compaction event :" + TextFormat.shortDebugString(compaction)
-          + " because its sequence id " + replaySeqId + " is smaller than this regions "
-          + "lastReplayedOpenRegionSeqId of " + lastReplayedOpenRegionSeqId);
-      return;
-    }
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(getRegionInfo().getEncodedName() + " : "
-          + "Replaying compaction marker " + TextFormat.shortDebugString(compaction)
-          + " with seqId=" + replaySeqId + " and lastReplayedOpenRegionSeqId="
-          + lastReplayedOpenRegionSeqId);
-    }
-
-    startRegionOperation(Operation.REPLAY_EVENT);
-    try {
-      Store store = this.getStore(compaction.getFamilyName().toByteArray());
-      if (store == null) {
+    synchronized (writestate) {
+      if (replaySeqId < lastReplayedOpenRegionSeqId) {
         LOG.warn(getRegionInfo().getEncodedName() + " : "
-            + "Found Compaction WAL edit for deleted family:"
-            + Bytes.toString(compaction.getFamilyName().toByteArray()));
+            + "Skipping replaying compaction event :" + TextFormat.shortDebugString(compaction)
+            + " because its sequence id " + replaySeqId + " is smaller than this regions "
+            + "lastReplayedOpenRegionSeqId of " + lastReplayedOpenRegionSeqId);
         return;
       }
-      store.replayCompactionMarker(compaction, pickCompactionFiles, removeFiles);
-      logRegionFiles();
-    } finally {
-      closeRegionOperation(Operation.REPLAY_EVENT);
+      if (replaySeqId < lastReplayedCompactionSeqId) {
+        LOG.warn(getRegionInfo().getEncodedName() + " : "
+            + "Skipping replaying compaction event :" + TextFormat.shortDebugString(compaction)
+            + " because its sequence id " + replaySeqId + " is smaller than this regions "
+            + "lastReplayedCompactionSeqId of " + lastReplayedCompactionSeqId);
+        return;
+      } else {
+        lastReplayedCompactionSeqId = replaySeqId;
+      }
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(getRegionInfo().getEncodedName() + " : "
+            + "Replaying compaction marker " + TextFormat.shortDebugString(compaction)
+            + " with seqId=" + replaySeqId + " and lastReplayedOpenRegionSeqId="
+            + lastReplayedOpenRegionSeqId);
+      }
+
+      startRegionOperation(Operation.REPLAY_EVENT);
+      try {
+        Store store = this.getStore(compaction.getFamilyName().toByteArray());
+        if (store == null) {
+          LOG.warn(getRegionInfo().getEncodedName() + " : "
+              + "Found Compaction WAL edit for deleted family:"
+              + Bytes.toString(compaction.getFamilyName().toByteArray()));
+          return;
+        }
+        store.replayCompactionMarker(compaction, pickCompactionFiles, removeFiles);
+        logRegionFiles();
+      } finally {
+        closeRegionOperation(Operation.REPLAY_EVENT);
+      }
     }
   }
 
@@ -4117,7 +4129,7 @@ public class HRegion implements HeapSize { // , Writable{
         // there may be some in-flight transactions, but they won't be made visible since they are
         // either greater than flush seq number or they were already dropped via flush.
         for (Store s : stores.values()) {
-          getMVCC().advanceMemstoreReadPointIfNeeded(s.getMaxMemstoreTS());
+          getMVCC().advanceMemstoreReadAndWritePointsIfNeeded(s.getMaxMemstoreTS());
         }
 
         // C. Finally notify anyone waiting on memstore to clear:
@@ -4332,7 +4344,7 @@ public class HRegion implements HeapSize { // , Writable{
         // there may be some in-flight transactions, but they won't be made visible since they are
         // either greater than flush seq number or they were already picked up via flush.
         for (Store s : getStores().values()) {
-          getMVCC().advanceMemstoreReadPointIfNeeded(s.getMaxMemstoreTS());
+          getMVCC().advanceMemstoreReadAndWritePointsIfNeeded(s.getMaxMemstoreTS());
         }
 
         // If we were waiting for observing a flush or region opening event for not showing partial
@@ -4537,7 +4549,7 @@ public class HRegion implements HeapSize { // , Writable{
         // there may be some in-flight transactions, but they won't be made visible since they are
         // either greater than flush seq number or they were already picked up via flush.
         for (Store s : getStores().values()) {
-          getMVCC().advanceMemstoreReadPointIfNeeded(s.getMaxMemstoreTS());
+          getMVCC().advanceMemstoreReadAndWritePointsIfNeeded(s.getMaxMemstoreTS());
         }
 
         // smallestSeqIdInStores is the seqId that we have a corresponding hfile for. We can safely
@@ -6720,7 +6732,7 @@ public class HRegion implements HeapSize { // , Writable{
       ClassSize.OBJECT +
       ClassSize.ARRAY +
       42 * ClassSize.REFERENCE + 2 * Bytes.SIZEOF_INT +
-      (13 * Bytes.SIZEOF_LONG) +
+      (14 * Bytes.SIZEOF_LONG) +
       4 * Bytes.SIZEOF_BOOLEAN);
 
   // woefully out of date - currently missing:

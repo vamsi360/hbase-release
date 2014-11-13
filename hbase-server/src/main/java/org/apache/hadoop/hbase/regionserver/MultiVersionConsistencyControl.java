@@ -129,7 +129,9 @@ public class MultiVersionConsistencyControl {
 
       if (nextReadValue > 0) {
         synchronized (readWaiters) {
-          memstoreRead = nextReadValue;
+          if (nextReadValue > memstoreRead) {
+            memstoreRead = nextReadValue;
+          }
           readWaiters.notifyAll();
         }
       }
@@ -144,10 +146,13 @@ public class MultiVersionConsistencyControl {
    * Advances the current read point to be given readPoint if it is smaller than
    * that.
    */
-  void advanceMemstoreReadPointIfNeeded(long readPoint) {
+  void advanceMemstoreReadAndWritePointsIfNeeded(long readPoint) {
     synchronized (writeQueue) {
       if (this.memstoreRead < readPoint) {
-        memstoreRead = readPoint;
+        this.memstoreRead = readPoint;
+      }
+      if (this.memstoreWrite < readPoint) {
+        this.memstoreWrite = readPoint; // set the write point as well.
       }
     }
   }
