@@ -45,7 +45,6 @@ import org.apache.hadoop.hbase.protobuf.generated.WALProtos;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor;
-import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor.EventType;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
 
@@ -96,7 +95,7 @@ public class HLogUtil {
   public static Path getRegionDirRecoveredEditsDir(final Path regiondir) {
     return new Path(regiondir, HConstants.RECOVERED_EDITS_DIR);
   }
-  
+
   /**
    * Move aside a bad edits file.
    *
@@ -291,7 +290,7 @@ public class HLogUtil {
       final FlushDescriptor f, AtomicLong sequenceId, boolean sync) throws IOException {
     long now = EnvironmentEdgeManager.currentTimeMillis();
     TableName tn = TableName.valueOf(f.getTableName().toByteArray());
-    long trx = log.appendNoSync(info, tn, WALEdit.createFlushWALEdit(info, f), 
+    long trx = log.appendNoSync(info, tn, WALEdit.createFlushWALEdit(info, f),
       new ArrayList<UUID>(), now, htd, sequenceId, false, HConstants.NO_NONCE, HConstants.NO_NONCE);
     if (sync) log.sync(trx);
     if (LOG.isTraceEnabled()) {
@@ -307,7 +306,7 @@ public class HLogUtil {
       final RegionEventDescriptor r, AtomicLong sequenceId) throws IOException {
     long now = EnvironmentEdgeManager.currentTimeMillis();
     TableName tn = TableName.valueOf(r.getTableName().toByteArray());
-    long trx = log.appendNoSync(info, tn, WALEdit.createRegionEventWALEdit(info, r), 
+    long trx = log.appendNoSync(info, tn, WALEdit.createRegionEventWALEdit(info, r),
       new ArrayList<UUID>(), now, htd, sequenceId, false, HConstants.NO_NONCE, HConstants.NO_NONCE);
     log.sync(trx);
     if (LOG.isTraceEnabled()) {
@@ -315,8 +314,8 @@ public class HLogUtil {
     }
     return trx;
   }
-  
-  
+
+
    /**
     * Write a log marker that a bulk load has succeeded and is about to be committed.
     *
@@ -344,10 +343,10 @@ public class HLogUtil {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Appended Bulk Load marker " + TextFormat.shortDebugString(descriptor));
     }
-    
+
     return trx;
   }
-  
+
   /**
    * Create a file with name as region open sequence id
    * @param fs
@@ -398,6 +397,10 @@ public class HLogUtil {
       try {
         if (!fs.createNewFile(newSeqIdFile) && !fs.exists(newSeqIdFile)) {
           throw new IOException("Failed to create SeqId file:" + newSeqIdFile);
+        }
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Written region seqId to file:" + newSeqIdFile + " ,newSeqId=" + newSeqId
+            + " ,maxSeqId=" + maxSeqId);
         }
       } catch(FileAlreadyExistsException ignored){
         // latest hdfs throws this exception. it's all right if newSeqIdFile already exists
