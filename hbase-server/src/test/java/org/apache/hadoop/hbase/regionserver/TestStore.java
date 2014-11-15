@@ -277,6 +277,14 @@ public class TestStore {
 
   @Test
   public void testDeleteExpiredStoreFiles() throws Exception {
+    testDeleteExpiredStoreFiles(0);
+    testDeleteExpiredStoreFiles(1);
+  }
+
+  /*
+   * @param minVersions the MIN_VERSIONS for the column family
+   */
+  public void testDeleteExpiredStoreFiles(int minVersions) throws Exception {
     int storeFileNum = 4;
     int ttl = 4;
     IncrementingEnvironmentEdge edge = new IncrementingEnvironmentEdge();
@@ -289,6 +297,7 @@ public class TestStore {
     conf.setInt(CompactionConfiguration.MIN_KEY, 5);
 
     HColumnDescriptor hcd = new HColumnDescriptor(family);
+    hcd.setMinVersions(minVersions);
     hcd.setTimeToLive(ttl);
     init(name.getMethodName(), conf, hcd);
 
@@ -317,10 +326,14 @@ public class TestStore {
       assertNull(this.store.requestCompaction());
       Collection<StoreFile> sfs = this.store.getStorefiles();
       // Ensure i files are gone.
-      assertEquals(storeFileNum - i, sfs.size());
-      // Ensure only non-expired files remain.
-      for (StoreFile sf : sfs) {
-        assertTrue(sf.getReader().getMaxTimestamp() >= (edge.currentTimeMillis() - storeTtl));
+      if (minVersions == 0) {
+        assertEquals(storeFileNum - i, sfs.size());
+        // Ensure only non-expired files remain.
+        for (StoreFile sf : sfs) {
+          assertTrue(sf.getReader().getMaxTimestamp() >= (edge.currentTimeMillis() - storeTtl));
+        }
+      } else {
+         assertEquals(storeFileNum, sfs.size());
       }
       // Let the next store file expired.
       edge.incrementTime(sleepTime);
@@ -328,7 +341,9 @@ public class TestStore {
     assertNull(this.store.requestCompaction());
     Collection<StoreFile> sfs = this.store.getStorefiles();
     // Assert the last expired file is not removed.
-    assertEquals(1, sfs.size());
+    if (minVersions == 0) {
+      assertEquals(1, sfs.size());
+    }
     long ts = sfs.iterator().next().getReader().getMaxTimestamp();
     assertTrue(ts < (edge.currentTimeMillis() - storeTtl));
   }
