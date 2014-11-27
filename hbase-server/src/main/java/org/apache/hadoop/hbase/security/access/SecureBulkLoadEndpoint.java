@@ -173,11 +173,8 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
       if (userProvider.isHBaseSecurityEnabled()) {
         getAccessController().preCleanupBulkLoad(env);
       }
-      fs.delete(createStagingDir(baseStagingDir,
-          getActiveUser(),
-          env.getRegion().getTableDesc().getTableName(),
-          new Path(request.getBulkToken()).getName()),
-          true);
+
+      fs.delete(new Path(request.getBulkToken()), true);
       done.run(CleanupBulkLoadResponse.newBuilder().build());
     } catch (IOException e) {
       ResponseConverter.setControllerException(controller, e);

@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.TreeMap;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -50,6 +51,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.apache.hadoop.hbase.security.SecureBulkLoadUtil;
 
 /**
  * Test cases for the "load" half of the HFileOutputFormat bulk load
@@ -160,8 +162,23 @@ public class TestLoadIncrementalHFiles {
     String [] args= {dir.toString(),"mytable_"+testName};
     loader.run(args);
     HTable table = new HTable(util.getConfiguration(), TABLE);
+    try {
+      assertEquals(expectedRows, util.countRows(table));
+    } finally {
+      table.close();
+    }
+
+    // verify staging folder has been cleaned up
+    Path stagingBasePath = SecureBulkLoadUtil.getBaseStagingDir(util.getConfiguration());
+    if(fs.exists(stagingBasePath)) {
+      FileStatus[] files = fs.listStatus(stagingBasePath);
+      for(FileStatus file : files) {
+        assertTrue("Folder=" + file.getPath() + " is not cleaned up.",
+          file.getPath().getName() != "DONOTERASE");
+      }
+    }
     
-    assertEquals(expectedRows, util.countRows(table));
+    util.deleteTable(TABLE);
   }
 
   /**
