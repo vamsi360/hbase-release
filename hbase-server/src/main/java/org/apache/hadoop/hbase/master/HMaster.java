@@ -210,6 +210,8 @@ import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.Regio
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerStartupResponse;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRSFatalErrorRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRSFatalErrorResponse;
+import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos.SplitLogTask.RecoveryMode;
+import org.apache.hadoop.hbase.regionserver.RegionCoprocessorHost;
 import org.apache.hadoop.hbase.regionserver.RegionSplitPolicy;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos.SplitLogTask.RecoveryMode;
 import org.apache.hadoop.hbase.replication.regionserver.Replication;
@@ -1838,9 +1840,9 @@ MasterServices, Server {
           + "if you want to bypass sanity checks");
     }
 
-    // check split policy class can be loaded
+    // check that coprocessors and other specified plugin classes can be loaded
     try {
-      RegionSplitPolicy.getSplitPolicyClass(htd, conf);
+      checkClassLoading(conf, htd);
     } catch (Exception ex) {
       throw new DoNotRetryIOException(ex);
     }
@@ -1900,6 +1902,12 @@ MasterServices, Server {
     if (!this.masterCheckCompression) return;
     CompressionTest.testCompression(hcd.getCompression());
     CompressionTest.testCompression(hcd.getCompactionCompression());
+  }
+
+  private void checkClassLoading(final Configuration conf, final HTableDescriptor htd)
+  throws IOException {
+    RegionSplitPolicy.getSplitPolicyClass(htd, conf);
+    RegionCoprocessorHost.testTableCoprocessorAttrs(conf, htd);
   }
 
   @Override

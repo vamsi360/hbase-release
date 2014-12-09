@@ -5769,8 +5769,10 @@ public class HRegion implements HeapSize { // , Writable{
    */
   protected HRegion openHRegion(final CancelableProgressable reporter)
   throws IOException {
+    // Refuse to open the region if we are missing local compression support
     checkCompressionCodecs();
-
+    // Refuse to open the region if a required class cannot be loaded
+    checkClassLoading();
     this.openSeqNum = initialize(reporter);
     this.setSequenceId(openSeqNum);
     if (log != null && getRegionServerServices() != null && !writestate.readOnly) {
@@ -5784,6 +5786,11 @@ public class HRegion implements HeapSize { // , Writable{
       CompressionTest.testCompression(fam.getCompression());
       CompressionTest.testCompression(fam.getCompactionCompression());
     }
+  }
+
+  private void checkClassLoading() throws IOException {
+    RegionSplitPolicy.getSplitPolicyClass(this.htableDescriptor, conf);
+    RegionCoprocessorHost.testTableCoprocessorAttrs(conf, this.htableDescriptor);
   }
 
   /**
