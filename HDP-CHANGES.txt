@@ -36,6 +36,7 @@ HBASE-10895 unassign a region fails due to the hosting region server is in Faile
 HBASE-10850 essential column family optimization is broken
 HBASE-10751 TestHRegion testWritesWhileScanning occasional fail since HBASE-10514 went in
 HBASE-11293 Master and Region servers fail to start when hbase.master.ipc.address=0.0.0.0, hbase.regionserver.ipc.address=0.0.0.0 and Kerberos is enabled
+HBASE-11277 RPCServer threads can wedge under high load
 
 Windows Fixes:
 HBASE-10799 [WINDOWS] TestImportTSVWithVisibilityLabels.testBulkOutputWithTsvImporterTextMapper fails on windows
