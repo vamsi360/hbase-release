@@ -1,0 +1,163 @@
+HBASE-12478 HBASE-10141 and MIN_VERSIONS are not compatible
+HBASE-12445 hbase is removing all remaining cells immediately after the cell marked with marker = KeyValue.Type.DeleteColumn via PUT (Hani Nadra)
+HBASE-12432 RpcRetryingCaller should log after fixed number of retries like AsyncProcess
+HBASE-12449 Use the max timestamp of current or old cell's timestamp in HRegion.append()
+HBASE-12416 RegionServerCallable should report what host it was communicating with
+HBASE-10844 Coprocessor failure during batchmutation leaves the memstore datastructs in an inconsistent state
+HBASE-12548 Improve debuggability of IntegrationTestTimeBoundedRequestsWithRegionReplicas
+HBASE-12407 HConnectionKey doesn't contain CUSTOM_CONTROLLER_CONF_KEY in CONNECTION_PROPERTIES
+HBASE-12402 ZKPermissionWatcher race condition in refreshing the cache leaving stale ACLs and causing AccessDenied
+HBASE-11972 The "doAs user" used in the update to hbase:acl table RPC is incorrect
+HBASE-12549 Fix TestAssignmentManagerOnCluster#testAssignRacingWithSSH() flaky test
+HBASE-12403 IntegrationTestMTTR flaky due to aggressive RS restart timeout
+HBASE-12401 Add some timestamp signposts in IntegrationTestMTTR
+HBASE-12562 Handling memory pressure for secondary region replicas
+HBASE-12398 Region isn't assigned in an extreme race condition
+HBASE-12377 HBaseAdmin#deleteTable fails when META region is moved around the same timeframe
+HBASE-12372 [WINDOWS] Enable log4j configuration in hbase.cmd
+HBASE-12560 [WINDOWS] Append the classpath from Hadoop to HBase classpath in bin/hbase.cmd
+HBASE-11716 LoadTestDataGeneratorWithVisibilityLabels should handle Delete mutations (Anoop Sam John)
+HBASE-11976 Server startcode is not checked for bulk region assignment
+HBASE-12367 Integration tests should not restore the cluster if the CM is not destructive
+HBASE-12485 Maintain SeqId monotonically increasing when Region Replica is on
+HBASE-12356 Rpc with region replica does not propagate tracing spans
+HBASE-12335 IntegrationTestRegionReplicaPerf is flaky
+HBASE-12317 Run IntegrationTestRegionReplicaPerf w.o mapred
+HBASE-10955 HBCK leaves the region in masters in-memory RegionStates if region hdfs dir is lost (Enis)
+HBASE-12319 Inconsistencies during region recovery due to close/open of a region during recovery
+HBASE-12301 user_permission command does not show global permissions (Matteo)
+HBASE-12189 Fix new issues found by coverity static analysis
+HBASE-12277 Refactor bulkLoad methods in AccessController to its own interface 
+HBASE-12278 Race condition in TestSecureLoadIncrementalHFilesSplitRecovery
+HBASE-11788 hbase is not deleting the cell when a Put with a KeyValue, KeyValue.Type.Delete is submitted (Srikanth Srungarapu)
+HBASE-11609 LoadIncrementalHFiles fails if the namespace is specified (Matteo)
+HBASE-12274 Race between RegionScannerImpl#nextInternal() and RegionScannerImpl#close() may produce null pointer exception
+HBASE-12098 User granted namespace table create permissions can't create a table (Srikanth Srungarapu)
+HBASE-11794 StripeStoreFlusher causes NullPointerException (jeongmin kim)
+HBASE-12078 Missing Data when scanning using PREFIX_TREE DATA-BLOCK-ENCODING (Zhang duo)
+HBASE-11728 Data loss while scanning using PREFIX_TREE DATA-BLOCK-ENCODING (Ram)
+HBASE-12156 TableName cache isn't used for one of valueOf methods (Andrey Stepachev)
+HBASE-12164 Check for presence of user Id in SecureBulkLoadEndpoint#secureBulkLoadHFiles() is inaccurate
+HBASE-12162 HBaseAdmin#getTableDescriptor() may fail in case master fails over
+HBASE-12095 SecureWALCellCodec should handle the case where encryption is disabled
+HBASE-12123 Failed assertion in BucketCache after 11331
+HBASE-11982 Bootstraping hbase:meta table creates a WAL file in region dir (Enis)
+HBASE-10141 instead of putting expired store files thru compaction, just archive them
+HBASE-12099 TestScannerModel fails if using jackson 1.9.13 (Esteban Gutierrez)
+HBASE-12072 We are doing 35 x 35 retries for master operations (Not full patch. Instead master operations use a 10min timeout)
+HBASE-12056 RPC logging too much in DEBUG mode
+HBASE-11988 AC/VC system table create on postStartMaster fails too often in test (Anoop and Stack)
+HBASE-12055 TestBucketWriterThread hangs flakily based on timing (Nick Dimiduk)
+HBASE-11798 TestBucketWriterThread may hang due to WriterThread stopping prematurely (Sergey Soldatov and Alex Newman)
+HBASE-11974 When a disabled table is scanned, NotServingRegionException is thrown instead of TableNotEnabledException
+HBASE-12012 Improve cancellation for the scan RPCs
+HBASE-12008 Remove IntegrationTestImportTsv#testRunFromOutputCommitter
+HBASE-11868 Data loss in hlog when the hdfs is unavailable (Liu Shaohui)
+HBASE-11989 IntegrationTestLoadAndVerify cannot be configured anymore on distributed mode
+HBASE-11963 Synchronize peer cluster replication connection attempts (Maddineni Sukumar)
+HBASE-11887 Memory retention in branch-1; millions of instances of LiteralByteString for column qualifier and value
+HBASE-11705 callQueueSize should be decremented in a fail-fast scenario (Esteban Gutierrez)
+HBASE-11898 CoprocessorHost.Environment should cache class loader instance. (Vladimir Rodionov)
+HBASE-11876 RegionScanner.nextRaw should not update metrics
+HBASE-11865 Result implements CellScannable; rather it should BE a CellScanner
+HBASE-7910 Dont use reflection for security (Mike Drob)
+HBASE-12052 BulkLoad Failed due to no write permission on input files
+HBASE-11973 The url of the token file location set by IntegrationTestImportTsv should point to the localfs
+HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
+HBASE-11847 HFile tool should be able to print block headers
+HBASE-11845 HFile tool should implement Tool, disable blockcache by default
+HBASE-11942 Fix TestHRegionBusyWait
+HBASE-11331 [blockcache] lazy block decompression
+HBASE-11678 BucketCache ramCache fills heap after running a few hours
+HBASE-11810 Access SSL Passwords through Credential Provider API (Larry McCay)
+HBASE-11908 Region replicas should be added to the meta table at the time of table creation
+HBASE-12561 Replicas of regions can be cached from different instances of the table in MetaCache
+HBASE-11863 WAL files are not archived and stays in the WAL directory after splitting
+HBASE-11813 CellScanner#advance may overflow stack (Stack)
+HBASE-11903 Directly invoking split & merge of replica regions should be disallowed
+HBASE-11886 The creator of the table should have all permissions on the table (Devaraj Das and Andrew Purtell)
+HBASE-11857 Restore ReaderBase.initAfterCompression() and WALCellCodec.create(Configuration, CompressionContext)
+HBASE-11762 Record the class name of Codec in WAL header
+HBASE-11580 Failover handling for secondary region replicas
+HBASE-11842 Integration test for async wal replication to secondary regions
+HBASE-11564 Improve cancellation management in the rpc layer
+HBASE-11297 Remove some synchros in the rpcServer responder 
+HBASE-11719 Remove some unused paths in AsyncClient 
+HBASE-11718 Remove some logs in RpcClient.java 
+HBASE-10814 RpcClient: some calls can get stuck when connection is closing
+HBASE-10942 support parallel request cancellation for multi-get
+HBASE-11851 RpcClient can try to close a connection not ready to close
+HBASE-11835 Wrong managenement of non expected calls in the client
+HBASE-11836 IntegrationTestTimeBoundedMultiGetRequestsWithRegionReplicas tests simple get by default
+HBASE-11654 WAL Splitting dirs are not deleted after replay (Victor Xu)
+HBASE-11837 Scanner from RegionCoprocessorEnvironment.getTable(TableName) returns no local data
+HBASE-11766 Backdoor CoprocessorHConnection is no longer being used for local writes
+HBASE-11574 hbase:meta's regions can be replicated
+HBASE-11571 Bulk load handling from secondary region replicas
+HBASE-11569 Flush / Compaction handling from secondary region replicas
+HBASE-11572 Add support for doing get/scans against a particular replica_id (Jeffrey Zhong)
+HBASE-11567 Write bulk load COMMIT events to WAL
+HBASE-11568 Async WAL replication for region replicas
+HBASE-11820 ReplicationSource : Set replication codec class as RPC codec class on a clonned Configuration (Anoop Sam John)
+HBASE-11367 Pluggable replication endpoint
+HBASE-11512 Write region open/close events to WAL
+HBASE-11511 Write flush events to WAL
+HBASE-11594 Unhandled NoNodeException in distributed log replay mode (Jeffrey Zhong)
+HBASE-11550 Custom value for BUCKET_CACHE_BUCKETS_KEY should be sorted (Gustavo Anatoly)
+HBASE-11551 BucketCache.run() doesn't handle exceptions correctly
+HBASE-11620 Record the class name of Writer in WAL header so that only proper Reader can open the WAL file
+HBASE-11557 Counter.class should always be added as dependencyJar
+HBASE-10674 HBCK should be updated to do replica related checks
+HBASE-11261 Handle splitting/merging of regions that have region_replication greater than one
+HBASE-10818 Add integration test for bulkload with replicas (Nick Dimiduk and Devaraj Das)
+HBASE-11214 Fixes for scans on a replicated table
+HBASE-10357 Failover RPC's for scans (Devaraj Das)
+HBASE-11344 Hide row keys and such from the web UIs
+HBASE-11293 Master and Region servers fail to start when hbase.master.ipc.address=0.0.0.0, hbase.regionserver.ipc.address=0.0.0.0 and Kerberos is enabled
+HBASE-10957 HBASE-10070: HMaster can abort with NPE in #rebuildUserRegions
+HBASE-10859 HStore.openStoreFiles() should pass the StoreFileInfo object to createStoreFileAndReader().
+HBASE-10858 TestRegionRebalancing is failing
+HBASE-10785 Metas own location should be cached
+HBASE-10814 RpcClient: some calls can get stuck when connection is closing
+HBASE-10791 Add integration test to demonstrate performance improvement
+HBASE-10810 LoadTestTool should share the connection and connection pool
+HBASE-10794 multi-get should handle replica location missing from cache
+HBASE-10634 Multiget doesn't fully work.
+HBASE-10701 Cache invalidation improvements from client side
+HBASE-10778 Unique keys accounting in MultiThreadedReader is incorrect
+HBASE-10743 Replica map update is problematic in RegionStates
+HBASE-10616 Integration test for multi-get calls
+HBASE-10734 Fix RegionStates.getRegionAssignments to not add duplicate regions
+HBASE-10729 Enable table doesn't balance out replicas evenly if the replicas were unassigned earlier
+HBASE-10720 rpcClient: Wrong log level when closing the connection
+HBASE-10688 Add a draining_node script to manage nodes in draining mode
+HBASE-10704 BaseLoadBalancer#roundRobinAssignment() may add same region to assignment plan multiple times
+HBASE-10633 StoreFileRefresherChore throws ConcurrentModificationException sometimes
+HBASE-10572 Create an IntegrationTest for region replicas.
+HBASE-10703 TestAsyncProcess does not pass on HBASE-10070
+HBASE-10637 rpcClient: Setup the iostreams when writing
+HBASE-10635 thrift#TestThriftServer fails due to TTL validity check
+HBASE-10620 LoadBalancer.needsBalance() should check for co-located region replicas as well
+HBASE-10672 Table snapshot should handle tables whose REGION_REPLICATION is greater than one.
+HBASE-10591 Sanity check table configuration in createTable
+HBASE-10661 TestStochasticLoadBalancer.testRegionReplicationOnMidClusterWithRacks() is flaky
+HBASE-10351 LoadBalancer changes for supporting region replicas
+HBASE-10630 NullPointerException in ConnectionManager.locateRegionInMeta() due to missing region info
+HBASE-10356 Failover RPC's for multi-get.
+HBASE-10525 Allow the client to use a different thread for writing to ease interrupt.
+HBASE-10355 Failover RPC's from client using region replicas.
+HBASE-10352 Region and RegionServer changes for opening region replicas, and refreshing store files
+HBASE-10351 LoadBalancer changes for supporting region replicas.
+HBASE-10359 Master/RS WebUI changes for region replicas.
+HBASE-10362 HBCK changes for supporting region replicas.
+HBASE-10361 Enable/AlterTable support for region replicas.
+HBASE-10350 Master/AM/RegionStates changes to create and assign region replicas.
+HBASE-10490 Simplify RpcClient code (Nicolas Liochon)
+HBASE-10517 NPE in MetaCache.clearCache()
+HBASE-10479 HConnection interface is public but is used internally, and contains a bunch of methods
+HBASE-10348 HTableDescriptor changes for region replicas
+HBASE-10354 Add an API for defining consistency per request
+HBASE-10347 HRegionInfo changes for adding replicaId and MetaEditor/MetaReader changes for region replicas
+HBASE-10277 refactor AsyncProcess
+HBASE-10427 clean up HRegionLocation/ServerName usage
+HBASE-10472 Manage the interruption in ZKUtil#getData
