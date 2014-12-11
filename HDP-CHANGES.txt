@@ -1,3 +1,4 @@
+HBASE-12575 Sanity check table coprocessor classes are loadable
 HBASE-12478 HBASE-10141 and MIN_VERSIONS are not compatible
 HBASE-12445 hbase is removing all remaining cells immediately after the cell marked with marker = KeyValue.Type.DeleteColumn via PUT (Hani Nadra)
 HBASE-12432 RpcRetryingCaller should log after fixed number of retries like AsyncProcess
