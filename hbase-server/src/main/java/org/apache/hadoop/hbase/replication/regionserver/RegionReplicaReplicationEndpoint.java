@@ -63,7 +63,6 @@ import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.regionserver.wal.HLogSplitter.PipelineController;
 import org.apache.hadoop.hbase.regionserver.wal.HLogSplitter.RegionEntryBuffer;
 import org.apache.hadoop.hbase.regionserver.wal.HLogSplitter.SinkWriter;
-import org.apache.hadoop.hbase.regionserver.wal.WALCellCodec;
 import org.apache.hadoop.hbase.regionserver.wal.HLog.Entry;
 import org.apache.hadoop.hbase.regionserver.wal.HLogSplitter.EntryBuffers;
 import org.apache.hadoop.hbase.regionserver.wal.HLogSplitter.OutputSink;
@@ -126,10 +125,6 @@ public class RegionReplicaReplicationEndpoint extends HBaseReplicationEndpoint {
     conf.setInt("hbase.client.serverside.retries.multiplier", 1);
     int numRetries = conf.getInt(CLIENT_RETRIES_NUMBER, defaultNumRetries);
     conf.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, numRetries);
-
-    String codecClassName = conf
-        .get(WALCellCodec.WAL_CELL_CODEC_CLASS_KEY, WALCellCodec.class.getName());
-    conf.set(HConstants.RPC_CODEC_CONF_KEY, codecClassName);
 
     this.numWriterThreads = this.conf.getInt(
       "hbase.region.replica.replication.writer.threads", 3);
