@@ -69,6 +69,7 @@ import org.apache.hadoop.hbase.master.RegionPlacementMaintainer;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.FSProtos;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.FSConstants;
 import org.apache.hadoop.io.IOUtils;
@@ -179,6 +180,21 @@ public abstract class FSUtils {
   public static boolean deleteDirectory(final FileSystem fs, final Path dir)
   throws IOException {
     return fs.exists(dir) && fs.delete(dir, true);
+  }
+
+  /**
+   * Delete the region directory if exists.
+   * @param conf
+   * @param hri
+   * @return True if deleted the region directory.
+   * @throws IOException
+   */
+  public static boolean deleteRegionDir(final Configuration conf, final HRegionInfo hri)
+  throws IOException {
+    Path rootDir = getRootDir(conf);
+    FileSystem fs = rootDir.getFileSystem(conf);
+    return deleteDirectory(fs,
+      new Path(getTableDir(rootDir, hri.getTable()), hri.getEncodedName()));
   }
 
   /**
@@ -1910,4 +1926,37 @@ public abstract class FSUtils {
     int hbaseSize = conf.getInt("hbase." + dfsKey, defaultSize);
     conf.setIfUnset(dfsKey, Integer.toString(hbaseSize));
   }
+
+  public static List<Path> getReferenceFilePaths(final FileSystem fs, final Path familyDir) throws IOException {
+    FileStatus[] fds = fs.listStatus(familyDir, new ReferenceFileFilter(fs));
+    List<Path> referenceFiles = new ArrayList<Path>(fds.length);
+    for (FileStatus fdfs: fds) {
+      Path fdPath = fdfs.getPath();
+      referenceFiles.add(fdPath);
+    }
+    return referenceFiles;
+  }
+
+
+  public static class ReferenceFileFilter implements PathFilter {
+
+    private final FileSystem fs;
+
+    public ReferenceFileFilter(FileSystem fs) {
+      this.fs = fs;
+    }
+
+    @Override
+    public boolean accept(Path rd) {
+      try {
+        // only files can be references.
+        return !fs.getFileStatus(rd).isDir() && StoreFileInfo.isReference(rd);
+      } catch (IOException ioe) {
+        // Maybe the file was moved or the fs was disconnected.
+        LOG.warn("Skipping file " + rd +" due to IOException", ioe);
+        return false;
+      }
+    }
+  }
+
 }
