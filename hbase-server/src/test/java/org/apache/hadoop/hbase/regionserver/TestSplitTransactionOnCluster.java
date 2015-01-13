@@ -1070,6 +1070,80 @@ public class TestSplitTransactionOnCluster {
     }
   }
 
+  @Test(timeout = 300000)
+  public void testFailedSplit() throws Exception {
+    TableName tableName = TableName.valueOf("testFailedSplit");
+    byte[] colFamily = Bytes.toBytes("info");
+    TESTING_UTIL.createTable(tableName, colFamily);
+    HTable table = new HTable(TESTING_UTIL.getConfiguration(), tableName);
+    try {
+      TESTING_UTIL.loadTable(table, colFamily);
+      List<HRegionInfo> regions = TESTING_UTIL.getHBaseAdmin().getTableRegions(tableName);
+      assertTrue(regions.size() == 1);
+      final HRegion actualRegion = cluster.getRegions(tableName).get(0);
+      actualRegion.getCoprocessorHost().load(FailingSplitRegionObserver.class,
+        Coprocessor.PRIORITY_USER, actualRegion.getBaseConf());
+
+      // The following split would fail.
+      admin.split(tableName.getNameAsString());
+      FailingSplitRegionObserver.latch.await();
+      LOG.info("Waiting for region to come out of RIT");
+      TESTING_UTIL.waitFor(60000, 1000, new Waiter.Predicate<Exception>() {
+        @Override
+        public boolean evaluate() throws Exception {
+          RegionStates regionStates = cluster.getMaster().getAssignmentManager().getRegionStates();
+          Map<String, RegionState> rit = regionStates.getRegionsInTransition();
+          return !rit.containsKey(actualRegion.getRegionInfo().getEncodedName());
+        }
+      });
+      regions = TESTING_UTIL.getHBaseAdmin().getTableRegions(tableName);
+      assertTrue(regions.size() == 1);
+    } finally {
+      table.close();
+      TESTING_UTIL.deleteTable(tableName);
+    }
+  }
+
+  @Test (timeout=300000)
+  public void testSSHCleanupDaugtherRegionsOfAbortedSplit() throws Exception {
+    TableName table = TableName.valueOf("testSSHCleanupDaugtherRegionsOfAbortedSplit");
+    try {
+      HTableDescriptor desc = new HTableDescriptor(table);
+      desc.addFamily(new HColumnDescriptor(Bytes.toBytes("f")));
+      admin.createTable(desc);
+      HTable hTable = new HTable(cluster.getConfiguration(), desc.getTableName());
+      for(int i = 1; i < 5; i++) {
+        Put p1 = new Put(("r"+i).getBytes());
+        p1.add(Bytes.toBytes("f"), "q1".getBytes(), "v".getBytes());
+        hTable.put(p1);
+      }
+      admin.flush(desc.getTableName().toString());
+      List<HRegion> regions = cluster.getRegions(desc.getTableName());
+      int serverWith = cluster.getServerWith(regions.get(0).getRegionName());
+      HRegionServer regionServer = cluster.getRegionServer(serverWith);
+      cluster.getServerWith(regions.get(0).getRegionName());
+      SplitTransaction st = new SplitTransaction(regions.get(0), Bytes.toBytes("r3"));
+      st.prepare();
+      st.stepsBeforePONR(regionServer, regionServer, false);
+      Path tableDir =
+          FSUtils.getTableDir(cluster.getMaster().getMasterFileSystem().getRootDir(),
+            desc.getTableName());
+      tableDir.getFileSystem(cluster.getConfiguration());
+      List<Path> regionDirs =
+          FSUtils.getRegionDirs(tableDir.getFileSystem(cluster.getConfiguration()), tableDir);
+      assertEquals(3,regionDirs.size());
+      AssignmentManager am = cluster.getMaster().getAssignmentManager();
+      am.processServerShutdown(regionServer.getServerName());
+      assertEquals(am.getRegionStates().getRegionsInTransition().toString(), am.getRegionStates()
+          .getRegionsInTransition().size(), 0);
+      regionDirs =
+          FSUtils.getRegionDirs(tableDir.getFileSystem(cluster.getConfiguration()), tableDir);
+      assertEquals(1,regionDirs.size());
+    } finally {
+      TESTING_UTIL.deleteTable(table);
+    }
+  }
+
   private void testSplitBeforeSettingSplittingInZKInternals() throws Exception {
     final byte[] tableName = Bytes.toBytes("testSplitBeforeSettingSplittingInZK");
     try {

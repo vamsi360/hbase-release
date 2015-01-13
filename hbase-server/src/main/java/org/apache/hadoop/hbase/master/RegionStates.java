@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.master.RegionState.State;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.zookeeper.ZKAssign;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
@@ -578,10 +579,6 @@ public class RegionStates {
       }
     }
 
-    for (HRegionInfo hri : regionsToOffline) {
-      regionOffline(hri);
-    }
-
     for (RegionState state : regionsInTransition.values()) {
       HRegionInfo hri = state.getRegion();
       if (assignedRegions.contains(hri)) {
@@ -600,10 +597,25 @@ public class RegionStates {
         if (state.isPendingOpenOrOpening() || state.isFailedClose() || state.isOffline()) {
           LOG.info("Found region in " + state + " to be reassigned by SSH for " + sn);
           rits.add(hri);
+        } else if(state.isSplittingNew()) {
+          try {
+            if (MetaReader.getRegion(server.getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID),
+              state.getRegion().getRegionName()) == null) {
+              regionsToOffline.add(state.getRegion());
+              FSUtils.deleteRegionDir(server.getConfiguration(), state.getRegion());
+            }
+          } catch (IOException e) {
+            LOG.warn("Got exception while deleting " + state.getRegion()
+                + " directories from file system.", e);
+          }
         } else {
           LOG.warn("THIS SHOULD NOT HAPPEN: unexpected " + state);
         }
       }
+    }
+
+    for (HRegionInfo hri : regionsToOffline) {
+      regionOffline(hri);
     }
 
     this.notifyAll();
