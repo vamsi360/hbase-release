@@ -1727,6 +1727,11 @@
             <version>${hadoop-two.version}</version>
           </dependency>
           <dependency>
+	    <groupId>org.apache.hadoop</groupId>
+	    <artifactId>hadoop-azure</artifactId>
+            <version>${hadoop-two.version}</version>
+          </dependency>
+          <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
             <version>${hadoop-two.version}</version>
