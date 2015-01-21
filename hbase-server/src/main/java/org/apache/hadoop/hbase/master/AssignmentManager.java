@@ -2259,6 +2259,7 @@ public class AssignmentManager extends ZooKeeperListener {
     RegionPlan randomPlan = null;
     boolean newPlan = false;
     RegionPlan existingPlan;
+    ServerName destination = balancer.randomAssignment(region, destServers);
 
     synchronized (this.regionPlans) {
       existingPlan = this.regionPlans.get(encodedName);
@@ -2274,8 +2275,7 @@ public class AssignmentManager extends ZooKeeperListener {
           || existingPlan.getDestination() == null
           || !destServers.contains(existingPlan.getDestination())) {
         newPlan = true;
-        randomPlan = new RegionPlan(region, null,
-            balancer.randomAssignment(region, destServers));
+        randomPlan = new RegionPlan(region, null, destination);
         if (!region.isMetaTable() && shouldAssignRegionsWithFavoredNodes) {
           List<HRegionInfo> regions = new ArrayList<HRegionInfo>(1);
           regions.add(region);
