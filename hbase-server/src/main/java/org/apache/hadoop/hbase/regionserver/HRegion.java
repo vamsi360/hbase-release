@@ -2602,7 +2602,10 @@ public class HRegion implements HeapSize { // , Writable{
    */
   public OperationStatus[] batchReplay(HLogSplitter.MutationReplay[] mutations, long replaySeqId)
       throws IOException {
-    if (replaySeqId < lastReplayedOpenRegionSeqId) {
+    if (!RegionReplicaUtil.isDefaultReplica(getRegionInfo())
+      && replaySeqId < lastReplayedOpenRegionSeqId) {
+      // if it is a secondary replica we should ignore these entries silently
+      // since they are coming out of order
       if (LOG.isTraceEnabled()) {
         LOG.trace(getRegionInfo().getEncodedName() + " : "
           + "Skipping " + mutations.length + " mutations with replaySeqId=" + replaySeqId
