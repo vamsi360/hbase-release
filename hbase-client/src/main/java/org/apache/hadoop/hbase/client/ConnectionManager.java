@@ -775,8 +775,8 @@ public class ConnectionManager {
         synchronized (this) {
           if (this.metaLookupPool == null) {
             this.metaLookupPool = getThreadPool(
-               conf.getInt("hbase.hconnection.meta.lookup.threads.max", 5),
-               conf.getInt("hbase.hconnection.meta.lookup.threads.max", 5), "-metaLookup-shared-");
+              conf.getInt("hbase.hconnection.meta.lookup.threads.max", 5),
+              conf.getInt("hbase.hconnection.meta.lookup.threads.core", 5), "-metaLookup-shared-");
           }
         }
       }
