@@ -73,6 +73,7 @@ import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaReader;
+import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.ConnectionUtils;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.MetaScanner;
@@ -236,6 +237,7 @@ import org.apache.hadoop.hbase.zookeeper.ClusterStatusTracker;
 import org.apache.hadoop.hbase.zookeeper.DrainingServerTracker;
 import org.apache.hadoop.hbase.zookeeper.LoadBalancerTracker;
 import org.apache.hadoop.hbase.zookeeper.MasterAddressTracker;
+import org.apache.hadoop.hbase.zookeeper.MetaRegionTracker;
 import org.apache.hadoop.hbase.zookeeper.RegionServerTracker;
 import org.apache.hadoop.hbase.zookeeper.ZKClusterId;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
@@ -963,6 +965,8 @@ MasterServices, Server {
         assignMeta(status, EMPTY_SET, m.getKey(), m.getValue());
       }
     }
+    unassignExcessMetaReplica(zooKeeper, conf.getInt(HConstants.META_REPLICAS_NUM,
+        HConstants.DEFAULT_META_REPLICA_NUM));
     // clear the dead servers with same host name and port of online server because we are not
     // removing dead server with same hostname and port of rs which is trying to check in before
     // master initialization. See HBASE-5916.
@@ -1010,6 +1014,31 @@ MasterServices, Server {
     // We put this out here in a method so can do a Mockito.spy and stub it out
     // w/ a mocked up ServerManager.
     return new ServerManager(master, services);
+  }
+
+  private void unassignExcessMetaReplica(ZooKeeperWatcher zkw, int numMetaReplicasConfigured) {
+    // unassign the unneeded replicas (for e.g., if the previous master was configured
+    // with a replication of 3 and now it is 2, we need to unassign the 1 unneeded replica)
+    try {
+      List<String> metaReplicaZnodes = zkw.getMetaReplicaNodes();
+      for (String metaReplicaZnode : metaReplicaZnodes) {
+        int replicaId = zkw.getMetaReplicaIdFromZnode(metaReplicaZnode);
+        if (replicaId >= numMetaReplicasConfigured) {
+          ServerName s = MetaRegionTracker.getMetaRegionLocation(zkw, replicaId);
+          HRegionInfo hri = RegionReplicaUtil.getRegionInfoForReplica(
+              HRegionInfo.FIRST_META_REGIONINFO, replicaId);
+          LOG.info("Closing excess replica of meta region " + hri);
+          // send a close and wait for a max of 30 seconds
+          ServerManager.closeRegionSilentlyAndWait(
+              (ClusterConnection)HConnectionManager.getConnection(conf), s, hri, 30000);
+          ZKUtil.deleteNode(zkw, zkw.getZNodeForReplica(replicaId));
+        }
+      }
+    } catch (Exception ex) {
+      // ignore the exception since we don't want the master to be wedged due to potential
+      // issues in the cleanup of the extra regions. We can do that cleanup via hbck or manually
+      LOG.warn("Ignoring exception " + ex);
+    }
   }
 
   /**

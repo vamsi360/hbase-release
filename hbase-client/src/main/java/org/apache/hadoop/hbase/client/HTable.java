@@ -1387,6 +1387,7 @@ public class HTable implements HTableInterface {
           terminated = this.pool.awaitTermination(60, TimeUnit.SECONDS);
         } while (!terminated);
       } catch (InterruptedException e) {
+        this.pool.shutdownNow();
         LOG.warn("waitForTermination interrupted");
       }
     }

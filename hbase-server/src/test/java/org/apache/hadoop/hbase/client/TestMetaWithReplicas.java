@@ -25,6 +25,7 @@ import static org.junit.Assert.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,6 +43,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaReader;
+import org.apache.hadoop.hbase.client.ConnectionManager.HConnectionImplementation;
 import org.apache.hadoop.hbase.regionserver.StorefileRefresherChore;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.HBaseFsck;
@@ -201,6 +203,10 @@ public class TestMetaWithReplicas {
     put.add("foo".getBytes(), row, row);
     htable.put(put);
     htable.flushCommits();
+    // check that metalookup pool would get created
+    ((HConnectionImplementation)htable.connection).relocateRegion(TABLE, row);
+    ExecutorService ex = ((HConnectionImplementation)htable.connection).getCurrentMetaLookupPool(); 
+    assert(ex != null);
     // Try to do a get of the row that was just put
     Get get = new Get(row);
     Result r = htable.get(get);
@@ -289,6 +295,43 @@ public class TestMetaWithReplicas {
       i++;
     } while ((hrl == null || hrl.getServerName().equals(oldServer)) && i < 3);
     assertTrue(i != 3);
+  }
+
+  @Test
+  public void testChangingReplicaCount() throws Exception {
+    // tests changing the replica count across master restarts
+    // reduce the replica count from 3 to 2
+    stopMasterAndValidateReplicaCount(3, 2);
+    // increase the replica count from 2 to 3
+    stopMasterAndValidateReplicaCount(2, 3);
+  }
+
+  private void stopMasterAndValidateReplicaCount(int originalReplicaCount, int newReplicaCount)
+      throws Exception {
+    ServerName sn = TEST_UTIL.getHBaseClusterInterface().getClusterStatus().getMaster();
+    TEST_UTIL.getHBaseClusterInterface().stopMaster(sn);
+    TEST_UTIL.getHBaseClusterInterface().waitForMasterToStop(sn, 60000);
+    List<String> metaZnodes = TEST_UTIL.getZooKeeperWatcher().getMetaReplicaNodes();
+    assert(metaZnodes.size() == originalReplicaCount); //we should have what was configured before
+    TEST_UTIL.getHBaseClusterInterface().getConf().setInt(HConstants.META_REPLICAS_NUM,
+        newReplicaCount);
+    TEST_UTIL.getHBaseClusterInterface().startMaster(sn.getHostname());
+    TEST_UTIL.getHBaseClusterInterface().waitForActiveAndReadyMaster();
+    int count = 0;
+    do {
+      metaZnodes = TEST_UTIL.getZooKeeperWatcher().getMetaReplicaNodes();
+      Thread.sleep(10);
+      count++;
+      // wait for the count to be different from the originalReplicaCount. When the
+      // replica count is reduced, that will happen when the master unassigns excess
+      // replica, and deletes the excess znodes
+    } while (metaZnodes.size() == originalReplicaCount && count < 1000);
+    assert(metaZnodes.size() == newReplicaCount);
+    // also check if hbck returns without errors
+    TEST_UTIL.getConfiguration().setInt(HConstants.META_REPLICAS_NUM,
+        newReplicaCount);
+    HBaseFsck hbck = HbckTestingUtil.doFsck(TEST_UTIL.getConfiguration(), false);
+    HbckTestingUtil.assertNoErrors(hbck);
   }
 
   @Test

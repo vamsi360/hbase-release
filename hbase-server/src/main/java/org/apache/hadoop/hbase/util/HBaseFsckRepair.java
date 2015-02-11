@@ -35,11 +35,13 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
+import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.master.RegionState;
+import org.apache.hadoop.hbase.master.ServerManager;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService;
 import org.apache.hadoop.hbase.regionserver.HRegion;
@@ -149,27 +151,10 @@ public class HBaseFsckRepair {
   public static void closeRegionSilentlyAndWait(HBaseAdmin admin,
       ServerName server, HRegionInfo region) throws IOException, InterruptedException {
     HConnection connection = admin.getConnection();
-    AdminService.BlockingInterface rs = connection.getAdmin(server);
-    try {
-      ProtobufUtil.closeRegion(rs, server, region.getRegionName(), false);
-    } catch (IOException e) {
-      LOG.warn("Exception when closing region: " + region.getRegionNameAsString(), e);
-    }
-    long timeout = admin.getConfiguration()
-      .getLong("hbase.hbck.close.timeout", 120000);
-    long expiration = timeout + System.currentTimeMillis();
-    while (System.currentTimeMillis() < expiration) {
-      try {
-        HRegionInfo rsRegion =
-          ProtobufUtil.getRegionInfo(rs, region.getRegionName());
-        if (rsRegion == null) return;
-      } catch (IOException ioe) {
-        return;
-      }
-      Thread.sleep(1000);
-    }
-    throw new IOException("Region " + region + " failed to close within"
-        + " timeout " + timeout);
+    long timeout = connection.getConfiguration()
+        .getLong("hbase.hbck.close.timeout", 120000);
+    ServerManager.closeRegionSilentlyAndWait((ClusterConnection)connection, server,
+           region, timeout);
   }
 
   /**

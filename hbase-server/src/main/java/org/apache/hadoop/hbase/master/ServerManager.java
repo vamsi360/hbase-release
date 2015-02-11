@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.ServerLoad;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.YouAreDeadException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.RetriesExhaustedException;
@@ -734,6 +735,33 @@ public class ServerManager {
   public boolean sendRegionClose(ServerName server,
       HRegionInfo region, int versionOfClosingNode) throws IOException {
     return sendRegionClose(server, region, versionOfClosingNode, null, true);
+  }
+
+  /**
+   * Contacts a region server and waits up to timeout ms
+   * to close the region.  This bypasses the active hmaster.
+   */
+  public static void closeRegionSilentlyAndWait(ClusterConnection connection,
+    ServerName server, HRegionInfo region, long timeout) throws IOException, InterruptedException {
+    AdminService.BlockingInterface rs = connection.getAdmin(server);
+    try {
+      ProtobufUtil.closeRegion(rs, server, region.getRegionName(), false);
+    } catch (IOException e) {
+      LOG.warn("Exception when closing region: " + region.getRegionNameAsString(), e);
+    }
+    long expiration = timeout + System.currentTimeMillis();
+    while (System.currentTimeMillis() < expiration) {
+      try {
+        HRegionInfo rsRegion =
+          ProtobufUtil.getRegionInfo(rs, region.getRegionName());
+        if (rsRegion == null) return;
+      } catch (IOException ioe) {
+        return;
+      }
+      Thread.sleep(1000);
+    }
+    throw new IOException("Region " + region + " failed to close within"
+        + " timeout " + timeout);
   }
 
   /**
