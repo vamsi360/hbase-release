@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -1541,7 +1542,8 @@ class ConnectionManager {
             throw new MasterNotRunningException(sn + " is dead.");
           }
           // Use the security info interface name as our stub key
-          String key = getStubKey(getServiceName(), sn.getHostAndPort());
+          String key = getStubKey(getServiceName(), sn.getHostname(),
+              sn.getPort());
           connectionLock.putIfAbsent(key, key);
           Object stub = null;
           synchronized (connectionLock.get(key)) {
@@ -1660,7 +1662,8 @@ class ConnectionManager {
         throw new RegionServerStoppedException(serverName + " is dead.");
       }
       String key = getStubKey(AdminService.BlockingInterface.class.getName(),
-        serverName.getHostAndPort());
+          serverName.getHostname(),
+          serverName.getPort());
       this.connectionLock.putIfAbsent(key, key);
       AdminService.BlockingInterface stub = null;
       synchronized (this.connectionLock.get(key)) {
@@ -1681,7 +1684,8 @@ class ConnectionManager {
       if (isDeadServer(sn)) {
         throw new RegionServerStoppedException(sn + " is dead.");
       }
-      String key = getStubKey(ClientService.BlockingInterface.class.getName(), sn.getHostAndPort());
+      String key = getStubKey(ClientService.BlockingInterface.class.getName(),
+         sn.getHostname(), sn.getPort());
       this.connectionLock.putIfAbsent(key, key);
       ClientService.BlockingInterface stub = null;
       synchronized (this.connectionLock.get(key)) {
@@ -1698,8 +1702,14 @@ class ConnectionManager {
       return stub;
     }
 
-    static String getStubKey(final String serviceName, final String rsHostnamePort) {
-      return serviceName + "@" + rsHostnamePort;
+    static String getStubKey(final String serviceName, final String rsHostname, int port) {
+      // Sometimes, servers go down and they come back up with the same hostname but a different
+      // IP address. Force a resolution of the rsHostname by trying to instantiate an
+      // InetSocketAddress, and this way we will rightfully get a new stubKey.
+      String str = serviceName + "@" +
+                new InetSocketAddress(rsHostname, port).getAddress().getHostAddress() +
+                ":" + port;
+      return str;
     }
 
     private ZooKeeperKeepAliveConnection keepAliveZookeeper;
