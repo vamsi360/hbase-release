@@ -24,6 +24,7 @@ import java.io.InterruptedIOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -1706,10 +1707,12 @@ class ConnectionManager {
       // Sometimes, servers go down and they come back up with the same hostname but a different
       // IP address. Force a resolution of the rsHostname by trying to instantiate an
       // InetSocketAddress, and this way we will rightfully get a new stubKey.
-      String str = serviceName + "@" +
-                new InetSocketAddress(rsHostname, port).getAddress().getHostAddress() +
-                ":" + port;
-      return str;
+      InetAddress i = new InetSocketAddress(rsHostname, port).getAddress();
+      String address = rsHostname;
+      if (i != null) {
+        address = i.getHostAddress();
+      }
+      return serviceName + "@" + address + ":" + port;
     }
 
     private ZooKeeperKeepAliveConnection keepAliveZookeeper;
