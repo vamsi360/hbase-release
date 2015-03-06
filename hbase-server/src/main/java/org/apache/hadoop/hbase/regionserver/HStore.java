@@ -750,20 +750,24 @@ public class HStore implements Store {
     Path dstPath = fs.bulkLoadStoreFile(getColumnFamilyName(), srcPath, seqNum);
 
     LOG.info("Loaded HFile " + srcPath + " into store '" + getColumnFamilyName() + "' as "
-        + dstPath + " - updating store file list.");
+            + dstPath + " - updating store file list.");
 
-    bulkLoadHFile(dstPath);
+    StoreFile sf = createStoreFileAndReader(dstPath);
+    bulkLoadHFile(sf);
 
     LOG.info("Successfully loaded store file " + srcPath + " into store " + this
-        + " (new location: " + dstPath + ")");
+            + " (new location: " + dstPath + ")");
 
     return dstPath;
   }
 
   @Override
-  public void bulkLoadHFile(Path bulkloadHfilePath) throws IOException {
-    StoreFile sf = createStoreFileAndReader(bulkloadHfilePath);
+  public void bulkLoadHFile(StoreFileInfo fileInfo) throws IOException {
+    StoreFile sf = createStoreFileAndReader(fileInfo);
+    bulkLoadHFile(sf);
+  }
 
+  private void bulkLoadHFile(StoreFile sf) throws IOException {
     StoreFile.Reader r = sf.getReader();
     this.storeSize += r.length();
     this.totalUncompressedBytes += r.getTotalUncompressedBytes();
@@ -781,11 +785,11 @@ public class HStore implements Store {
       this.lock.writeLock().unlock();
     }
     notifyChangedReadersObservers();
-    LOG.info("Loaded HFile " + bulkloadHfilePath + " into store '" + getColumnFamilyName());
+    LOG.info("Loaded HFile " + sf.getFileInfo() + " into store '" + getColumnFamilyName());
     if (LOG.isTraceEnabled()) {
       String traceMessage = "BULK LOAD time,size,store size,store files ["
-          + EnvironmentEdgeManager.currentTimeMillis() + "," + r.length() + "," + storeSize + ","
-          + storeEngine.getStoreFileManager().getStorefileCount() + "]";
+              + EnvironmentEdgeManager.currentTimeMillis() + "," + r.length() + "," + storeSize
+              + "," + storeEngine.getStoreFileManager().getStorefileCount() + "]";
       LOG.trace(traceMessage);
     }
   }

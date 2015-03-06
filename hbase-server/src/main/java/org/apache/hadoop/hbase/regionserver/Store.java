@@ -389,5 +389,5 @@ public interface Store extends HeapSize, StoreConfigInformation {
     */
   void refreshStoreFiles(Collection<String> newFiles) throws IOException;
 
-  void bulkLoadHFile(Path dstPath) throws IOException;
+  void bulkLoadHFile(StoreFileInfo fileInfo) throws IOException;
 }

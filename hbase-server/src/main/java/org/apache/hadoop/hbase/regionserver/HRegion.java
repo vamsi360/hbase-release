@@ -19,6 +19,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import java.io.EOFException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
@@ -4465,15 +4466,17 @@ public class HRegion implements HeapSize { // , Writable{
             continue;
           }
 
-          Path familyPath = this.getRegionFileSystem().getStoreDir(Bytes.toString(family));
           List<String> storeFiles = storeDescriptor.getStoreFileList();
           for (String storeFile : storeFiles) {
-            Path storeFilePath = new Path(familyPath, storeFile);
-            if (fs.getFileSystem().exists(storeFilePath)) {
-              store.bulkLoadHFile(storeFilePath);
-            } else {
-              LOG.warn(getRegionInfo().getEncodedName() + " : " + storeFilePath + " doesn't exist "
-                  +"any more. Skip loading the file");
+            StoreFileInfo storeFileInfo = null;
+            try {
+              storeFileInfo = fs.getStoreFileInfo(Bytes.toString(family), storeFile);
+              store.bulkLoadHFile(storeFileInfo);
+            } catch(FileNotFoundException ex) {
+              LOG.warn(getRegionInfo().getEncodedName() + " : "
+                      + ((storeFileInfo != null) ? storeFileInfo.toString() :
+                      (new Path(Bytes.toString(family), storeFile)).toString())
+                      + " doesn't exist any more. Skip loading the file");
             }
           }
         }
