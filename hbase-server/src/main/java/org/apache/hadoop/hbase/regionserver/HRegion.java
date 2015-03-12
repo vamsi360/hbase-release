@@ -4531,12 +4531,12 @@ public class HRegion implements HeapSize { // , Writable{
               // only drop memstore snapshots if they are smaller than last flush for the store
               if (this.prepareFlushResult.flushSeqId <= storeSeqId) {
                 StoreFlushContext ctx = this.prepareFlushResult.storeFlushCtxs == null ?
-                    null : this.prepareFlushResult.storeFlushCtxs.get(store.getFamily());
+                    null : this.prepareFlushResult.storeFlushCtxs.get(store.getFamily().getName());
                 if (ctx != null) {
                   long snapshotSize = store.getFlushableSize();
                   ctx.abort();
                   this.addAndGetGlobalMemstoreSize(-snapshotSize);
-                  this.prepareFlushResult.storeFlushCtxs.remove(store.getFamily());
+                  this.prepareFlushResult.storeFlushCtxs.remove(store.getFamily().getName());
                   totalFreedSize += snapshotSize;
                 }
               }
