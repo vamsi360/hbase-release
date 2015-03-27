@@ -358,6 +358,8 @@ Shell.load_command_group(
     delete_snapshot
     delete_all_snapshot
     list_snapshots
+    snapshot_all
+    snapshot_restore
   ]
 )
 
