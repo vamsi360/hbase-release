@@ -221,7 +221,7 @@ public abstract class AbstractTestIPC {
   protected abstract AbstractRpcClient createRpcClientRTEDuringConnectionSetup(Configuration conf)
       throws IOException;
 
-  @Test
+  // @Test
   public void testRTEDuringConnectionSetup() throws Exception {
     Configuration conf = HBaseConfiguration.create();
     TestRpcServer rpcServer = new TestRpcServer();
