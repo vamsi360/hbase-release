@@ -111,9 +111,6 @@ public class TestGenerateDelegationToken {
     PRINCIPAL = USERNAME + "/" + HOST;
     HTTP_PRINCIPAL = "HTTP/" + HOST;
     KDC.createPrincipal(KEYTAB_FILE, PRINCIPAL, HTTP_PRINCIPAL);
-//    TEST_UTIL.getConfiguration().set("dfs.data.transfer.protection",
-//      "authentication,integrity,privacy");
-    TEST_UTIL.getConfiguration().setBoolean("ignore.secure.ports.for.testing", true);
     TEST_UTIL.startMiniZKCluster();
 
     HBaseKerberosUtils.setKeytabFileForTesting(KEYTAB_FILE.getAbsolutePath());
