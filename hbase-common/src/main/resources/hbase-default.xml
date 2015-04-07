@@ -1380,4 +1380,12 @@ possible configurations would overwhelm and obscure the important.
     0.x Abort only when this percent of handlers have died;
     1 Abort only all of the handers have died.</description>
   </property>
+  <property>
+    <name>hbase.master.port</name>
+    <value>16000</value>
+  </property>
+  <property>
+    <name>hbase.master.regionserver.info.port</name>
+    <value>16040</value>
+  </property>
 </configuration>

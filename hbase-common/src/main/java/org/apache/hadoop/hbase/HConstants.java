@@ -145,8 +145,14 @@ public final class HConstants {
   /** default port for master web api */
   public static final int DEFAULT_MASTER_INFOPORT = 16010;
 
+  /** default port for master's regionserver's web api */
+  public static final int DEFAULT_MASTER_REGIONSERVER_INFOPORT = 16040;
+
   /** Configuration key for master web API port */
   public static final String MASTER_INFO_PORT = "hbase.master.info.port";
+
+  /** Configuration key for master's regionserver's web API port */
+  public static final String MASTER_REGIONSERVER_INFO_PORT = "hbase.master.regionserver.info.port";
 
   /** Parameter name for the master type being backup (waits for primary to go inactive). */
   public static final String MASTER_TYPE_BACKUP = "hbase.master.backup";
