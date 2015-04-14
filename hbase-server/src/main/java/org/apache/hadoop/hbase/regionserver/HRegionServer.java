@@ -1796,6 +1796,11 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
   }
 
   @Override
+  public CatalogTracker getCatalogTracker() {
+    return getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID);
+  }
+
+  @Override
   public CatalogTracker getCatalogTracker(int replicaId) {
     return this.catalogTracker;
   }

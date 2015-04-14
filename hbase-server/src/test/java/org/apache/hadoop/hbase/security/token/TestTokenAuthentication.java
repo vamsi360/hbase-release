@@ -148,6 +148,11 @@ public class TestTokenAuthentication {
     }
 
     @Override
+    public CatalogTracker getCatalogTracker() {
+      return null;
+    }
+
+    @Override
     public ZooKeeperWatcher getZooKeeper() {
       return zookeeper;
     }

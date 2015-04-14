@@ -436,6 +436,11 @@ public class TestReplicationSourceManager {
     }
 
     @Override
+    public CatalogTracker getCatalogTracker() {
+      return null; // To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public ServerName getServerName() {
       return ServerName.valueOf(hostname, 1234, 1L);
     }

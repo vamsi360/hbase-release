@@ -149,6 +149,11 @@ public class TestCatalogJanitor {
     }
 
     @Override
+    public CatalogTracker getCatalogTracker() {
+      return this.ct;
+    }
+
+    @Override
     public Configuration getConfiguration() {
       return this.c;
     }
@@ -396,6 +401,12 @@ public class TestCatalogJanitor {
 
     @Override
     public CatalogTracker getCatalogTracker(int replicaId) {
+      // TODO Auto-generated method stub
+      return null;
+    }
+
+    @Override
+    public CatalogTracker getCatalogTracker() {
       // TODO Auto-generated method stub
       return null;
     }

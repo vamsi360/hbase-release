@@ -133,6 +133,11 @@ class MockRegionServerServices implements RegionServerServices {
   }
 
   @Override
+  public CatalogTracker getCatalogTracker() {
+    return null;
+  }
+
+  @Override
   public ZooKeeperWatcher getZooKeeper() {
     return zkw;
   }

@@ -28,6 +28,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.google.protobuf.Message;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.CellScannable;
@@ -272,6 +273,11 @@ ClientProtos.ClientService.BlockingInterface, RegionServerServices {
   @Override
   public CatalogTracker getCatalogTracker(int replicaId) {
     // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public CatalogTracker getCatalogTracker() {
     return null;
   }
 

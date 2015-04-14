@@ -300,6 +300,11 @@ public class TestActiveMasterManager {
       return null;
     }
 
+    @Override
+    public CatalogTracker getCatalogTracker() {
+      return null;
+    }
+
     public ClusterStatusTracker getClusterStatusTracker() {
       return clusterStatusTracker;
     }

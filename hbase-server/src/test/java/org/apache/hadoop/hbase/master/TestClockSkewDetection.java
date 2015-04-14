@@ -44,6 +44,9 @@ public class TestClockSkewDetection {
       public CatalogTracker getCatalogTracker(int replicaId) {
         return null;
       }
+      public CatalogTracker getCatalogTracker() {
+        return null;
+      }
 
       @Override
       public Configuration getConfiguration() {

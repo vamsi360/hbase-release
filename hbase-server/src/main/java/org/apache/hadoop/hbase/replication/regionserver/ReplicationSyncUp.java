@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
@@ -142,6 +143,11 @@ public class ReplicationSyncUp extends Configured implements Tool {
     @Override
     public ZooKeeperWatcher getZooKeeper() {
       return zkw;
+    }
+
+    @Override
+    public CatalogTracker getCatalogTracker() {
+      return getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID);
     }
 
     @Override

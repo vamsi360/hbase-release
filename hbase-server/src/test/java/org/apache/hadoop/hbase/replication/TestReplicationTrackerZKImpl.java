@@ -223,6 +223,11 @@ public class TestReplicationTrackerZKImpl {
     }
 
     @Override
+    public CatalogTracker getCatalogTracker() {
+      return null;
+    }
+
+    @Override
     public ServerName getServerName() {
       return ServerName.valueOf(this.serverName);
     }

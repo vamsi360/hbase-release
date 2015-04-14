@@ -147,6 +147,11 @@ public class TestReplicationStateZKImpl extends TestReplicationStateBasic {
     }
 
     @Override
+    public CatalogTracker getCatalogTracker() {
+      return null;
+    }
+
+    @Override
     public ServerName getServerName() {
       return ServerName.valueOf(this.serverName);
     }

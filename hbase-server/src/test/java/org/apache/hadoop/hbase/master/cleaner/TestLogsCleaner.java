@@ -156,6 +156,11 @@ public class TestLogsCleaner {
     }
 
     @Override
+    public CatalogTracker getCatalogTracker() {
+      return null;
+    }
+
+    @Override
     public ServerName getServerName() {
       return ServerName.valueOf("regionserver,60020,000000");
     }

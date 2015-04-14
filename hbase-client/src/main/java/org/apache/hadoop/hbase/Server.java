@@ -40,6 +40,11 @@ public interface Server extends Abortable, Stoppable {
   ZooKeeperWatcher getZooKeeper();
 
   /**
+   * @return Master's instance of {@link CatalogTracker}
+   */
+  CatalogTracker getCatalogTracker();
+
+  /**
    * @param replicaId
    * @return Master's instance of {@link CatalogTracker}
    */

@@ -2495,6 +2495,11 @@ MasterServices, Server {
   }
 
   @Override
+  public CatalogTracker getCatalogTracker() {
+    return getCatalogTracker(HRegionInfo.DEFAULT_REPLICA_ID);
+  }
+
+  @Override
   public CatalogTracker getCatalogTracker(int replicaId) {
     return replicaIdToCatalogTracker.get(replicaId);
   }

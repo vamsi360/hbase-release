@@ -100,6 +100,11 @@ public class MockServer implements Server {
   }
 
   @Override
+  public CatalogTracker getCatalogTracker() {
+    return null;
+  }
+
+  @Override
   public ServerName getServerName() {
     return NAME;
   }
