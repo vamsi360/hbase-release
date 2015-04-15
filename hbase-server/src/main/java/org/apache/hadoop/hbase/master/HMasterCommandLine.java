@@ -91,17 +91,6 @@ public class HMasterCommandLine extends ServerCommandLine {
       return 1;
     }
 
-    String masterPort = getConf().get(HConstants.MASTER_PORT);
-    String masterRegionserverInfoPort = getConf().get(HConstants.MASTER_REGIONSERVER_INFO_PORT);
-    if (masterPort != null && masterRegionserverInfoPort != null) {
-      // when run in this mode, we'd honor the master RPC port, and start the master's
-      // regionserver's jetty on a different port. This is mainly to provide compatibility
-      // with older hbase versions when both master and regionserver are run in the same machine
-      // Without doing this, servers will run into bind exceptions
-      getConf().setInt(HConstants.REGIONSERVER_PORT, Integer.parseInt(masterPort));
-      getConf().setInt(HConstants.REGIONSERVER_INFO_PORT,
-          Integer.parseInt(masterRegionserverInfoPort));
-    }
 
     if (cmd.hasOption("minRegionServers")) {
       String val = cmd.getOptionValue("minRegionServers");
