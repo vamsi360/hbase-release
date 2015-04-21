@@ -3871,6 +3871,11 @@ public class HRegion implements HeapSize { // , Writable{
         }
         store.replayCompactionMarker(compaction, pickCompactionFiles, removeFiles);
         logRegionFiles();
+      } catch (FileNotFoundException ex) {
+        LOG.warn(getRegionInfo().getEncodedName() + " : "
+            + "At least one of the store files in compaction: "
+            + TextFormat.shortDebugString(compaction)
+            + " doesn't exist any more. Skip loading the file(s)", ex);
       } finally {
         closeRegionOperation(Operation.REPLAY_EVENT);
       }
@@ -4136,15 +4141,21 @@ public class HRegion implements HeapSize { // , Writable{
           getMVCC().advanceMemstoreReadAndWritePointsIfNeeded(s.getMaxMemstoreTS());
         }
 
-        // C. Finally notify anyone waiting on memstore to clear:
-        // e.g. checkResources().
-        synchronized (this) {
-          notifyAll(); // FindBugs NN_NAKED_NOTIFY
-        }
-      } finally {
+      } catch (FileNotFoundException ex) {
+        LOG.warn(getRegionInfo().getEncodedName() + " : "
+            + "At least one of the store files in flush: " + TextFormat.shortDebugString(flush)
+            + " doesn't exist any more. Skip loading the file(s)", ex);
+      }
+      finally {
         status.cleanup();
         writestate.notifyAll();
       }
+    }
+
+    // C. Finally notify anyone waiting on memstore to clear:
+    // e.g. checkResources().
+    synchronized (this) {
+      notifyAll(); // FindBugs NN_NAKED_NOTIFY
     }
   }
 
@@ -4182,6 +4193,7 @@ public class HRegion implements HeapSize { // , Writable{
             + Bytes.toString(family) + " but no associated flush context. Ignoring");
         continue;
       }
+
       ctx.replayFlush(flushFiles, dropMemstoreSnapshot); // replay the flush
     }
   }
@@ -4320,7 +4332,14 @@ public class HRegion implements HeapSize { // , Writable{
           }
 
           List<String> storeFiles = storeDescriptor.getStoreFileList();
-          store.refreshStoreFiles(storeFiles); // replace the files with the new ones
+          try {
+            store.refreshStoreFiles(storeFiles); // replace the files with the new ones
+          } catch (FileNotFoundException ex) {
+            LOG.warn(getRegionInfo().getEncodedName() + " : "
+                    + "At least one of the store files: " + storeFiles
+                    + " doesn't exist any more. Skip loading the file(s)", ex);
+            continue;
+          }
 
           if (writestate.flushing) {
             // only drop memstore snapshots if they are smaller than last flush for the store
