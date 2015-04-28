@@ -29,7 +29,7 @@ if defined HADOOP_CONF_DIR (
 )
 
 @rem The maximum amount of heap to use, in MB. Default is 1000.
-@rem set HBASE_HEAPSIZE=1000
+set HBASE_HEAPSIZE=1000
 
 @rem Extra Java runtime options.
 @rem Below are what we set by default.  May only work with SUN JVM.
