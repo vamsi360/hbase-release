@@ -2057,7 +2057,8 @@ public class AccessController extends BaseMasterAndRegionObserver
     String requestUserName = RpcServer.getRequestUserName();
     String owner = scannerOwners.get(s);
     if (authorizationEnabled && owner != null && !owner.equals(requestUserName)) {
-      throw new AccessDeniedException("User '"+ requestUserName +"' is not the scanner owner!");
+      throw new AccessDeniedException("User '"+ requestUserName +"' is not the scanner owner(" +
+          owner + ")!");
     }
   }
 
