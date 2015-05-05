@@ -61,6 +61,7 @@ import org.apache.hadoop.hbase.util.ChecksumType;
 import org.apache.hadoop.hbase.util.ClassSize;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.io.compress.Compressor;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -82,6 +83,9 @@ public class TestHFileBlock {
 
   private static final int NUM_TEST_BLOCKS = 1000;
   private static final int NUM_READER_THREADS = 26;
+
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   // Used to generate KeyValues
   private static int NUM_KEYVALUES = 50;
@@ -704,6 +708,14 @@ public class TestHFileBlock {
 
   @Test
   public void testConcurrentReading() throws Exception {
+	// In the local file system, Hadoop has a bug where seeks do not go to the correct location
+	// if checksum verification is disabled (see HBASE-5885).  However, HBASE-11218 disables
+	// checksum verification for local file system, which caused this test to fail randomly
+	// in Windows operating system.
+	// For now, disable this test when running under WINDOWS OS.  It would be re-enabled when
+	// HADOOP (eg. HADOOP-7844) fix the issue or a good workaround is identified.
+    Assume.assumeTrue(!WINDOWS);
+
     testConcurrentReadingInternals();
   }
 
