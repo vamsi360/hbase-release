@@ -1,4 +1,5 @@
 /**
+ * Copyright The Apache Software Foundation
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -16,27 +17,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.security;
+package org.apache.hadoop.hbase;
 
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.util.Bytes;
 
+/**
+ * An extension of the KeyValue where the tags length is always 0 
+ */
 @InterfaceAudience.Private
-public class SecureBulkLoadUtil {
-  private final static String BULKLOAD_STAGING_DIR = "hbase.bulkload.staging.dir";
-
-  /**
-   * This returns the staging path for a given column family.
-   * This is needed for clean recovery and called reflectively in LoadIncrementalHFiles
-   */
-  public static Path getStagingPath(Configuration conf, String bulkToken, byte[] family) {
-    Path stageP = new Path(getBaseStagingDir(conf), bulkToken);
-    return new Path(stageP, Bytes.toString(family));
+public class NoTagsKeyValue extends KeyValue {
+  public NoTagsKeyValue(byte[] bytes, int offset, int length) {
+    super(bytes, offset, length);
   }
 
-  public static Path getBaseStagingDir(Configuration conf) {
-    return new Path(conf.get(BULKLOAD_STAGING_DIR));
+  @Override
+  public int getTagsLength() {
+    return 0;
   }
 }
