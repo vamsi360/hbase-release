@@ -39,4 +39,8 @@
     <value>hadoop</value>
     <description>List of users or groups (comma-separated), who are allowed full privileges, regardless of stored ACLs, across the cluster. Only used when HBase security is enabled.</description>
   </property>
+  <property>
+    <name>phoenix.functions.allowUserDefinedFunctions</name>
+    <value>true</value>
+  </property>
 </configuration>
