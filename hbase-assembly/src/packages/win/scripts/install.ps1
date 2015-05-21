@@ -118,9 +118,10 @@ function Main( $scriptDir )
         "hbase.rootdir" = "$hbaseRootDir";
         "hbase.zookeeper.quorum" = "$ENV:ZOOKEEPER_HOSTS";
         "hbase.zookeeper.property.clientPort" = "2181"}
-    if ($ENV:IS_PHOENIX -ieq "yes") {
-        $config += @{"hbase.regionserver.wal.codec" = "org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec"}
-    }
+    $config += @{"hbase.regionserver.wal.codec" = "org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec";
+                 "hbase.regionserver.rpc.scheduler.factory.class" = "org.apache.hadoop.hbase.ipc.PhoenixRpcSchedulerFactory";
+                 "hbase.rpc.controllerfactory.class" = "org.apache.hadoop.hbase.ipc.controller.ServerRpcControllerFactory"				
+                }
     configure "hbase" $nodeInstallRoot $serviceCredential $config
 
 
