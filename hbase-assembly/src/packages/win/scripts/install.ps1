@@ -122,7 +122,8 @@ function Main( $scriptDir )
     {
         $config += @{"hbase.regionserver.wal.codec" = "org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec";
                      "hbase.region.server.rpc.scheduler.factory.class" = "org.apache.hadoop.hbase.ipc.PhoenixRpcSchedulerFactory";
-                     "hbase.rpc.controllerfactory.class" = "org.apache.hadoop.hbase.ipc.controller.ServerRpcControllerFactory"				
+                     "hbase.rpc.controllerfactory.class" = "org.apache.hadoop.hbase.ipc.controller.ServerRpcControllerFactory"	
+                    }
     }
     configure "hbase" $nodeInstallRoot $serviceCredential $config
 
