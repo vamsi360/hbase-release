@@ -2498,24 +2498,11 @@ public class KeyValue implements Cell, HeapSize, Cloneable, SettableSequenceId, 
    * @param in
    * @return Created KeyValue or throws an exception
    * @throws IOException
+   * @{@link Deprecated} Use {@link KeyValueUtil#iscreate(InputStream, boolean)}
    */
+  @Deprecated
   public static KeyValue iscreate(final InputStream in) throws IOException {
-    byte [] intBytes = new byte[Bytes.SIZEOF_INT];
-    int bytesRead = 0;
-    while (bytesRead < intBytes.length) {
-      int n = in.read(intBytes, bytesRead, intBytes.length - bytesRead);
-      if (n < 0) {
-        if (bytesRead == 0) {
-          throw new EOFException();
-        }
-        throw new IOException("Failed read of int, read " + bytesRead + " bytes");
-      }
-      bytesRead += n;
-    }
-    // TODO: perhaps some sanity check is needed here.
-    byte [] bytes = new byte[Bytes.toInt(intBytes)];
-    IOUtils.readFully(in, bytes, 0, bytes.length);
-    return new KeyValue(bytes, 0, bytes.length);
+    return KeyValueUtil.iscreate(in, true);
   }
 
   /**
