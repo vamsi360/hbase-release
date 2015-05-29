@@ -598,28 +598,36 @@ import org.junit.experimental.categories.Category;
             if (create_table.get()) {
               new CreateTableAction().perform();
             }
+          case ADD_ROW:
+            new AddRowAction().perform();
+            break;
           case DISABLE_TABLE:
             new DisableTableAction().perform();
+            break;
           case ENABLE_TABLE:
             new EnableTableAction().perform();
+            break;
           case DELETE_TABLE:
             // reduce probability of deleting table to 20%
             if (RandomUtils.nextInt(100) < 20) {
               new DeleteTableAction().perform();
             }
+            break;
           case ADD_COLUMNFAMILY:
             new AddColumnFamilyAction().perform();
+            break;
           case DELETE_COLUMNFAMILY:
             // reduce probability of deleting column family to 20%
             if (RandomUtils.nextInt(100) < 20) {
               new DeleteColumnFamilyAction().perform();
             }
+            break;
           case ALTER_FAMILYVERSIONS:
             new AlterFamilyVersionsAction().perform();
+            break;
           case ALTER_FAMILYENCODING:
             new AlterFamilyEncodingAction().perform();
-          case ADD_ROW:
-            new AddRowAction().perform();
+            break;
           }
         } catch (Exception ex) {
           this.savedException = ex;
@@ -669,12 +677,13 @@ import org.junit.experimental.categories.Category;
       worker.start();
     }
 
-    Threads.sleep(runtime * 3 / 2);
-    LOG.info("Runtime is up");
-    running.set(false);
-    Threads.sleep(runtime / 3);
+    Threads.sleep(runtime / 2);
     LOG.info("Stopping creating new tables");
     create_table.set(false);
+    Threads.sleep(runtime / 2);
+    LOG.info("Runtime is up");
+    running.set(false);
+
     checkException(workers);
 
     for (Worker worker : workers) {
@@ -717,20 +726,21 @@ import org.junit.experimental.categories.Category;
     IntegrationTestingUtility.setUseDistributedCluster(conf);
     IntegrationTestDDLMasterFailover masterFailover = new IntegrationTestDDLMasterFailover();
     Connection connection = null;
+    int ret = 1;
     try {
       // Initialize connection once, then pass to Actions
       LOG.debug("Setting up connection ...");
       connection = ConnectionFactory.createConnection(conf);
       masterFailover.setConnection(connection);
-      int ret = ToolRunner.run(conf, masterFailover, args);
-      connection = masterFailover.getConnection();
-      System.exit(ret);
+      ret = ToolRunner.run(conf, masterFailover, args);
     } catch (IOException e){
       LOG.fatal("Failed to establish connection. Aborting test ...", e);
     } finally {
+      connection = masterFailover.getConnection();
       if (connection != null){
         connection.close();
       }
+      System.exit(ret);
     }
   }
 }
