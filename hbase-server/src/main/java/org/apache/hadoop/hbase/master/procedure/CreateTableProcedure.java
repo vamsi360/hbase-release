@@ -287,8 +287,8 @@ public class CreateTableProcedure
       return false;
     }
     TableStateManager tsm = env.getMasterServices().getAssignmentManager().getTableStateManager();
-    if (tsm.isTableState(tableName, true, ZooKeeperProtos.Table.State.ENABLING,
-          ZooKeeperProtos.Table.State.ENABLED)) {
+    if (!getTableName().isSystemTable() && (tsm.isTableState(tableName, true, ZooKeeperProtos.Table.State.ENABLING,
+          ZooKeeperProtos.Table.State.ENABLED))) {
       LOG.warn("The table " + tableName + " does not exist in meta but has a znode. " +
                "run hbck to fix inconsistencies.");
       setFailure("master-create-table", new TableExistsException(getTableName()));
