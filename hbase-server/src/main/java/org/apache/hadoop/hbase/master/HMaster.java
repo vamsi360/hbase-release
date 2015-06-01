@@ -212,6 +212,7 @@ import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.Regio
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRSFatalErrorRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRSFatalErrorResponse;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos.SplitLogTask.RecoveryMode;
+import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.regionserver.RegionCoprocessorHost;
 import org.apache.hadoop.hbase.regionserver.RegionSplitPolicy;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos.SplitLogTask.RecoveryMode;
@@ -316,6 +317,11 @@ MasterServices, Server {
    * This servers address.
    */
   private final InetSocketAddress isa;
+
+  /*
+   * hostname obtained from InetSocketAddress or, specified by hostname config
+   */
+  protected String hostname;
 
   // Metrics for the HMaster
   private final MetricsMaster metricsMaster;
@@ -428,9 +434,14 @@ MasterServices, Server {
     this.conf.setBoolean(HConstants.USE_META_REPLICAS, false);
     FSUtils.setupShortCircuitRead(conf);
     // Server to handle client requests.
-    String hostname = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
-      conf.get("hbase.master.dns.interface", "default"),
-      conf.get("hbase.master.dns.nameserver", "default")));
+    this.hostname = conf.get(HRegionServer.HOSTNAME_KEY);
+    if (hostname == null || hostname.length() == 0) {
+      this.hostname = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
+        conf.get("hbase.master.dns.interface", "default"),
+        conf.get("hbase.master.dns.nameserver", "default")));
+    } else {
+      LOG.info("hostname is " + hostname);
+    }
     int port = conf.getInt(HConstants.MASTER_PORT, HConstants.DEFAULT_MASTER_PORT);
     // Test that the hostname is reachable
     InetSocketAddress initialIsa = new InetSocketAddress(hostname, port);
@@ -1354,8 +1365,9 @@ MasterServices, Server {
     // Register with server manager
     try {
       InetAddress ia = getRemoteInetAddress(request.getPort(), request.getServerStartCode());
-      ServerName rs = this.serverManager.regionServerStartup(ia, request.getPort(),
-        request.getServerStartCode(), request.getServerCurrentTime());
+      // if regionserver passed hostname to use,
+      // then use it instead of doing a reverse DNS lookup
+      ServerName rs = this.serverManager.regionServerStartup(request, ia);
 
       // Send back some config info
       RegionServerStartupResponse.Builder resp = createConfigurationSubset();

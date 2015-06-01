@@ -64,6 +64,33 @@ public final class RegionServerStatusProtos {
      * </pre>
      */
     long getServerCurrentTime();
+
+    // optional string use_this_hostname_instead = 4;
+    /**
+     * <code>optional string use_this_hostname_instead = 4;</code>
+     *
+     * <pre>
+     ** hostname for region server, optional 
+     * </pre>
+     */
+    boolean hasUseThisHostnameInstead();
+    /**
+     * <code>optional string use_this_hostname_instead = 4;</code>
+     *
+     * <pre>
+     ** hostname for region server, optional 
+     * </pre>
+     */
+    java.lang.String getUseThisHostnameInstead();
+    /**
+     * <code>optional string use_this_hostname_instead = 4;</code>
+     *
+     * <pre>
+     ** hostname for region server, optional 
+     * </pre>
+     */
+    com.google.protobuf.ByteString
+        getUseThisHostnameInsteadBytes();
   }
   /**
    * Protobuf type {@code RegionServerStartupRequest}
@@ -129,6 +156,11 @@ public final class RegionServerStatusProtos {
             case 24: {
               bitField0_ |= 0x00000004;
               serverCurrentTime_ = input.readUInt64();
+              break;
+            }
+            case 34: {
+              bitField0_ |= 0x00000008;
+              useThisHostnameInstead_ = input.readBytes();
               break;
             }
           }
@@ -243,10 +275,66 @@ public final class RegionServerStatusProtos {
       return serverCurrentTime_;
     }
 
+    // optional string use_this_hostname_instead = 4;
+    public static final int USE_THIS_HOSTNAME_INSTEAD_FIELD_NUMBER = 4;
+    private java.lang.Object useThisHostnameInstead_;
+    /**
+     * <code>optional string use_this_hostname_instead = 4;</code>
+     *
+     * <pre>
+     ** hostname for region server, optional 
+     * </pre>
+     */
+    public boolean hasUseThisHostnameInstead() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>optional string use_this_hostname_instead = 4;</code>
+     *
+     * <pre>
+     ** hostname for region server, optional 
+     * </pre>
+     */
+    public java.lang.String getUseThisHostnameInstead() {
+      java.lang.Object ref = useThisHostnameInstead_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          useThisHostnameInstead_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string use_this_hostname_instead = 4;</code>
+     *
+     * <pre>
+     ** hostname for region server, optional 
+     * </pre>
+     */
+    public com.google.protobuf.ByteString
+        getUseThisHostnameInsteadBytes() {
+      java.lang.Object ref = useThisHostnameInstead_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        useThisHostnameInstead_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private void initFields() {
       port_ = 0;
       serverStartCode_ = 0L;
       serverCurrentTime_ = 0L;
+      useThisHostnameInstead_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -281,6 +369,9 @@ public final class RegionServerStatusProtos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeUInt64(3, serverCurrentTime_);
       }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeBytes(4, getUseThisHostnameInsteadBytes());
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -301,6 +392,10 @@ public final class RegionServerStatusProtos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
           .computeUInt64Size(3, serverCurrentTime_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(4, getUseThisHostnameInsteadBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -340,6 +435,11 @@ public final class RegionServerStatusProtos {
         result = result && (getServerCurrentTime()
             == other.getServerCurrentTime());
       }
+      result = result && (hasUseThisHostnameInstead() == other.hasUseThisHostnameInstead());
+      if (hasUseThisHostnameInstead()) {
+        result = result && getUseThisHostnameInstead()
+            .equals(other.getUseThisHostnameInstead());
+      }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -364,6 +464,10 @@ public final class RegionServerStatusProtos {
       if (hasServerCurrentTime()) {
         hash = (37 * hash) + SERVER_CURRENT_TIME_FIELD_NUMBER;
         hash = (53 * hash) + hashLong(getServerCurrentTime());
+      }
+      if (hasUseThisHostnameInstead()) {
+        hash = (37 * hash) + USE_THIS_HOSTNAME_INSTEAD_FIELD_NUMBER;
+        hash = (53 * hash) + getUseThisHostnameInstead().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -480,6 +584,8 @@ public final class RegionServerStatusProtos {
         bitField0_ = (bitField0_ & ~0x00000002);
         serverCurrentTime_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000004);
+        useThisHostnameInstead_ = "";
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
 
@@ -520,6 +626,10 @@ public final class RegionServerStatusProtos {
           to_bitField0_ |= 0x00000004;
         }
         result.serverCurrentTime_ = serverCurrentTime_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.useThisHostnameInstead_ = useThisHostnameInstead_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -544,6 +654,11 @@ public final class RegionServerStatusProtos {
         }
         if (other.hasServerCurrentTime()) {
           setServerCurrentTime(other.getServerCurrentTime());
+        }
+        if (other.hasUseThisHostnameInstead()) {
+          bitField0_ |= 0x00000008;
+          useThisHostnameInstead_ = other.useThisHostnameInstead_;
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -727,6 +842,104 @@ public final class RegionServerStatusProtos {
       public Builder clearServerCurrentTime() {
         bitField0_ = (bitField0_ & ~0x00000004);
         serverCurrentTime_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // optional string use_this_hostname_instead = 4;
+      private java.lang.Object useThisHostnameInstead_ = "";
+      /**
+       * <code>optional string use_this_hostname_instead = 4;</code>
+       *
+       * <pre>
+       ** hostname for region server, optional 
+       * </pre>
+       */
+      public boolean hasUseThisHostnameInstead() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      /**
+       * <code>optional string use_this_hostname_instead = 4;</code>
+       *
+       * <pre>
+       ** hostname for region server, optional 
+       * </pre>
+       */
+      public java.lang.String getUseThisHostnameInstead() {
+        java.lang.Object ref = useThisHostnameInstead_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          useThisHostnameInstead_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string use_this_hostname_instead = 4;</code>
+       *
+       * <pre>
+       ** hostname for region server, optional 
+       * </pre>
+       */
+      public com.google.protobuf.ByteString
+          getUseThisHostnameInsteadBytes() {
+        java.lang.Object ref = useThisHostnameInstead_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          useThisHostnameInstead_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string use_this_hostname_instead = 4;</code>
+       *
+       * <pre>
+       ** hostname for region server, optional 
+       * </pre>
+       */
+      public Builder setUseThisHostnameInstead(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+        useThisHostnameInstead_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string use_this_hostname_instead = 4;</code>
+       *
+       * <pre>
+       ** hostname for region server, optional 
+       * </pre>
+       */
+      public Builder clearUseThisHostnameInstead() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        useThisHostnameInstead_ = getDefaultInstance().getUseThisHostnameInstead();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string use_this_hostname_instead = 4;</code>
+       *
+       * <pre>
+       ** hostname for region server, optional 
+       * </pre>
+       */
+      public Builder setUseThisHostnameInsteadBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+        useThisHostnameInstead_ = value;
         onChanged();
         return this;
       }
@@ -5497,31 +5710,32 @@ public final class RegionServerStatusProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\030RegionServerStatus.proto\032\013HBase.proto\032" +
-      "\023ClusterStatus.proto\"b\n\032RegionServerStar" +
-      "tupRequest\022\014\n\004port\030\001 \002(\r\022\031\n\021server_start" +
-      "_code\030\002 \002(\004\022\033\n\023server_current_time\030\003 \002(\004" +
-      "\"C\n\033RegionServerStartupResponse\022$\n\013map_e" +
-      "ntries\030\001 \003(\0132\017.NameStringPair\"S\n\031RegionS" +
-      "erverReportRequest\022\033\n\006server\030\001 \002(\0132\013.Ser" +
-      "verName\022\031\n\004load\030\002 \001(\0132\013.ServerLoad\"\034\n\032Re" +
-      "gionServerReportResponse\"O\n\031ReportRSFata" +
-      "lErrorRequest\022\033\n\006server\030\001 \002(\0132\013.ServerNa",
-      "me\022\025\n\rerror_message\030\002 \002(\t\"\034\n\032ReportRSFat" +
-      "alErrorResponse\"6\n\037GetLastFlushedSequenc" +
-      "eIdRequest\022\023\n\013region_name\030\001 \002(\014\"D\n GetLa" +
-      "stFlushedSequenceIdResponse\022 \n\030last_flus" +
-      "hed_sequence_id\030\001 \002(\0042\354\002\n\031RegionServerSt" +
-      "atusService\022P\n\023RegionServerStartup\022\033.Reg" +
-      "ionServerStartupRequest\032\034.RegionServerSt" +
-      "artupResponse\022M\n\022RegionServerReport\022\032.Re" +
-      "gionServerReportRequest\032\033.RegionServerRe" +
-      "portResponse\022M\n\022ReportRSFatalError\022\032.Rep",
-      "ortRSFatalErrorRequest\032\033.ReportRSFatalEr" +
-      "rorResponse\022_\n\030GetLastFlushedSequenceId\022" +
-      " .GetLastFlushedSequenceIdRequest\032!.GetL" +
-      "astFlushedSequenceIdResponseBN\n*org.apac" +
-      "he.hadoop.hbase.protobuf.generatedB\030Regi" +
-      "onServerStatusProtosH\001\210\001\001\240\001\001"
+      "\023ClusterStatus.proto\"\205\001\n\032RegionServerSta" +
+      "rtupRequest\022\014\n\004port\030\001 \002(\r\022\031\n\021server_star" +
+      "t_code\030\002 \002(\004\022\033\n\023server_current_time\030\003 \002(" +
+      "\004\022!\n\031use_this_hostname_instead\030\004 \001(\t\"C\n\033" +
+      "RegionServerStartupResponse\022$\n\013map_entri" +
+      "es\030\001 \003(\0132\017.NameStringPair\"S\n\031RegionServe" +
+      "rReportRequest\022\033\n\006server\030\001 \002(\0132\013.ServerN" +
+      "ame\022\031\n\004load\030\002 \001(\0132\013.ServerLoad\"\034\n\032Region" +
+      "ServerReportResponse\"O\n\031ReportRSFatalErr",
+      "orRequest\022\033\n\006server\030\001 \002(\0132\013.ServerName\022\025" +
+      "\n\rerror_message\030\002 \002(\t\"\034\n\032ReportRSFatalEr" +
+      "rorResponse\"6\n\037GetLastFlushedSequenceIdR" +
+      "equest\022\023\n\013region_name\030\001 \002(\014\"D\n GetLastFl" +
+      "ushedSequenceIdResponse\022 \n\030last_flushed_" +
+      "sequence_id\030\001 \002(\0042\354\002\n\031RegionServerStatus" +
+      "Service\022P\n\023RegionServerStartup\022\033.RegionS" +
+      "erverStartupRequest\032\034.RegionServerStartu" +
+      "pResponse\022M\n\022RegionServerReport\022\032.Region" +
+      "ServerReportRequest\032\033.RegionServerReport",
+      "Response\022M\n\022ReportRSFatalError\022\032.ReportR" +
+      "SFatalErrorRequest\032\033.ReportRSFatalErrorR" +
+      "esponse\022_\n\030GetLastFlushedSequenceId\022 .Ge" +
+      "tLastFlushedSequenceIdRequest\032!.GetLastF" +
+      "lushedSequenceIdResponseBN\n*org.apache.h" +
+      "adoop.hbase.protobuf.generatedB\030RegionSe" +
+      "rverStatusProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -5533,7 +5747,7 @@ public final class RegionServerStatusProtos {
           internal_static_RegionServerStartupRequest_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_RegionServerStartupRequest_descriptor,
-              new java.lang.String[] { "Port", "ServerStartCode", "ServerCurrentTime", });
+              new java.lang.String[] { "Port", "ServerStartCode", "ServerCurrentTime", "UseThisHostnameInstead", });
           internal_static_RegionServerStartupResponse_descriptor =
             getDescriptor().getMessageTypes().get(1);
           internal_static_RegionServerStartupResponse_fieldAccessorTable = new
