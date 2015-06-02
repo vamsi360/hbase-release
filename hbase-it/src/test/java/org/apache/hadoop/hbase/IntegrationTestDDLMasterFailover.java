@@ -265,7 +265,22 @@ import org.junit.experimental.categories.Category;
         LOG.info("Disabled table :" + freshTableDesc);
       } catch (Exception e){
         LOG.warn("Caught exception in action: " + this.getClass());
-        throw e;
+        // TODO workaround
+        // loose restriction for TableNotDisabledException/TableNotEnabledException thrown in sync operations
+        // 1) when enable/disable starts, the table state is changed to ENABLING/DISABLING (ZK node in 1.x),
+        // which will be further changed to ENABLED/DISABLED once the operation completes
+        // 2) if master failover happens in the middle of the enable/disable operation, the new master will try
+        // to recover the tables in ENABLING/DISABLING state, as programmed in
+        // AssignmentManager#recoverTableInEnablingState() and AssignmentManager#recoverTableInDisablingState()
+        // 3) after the new master initialization completes, the procedure tries to re-do the enable/disable
+        // operation, which was already done
+        // Ignore those exceptions before change of behaviors of AssignmentManager in presence of PV2
+        if (e instanceof TableNotEnabledException) {
+          LOG.warn("Caught TableNotEnabledException in action: " + this.getClass());
+          e.printStackTrace();
+        } else {
+          throw e;
+        }
       } finally {
         admin.close();
       }
@@ -294,7 +309,22 @@ import org.junit.experimental.categories.Category;
         LOG.info("Enabled table :" + freshTableDesc);
       } catch (Exception e){
         LOG.warn("Caught exception in action: " + this.getClass());
-        throw e;
+        // TODO workaround
+        // loose restriction for TableNotDisabledException/TableNotEnabledException thrown in sync operations
+        // 1) when enable/disable starts, the table state is changed to ENABLING/DISABLING (ZK node in 1.x),
+        // which will be further changed to ENABLED/DISABLED once the operation completes
+        // 2) if master failover happens in the middle of the enable/disable operation, the new master will try
+        // to recover the tables in ENABLING/DISABLING state, as programmed in
+        // AssignmentManager#recoverTableInEnablingState() and AssignmentManager#recoverTableInDisablingState()
+        // 3) after the new master initialization completes, the procedure tries to re-do the enable/disable
+        // operation, which was already done
+        // Ignore those exceptions before change of behaviors of AssignmentManager in presence of PV2
+        if (e instanceof TableNotDisabledException) {
+          LOG.warn("Caught TableNotDisabledException in action: " + this.getClass());
+          e.printStackTrace();
+        } else {
+          throw e;
+        }
       } finally {
         admin.close();
       }
@@ -373,7 +403,7 @@ import org.junit.experimental.categories.Category;
         disabledTables.put(tableName, freshTableDesc);
       } catch (Exception e){
         LOG.warn("Caught exception in action: " + this.getClass());
-        // TODO BUG-37526
+        // TODO HBASE-13415
         // loose restriction for InvalidFamilyOperationException thrown in async operations before HBASE-13415 completes
         // when failover happens, multiple procids may be created from the same request
         // when 1 procedure succeeds, the others would complain about family already exists
@@ -503,7 +533,7 @@ import org.junit.experimental.categories.Category;
         disabledTables.put(tableName, freshTableDesc);
       } catch (Exception e) {
         LOG.warn("Caught exception in action: " + this.getClass());
-        // TODO BUG-37526
+        // TODO HBASE-13415
         // loose restriction for InvalidFamilyOperationException thrown in async operations before HBASE-13415 completes
         // when failover happens, multiple procids may be created from the same request
         // when 1 procedure succeeds, the others would complain about family not exists
@@ -598,6 +628,7 @@ import org.junit.experimental.categories.Category;
             if (create_table.get()) {
               new CreateTableAction().perform();
             }
+            break;
           case ADD_ROW:
             new AddRowAction().perform();
             break;
