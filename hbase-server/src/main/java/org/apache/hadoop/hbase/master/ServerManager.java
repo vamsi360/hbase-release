@@ -60,6 +60,7 @@ import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.OpenRegionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.OpenRegionResponse;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.ServerInfo;
+import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerStartupRequest;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos.SplitLogTask.RecoveryMode;
 import org.apache.hadoop.hbase.regionserver.RegionOpeningState;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -217,15 +218,12 @@ public class ServerManager {
 
   /**
    * Let the server manager know a new regionserver has come online
-   * @param ia The remote address
-   * @param port The remote port
-   * @param serverStartcode
-   * @param serverCurrentTime The current time of the region server in ms
+   * @param request the startup request
+   * @param ia the InetAddress from which request is received
    * @return The ServerName we know this server as.
    * @throws IOException
    */
-  ServerName regionServerStartup(final InetAddress ia, final int port,
-    final long serverStartcode, long serverCurrentTime)
+  ServerName regionServerStartup(RegionServerStartupRequest request, final InetAddress ia)
   throws IOException {
     // Test for case where we get a region startup message from a regionserver
     // that has been quickly restarted but whose znode expiration handler has
@@ -234,8 +232,11 @@ public class ServerManager {
     // is, reject the server and trigger its expiration. The next time it comes
     // in, it should have been removed from serverAddressToServerInfo and queued
     // for processing by ProcessServerShutdown.
-    ServerName sn = ServerName.valueOf(ia.getHostName(), port, serverStartcode);
-    checkClockSkew(sn, serverCurrentTime);
+    final String hostname = request.hasUseThisHostnameInstead() ?
+        request.getUseThisHostnameInstead() :ia.getHostName();
+    ServerName sn = ServerName.valueOf(hostname, request.getPort(),
+      request.getServerStartCode());
+    checkClockSkew(sn, request.getServerCurrentTime());
     checkIsDead(sn, "STARTUP");
     if (!checkAndRecordNewServer(sn, ServerLoad.EMPTY_SERVERLOAD)) {
       LOG.warn("THIS SHOULD NOT HAPPEN, RegionServerStartup"

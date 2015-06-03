@@ -481,6 +481,16 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
    */
   private ServerName serverNameFromMasterPOV;
 
+  /*
+   * hostname specified by hostname config
+   */
+  protected String useThisHostnameInstead;
+
+  // key to the config parameter of server hostname
+  // the specification of server hostname is optional. The hostname should be resolvable from
+  // both master and region server
+  public final static String HOSTNAME_KEY = "hbase.regionserver.hostname";
+
   /**
    * This servers startcode.
    */
@@ -595,11 +605,17 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD,
       HConstants.HBASE_REGIONSERVER_LEASE_PERIOD_KEY,
       HConstants.DEFAULT_HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD);
-    String h = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
+    useThisHostnameInstead = conf.get(HOSTNAME_KEY);
+    String hostname = useThisHostnameInstead;
+    if (hostname == null || hostname.isEmpty()) {
+      String h = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
         conf.get("hbase.regionserver.dns.interface", "default"),
         conf.get("hbase.regionserver.dns.nameserver", "default")));
-    // Server to handle client requests.
-    String hostname = conf.get("hbase.regionserver.ipc.address", h);
+      // Server to handle client requests.
+      hostname = conf.get("hbase.regionserver.ipc.address", h);
+    } else {
+      LOG.info("hostname is configured to be " + hostname);
+    }
     int port = conf.getInt(HConstants.REGIONSERVER_PORT,
       HConstants.DEFAULT_REGIONSERVER_PORT);
     // Creation of a HSA will force a resolve.
@@ -640,11 +656,11 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
 
     // login the zookeeper client principal (if using security)
     ZKUtil.loginClient(this.conf, "hbase.zookeeper.client.keytab.file",
-      "hbase.zookeeper.client.kerberos.principal", h);
+      "hbase.zookeeper.client.kerberos.principal", hostname);
 
     // login the server principal (if using secure Hadoop)
     userProvider.login("hbase.regionserver.keytab.file",
-      "hbase.regionserver.kerberos.principal", h);
+      "hbase.regionserver.kerberos.principal", hostname);
     regionServerAccounting = new RegionServerAccounting();
     cacheConfig = new CacheConfig(conf);
     uncaughtExceptionHandler = new UncaughtExceptionHandler() {
@@ -1254,6 +1270,13 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
   }
 
   /*
+   * Returns true if configured hostname should be used
+   */
+  protected boolean shouldUseThisHostnameInstead() {
+    return useThisHostnameInstead != null && !useThisHostnameInstead.isEmpty();
+  }
+
+  /*
    * Run init. Sets up hlog and starts up all server threads.
    *
    * @param c Extra configuration.
@@ -1268,9 +1291,18 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
           String hostnameFromMasterPOV = e.getValue();
           this.serverNameFromMasterPOV = ServerName.valueOf(hostnameFromMasterPOV,
               this.isa.getPort(), this.startcode);
-          if (!hostnameFromMasterPOV.equals(this.isa.getHostName())) {
-            LOG.info("Master passed us a different hostname to use; was=" +
-              this.isa.getHostName() + ", but now=" + hostnameFromMasterPOV);
+          if (shouldUseThisHostnameInstead() &&
+              !hostnameFromMasterPOV.equals(useThisHostnameInstead)) {
+            String msg = "Master passed us a different hostname to use; was=" +
+                this.useThisHostnameInstead + ", but now=" + hostnameFromMasterPOV;
+            LOG.error(msg);
+            throw new IOException(msg);
+          }
+          if (!shouldUseThisHostnameInstead() &&
+              !hostnameFromMasterPOV.equals(this.isa.getHostName())) {
+            String msg = "Master passed us a different hostname to use; was=" +
+                this.isa.getHostName() + ", but now=" + hostnameFromMasterPOV;
+            LOG.error(msg);
           }
           continue;
         }
@@ -2116,6 +2148,9 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       request.setPort(port);
       request.setServerStartCode(this.startcode);
       request.setServerCurrentTime(now);
+      if (shouldUseThisHostnameInstead()) {
+        request.setUseThisHostnameInstead(useThisHostnameInstead);
+      }
       result = this.rssStub.regionServerStartup(null, request.build());
     } catch (ServiceException se) {
       IOException ioe = ProtobufUtil.getRemoteException(se);
