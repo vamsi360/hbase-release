@@ -62,7 +62,6 @@ import org.apache.hadoop.hbase.protobuf.ResponseConverter;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.OpenRegionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.OpenRegionResponse;
-import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.ServerInfo;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerStartupRequest;
 import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.RegionStoreSequenceIds;
 import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.StoreSequenceId;
@@ -72,7 +71,6 @@ import org.apache.hadoop.hbase.regionserver.RegionOpeningState;
 import org.apache.hadoop.hbase.regionserver.RegionServerStoppedException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Triple;
-import org.apache.hadoop.hbase.util.RetryCounter;
 import org.apache.hadoop.hbase.util.RetryCounterFactory;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
@@ -842,7 +840,7 @@ public class ServerManager {
    * Contacts a region server and waits up to timeout ms
    * to close the region.  This bypasses the active hmaster.
    */
-  public static void closeRegionSilentlyAndWait(ClusterConnection connection, 
+  public static void closeRegionSilentlyAndWait(ClusterConnection connection,
     ServerName server, HRegionInfo region, long timeout) throws IOException, InterruptedException {
     AdminService.BlockingInterface rs = connection.getAdmin(server);
     try {
@@ -895,47 +893,6 @@ public class ServerManager {
           + " failed because no RPC connection found to this server");
     }
     ProtobufUtil.mergeRegions(admin, region_a, region_b, forcible);
-  }
-
-  /**
-   * Check if a region server is reachable and has the expected start code
-   */
-  public boolean isServerReachable(ServerName server) {
-    if (server == null) throw new NullPointerException("Passed server is null");
-
-    RetryCounter retryCounter = pingRetryCounterFactory.create();
-    while (retryCounter.shouldRetry()) {
-      synchronized (this.onlineServers) {
-        if (this.deadservers.isDeadServer(server)) {
-          return false;
-        }
-      }
-      try {
-        AdminService.BlockingInterface admin = getRsAdmin(server);
-        if (admin != null) {
-          ServerInfo info = ProtobufUtil.getServerInfo(admin);
-          return info != null && info.hasServerName()
-            && server.getStartcode() == info.getServerName().getStartCode();
-        }
-      } catch (RegionServerStoppedException | ServerNotRunningYetException e) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Couldn't reach " + server, e);
-        }
-        break;
-      } catch (IOException ioe) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Couldn't reach " + server + ", try=" + retryCounter.getAttemptTimes() + " of "
-              + retryCounter.getMaxAttempts(), ioe);
-        }
-        try {
-          retryCounter.sleepUntilNextRetry();
-        } catch(InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          break;
-        }
-      }
-    }
-    return false;
   }
 
     /**
@@ -1097,9 +1054,19 @@ public class ServerManager {
    * master any more, for example, a very old previous instance).
    */
   public synchronized boolean isServerDead(ServerName serverName) {
-    return serverName == null || deadservers.isDeadServer(serverName)
-      || queuedDeadServers.contains(serverName)
-      || requeuedDeadServers.containsKey(serverName);
+    if (serverName == null || deadservers.isDeadServer(serverName)
+        || queuedDeadServers.contains(serverName)
+        || requeuedDeadServers.containsKey(serverName)) {
+      return true;
+    }
+
+    // we are not acquiring the lock
+    ServerName onlineServer = findServerWithSameHostnamePortWithLock(serverName);
+    if (onlineServer != null && serverName.getStartcode() < onlineServer.getStartcode()) {
+      return true;
+    }
+
+    return false;
   }
 
   public void shutdownCluster() {
