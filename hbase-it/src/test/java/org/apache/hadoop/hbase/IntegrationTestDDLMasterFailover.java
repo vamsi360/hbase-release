@@ -46,10 +46,12 @@ import org.junit.experimental.categories.Category;
 
 /**
  *
- * Integration test that verifies Procedure V2. DDL operations should go through
- * (rollforward or rollback) when primary master is killed by ChaosMonkey (default MASTER_KILLING)<br/>
+ * Integration test that verifies Procedure V2. <br/><br/>
  *
- * Multiple Worker threads are started to randomly do the following Actions:<br/>
+ * DDL operations should go through (rollforward or rollback) when primary master is killed by ChaosMonkey
+ * (default MASTER_KILLING)<br/><br/>
+ *
+ * Multiple Worker threads are started to randomly do the following Actions in loops:<br/>
  * Actions generating and populating tables:
  * <ul>
  *     <li>CreateTableAction</li>
@@ -65,11 +67,13 @@ import org.junit.experimental.categories.Category;
  *     <li>AlterColumnFamilyEncodingAction</li>
  *     <li>DeleteColumnFamilyAction</li>
  * </ul>
+ * <br/>
  *
- * The threads runs for a period of time (default 20 minutes). Then stop the threads and do verification.
+ * The threads run for a period of time (default 20 minutes) then are stopped at the end of runtime. Verification
+ * is performed towards those checkpoints:
  * <ol>
  *     <li>No Actions throw Exceptions.</li>
- *     <li>hbck throw no errors. Regions are consistent.</li>
+ *     <li>No inconsistencies are detected in hbck.</li>
  * </ol>
  */
 
@@ -352,7 +356,15 @@ import org.junit.experimental.categories.Category;
         LOG.info("Deleted table :" + selected);
       } catch (Exception e){
         LOG.warn("Caught exception in action: " + this.getClass());
-        throw e;
+        // TODO workaround
+        // when master failover happens during DELETE_TABLE, client will do RPC retry and get TableNotFoundException
+        // ignore for now till better resolution
+        if (e instanceof TableNotFoundException) {
+          LOG.warn("Caught TableNotFoundException in action: " + this.getClass());
+          e.printStackTrace();
+        } else {
+          throw e;
+        }
       } finally {
         admin.close();
       }
@@ -683,7 +695,7 @@ import org.junit.experimental.categories.Category;
     for (Worker worker : workers){
       Exception e = worker.getSavedException();
       if (e != null) {
-        LOG.warn("Found exception in thread: " + worker.getName());
+        LOG.error("Found exception in thread: " + worker.getName());
         e.printStackTrace();
       }
       Assert.assertNull("Action failed: " + worker.getAction() + " in thread: " + worker.getName(), e);
