@@ -156,6 +156,7 @@ import org.apache.hadoop.hbase.wal.WALProvider;
 import org.apache.hadoop.hbase.wal.WALSplitter;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -183,6 +184,9 @@ public class TestHRegion {
   // over in TestHRegionOnCluster.
   static final Log LOG = LogFactory.getLog(TestHRegion.class);
   @Rule public TestName name = new TestName();
+
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   private static final String COLUMN_FAMILY = "MyCF";
   private static final byte [] COLUMN_FAMILY_BYTES = Bytes.toBytes(COLUMN_FAMILY);
@@ -4748,6 +4752,10 @@ public class TestHRegion {
 
   @Test
   public void testCompactionFromPrimary() throws IOException {
+    // The test is flaky in Windows Jenkins run.
+    // Disable for Windows env to reduce noise.
+    Assume.assumeTrue(!WINDOWS);
+
     Path rootDir = new Path(dir + "testRegionReplicaSecondary");
     FSUtils.setRootDir(TEST_UTIL.getConfiguration(), rootDir);
 
