@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hbase.http.ssl.KeyStoreTestUtil;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -49,6 +50,9 @@ import java.util.List;
 @Category(LargeTests.class)
 public class TestHBaseTestingUtility {
   private final Log LOG = LogFactory.getLog(this.getClass());
+
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   /**
    * Basic sanity test that spins up multiple HDFS and HBase clusters that share
@@ -331,8 +335,17 @@ public class TestHBaseTestingUtility {
     } finally {
       hbt.shutdownMiniZKCluster();
     }
+  }
 
-    // Test 5 - set up zookeeper cluster with same ports specified - fail is expected.
+  @Test
+  public void testMiniZooKeeperWithMultipleClientPorts2() throws Exception {
+    // the test passed in Windows Azure VM, but constantly failed in Windows Jenkins run.
+    // Disable for Windows env to reduce noise.
+    Assume.assumeTrue(!WINDOWS);
+
+    HBaseTestingUtility hbt = new HBaseTestingUtility();
+
+    // Set up zookeeper cluster with same ports specified - fail is expected.
     int [] clientPortList5 = {5555, 5556, 5556};
 
     try {
