@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -50,6 +51,9 @@ import org.junit.experimental.categories.Category;
 @Category(LargeTests.class)
 public class TestSnapshotCloneIndependence {
   private static final Log LOG = LogFactory.getLog(TestSnapshotCloneIndependence.class);
+
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   private static final HBaseTestingUtility UTIL = new HBaseTestingUtility();
 
@@ -174,6 +178,10 @@ public class TestSnapshotCloneIndependence {
 
   @Test (timeout=300000)
   public void testOfflineSnapshotDeleteIndependent() throws Exception {
+    // The test is flaky in Windows Jenkins environment. To reduce
+    // noise, disable it in Windows UT.
+    Assume.assumeTrue(!WINDOWS);
+
     runTestSnapshotDeleteIndependent(false);
   }
 
