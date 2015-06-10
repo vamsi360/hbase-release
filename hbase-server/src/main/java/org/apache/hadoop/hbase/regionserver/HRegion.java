@@ -478,6 +478,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
      * FLUSHED_NO_COMPACTION_NEEDED or FLUSHED_NO_COMPACTION_NEEDED.
      * @return true if the memstores were flushed, else false.
      */
+    @Override
     public boolean isFlushSucceeded() {
       return result == Result.FLUSHED_NO_COMPACTION_NEEDED || result == Result
           .FLUSHED_COMPACTION_NEEDED;
@@ -487,6 +488,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
      * Convenience method, the equivalent of checking if result is FLUSHED_COMPACTION_NEEDED.
      * @return True if the flush requested a compaction, else false (doesn't even mean it flushed).
      */
+    @Override
     public boolean isCompactionNeeded() {
       return result == Result.FLUSHED_COMPACTION_NEEDED;
     }
@@ -1110,7 +1112,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
   public long getNumMutationsWithoutWAL() {
     return numMutationsWithoutWAL.get();
   }
-  
+
   @Override
   public long getDataInMemoryWithoutWAL() {
     return dataInMemoryWithoutWAL.get();
@@ -2330,6 +2332,14 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
           Bytes.toStringBinary(getRegionInfo().getRegionName()));
       dse.initCause(t);
       status.abort("Flush failed: " + StringUtils.stringifyException(t));
+
+      if (rsServices != null) {
+        // MemstoreFlusher already causes abort, but in case flush is called from another thread
+        // we should still cause abort otherwise it will be dataloss since memstore snapshots are
+        // not cleared
+        rsServices.abort("Replay of WAL required. Forcing server shutdown", dse);
+      }
+
       throw dse;
     }
 
@@ -2367,7 +2377,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     LOG.info(msg);
     status.setStatus(msg);
 
-    return new FlushResultImpl(compactionRequested ? 
+    return new FlushResultImpl(compactionRequested ?
         FlushResult.Result.FLUSHED_COMPACTION_NEEDED :
           FlushResult.Result.FLUSHED_NO_COMPACTION_NEEDED,
         flushOpSeqId);
@@ -5354,7 +5364,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
         moreValues = nextInternal(tmpList, scannerContext);
         outResults.addAll(tmpList);
       }
-      
+
       // If the size limit was reached it means a partial Result is being returned. Returning a
       // partial Result means that we should not reset the filters; filters should only be reset in
       // between rows
@@ -6475,6 +6485,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     return results;
   }
 
+  @Override
   public void mutateRow(RowMutations rm) throws IOException {
     // Don't need nonces here - RowMutations only supports puts and deletes
     mutateRowsWithLocks(rm.getMutations(), Collections.singleton(rm.getRow()));
@@ -6501,6 +6512,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
    * <code>rowsToLock</code> is sorted in order to avoid deadlocks.
    * @throws IOException
    */
+  @Override
   public void mutateRowsWithLocks(Collection<Mutation> mutations,
       Collection<byte[]> rowsToLock, long nonceGroup, long nonce) throws IOException {
     MultiRowMutationProcessor proc = new MultiRowMutationProcessor(mutations, rowsToLock);
@@ -7499,6 +7511,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
 
 
   /** @return the coprocessor host */
+  @Override
   public RegionCoprocessorHost getCoprocessorHost() {
     return coprocessorHost;
   }

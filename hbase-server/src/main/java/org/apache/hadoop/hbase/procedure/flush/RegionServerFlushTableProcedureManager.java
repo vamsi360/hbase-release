@@ -272,7 +272,8 @@ public class RegionServerFlushTableProcedureManager extends RegionServerProcedur
     }
 
     /**
-     * This attempts to cancel out all pending and in progress tasks (interruptions issues)
+     * This attempts to cancel out all pending and in progress tasks. Does not interrupt the running
+     * tasks itself. An ongoing HRegion.flush() should not be interrupted (see HBASE-13877).
      * @throws InterruptedException
      */
     void cancelTasks() throws InterruptedException {
@@ -289,13 +290,14 @@ public class RegionServerFlushTableProcedureManager extends RegionServerProcedur
     }
 
     /**
-     * Abruptly shutdown the thread pool.  Call when exiting a region server.
+     * Gracefully shutdown the thread pool. An ongoing HRegion.flush() should not be
+     * interrupted (see HBASE-13877)
      */
     void stop() {
       if (this.stopped) return;
 
       this.stopped = true;
-      this.executor.shutdownNow();
+      this.executor.shutdown();
     }
   }
 
