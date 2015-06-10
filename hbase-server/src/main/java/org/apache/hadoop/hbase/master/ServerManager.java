@@ -50,7 +50,6 @@ import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.ipc.ServerNotRunningYetException;
 import org.apache.hadoop.hbase.client.RetriesExhaustedException;
 import org.apache.hadoop.hbase.master.balancer.BaseLoadBalancer;
 import org.apache.hadoop.hbase.master.handler.MetaServerShutdownHandler;
@@ -68,7 +67,6 @@ import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.StoreSeque
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos.SplitLogTask.RecoveryMode;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.regionserver.RegionOpeningState;
-import org.apache.hadoop.hbase.regionserver.RegionServerStoppedException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Triple;
 import org.apache.hadoop.hbase.util.RetryCounterFactory;
@@ -742,8 +740,8 @@ public class ServerManager {
         " failed because no RPC connection found to this server");
       return RegionOpeningState.FAILED_OPENING;
     }
-    OpenRegionRequest request = RequestConverter.buildOpenRegionRequest(server, 
-      region, versionOfOfflineNode, favoredNodes, 
+    OpenRegionRequest request = RequestConverter.buildOpenRegionRequest(server,
+      region, versionOfOfflineNode, favoredNodes,
       (RecoveryMode.LOG_REPLAY == this.services.getMasterFileSystem().getLogRecoveryMode()));
     try {
       OpenRegionResponse response = admin.openRegion(null, request);
@@ -1053,10 +1051,20 @@ public class ServerManager {
    * not known to be dead either. it is simply not tracked by the
    * master any more, for example, a very old previous instance).
    */
-  public synchronized boolean isServerDead(ServerName serverName) {
-    if (serverName == null || deadservers.isDeadServer(serverName)
+  public synchronized boolean isServerInDeadServersList(ServerName serverName) {
+    return (serverName == null || deadservers.isDeadServer(serverName)
         || queuedDeadServers.contains(serverName)
-        || requeuedDeadServers.containsKey(serverName)) {
+        || requeuedDeadServers.containsKey(serverName));
+  }
+
+  /**
+   * Check if a server is known to be dead.  A server can be online,
+   * or known to be dead, or unknown to this manager (i.e, not online,
+   * not known to be dead either. it is simply not tracked by the
+   * master any more, for example, a very old previous instance).
+   */
+  public synchronized boolean isServerDead(ServerName serverName) {
+    if (isServerInDeadServersList(serverName)) {
       return true;
     }
 

@@ -824,7 +824,7 @@ public class RegionStates {
   synchronized boolean isServerDeadAndNotProcessed(ServerName server) {
     if (server == null) return false;
     if (serverManager.isServerOnline(server)) {
-      if (!serverManager.isServerDead(server)) {
+      if (!serverManager.isServerInDeadServersList(server)) {
         return false;
       }
     }

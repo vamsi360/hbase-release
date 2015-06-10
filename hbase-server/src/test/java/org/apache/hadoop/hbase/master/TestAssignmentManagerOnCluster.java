@@ -1033,7 +1033,7 @@ public class TestAssignmentManagerOnCluster {
       cluster.waitForRegionServerToStop(oldServerName, -1);
 
       ServerManager serverManager = master.getServerManager();
-      while (!serverManager.isServerDead(oldServerName)
+      while (!serverManager.isServerInDeadServersList(oldServerName)
           || serverManager.getDeadServers().areDeadServersInProgress()) {
         Thread.sleep(100);
       }
@@ -1087,7 +1087,7 @@ public class TestAssignmentManagerOnCluster {
       TEST_UTIL.waitFor(120000, 1000, new Waiter.Predicate<Exception>() {
         @Override
         public boolean evaluate() throws Exception {
-          return serverManager.isServerDead(serverName)
+          return serverManager.isServerInDeadServersList(serverName)
             && !serverManager.areDeadServersInProgress();
         }
       });
@@ -1161,7 +1161,7 @@ public class TestAssignmentManagerOnCluster {
       cluster.waitForRegionServerToStop(oldServerName, -1);
 
       ServerManager serverManager = master.getServerManager();
-      while (!serverManager.isServerDead(oldServerName)
+      while (!serverManager.isServerInDeadServersList(oldServerName)
           || serverManager.getDeadServers().areDeadServersInProgress()) {
         Thread.sleep(100);
       }
