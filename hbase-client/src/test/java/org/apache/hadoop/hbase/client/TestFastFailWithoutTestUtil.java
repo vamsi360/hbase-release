@@ -48,12 +48,16 @@ import org.apache.hadoop.hbase.exceptions.ConnectionClosingException;
 import org.apache.hadoop.hbase.exceptions.PreemptiveFastFailException;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.ipc.RemoteException;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ SmallTests.class })
 public class TestFastFailWithoutTestUtil {
   private static final Log LOG = LogFactory.getLog(TestFastFailWithoutTestUtil.class);
+
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   @Test
   public void testInterceptorFactoryMethods() {
@@ -334,6 +338,10 @@ public class TestFastFailWithoutTestUtil {
   @Test(timeout = 120000)
   public void testPreemptiveFastFailException50Times()
       throws InterruptedException, ExecutionException {
+    // The test is flaky in Windows Jenkins environment. To reduce
+    // noise, disable it in Windows UT.
+    Assume.assumeTrue(!WINDOWS);
+
     for (int i = 0; i < 50; i++) {
       testPreemptiveFastFailException();
     }
