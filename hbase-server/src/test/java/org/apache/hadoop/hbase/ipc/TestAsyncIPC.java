@@ -178,7 +178,7 @@ public class TestAsyncIPC extends AbstractTestIPC {
         }
       });
 
-      TEST_UTIL.waitFor(1000, new Waiter.Predicate<Exception>() {
+      TEST_UTIL.waitFor(10000, new Waiter.Predicate<Exception>() {
         @Override
         public boolean evaluate() throws Exception {
           return done.get();
@@ -230,7 +230,7 @@ public class TestAsyncIPC extends AbstractTestIPC {
           }
         });
 
-      TEST_UTIL.waitFor(1000, new Waiter.Predicate<Exception>() {
+      TEST_UTIL.waitFor(10000, new Waiter.Predicate<Exception>() {
         @Override
         public boolean evaluate() throws Exception {
           return done.get();
