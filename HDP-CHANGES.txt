@@ -2,6 +2,7 @@ HDP-2.3 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.1
 
+HBASE-13829 Add more ThrottleType
 HBASE-14445 ExportSnapshot does not honor -chmod option
 HBASE-13250 chown of ExportSnapshot does not cover all path and files (He Liangliang)
 HBASE-14280 Bulk Upload from HA cluster to remote HA hbase cluster fails (Ankit Singhal)
