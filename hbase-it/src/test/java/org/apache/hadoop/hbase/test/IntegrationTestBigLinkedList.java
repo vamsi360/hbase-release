@@ -220,7 +220,7 @@ public class IntegrationTestBigLinkedList extends IntegrationTestBase {
 
   protected int NUM_SLAVES_BASE = 3; // number of slaves for the cluster
 
-  private static final int MISSING_ROWS_TO_LOG = 2; // YARN complains when too many counters
+  private static final int MISSING_ROWS_TO_LOG = 10; // YARN complains when too many counters
 
   private static final int WIDTH_DEFAULT = 1000000;
   private static final int WRAP_DEFAULT = 25;
@@ -698,8 +698,7 @@ public class IntegrationTestBigLinkedList extends IntegrationTestBase {
               LOG.warn(e);
             }
             if (rows.addAndGet(1) < MISSING_ROWS_TO_LOG) {
-              context.getCounter(FOUND_GROUP_KEY, keyStr + "_in_"
-                  + context.getInputSplit().toString()).increment(1);
+              context.getCounter(FOUND_GROUP_KEY, keyStr).increment(1);
             }
             context.getCounter(FOUND_GROUP_KEY, "CELL_WITH_MISSING_ROW").increment(1);
           }
