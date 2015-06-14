@@ -44,7 +44,6 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableStateManager;
 import org.apache.hadoop.hbase.client.RegionReplicaUtil;
-import org.apache.hadoop.hbase.MetaTableAccessor;
 import org.apache.hadoop.hbase.master.RegionState.State;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -824,7 +823,7 @@ public class RegionStates {
   synchronized boolean isServerDeadAndNotProcessed(ServerName server) {
     if (server == null) return false;
     if (serverManager.isServerOnline(server)) {
-      if (!serverManager.isServerInDeadServersList(server)) {
+      if (!serverManager.isServerDead(server)) {
         return false;
       }
     }
