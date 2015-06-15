@@ -309,7 +309,9 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
       } else {
         admin = conn.getAdmin();
       }
-      doBulkLoad(hfofDir, admin, t, conn.getRegionLocator(t.getName()));
+      try (RegionLocator rl = conn.getRegionLocator(t.getName())) {
+        doBulkLoad(hfofDir, admin, t, rl);
+      }
     } finally {
       if (admin != null) admin.close();
       if (closeConnWhenFinished) {
