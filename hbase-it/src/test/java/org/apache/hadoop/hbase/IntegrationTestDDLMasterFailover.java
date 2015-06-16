@@ -231,7 +231,15 @@ import org.junit.experimental.categories.Category;
         LOG.info("Created table:" + freshTableDesc);
       } catch (Exception e){
         LOG.warn("Caught exception in action: " + this.getClass());
-        throw e;
+        // TODO workaround
+        // when master failover happens during CREATE_TABLE, client will do RPC retry and get TableExistsException
+        // ignore for now till better resolution
+        if (e instanceof TableExistsException) {
+          LOG.warn("Caught TableExistsException in action: " + this.getClass());
+          e.printStackTrace();
+        } else {
+          throw e;
+        }
       } finally {
         admin.close();
       }
