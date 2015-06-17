@@ -153,8 +153,6 @@ public class ServerManager {
   private final long maxSkew;
   private final long warningSkew;
 
-  private final RetryCounterFactory pingRetryCounterFactory;
-
   /**
    * Set of region servers which are dead but not processed immediately. If one
    * server died before master enables ServerShutdownHandler, the server will be
@@ -213,11 +211,6 @@ public class ServerManager {
     maxSkew = c.getLong("hbase.master.maxclockskew", 30000);
     warningSkew = c.getLong("hbase.master.warningclockskew", 10000);
     this.connection = connect ? (ClusterConnection)ConnectionFactory.createConnection(c) : null;
-    int pingMaxAttempts = Math.max(1, master.getConfiguration().getInt(
-      "hbase.master.maximum.ping.server.attempts", 10));
-    int pingSleepInterval = Math.max(1, master.getConfiguration().getInt(
-      "hbase.master.ping.server.retry.sleep.interval", 100));
-    this.pingRetryCounterFactory = new RetryCounterFactory(pingMaxAttempts, pingSleepInterval);
   }
 
   /**
