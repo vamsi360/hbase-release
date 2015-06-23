@@ -1329,7 +1329,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
         long endTime = EnvironmentEdgeManager.currentTime();
         regionServer.metricsRegionServer.updateFlushTime(endTime - startTime);
       }
-      regionServer.compactSplitThread.requestRegionsMerge(regionA, regionB, forcible, masterSystemTime);
+      regionServer.compactSplitThread.requestRegionsMerge(regionA, regionB, forcible,
+          masterSystemTime);
       return MergeRegionsResponse.newBuilder().build();
     } catch (DroppedSnapshotException ex) {
       regionServer.abort("Replay of WAL required. Forcing server shutdown", ex);

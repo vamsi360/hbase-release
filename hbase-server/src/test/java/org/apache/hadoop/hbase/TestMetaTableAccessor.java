@@ -464,7 +464,8 @@ public class TestMetaTableAccessor {
       List<HRegionInfo> regionInfos = Lists.newArrayList(parentA, parentB);
       MetaTableAccessor.addRegionsToMeta(connection, regionInfos, 3);
 
-      MetaTableAccessor.mergeRegions(connection, merged, parentA, parentB, serverName0, 3, HConstants.LATEST_TIMESTAMP);
+      MetaTableAccessor.mergeRegions(connection, merged, parentA, parentB, serverName0, 3,
+          HConstants.LATEST_TIMESTAMP);
 
       assertEmptyMetaLocation(meta, merged.getRegionName(), 1);
       assertEmptyMetaLocation(meta, merged.getRegionName(), 2);
