@@ -284,7 +284,7 @@ public abstract class TableLockManager {
             if (!lock.tryAcquire(lockTimeoutMs)) {
               throw new LockTimeoutException("Timed out acquiring " +
                 (isShared ? "read" : "write") + "lock for table:" + tableName +
-                "for:" + purpose + " after " + lockTimeoutMs + " ms.");
+                " for:" + purpose + " after " + lockTimeoutMs + " ms.");
             }
           }
         } catch (InterruptedException e) {
@@ -292,7 +292,7 @@ public abstract class TableLockManager {
           Thread.currentThread().interrupt();
           throw new InterruptedIOException("Interrupted acquiring a lock");
         }
-        if (LOG.isTraceEnabled()) LOG.trace("Acquired table " + (isShared ? "read" : "write")
+        LOG.info("Acquired table " + (isShared ? "read" : "write")
             + " lock on " + tableName + " for " + purpose);
       }
 
@@ -313,9 +313,9 @@ public abstract class TableLockManager {
           LOG.warn("Interrupted while releasing a lock for " + tableName);
           throw new InterruptedIOException();
         }
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("Released table lock on " + tableName);
-        }
+
+        LOG.info("Released table lock on " + tableName);
+
       }
 
       private InterProcessLock createTableLock() {

@@ -67,6 +67,8 @@ public class MasterProcedureQueue implements ProcedureRunnableSet {
   private final int userTablePriority;
   private final int sysTablePriority;
 
+  private final Boolean traceEnabled;
+
   private int queueSize;
 
   public MasterProcedureQueue(final Configuration conf, final TableLockManager lockManager) {
@@ -77,6 +79,7 @@ public class MasterProcedureQueue implements ProcedureRunnableSet {
     metaTablePriority = conf.getInt("hbase.master.procedure.queue.meta.table.priority", 3);
     sysTablePriority = conf.getInt("hbase.master.procedure.queue.system.table.priority", 2);
     userTablePriority = conf.getInt("hbase.master.procedure.queue.user.table.priority", 1);
+    traceEnabled = conf.getBoolean("hbase.procedure.trace.enabled", true);
   }
 
   @Override
@@ -259,6 +262,9 @@ public class MasterProcedureQueue implements ProcedureRunnableSet {
    * @return true if we were able to acquire the lock on the table, otherwise false.
    */
   public boolean tryAcquireTableWrite(final TableName table, final String purpose) {
+    if (traceEnabled) {
+      LOG.info("Trying to acquire table write lock on " + table + " for " + purpose);
+    }
     return getRunQueueOrCreate(table).tryWrite(lockManager, table, purpose);
   }
 
@@ -267,6 +273,9 @@ public class MasterProcedureQueue implements ProcedureRunnableSet {
    * @param table the name of the table that has the write lock
    */
   public void releaseTableWrite(final TableName table) {
+    if (traceEnabled) {
+      LOG.info("Trying to release table write lock on " + table);
+    }
     getRunQueue(table).releaseWrite(lockManager, table);
   }
 
