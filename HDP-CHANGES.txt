@@ -1,0 +1,10 @@
+HDP-2.3 is based on Apache HBase 1.1.1
+
+Following are the changes on top of Apache HBase 1.1.1
+
+HBASE-11658 Piped commands to hbase shell should return non-zero if shell command failed
+HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
+BUG-35784 Update httpcore version to 4.2.5
+BUG-28682 HBase - Address Security Issues in Jetty 6.1.26
+BUG-22418 Update jackson version to 1.9.13 
+BUG-29025 Windows incompatibility with unicode (Chinese characters)
