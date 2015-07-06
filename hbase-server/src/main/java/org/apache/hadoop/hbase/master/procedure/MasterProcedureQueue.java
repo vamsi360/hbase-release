@@ -292,7 +292,7 @@ public class MasterProcedureQueue implements ProcedureRunnableSet {
     if (queue != null) {
       lock.lock();
       try {
-        if (queue.isEmpty() && !queue.isLocked()) {
+        if (queue.isEmpty() && queue.acquireDeleteLock()) {
           fairq.remove(table);
 
           // Remove the table lock
@@ -316,7 +316,7 @@ public class MasterProcedureQueue implements ProcedureRunnableSet {
     void addFront(Procedure proc);
     void addBack(Procedure proc);
     Long poll();
-    boolean isLocked();
+    boolean acquireDeleteLock();
   }
 
   /**
@@ -365,6 +365,14 @@ public class MasterProcedureQueue implements ProcedureRunnableSet {
     }
 
     @Override
+    public synchronized boolean acquireDeleteLock() {
+      if (isLocked()) {
+        return false;
+      }
+      wlock = true;
+      return true;
+    }
+
     public boolean isLocked() {
       synchronized (this) {
         return wlock || rlock > 0;
