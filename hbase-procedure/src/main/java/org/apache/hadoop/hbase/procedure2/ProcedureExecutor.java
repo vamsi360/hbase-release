@@ -285,8 +285,8 @@ public class ProcedureExecutor<TEnvironment> {
       proc.beforeReplay(getEnvironment());
       procedures.put(proc.getProcId(), proc);
       logMaxProcId = Math.max(logMaxProcId, proc.getProcId());
-      if (LOG.isDebugEnabled() || conf.getBoolean("hbase.procedure.trace.enabled", true)) {
-        LOG.info("Loading procedure state=" + proc.getState() +
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Loading procedure state=" + proc.getState() +
             " isFailed=" + proc.hasException() + ": " + proc);
       }
       if (!proc.hasParent() && !proc.isFinished()) {
@@ -631,8 +631,8 @@ public class ProcedureExecutor<TEnvironment> {
   }
 
   private void execLoop(Procedure proc) {
-    if (LOG.isTraceEnabled() || conf.getBoolean("hbase.procedure.trace.enabled", true)) {
-      LOG.info("Trying to start the execution of " + proc);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Trying to start the execution of " + proc);
     }
 
     Long rootProcId = getRootProcedureId(proc);
@@ -685,8 +685,8 @@ public class ProcedureExecutor<TEnvironment> {
 
       if (proc.getProcId() == rootProcId && proc.isSuccess()) {
         // Finalize the procedure state
-        if (LOG.isDebugEnabled() || conf.getBoolean("hbase.procedure.trace.enabled", true)) {
-          LOG.info("Procedure completed in " +
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Procedure completed in " +
               StringUtils.humanTimeDiff(proc.elapsedTime()) + ": " + proc);
         }
         procedureFinished(proc);
@@ -781,11 +781,6 @@ public class ProcedureExecutor<TEnvironment> {
         proc.releaseLock(getEnvironment());
       }
 
-      if (conf.getBoolean("hbase.procedure.trace.enabled", true)) {
-        LOG.info("Executing rollback procedure [" + proc + "] "
-          + (reuseLock ? "without releasing the lock." : "with the lock released."));
-      }
-
       // allows to kill the executor before something is stored to the wal.
       // useful to test the procedure recovery.
       if (abortRollback) {
@@ -811,11 +806,6 @@ public class ProcedureExecutor<TEnvironment> {
   private boolean executeRollback(final Procedure proc) {
     try {
       proc.doRollback(getEnvironment());
-
-      if (conf.getBoolean("hbase.procedure.trace.enabled", true)) {
-        LOG.info("Procedure rolled back in " +
-            StringUtils.humanTimeDiff(proc.elapsedTime()) + ": " + proc);
-      }
     } catch (IOException e) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("rollback attempt failed for " + proc, e);
