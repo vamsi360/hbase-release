@@ -36,7 +36,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -1807,10 +1806,10 @@ public class HTable implements HTableInterface {
                   ", value=" + serviceResult.getValue().getValue());
             }
             try {
-              callback.update(region, row,
-                  (R) responsePrototype.newBuilderForType().mergeFrom(
-                      serviceResult.getValue().getValue()).build());
-            } catch (InvalidProtocolBufferException e) {
+              Message.Builder builder = responsePrototype.newBuilderForType();
+              ProtobufUtil.mergeFrom(builder, serviceResult.getValue().getValue());
+              callback.update(region, row, (R) builder.build());
+            } catch (IOException e) {
               LOG.error("Unexpected response type from endpoint " + methodDescriptor.getFullName(),
                   e);
               callbackErrorExceptions.add(e);

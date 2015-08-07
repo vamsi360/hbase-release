@@ -1858,15 +1858,21 @@ public class AccessController extends BaseRegionObserver
       while (tagIterator.hasNext()) {
         Tag tag = tagIterator.next();
         if (tag.getType() != AccessControlLists.ACL_TAG_TYPE) {
+          // Not an ACL tag, just carry it through
           if (LOG.isTraceEnabled()) {
             LOG.trace("Carrying forward tag from " + oldCell + ": type " + tag.getType() +
               " length " + tag.getTagLength());
           }
           tags.add(tag);
         } else {
-          ListMultimap<String,Permission> kvPerms = ProtobufUtil.toUsersAndPermissions(
-            AccessControlProtos.UsersAndPermissions.newBuilder().mergeFrom(
-              tag.getBuffer(), tag.getTagOffset(), tag.getTagLength()).build());
+          // Merge the perms from the older ACL into the current permission set
+          // TODO: The efficiency of this can be improved. Don't build just to unpack
+          // again, use the builder
+          AccessControlProtos.UsersAndPermissions.Builder builder =
+            AccessControlProtos.UsersAndPermissions.newBuilder();
+          ProtobufUtil.mergeFrom(builder, tag.getBuffer(), tag.getTagOffset(), tag.getTagLength());
+          ListMultimap<String,Permission> kvPerms =
+            ProtobufUtil.toUsersAndPermissions(builder.build());
           perms.putAll(kvPerms);
         }
       }

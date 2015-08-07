@@ -33,6 +33,19 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableSet;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
+import com.google.protobuf.Parser;
+import com.google.protobuf.RpcChannel;
+import com.google.protobuf.Service;
+import com.google.protobuf.ServiceException;
+import com.google.protobuf.TextFormat;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
@@ -63,6 +76,7 @@ import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.io.LimitInputStream;
 import org.apache.hadoop.hbase.io.TimeRange;
 import org.apache.hadoop.hbase.ipc.PayloadCarryingRpcController;
 import org.apache.hadoop.hbase.protobuf.generated.AccessControlProtos;
@@ -138,17 +152,22 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.security.token.Token;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.Message;
-import com.google.protobuf.Parser;
-import com.google.protobuf.RpcChannel;
-import com.google.protobuf.Service;
-import com.google.protobuf.ServiceException;
-import com.google.protobuf.TextFormat;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NavigableSet;
 
 import static org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier.RegionSpecifierType.REGION_NAME;
 /**
@@ -2767,8 +2786,9 @@ public final class ProtobufUtil {
     ClientProtos.CellVisibility.Builder builder = ClientProtos.CellVisibility.newBuilder();
     ClientProtos.CellVisibility proto = null;
     try {
-      proto = builder.mergeFrom(protoBytes).build();
-    } catch (InvalidProtocolBufferException e) {
+      ProtobufUtil.mergeFrom(builder, protoBytes);
+      proto = builder.build();
+    } catch (IOException e) {
       throw new DeserializationException(e);
     }
     return toCellVisibility(proto);
@@ -2809,8 +2829,9 @@ public final class ProtobufUtil {
     ClientProtos.Authorizations.Builder builder = ClientProtos.Authorizations.newBuilder();
     ClientProtos.Authorizations proto = null;
     try {
-      proto = builder.mergeFrom(protoBytes).build();
-    } catch (InvalidProtocolBufferException e) {
+      ProtobufUtil.mergeFrom(builder, protoBytes);
+      proto = builder.build();
+    } catch (IOException e) {
       throw new DeserializationException(e);
     }
     return toAuthorizations(proto);
@@ -2867,6 +2888,104 @@ public final class ProtobufUtil {
       }
     }
     return result;
+  }
+
+  /**
+   * This version of protobuf's mergeDelimitedFrom avoids the hard-coded 64MB limit for decoding
+   * buffers
+   * @param builder current message builder
+   * @param in Inputsream with delimited protobuf data
+   * @throws IOException
+   */
+  public static void mergeDelimitedFrom(Message.Builder builder, InputStream in)
+    throws IOException {
+    // This used to be builder.mergeDelimitedFrom(in);
+    // but is replaced to allow us to bump the protobuf size limit.
+    final int firstByte = in.read();
+    if (firstByte != -1) {
+      final int size = CodedInputStream.readRawVarint32(firstByte, in);
+      final InputStream limitedInput = new LimitInputStream(in, size);
+      final CodedInputStream codedInput = CodedInputStream.newInstance(limitedInput);
+      codedInput.setSizeLimit(size);
+      builder.mergeFrom(codedInput);
+      codedInput.checkLastTagWas(0);
+    }
+  }
+
+  /**
+   * This version of protobuf's mergeFrom avoids the hard-coded 64MB limit for decoding
+   * buffers where the message size is known
+   * @param builder current message builder
+   * @param in InputStream containing protobuf data
+   * @param size known size of protobuf data
+   * @throws IOException 
+   */
+  public static void mergeFrom(Message.Builder builder, InputStream in, int size)
+      throws IOException {
+    final CodedInputStream codedInput = CodedInputStream.newInstance(in);
+    codedInput.setSizeLimit(size);
+    builder.mergeFrom(codedInput);
+    codedInput.checkLastTagWas(0);
+  }
+
+  /**
+   * This version of protobuf's mergeFrom avoids the hard-coded 64MB limit for decoding
+   * buffers where the message size is not known
+   * @param builder current message builder
+   * @param in InputStream containing protobuf data
+   * @throws IOException 
+   */
+  public static void mergeFrom(Message.Builder builder, InputStream in)
+      throws IOException {
+    final CodedInputStream codedInput = CodedInputStream.newInstance(in);
+    codedInput.setSizeLimit(Integer.MAX_VALUE);
+    builder.mergeFrom(codedInput);
+    codedInput.checkLastTagWas(0);
+  }
+
+  /**
+   * This version of protobuf's mergeFrom avoids the hard-coded 64MB limit for decoding
+   * buffers when working with ByteStrings
+   * @param builder current message builder
+   * @param bs ByteString containing the 
+   * @throws IOException 
+   */
+  public static void mergeFrom(Message.Builder builder, ByteString bs) throws IOException {
+    final CodedInputStream codedInput = bs.newCodedInput();
+    codedInput.setSizeLimit(bs.size());
+    builder.mergeFrom(codedInput);
+    codedInput.checkLastTagWas(0);
+  }
+
+  /**
+   * This version of protobuf's mergeFrom avoids the hard-coded 64MB limit for decoding
+   * buffers when working with byte arrays
+   * @param builder current message builder
+   * @param b byte array
+   * @throws IOException 
+   */
+  public static void mergeFrom(Message.Builder builder, byte[] b) throws IOException {
+    final CodedInputStream codedInput = CodedInputStream.newInstance(b);
+    codedInput.setSizeLimit(b.length);
+    builder.mergeFrom(codedInput);
+    codedInput.checkLastTagWas(0);
+  }
+
+  /**
+   * This version of protobuf's mergeFrom avoids the hard-coded 64MB limit for decoding
+   * buffers when working with byte arrays
+   * @param builder current message builder
+   * @param b byte array
+   * @param offset
+   * @param length
+   * @throws IOException
+   */
+  public static void mergeFrom(Message.Builder builder, byte[] b, int offset, int length)
+      throws IOException {
+    final CodedInputStream codedInput = CodedInputStream.newInstance(b, offset, length);
+    codedInput.setSizeLimit(length);
+    builder.mergeFrom(codedInput);
+    codedInput.checkLastTagWas(0);
   }
 
   /**

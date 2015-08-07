@@ -93,7 +93,7 @@ public class RegionServerTracker extends ZooKeeperListener {
             }
             if (data != null && data.length > 0 && ProtobufUtil.isPBMagicPrefix(data)) {
               int magicLen = ProtobufUtil.lengthOfPBMagic();
-              rsInfoBuilder.mergeFrom(data, magicLen, data.length - magicLen);
+              ProtobufUtil.mergeFrom(rsInfoBuilder, data, magicLen, data.length - magicLen);
             }
           } catch (KeeperException e) {
             LOG.warn("Get Rs info port from ephemeral node", e);
