@@ -85,20 +85,16 @@ public class TestRegionLocationFinder {
     for (int i = 0; i < ServerNum; i++) {
       HRegionServer server = cluster.getRegionServer(i);
       for (Region region : server.getOnlineRegions(tableName)) {
-        // mini cluster, all rs in one host, all rs are top block location
-        List<ServerName> servers = finder.internalGetTopBlockLocation(region.getRegionInfo());
-        // test table may have empty region
-        if (region.getHDFSBlocksDistribution().getUniqueBlocksTotalWeight() == 0) {
-          continue;
-        }
-        List<String> topHosts = region.getHDFSBlocksDistribution().getTopHosts();
-        // rs and datanode may have different host in local machine test
-        if (!topHosts.contains(server.getServerName().getHostname())) {
-          continue;
-        }
-        for (int j = 0; j < ServerNum; j++) {
-          ServerName serverName = cluster.getRegionServer(j).getServerName();
-          assertTrue(servers.contains(serverName));
+        // get region's hdfs block distribution by region and RegionLocationFinder, 
+        // they should have same result
+        HDFSBlocksDistribution blocksDistribution1 = region.getHDFSBlocksDistribution();
+        HDFSBlocksDistribution blocksDistribution2 = finder.getBlockDistribution(region
+            .getRegionInfo());
+        assertEquals(blocksDistribution1.getUniqueBlocksTotalWeight(),
+          blocksDistribution2.getUniqueBlocksTotalWeight());
+        if (blocksDistribution1.getUniqueBlocksTotalWeight() != 0) {
+          assertEquals(blocksDistribution1.getTopHosts().get(0), blocksDistribution2.getTopHosts()
+              .get(0));
         }
       }
     }
