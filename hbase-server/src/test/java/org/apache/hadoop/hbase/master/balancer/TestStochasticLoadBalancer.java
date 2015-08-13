@@ -40,7 +40,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerLoad;
 import org.apache.hadoop.hbase.ServerName;
@@ -48,9 +47,8 @@ import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.master.RackManager;
 import org.apache.hadoop.hbase.master.RegionPlan;
 import org.apache.hadoop.hbase.master.balancer.BaseLoadBalancer.Cluster;
+import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.net.DNSToSwitchMapping;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -58,80 +56,6 @@ import org.junit.experimental.categories.Category;
 public class TestStochasticLoadBalancer extends BalancerTestBase {
   public static final String REGION_KEY = "testRegion";
   private static final Log LOG = LogFactory.getLog(TestStochasticLoadBalancer.class);
-
-  int[] largeCluster = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 56 };
-
-  // int[testnum][servernumber] -> numregions
-  int[][] clusterStateMocks = new int[][]{
-      // 1 node
-      new int[]{0},
-      new int[]{1},
-      new int[]{10},
-      // 2 node
-      new int[]{0, 0},
-      new int[]{2, 0},
-      new int[]{2, 1},
-      new int[]{2, 2},
-      new int[]{2, 3},
-      new int[]{2, 4},
-      new int[]{1, 1},
-      new int[]{0, 1},
-      new int[]{10, 1},
-      new int[]{514, 1432},
-      new int[]{48, 53},
-      // 3 node
-      new int[]{0, 1, 2},
-      new int[]{1, 2, 3},
-      new int[]{0, 2, 2},
-      new int[]{0, 3, 0},
-      new int[]{0, 4, 0},
-      new int[]{20, 20, 0},
-      // 4 node
-      new int[]{0, 1, 2, 3},
-      new int[]{4, 0, 0, 0},
-      new int[]{5, 0, 0, 0},
-      new int[]{6, 6, 0, 0},
-      new int[]{6, 2, 0, 0},
-      new int[]{6, 1, 0, 0},
-      new int[]{6, 0, 0, 0},
-      new int[]{4, 4, 4, 7},
-      new int[]{4, 4, 4, 8},
-      new int[]{0, 0, 0, 7},
-      // 5 node
-      new int[]{1, 1, 1, 1, 4},
-      // more nodes
-      new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-      new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 10},
-      new int[]{6, 6, 5, 6, 6, 6, 6, 6, 6, 1},
-      new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 54},
-      new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 55},
-      new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 56},
-      new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 16},
-      new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 8},
-      new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 9},
-      new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 10},
-      new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 123},
-      new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 155},
-      new int[]{10, 7, 12, 8, 11, 10, 9, 14},
-      new int[]{13, 14, 6, 10, 10, 10, 8, 10},
-      new int[]{130, 14, 60, 10, 100, 10, 80, 10},
-      new int[]{130, 140, 60, 100, 100, 100, 80, 100},
-      largeCluster,
-
-  };
 
   @Test
   public void testKeepRegionLoad() throws Exception {
