@@ -576,6 +576,11 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
+          <version>${maven-source-plugin.version}</version>
+         </plugin>
+        <!--plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
           <executions>
             <execution>
               <id>attach-sources</id>
@@ -585,19 +590,19 @@
               </goals>
             </execution>
           </executions>
-        </plugin>
+        </plugin-->
         <!-- General configuration for submodules who want to build a test jar -->
-        <plugin>
+        <!--plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <executions>
             <execution>
               <phase>prepare-package</phase>
-              <goals>
+              <goals-->
                   <!--This goal will install a -test.jar when we do install
                       See http://maven.apache.org/guides/mini/guide-attached-tests.html
                    -->
-                <goal>test-jar</goal>
+                <!--goal>test-jar</goal>
               </goals>
             </execution>
           </executions>
@@ -611,7 +616,7 @@
               <exclude>zoo.cfg</exclude>
             </excludes>
           </configuration>
-        </plugin>
+        </plugin-->
         <!-- General config for eclipse classpath/settings -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -768,6 +773,20 @@
       </plugins>
     </pluginManagement>
     <plugins>
+     <plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+    	<artifactId>maven-source-plugin</artifactId>
+    	<executions>
+    	<execution>
+            <id>attach-sources</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+              <goal>test-jar-no-fork</goal>
+            </goals>
+        </execution>
+    	</executions>
+      </plugin> 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
@@ -1199,6 +1218,7 @@
     <hbase.skip-jacoco>true</hbase.skip-jacoco>
     <jacoco.version>0.6.2.201302030002</jacoco.version>
     <extra.enforcer.version>1.0-beta-3</extra.enforcer.version>
+    <maven-source-plugin.version>2.4</maven-source-plugin.version>
   </properties>
   <!-- Sorted by groups of dependencies then groupId and artifactId -->
   <dependencyManagement>
