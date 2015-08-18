@@ -592,17 +592,17 @@
           </executions>
         </plugin-->
         <!-- General configuration for submodules who want to build a test jar -->
-        <!--plugin>
+        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <executions>
             <execution>
               <phase>prepare-package</phase>
-              <goals-->
+              <goals>
                   <!--This goal will install a -test.jar when we do install
                       See http://maven.apache.org/guides/mini/guide-attached-tests.html
                    -->
-                <!--goal>test-jar</goal>
+                <goal>test-jar</goal>
               </goals>
             </execution>
           </executions>
@@ -616,7 +616,7 @@
               <exclude>zoo.cfg</exclude>
             </excludes>
           </configuration>
-        </plugin-->
+        </plugin>
         <!-- General config for eclipse classpath/settings -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
