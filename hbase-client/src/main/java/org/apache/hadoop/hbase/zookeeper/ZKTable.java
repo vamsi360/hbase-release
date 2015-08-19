@@ -149,7 +149,29 @@ public class ZKTable {
     throws KeeperException {
     synchronized (this.cache) {
       if (isEnablingOrEnabledTable(tableName)) {
-        return false;
+        // If the table is in the one of the states from the states list, the cache
+        // might be out-of-date, try to find it out from the master source (zookeeper server).
+        //
+        // Note: this adds extra zookeeper server calls and might have performance impact.
+        // However, this is not the happy path so we should not reach here often. Therefore,
+        // the performance impact should be minimal to none.
+        try {
+          ZooKeeperProtos.Table.State currentState =
+            ZKTableReadOnly.getTableState(this.watcher, tableName);
+
+          if (currentState == null ||
+           currentState == ZooKeeperProtos.Table.State.ENABLING ||
+           currentState == ZooKeeperProtos.Table.State.ENABLED) {
+            return false;
+          }
+        } catch (InterruptedException e) {
+            // TODO: special hack code to handle InterruptedException (which was
+            // from a 0.99 change back ported to 0.98.  Handling InterruptedException
+            // correctly would involve more changes in 0.98 code base.
+            KeeperException ke = new KeeperException.SystemErrorException();
+            ke.initCause(e);
+            throw ke;
+        }
       }
       setTableState(tableName, ZooKeeperProtos.Table.State.ENABLING);
       return true;

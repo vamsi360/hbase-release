@@ -66,6 +66,7 @@ import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
 import org.apache.hadoop.hbase.catalog.MetaReader;
@@ -93,6 +94,7 @@ import org.apache.hadoop.hbase.master.TableLockManager;
 import org.apache.hadoop.hbase.master.TableLockManager.TableLock;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
+import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
@@ -109,6 +111,7 @@ import org.apache.hadoop.hbase.zookeeper.MetaRegionTracker;
 import org.apache.hadoop.hbase.zookeeper.ZKAssign;
 import org.apache.zookeeper.KeeperException;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -1569,7 +1572,8 @@ public class TestHBaseFsck {
       // TODO: fixHdfsHoles does not work against splits, since the parent dir lingers on
       // for some time until children references are deleted. HBCK erroneously sees this as
       // overlapping regions
-      HBaseFsck hbck = doFsck(conf, true, true, false, false, false, true, true, true, false, false, null);
+      HBaseFsck hbck = doFsck(
+        conf, true, true, false, false, false, true, true, true, false, false, false, null);
       assertErrors(hbck, new ERROR_CODE[] {}); //no LINGERING_SPLIT_PARENT reported
 
       // assert that the split hbase:meta entry is still there.
@@ -1632,7 +1636,8 @@ public class TestHBaseFsck {
           ERROR_CODE.NOT_IN_META_OR_DEPLOYED, ERROR_CODE.HOLE_IN_REGION_CHAIN}); //no LINGERING_SPLIT_PARENT
 
       // now fix it. The fix should not revert the region split, but add daughters to META
-      hbck = doFsck(conf, true, true, false, false, false, false, false, false, false, false, null);
+      hbck = doFsck(
+        conf, true, true, false, false, false, false, false, false, false, false, false, null);
       assertErrors(hbck, new ERROR_CODE[] {ERROR_CODE.NOT_IN_META_OR_DEPLOYED,
           ERROR_CODE.NOT_IN_META_OR_DEPLOYED, ERROR_CODE.HOLE_IN_REGION_CHAIN});
 
@@ -2277,7 +2282,7 @@ public class TestHBaseFsck {
     }
   }
 
-  @Test(timeout=60000)
+  @Test(timeout=180000)
   public void testCheckTableLocks() throws Exception {
     IncrementingEnvironmentEdge edge = new IncrementingEnvironmentEdge(0);
     EnvironmentEdgeManager.injectEdge(edge);
@@ -2344,6 +2349,55 @@ public class TestHBaseFsck {
         "should acquire without blocking");
     writeLock.acquire(); // this should not block.
     writeLock.release(); // release for clean state
+  }
+
+  /**
+   * Test orphaned table ZNode (for table states)
+   */
+  @Test
+  public void testOrphanedTableZNode() throws Exception {
+    TableName table = TableName.valueOf("testOrphanedZKTableEntry");
+
+    try {
+      TEST_UTIL.getHBaseCluster().getMaster().getAssignmentManager().getZKTable().
+      setEnablingTable(table);
+
+      try {
+        setupTable(table);
+        Assert.fail(
+          "Create table should fail when its ZNode has already existed with ENABLING state.");
+      } catch(TableExistsException t) {
+        //Expected exception
+      }
+      // The setup table was interrupted in some state that needs to some cleanup.
+      try {
+        deleteTable(table);
+      } catch (IOException e) {
+        // Because create table failed, it is expected that the cleanup table would
+        // throw some exception.  Ignore and continue.
+      }
+
+      HBaseFsck hbck = doFsck(conf, false);
+      assertTrue(hbck.getErrors().getErrorList().contains(ERROR_CODE.ORPHANED_ZK_TABLE_ENTRY));
+
+      // fix the orphaned ZK entry
+      hbck = doFsck(conf, true);
+
+      // check that orpahned ZK table entry is gone.
+      hbck = doFsck(conf, false);
+      assertFalse(hbck.getErrors().getErrorList().contains(ERROR_CODE.ORPHANED_ZK_TABLE_ENTRY));
+      // Now create table should succeed.
+      setupTable(table);
+    } finally {
+      // This code could be called that either a table was created successfully or set up
+      // table failed in some unknown state.  Therefore, clean up can either succeed or fail.
+      try {
+        deleteTable(table);
+      } catch (IOException e) {
+        // The cleanup table would throw some exception if create table failed in some state.
+        // Ignore this exception
+      }
+    }
   }
 
   @Test
@@ -2532,7 +2586,8 @@ public class TestHBaseFsck {
 
       // fix hole
       assertErrors(
-        doFsck(conf, false, true, false, false, false, false, false, false, false, false, null),
+        doFsck(
+          conf, false, true, false, false, false, false, false, false, false, false, false, null),
         new ERROR_CODE[] { ERROR_CODE.NOT_IN_META_OR_DEPLOYED,
           ERROR_CODE.NOT_IN_META_OR_DEPLOYED });
 
