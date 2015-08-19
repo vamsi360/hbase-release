@@ -6626,8 +6626,10 @@ public class HRegion implements HeapSize { // , Writable{
               boolean noWriteBack = (amount == 0);
 
               Cell c = null;
+              long ts = now;
               if (idx < results.size() && CellUtil.matchingQualifier(results.get(idx), kv)) {
                 c = results.get(idx);
+                ts = Math.max(now, c.getTimestamp());
                 if(c.getValueLength() == Bytes.SIZEOF_LONG) {
                   amount += Bytes.toLong(c.getValueArray(), c.getValueOffset(), Bytes.SIZEOF_LONG);
                 } else {
@@ -6643,7 +6645,7 @@ public class HRegion implements HeapSize { // , Writable{
               byte[] val = Bytes.toBytes(amount);
               int oldCellTagsLen = (c == null) ? 0 : c.getTagsLengthUnsigned();
               int incCellTagsLen = kv.getTagsLengthUnsigned();
-              KeyValue newKV = new KeyValue(row.length, family.getKey().length, q.length, now,
+              KeyValue newKV = new KeyValue(row.length, family.getKey().length, q.length, ts,
                   KeyValue.Type.Put, val.length, oldCellTagsLen + incCellTagsLen);
               System.arraycopy(row, 0, newKV.getBuffer(), newKV.getRowOffset(), row.length);
               System.arraycopy(family.getKey(), 0, newKV.getBuffer(), newKV.getFamilyOffset(),
