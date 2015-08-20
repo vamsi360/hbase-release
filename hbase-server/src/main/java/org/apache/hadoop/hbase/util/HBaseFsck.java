@@ -275,6 +275,8 @@ public class HBaseFsck extends Configured {
    */
   private Set<TableName> orphanedTableZNodes = new HashSet<TableName>();
 
+  private Map<TableName, Set<String>> skippedRegions = new HashMap<TableName, Set<String>>();
+
   /**
    * Constructor
    *
@@ -387,6 +389,7 @@ public class HBaseFsck extends Configured {
     errors.clear();
     tablesInfo.clear();
     orphanHdfsDirs.clear();
+    skippedRegions.clear();
   }
 
   /**
@@ -1610,6 +1613,17 @@ public class HBaseFsck extends Configured {
     checkRegionConsistencyConcurrently(replicaWorkItems);
 
     setCheckHdfs(prevHdfsCheck);
+
+    // If some regions is skipped during checkRegionConsistencyConcurrently() phase, we might
+    // not get accurate state of the hbase if continuing. The config here allows users to tune
+    // the tolerance of number of skipped region.
+    // TODO: evaluate the consequence to continue the hbck operation without config.
+    int terminateThreshold =  getConf().getInt("hbase.hbck.skipped.regions.limit", 0);
+    int numOfSkippedRegions = skippedRegions.size();
+    if (numOfSkippedRegions > 0 && numOfSkippedRegions > terminateThreshold) {
+      throw new IOException(numOfSkippedRegions
+        + " region(s) could not be checked or repaired.  See logs for detail.");
+    }
   }
 
   /**
@@ -1652,9 +1666,30 @@ public class HBaseFsck extends Configured {
 
     @Override
     public synchronized Void call() throws Exception {
-      checkRegionConsistency(key, hbi);
+      try {
+        checkRegionConsistency(key, hbi);
+      } catch (Exception e) {
+        // If the region is non-META region, skip this region and send warning/error message; if
+        // the region is META region, we should not continue.
+        LOG.warn("Unable to complete check or repair the region '" + hbi.getRegionNameAsString()
+          + "'.", e);
+        if (hbi.getHdfsHRI().isMetaRegion()) {
+          throw e;
+        }
+        LOG.warn("Skip region '" + hbi.getRegionNameAsString() + "'");
+        addSkippedRegion(hbi);
+      }
       return null;
     }
+  }
+
+  private void addSkippedRegion(final HbckInfo hbi) {
+    Set<String> skippedRegionNames = skippedRegions.get(hbi.getTableName());
+    if (skippedRegionNames == null) {
+      skippedRegionNames = new HashSet<String>();
+    }
+    skippedRegionNames.add(hbi.getRegionNameAsString());
+    skippedRegions.put(hbi.getTableName(), skippedRegionNames);
   }
 
   private void preCheckPermission() throws IOException, AccessControlException {
@@ -3507,14 +3542,29 @@ public class HBaseFsck extends Configured {
    */
   private void printTableSummary(SortedMap<TableName, TableInfo> tablesInfo) {
     StringBuilder sb = new StringBuilder();
+    int numOfSkippedRegions;
     errors.print("Summary:");
     for (TableInfo tInfo : tablesInfo.values()) {
+      numOfSkippedRegions = (skippedRegions.containsKey(tInfo.getName())) ?
+          skippedRegions.get(tInfo.getName()).size() : 0;
       if (errors.tableHasErrors(tInfo)) {
         errors.print("Table " + tInfo.getName() + " is inconsistent.");
-      } else {
-        errors.print("  " + tInfo.getName() + " is okay.");
+      } else if (numOfSkippedRegions > 0){
+        errors.print("Table " + tInfo.getName() + " is okay (with "
+          + numOfSkippedRegions + " skipped regions).");
+      }
+      else {
+        errors.print("Table " + tInfo.getName() + " is okay.");
       }
       errors.print("    Number of regions: " + tInfo.getNumRegions());
+      if (numOfSkippedRegions > 0) {
+        Set<String> skippedRegionStrings = skippedRegions.get(tInfo.getName());
+        errors.print("    Number of skipped regions: " + numOfSkippedRegions);
+        errors.print("      List of skipped regions:");
+        for(String sr : skippedRegionStrings) {
+          errors.print("        " + sr);
+        }
+      }
       sb.setLength(0); // clear out existing buffer, if any.
       sb.append("    Deployed on: ");
       for (ServerName server : tInfo.deployedOn) {
