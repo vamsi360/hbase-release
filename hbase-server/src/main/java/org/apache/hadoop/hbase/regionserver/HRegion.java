@@ -1173,6 +1173,9 @@ public class HRegion implements HeapSize { // , Writable{
    * vector if already closed and null if judged that it should not close.
    *
    * @throws IOException e
+   * @throws DroppedSnapshotException Thrown when replay of wal is required
+   * because a Snapshot was not properly persisted. The region is put in closing mode, and the
+   * caller MUST abort after this.
    */
   public Map<byte[], List<StoreFile>> close() throws IOException {
     return close(false);
@@ -1210,6 +1213,9 @@ public class HRegion implements HeapSize { // , Writable{
    * we are not to close at this time or we are already closed.
    *
    * @throws IOException e
+   * @throws DroppedSnapshotException Thrown when replay of wal is required
+   * because a Snapshot was not properly persisted. The region is put in closing mode, and the
+   * caller MUST abort after this.
    */
   public Map<byte[], List<StoreFile>> close(final boolean abort) throws IOException {
     // Only allow one thread to close at a time. Serialize them so dual
@@ -1226,6 +1232,14 @@ public class HRegion implements HeapSize { // , Writable{
     } finally {
       status.cleanup();
     }
+  }
+
+  /**
+   * Exposed for some very specific unit tests.
+   */
+  @VisibleForTesting
+  public void setClosing(boolean closing) {
+    this.closing.set(closing);
   }
 
   private Map<byte[], List<StoreFile>> doClose(final boolean abort, MonitoredTask status)
@@ -2091,6 +2105,41 @@ public class HRegion implements HeapSize { // , Writable{
     return false;
   }
 
+  /**
+   * Flush the memstore.
+   *
+   * Flushing the memstore is a little tricky. We have a lot of updates in the
+   * memstore, all of which have also been written to the log. We need to
+   * write those updates in the memstore out to disk, while being able to
+   * process reads/writes as much as possible during the flush operation. Also,
+   * the log has to state clearly the point in time at which the memstore was
+   * flushed. (That way, during recovery, we know when we can rely on the
+   * on-disk flushed structures and when we have to recover the memstore from
+   * the log.)
+   *
+   * <p>So, we have a three-step process:
+   *
+   * <ul><li>A. Flush the memstore to the on-disk stores, noting the current
+   * sequence ID for the log.<li>
+   *
+   * <li>B. Write a FLUSHCACHE-COMPLETE message to the log, using the sequence
+   * ID that was current at the time of memstore-flush.</li>
+   *
+   * <li>C. Get rid of the memstore structures that are now redundant, as
+   * they've been flushed to the on-disk HStores.</li>
+   * </ul>
+   * <p>This method is protected, but can be accessed via several public
+   * routes.
+   *
+   * <p> This method may block for some time.
+   * @param status
+   *
+   * @return object describing the flush's state
+   *
+   * @throws IOException general io exceptions
+   * @throws DroppedSnapshotException Thrown when replay of hlog is required
+   * because a Snapshot was not properly persisted.
+   */
   protected FlushResult internalFlushCacheAndCommit(
       final HLog wal, MonitoredTask status, PrepareFlushResult prepareResult)
           throws IOException {
@@ -2168,6 +2217,20 @@ public class HRegion implements HeapSize { // , Writable{
           Bytes.toStringBinary(getRegionName()));
       dse.initCause(t);
       status.abort("Flush failed: " + StringUtils.stringifyException(t));
+
+      // TODO DEV: the following comments are copied from HBASE-13877 patch in 0.98 line, where
+      // the code was refactored.  For now, I just keep the original comment
+      //
+      // Callers for flushcache() should catch DroppedSnapshotException and abort the region server.
+      // However, since we may have the region read lock, we cannot call close(true) here since
+      // we cannot promote to a write lock. Instead we are setting closing so that all other region
+      // operations except for close will be rejected.
+      this.closing.set(true);
+
+      if (rsServices != null) {
+        // This is a safeguard against the case where the caller fails to explicitly handle aborting
+        rsServices.abort("Replay of WAL required. Forcing server shutdown", dse);
+      }
       throw dse;
     }
 

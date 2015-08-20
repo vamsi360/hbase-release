@@ -4010,6 +4010,9 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       region.forceSplit(splitPoint);
       compactSplitThread.requestSplit(region, region.checkSplit());
       return SplitRegionResponse.newBuilder().build();
+    } catch (DroppedSnapshotException ex) {
+      abort("Replay of WAL required. Forcing server shutdown", ex);
+      throw new ServiceException(ex);
     } catch (IOException ie) {
       throw new ServiceException(ie);
     }
@@ -4044,6 +4047,9 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       regionB.flushcache();
       compactSplitThread.requestRegionsMerge(regionA, regionB, forcible);
       return MergeRegionsResponse.newBuilder().build();
+    } catch (DroppedSnapshotException ex) {
+      abort("Replay of WAL required. Forcing server shutdown", ex);
+      throw new ServiceException(ex);
     } catch (IOException ie) {
       throw new ServiceException(ie);
     }
