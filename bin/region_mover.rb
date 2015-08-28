@@ -251,7 +251,9 @@ end
 def getServerName(servers, hostname)
   servername = nil
   for server in servers
-    if getHostnameFromServerName(server) == hostname
+    sname = getHostnameFromServerName(server)
+    sname = sname.upcase
+    if sname == hostname.upcase
       servername = server
       break
     end
