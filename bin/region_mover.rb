@@ -212,7 +212,8 @@ def getServerName(servers, hostname, port)
   servername = nil
   for server in servers
     hostFromServerName, portFromServerName = getHostPortFromServerName(server)
-    if hostFromServerName == hostname and portFromServerName == port
+    hostFromServerName = hostFromServerName.upcase
+    if hostFromServerName == hostname.upcase and portFromServerName == port
       servername = server
       break
     end
