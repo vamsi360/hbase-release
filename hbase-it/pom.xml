@@ -23,12 +23,12 @@
   <parent>
     <artifactId>hbase</artifactId>
     <groupId>org.apache.hbase</groupId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <relativePath>..</relativePath>
   </parent>
 
   <artifactId>hbase-it</artifactId>
-  <name>HBase - Integration Tests</name>
+  <name>Apache HBase - Integration Tests</name>
   <description>Integration and System tests for HBase</description>
 
   <properties>
@@ -45,6 +45,10 @@
       <testResource>
          <!-- We depend on hbase-server test resources -->
         <directory>../hbase-server/src/test/resources</directory>
+        <excludes>
+          <exclude>META-INF/NOTICE</exclude>
+          <exclude>META-INF/LICENSE</exclude>
+        </excludes>
       </testResource>
     </testResources>
     <pluginManagement>

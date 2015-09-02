@@ -115,6 +115,7 @@ import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos;
 import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.RegionLoad;
 import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.RegionStoreSequenceIds;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.Coprocessor;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.Coprocessor.Builder;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NameStringPair;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionServerInfo;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier;
@@ -907,7 +908,9 @@ public class HRegionServer extends HasThread implements
       }
       
       // Start the Quota Manager
-      rsQuotaManager.start(getRpcServer().getScheduler());
+      if (this.rsQuotaManager != null) {
+        rsQuotaManager.start(getRpcServer().getScheduler());
+      }
 
       // We registered with the Master.  Go into run mode.
       long lastMsg = System.currentTimeMillis();
@@ -1169,17 +1172,24 @@ public class HRegionServer extends HasThread implements
     serverLoad.setUsedHeapMB((int)(memory.getUsed() / 1024 / 1024));
     serverLoad.setMaxHeapMB((int) (memory.getMax() / 1024 / 1024));
     Set<String> coprocessors = getWAL(null).getCoprocessorHost().getCoprocessors();
+    Builder coprocessorBuilder = Coprocessor.newBuilder();
     for (String coprocessor : coprocessors) {
-      serverLoad.addCoprocessors(
-        Coprocessor.newBuilder().setName(coprocessor).build());
+      serverLoad.addCoprocessors(coprocessorBuilder.setName(coprocessor).build());
     }
     RegionLoad.Builder regionLoadBldr = RegionLoad.newBuilder();
     RegionSpecifier.Builder regionSpecifier = RegionSpecifier.newBuilder();
     for (Region region : regions) {
+      if (region.getCoprocessorHost() != null) {
+        Set<String> regionCoprocessors = region.getCoprocessorHost().getCoprocessors();
+        Iterator<String> iterator = regionCoprocessors.iterator();
+        while (iterator.hasNext()) {
+          serverLoad.addCoprocessors(coprocessorBuilder.setName(iterator.next()).build());
+        }
+      }
       serverLoad.addRegionLoads(createRegionLoad(region, regionLoadBldr, regionSpecifier));
-      for (String coprocessor :
-          getWAL(region.getRegionInfo()).getCoprocessorHost().getCoprocessors()) {
-        serverLoad.addCoprocessors(Coprocessor.newBuilder().setName(coprocessor).build());
+      for (String coprocessor : getWAL(region.getRegionInfo()).getCoprocessorHost()
+          .getCoprocessors()) {
+        serverLoad.addCoprocessors(coprocessorBuilder.setName(coprocessor).build());
       }
     }
     serverLoad.setReportStartTime(reportStartTime);
@@ -1701,8 +1711,8 @@ public class HRegionServer extends HasThread implements
 
     // Leases is not a Thread. Internally it runs a daemon thread. If it gets
     // an unhandled exception, it will just exit.
-    this.leases.setName(getName() + ".leaseChecker");
-    this.leases.start();
+    Threads.setDaemonThreadRunning(this.leases.getThread(), getName() + ".leaseChecker",
+      uncaughtExceptionHandler);
 
     if (this.replicationSourceHandler == this.replicationSinkHandler &&
         this.replicationSourceHandler != null) {
@@ -2268,8 +2278,8 @@ public class HRegionServer extends HasThread implements
         LOG.debug("Master is not running yet");
       } else {
         LOG.warn("error telling master we are up", se);
-        rssStub = null;
       }
+      rssStub = null;
     }
     return result;
   }
@@ -3223,9 +3233,9 @@ public class HRegionServer extends HasThread implements
         throw new UnknownProtocolException(service.getClass(), "Unknown method " + methodName
             + " called on service " + serviceName);
       }
-      Message request =
-          service.getRequestPrototype(methodDesc).newBuilderForType().mergeFrom(call.getRequest())
-              .build();
+      Message.Builder builderForType = service.getRequestPrototype(methodDesc).newBuilderForType();
+      ProtobufUtil.mergeFrom(builderForType, call.getRequest());
+      Message request = builderForType.build();
       final Message.Builder responseBuilder =
           service.getResponsePrototype(methodDesc).newBuilderForType();
       service.callMethod(methodDesc, controller, request, new RpcCallback<Message>() {

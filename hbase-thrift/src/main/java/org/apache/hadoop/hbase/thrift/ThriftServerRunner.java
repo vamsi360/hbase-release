@@ -1652,6 +1652,8 @@ public class ThriftServerRunner implements Runnable {
       } catch (IOException e) {
         LOG.warn(e.getMessage(), e);
         throw new IOError(Throwables.getStackTraceAsString(e));
+      } finally {
+        closeTable(table);
       }
     }
 

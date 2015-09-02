@@ -75,7 +75,6 @@ import org.apache.hadoop.hbase.util.Threads;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.Descriptors;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Service;
 import com.google.protobuf.ServiceException;
@@ -93,11 +92,19 @@ import com.google.protobuf.ServiceException;
  * In the case of reads, some fields used by a Scan are shared among all threads.
  *
  * <p>HTable is no longer a client API. Use {@link Table} instead. It is marked
- * InterfaceAudience.Private indicating that this is an HBase-internal class as defined in
+ * InterfaceAudience.Private as of hbase-1.0.0 indicating that this is an
+ * HBase-internal class as defined in
  * <a href="https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/InterfaceClassification.html">Hadoop
- * Interface Classification</a>
- * There are no guarantees for backwards source / binary compatibility and methods or class can
+ * Interface Classification</a>. There are no guarantees for backwards
+ * source / binary compatibility and methods or the class can
  * change or go away without deprecation.
+ * <p>Near all methods of this * class made it out to the new {@link Table}
+ * Interface or were * instantiations of methods defined in {@link HTableInterface}.
+ * A few did not. Namely, the {@link #getStartEndKeys}, {@link #getEndKeys},
+ * and {@link #getStartKeys} methods. These three methods are available
+ * in {@link RegionLocator} as of 1.0.0 but were NOT marked as
+ * deprecated when we released 1.0.0. In spite of this oversight on our
+ * part, these methods will be removed in 2.0.0.
  *
  * @see Table
  * @see Admin
@@ -600,7 +607,8 @@ public class HTable implements HTableInterface, RegionLocator {
   }
 
   /**
-   * @deprecated Use {@link RegionLocator#getStartEndKeys()} instead;
+   * To be removed in 2.0.0.
+   * @deprecated Since 1.1.0. Use {@link RegionLocator#getStartEndKeys()} instead
    */
   @Override
   @Deprecated
@@ -609,7 +617,8 @@ public class HTable implements HTableInterface, RegionLocator {
   }
 
   /**
-   * @deprecated Use {@link RegionLocator#getEndKeys()} instead;
+   * To be removed in 2.0.0.
+   * @deprecated Since 1.1.0. Use {@link RegionLocator#getEndKeys()} instead;
    */
   @Override
   @Deprecated
@@ -618,7 +627,8 @@ public class HTable implements HTableInterface, RegionLocator {
   }
 
   /**
-   * @deprecated Use {@link RegionLocator#getStartEndKeys()} instead;
+   * To be removed in 2.0.0.
+   * @deprecated Since 1.1.0. Use {@link RegionLocator#getStartEndKeys()} instead;
    */
   @Override
   @Deprecated
@@ -1165,7 +1175,7 @@ public class HTable implements HTableInterface, RegionLocator {
       final byte [] qualifier, final long amount, final boolean writeToWAL)
   throws IOException {
     return incrementColumnValue(row, family, qualifier, amount,
-      writeToWAL? Durability.SKIP_WAL: Durability.USE_DEFAULT);
+      writeToWAL? Durability.SYNC_WAL: Durability.SKIP_WAL);
   }
 
   /**
@@ -1873,10 +1883,10 @@ public class HTable implements HTableInterface, RegionLocator {
                   ", value=" + serviceResult.getValue().getValue());
             }
             try {
-              callback.update(region, row,
-                  (R) responsePrototype.newBuilderForType().mergeFrom(
-                      serviceResult.getValue().getValue()).build());
-            } catch (InvalidProtocolBufferException e) {
+              Message.Builder builder = responsePrototype.newBuilderForType();
+              ProtobufUtil.mergeFrom(builder, serviceResult.getValue().getValue());
+              callback.update(region, row, (R) builder.build());
+            } catch (IOException e) {
               LOG.error("Unexpected response type from endpoint " + methodDescriptor.getFullName(),
                   e);
               callbackErrorExceptions.add(e);

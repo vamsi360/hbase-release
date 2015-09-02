@@ -23,14 +23,17 @@
   <parent>
     <artifactId>hbase</artifactId>
     <groupId>org.apache.hbase</groupId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <relativePath>..</relativePath>
   </parent>
   <artifactId>hbase-server</artifactId>
-  <name>HBase - Server</name>
+  <name>Apache HBase - Server</name>
   <description>Main functionality for HBase</description>
   <properties>
     <test.build.webapps>target/test-classes/webapps</test.build.webapps>
+    <license.bundles.logo>true</license.bundles.logo>
+    <license.bundles.bootstrap>true</license.bundles.bootstrap>
+    <license.bundles.jquery>true</license.bundles.jquery>
   </properties>
   <build>
     <!-- Makes sure the resources get added before they are processed
@@ -45,6 +48,15 @@
       </resource>
     </resources>
     <testResources>
+      <!-- Our test artifact has different license info than our source/bin ones -->
+      <testResource>
+        <directory>src/test/resources/META-INF/</directory>
+        <targetPath>META-INF/</targetPath>
+        <includes>
+          <include>NOTICE</include>
+        </includes>
+        <filtering>true</filtering>
+      </testResource>
       <testResource>
         <directory>src/test/resources</directory>
         <includes>
@@ -53,13 +65,44 @@
       </testResource>
     </testResources>
     <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-site-plugin</artifactId>
-          <configuration>
-            <skip>true</skip>
-          </configuration>
-        </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <!-- licensing info from our bundled works -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-remote-resources-plugin</artifactId>
+        <version>1.5</version>
+        <executions>
+          <execution>
+            <id>default</id>
+            <configuration>
+              <attachToTest>false</attachToTest>
+              <properties>
+                <copyright-end-year>${build.year}</copyright-end-year>
+                <debug-print-included-work-info>${license.debug.print.included}</debug-print-included-work-info>
+                <bundled-dependencies>${license.bundles.dependencies}</bundled-dependencies>
+                <bundled-jquery>${license.bundles.jquery}</bundled-jquery>
+                <bundled-logo>${license.bundles.logo}</bundled-logo>
+                <bundled-bootstrap>${license.bundles.bootstrap}</bundled-bootstrap>
+              </properties>
+              <resourceBundles>
+                <resourceBundle>${project.groupId}:hbase-resource-bundle:${project.version}</resourceBundle>
+              </resourceBundles>
+              <supplementalModelArtifacts>
+                <supplementalModelArtifact>${project.groupId}:hbase-resource-bundle:${project.version}</supplementalModelArtifact>
+              </supplementalModelArtifacts>
+              <supplementalModels>
+                <supplementalModel>supplemental-models.xml</supplementalModel>
+              </supplementalModels>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <!-- Run with -Dmaven.test.skip.exec=true to build -tests.jar without running
         tests (this is needed for upstream projects whose tests need this jar simply for
         compilation) -->
@@ -345,6 +388,13 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <!-- resource bundle only needed at build time -->
+    <dependency>
+       <groupId>org.apache.hbase</groupId>
+       <artifactId>hbase-resource-bundle</artifactId>
+       <version>${project.version}</version>
+       <optional>true</optional>
+    </dependency>
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
@@ -513,6 +563,41 @@
     </dependency>
   </dependencies>
   <profiles>
+    <!-- Needs to make the profile in apache parent pom -->
+    <profile>
+      <id>apache-release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>license-javadocs</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}/apidocs</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>src/main/javadoc/META-INF/</directory>
+                      <targetPath>META-INF/</targetPath>
+                      <includes>
+                        <include>LICENSE</include>
+                        <include>NOTICE</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <!-- Skip the tests in this module -->
     <profile>
       <id>skipServerTests</id>

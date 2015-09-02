@@ -751,7 +751,8 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     }
     this.memstoreFlushSize = flushSize;
     this.blockingMemStoreSize = this.memstoreFlushSize *
-        conf.getLong("hbase.hregion.memstore.block.multiplier", 2);
+        conf.getLong(HConstants.HREGION_MEMSTORE_BLOCK_MULTIPLIER,
+                HConstants.DEFAULT_HREGION_MEMSTORE_BLOCK_MULTIPLIER);
   }
 
   /**
@@ -1436,7 +1437,14 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
 
         // close each store in parallel
         for (final Store store : stores.values()) {
-          assert abort || store.getFlushableSize() == 0 || writestate.readOnly;
+          long flushableSize = store.getFlushableSize();
+          if (!(abort || flushableSize == 0 || writestate.readOnly)) {
+            getRegionServerServices().abort("Assertion failed while closing store "
+                + getRegionInfo().getRegionNameAsString() + " " + store
+                + ". flushableSize expected=0, actual= " + flushableSize
+                + ". Current memstoreSize=" + getMemstoreSize() + ". Maybe a coprocessor "
+                + "operation failed and left the memstore in a partially updated state.", null);
+          }
           completionService
               .submit(new Callable<Pair<byte[], Collection<StoreFile>>>() {
                 @Override
@@ -3298,13 +3306,16 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
         boolean valueIsNull = comparator.getValue() == null ||
           comparator.getValue().length == 0;
         boolean matches = false;
+        long cellTs = 0;
         if (result.size() == 0 && valueIsNull) {
           matches = true;
         } else if (result.size() > 0 && result.get(0).getValueLength() == 0 &&
             valueIsNull) {
           matches = true;
+          cellTs = result.get(0).getTimestamp();
         } else if (result.size() == 1 && !valueIsNull) {
           Cell kv = result.get(0);
+          cellTs = kv.getTimestamp();
           int compareResult = comparator.compareTo(kv.getValueArray(),
               kv.getValueOffset(), kv.getValueLength());
           switch (compareOp) {
@@ -3332,6 +3343,20 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
         }
         //If matches put the new put or delete the new delete
         if (matches) {
+          // We have acquired the row lock already. If the system clock is NOT monotonically
+          // non-decreasing (see HBASE-14070) we should make sure that the mutation has a
+          // larger timestamp than what was observed via Get. doBatchMutate already does this, but
+          // there is no way to pass the cellTs. See HBASE-14054.
+          long now = EnvironmentEdgeManager.currentTime();
+          long ts = Math.max(now, cellTs); // ensure write is not eclipsed
+          byte[] byteTs = Bytes.toBytes(ts);
+
+          if (w instanceof Put) {
+            updateCellTimestamps(w.getFamilyCellMap().values(), byteTs);
+          }
+          // else delete is not needed since it already does a second get, and sets the timestamp
+          // from get (see prepareDeleteTimestamps).
+
           // All edits for the given row (across all column families) must
           // happen atomically.
           doBatchMutate(w);
@@ -3378,13 +3403,16 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
         boolean valueIsNull = comparator.getValue() == null ||
             comparator.getValue().length == 0;
         boolean matches = false;
+        long cellTs = 0;
         if (result.size() == 0 && valueIsNull) {
           matches = true;
         } else if (result.size() > 0 && result.get(0).getValueLength() == 0 &&
             valueIsNull) {
           matches = true;
+          cellTs = result.get(0).getTimestamp();
         } else if (result.size() == 1 && !valueIsNull) {
           Cell kv = result.get(0);
+          cellTs = kv.getTimestamp();
           int compareResult = comparator.compareTo(kv.getValueArray(),
               kv.getValueOffset(), kv.getValueLength());
           switch (compareOp) {
@@ -3412,6 +3440,22 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
         }
         //If matches put the new put or delete the new delete
         if (matches) {
+          // We have acquired the row lock already. If the system clock is NOT monotonically
+          // non-decreasing (see HBASE-14070) we should make sure that the mutation has a
+          // larger timestamp than what was observed via Get. doBatchMutate already does this, but
+          // there is no way to pass the cellTs. See HBASE-14054.
+          long now = EnvironmentEdgeManager.currentTime();
+          long ts = Math.max(now, cellTs); // ensure write is not eclipsed
+          byte[] byteTs = Bytes.toBytes(ts);
+
+          for (Mutation w : rm.getMutations()) {
+            if (w instanceof Put) {
+              updateCellTimestamps(w.getFamilyCellMap().values(), byteTs);
+            }
+            // else delete is not needed since it already does a second get, and sets the timestamp
+            // from get (see prepareDeleteTimestamps).
+          }
+
           // All edits for the given row (across all column families) must
           // happen atomically.
           mutateRow(rm);
@@ -7378,8 +7422,9 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
               " in region "+Bytes.toStringBinary(getRegionInfo().getRegionName()));
     }
 
-    Message request = service.getRequestPrototype(methodDesc).newBuilderForType()
-        .mergeFrom(call.getRequest()).build();
+    Message.Builder builder = service.getRequestPrototype(methodDesc).newBuilderForType();
+    ProtobufUtil.mergeFrom(builder, call.getRequest());
+    Message request = builder.build();
 
     if (coprocessorHost != null) {
       request = coprocessorHost.preEndpointInvocation(service, methodName, request);

@@ -23,13 +23,17 @@
     <parent>
         <artifactId>hbase</artifactId>
         <groupId>org.apache.hbase</groupId>
-        <version>1.1.1</version>
+        <version>1.1.2</version>
         <relativePath>..</relativePath>
     </parent>
 
     <artifactId>hbase-protocol</artifactId>
-    <name>HBase - Protocol</name>
+    <name>Apache HBase - Protocol</name>
     <description>Protobuf protocol classes used by HBase to communicate.</description>
+
+    <properties>
+      <maven.javadoc.skip>true</maven.javadoc.skip>
+    </properties>
 
     <build>
       <plugins>

@@ -24,12 +24,12 @@
   <parent>
     <artifactId>hbase</artifactId>
     <groupId>org.apache.hbase</groupId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <relativePath>..</relativePath>
   </parent>
 
   <artifactId>hbase-client</artifactId>
-  <name>HBase - Client</name>
+  <name>Apache HBase - Client</name>
   <description>Client of HBase</description>
 
   <build>
