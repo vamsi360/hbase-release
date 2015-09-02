@@ -1,3 +1,18 @@
+HBASE-14228 Make region_mover.rb script case insensitive with regard to hostname
+HBASE-13413 New integration test for oss => oss replication
+HBASE-13137 Provide client utility to easily enable and disable table replication
+HBASE-13995 ServerName is not fully case insensitive
+HBASE-13576 HBCK enhancement: Failure in checking one region should not fail the entire HBCK operation
+HBASE-12891 Parallel execution for Hbck checkRegionConsistency
+HBASE-14054 Acknowledged writes may get lost if regionserver clock is set backwards
+HBASE-12865 WALs may be deleted before they are replicated to peers
+HBASE-13877 Interrupt to flush from TableFlushProcedure causes dataloss in ITBLL
+HBASE-13473 deleted cells come back alive after the stripe compaction
+HBASE-12449 Use the max timestamp of current or old cell's timestamp in HRegion.append()
+HBASE-12070 Add an option to hbck to fix ZK inconsistencies
+HBASE-14196 Thrift server idle connection issue
+HBASE-12270 A bug in the bucket cache, with cache blocks on write enabled
+HBASE-13935 Orphaned namespace table ZK node should not prevent master to start
 HBASE-12575 Sanity check table coprocessor classes are loadable
 HBASE-12478 HBASE-10141 and MIN_VERSIONS are not compatible
 HBASE-12445 hbase is removing all remaining cells immediately after the cell marked with marker = KeyValue.Type.DeleteColumn via PUT (Hani Nadra)
