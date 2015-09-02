@@ -1,3 +1,9 @@
+HBASE-10499 In write heavy scenario one of the regions does not get flushed causing RegionTooBusyException
+HBASE-12954 'Ability impaired using HBase on multihomed hosts'
+HBASE-13331 Exceptions from DFS client can cause CatalogJanitor to delete referenced files
+HBASE-11144 Filter to support scanning multiple row key ranges
+HBASE-12801 Failed to truncate a table while maintaing binary region boundaries
+HBASE-13239 HBase grant at specific column level does not work for Groups
 HBASE-14228 Make region_mover.rb script case insensitive with regard to hostname
 HBASE-13413 New integration test for oss => oss replication
 HBASE-13137 Provide client utility to easily enable and disable table replication
