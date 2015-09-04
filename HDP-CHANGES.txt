@@ -1,3 +1,8 @@
+HBASE-13768 ZooKeeper znodes are bootstrapped with insecure ACLs in a secure configuration (Enis Soztutar)
+HBASE-13169 ModifyTable increasing the region replica count should also auto-setup RRRE
+HBASE-13515 Handle FileNotFoundException in region replica replay for flush/compaction events
+HBASE-12714 RegionReplicaReplicationEndpoint should not set the RPC Codec
+HBASE-13120 Allow disabling hadoop classpath and native library lookup (Siddharth Wagle)
 HBASE-10499 In write heavy scenario one of the regions does not get flushed causing RegionTooBusyException
 HBASE-12954 'Ability impaired using HBase on multihomed hosts'
 HBASE-13331 Exceptions from DFS client can cause CatalogJanitor to delete referenced files
@@ -14,7 +19,6 @@ HBASE-14054 Acknowledged writes may get lost if regionserver clock is set backwa
 HBASE-12865 WALs may be deleted before they are replicated to peers
 HBASE-13877 Interrupt to flush from TableFlushProcedure causes dataloss in ITBLL
 HBASE-13473 deleted cells come back alive after the stripe compaction
-HBASE-12449 Use the max timestamp of current or old cell's timestamp in HRegion.append()
 HBASE-12070 Add an option to hbck to fix ZK inconsistencies
 HBASE-14196 Thrift server idle connection issue
 HBASE-12270 A bug in the bucket cache, with cache blocks on write enabled
