@@ -31,10 +31,17 @@ public class BlockCacheKey implements HeapSize, java.io.Serializable {
   private static final long serialVersionUID = -5199992013113130534L;
   private final String hfileName;
   private final long offset;
+  private final boolean isPrimaryReplicaBlock;
   private final DataBlockEncoding encoding;
 
   public BlockCacheKey(String file, long offset, DataBlockEncoding encoding,
       BlockType blockType) {
+    this (file, offset, encoding, blockType, true);
+  }
+    
+  public BlockCacheKey(String file, long offset, DataBlockEncoding encoding,
+      BlockType blockType, boolean isPrimaryReplica) {
+    this.isPrimaryReplicaBlock = isPrimaryReplica;
     this.hfileName = file;
     this.offset = offset;
     // We add encoding to the cache key only for data blocks. If the block type
@@ -74,7 +81,7 @@ public class BlockCacheKey implements HeapSize, java.io.Serializable {
   @Override
   public String toString() {
     return hfileName + "_" + offset
-        + (encoding == DataBlockEncoding.NONE ? "" : "_" + encoding);
+        + (encoding == DataBlockEncoding.NONE ? "" : "_" + encoding) + "-" + isPrimaryReplicaBlock;
   }
 
   /**
@@ -83,7 +90,7 @@ public class BlockCacheKey implements HeapSize, java.io.Serializable {
    */
   @Override
   public long heapSize() {
-    return ClassSize.align(ClassSize.OBJECT + 2 * hfileName.length() +
+    return ClassSize.align(ClassSize.OBJECT + 2 * hfileName.length() + Bytes.SIZEOF_BOOLEAN +
         Bytes.SIZEOF_LONG + 2 * ClassSize.REFERENCE);
   }
 
@@ -93,6 +100,10 @@ public class BlockCacheKey implements HeapSize, java.io.Serializable {
    */
   public String getHfileName() {
     return hfileName;
+  }
+
+  public boolean isPrimary() {
+    return !isPrimaryReplicaBlock;
   }
 
   public DataBlockEncoding getDataBlockEncoding() {

@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.io.hfile.BlockCache;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
 import org.apache.hadoop.hbase.io.hfile.CacheStats;
+import org.apache.hadoop.hbase.io.hfile.CombinedBlockCache.CombinedCacheStats;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.hadoop.metrics2.MetricsExecutor;
@@ -226,6 +227,14 @@ class MetricsRegionServerWrapperImpl
   }
 
   @Override
+  public long getBlockCachePrimaryHitCount() {
+    if (this.cacheStats == null) {
+      return 0;
+    }
+    return this.cacheStats.getPrimaryHitCount();
+  }
+
+  @Override
   public long getBlockCacheMissCount() {
     if (this.cacheStats == null) {
       return 0;
@@ -234,11 +243,27 @@ class MetricsRegionServerWrapperImpl
   }
 
   @Override
+  public long getBlockCachePrimaryMissCount() {
+    if (this.cacheStats == null) {
+      return 0;
+    }
+    return this.cacheStats.getPrimaryMissCount();
+  }
+
+  @Override
   public long getBlockCacheEvictedCount() {
     if (this.cacheStats == null) {
       return 0;
     }
     return this.cacheStats.getEvictedCount();
+  }
+
+  @Override
+  public long getBlockCachePrimaryEvictedCount() {
+    if (this.cacheStats == null) {
+      return 0;
+    }
+    return this.cacheStats.getPrimaryEvictedCount();
   }
 
   @Override

@@ -87,6 +87,8 @@ public abstract class AbstractHFileReader
 
   /** File name to be used for block names */
   protected final String name;
+  
+  private boolean isPrimaryReplicaReader;
 
   protected FileInfo fileInfo;
 
@@ -246,6 +248,16 @@ public abstract class AbstractHFileReader
   @Override
   public FixedFileTrailer getTrailer() {
     return trailer;
+  }
+
+  @Override
+  public boolean isPrimaryReplicaReader() {
+    return isPrimaryReplicaReader;
+  }
+
+  @Override
+  public void setPrimaryReplicaReader(boolean isPrimaryReplicaReader) {
+    this.isPrimaryReplicaReader = isPrimaryReplicaReader;
   }
 
   @Override

@@ -245,16 +245,16 @@ public class SlabCache implements SlabItemActionWatcher, BlockCache, HeapSize {
       boolean updateCacheMetrics) {
     SingleSizeCache cachedBlock = backingStore.get(key);
     if (cachedBlock == null) {
-      if (!repeat) stats.miss(caching);
+      if (!repeat) stats.miss(caching, key.isPrimary());
       return null;
     }
 
     Cacheable contentBlock = cachedBlock.getBlock(key, caching, false, updateCacheMetrics);
 
     if (contentBlock != null) {
-      if (updateCacheMetrics) stats.hit(caching);
+      if (updateCacheMetrics) stats.hit(caching, key.isPrimary());
     } else if (!repeat) {
-      if (updateCacheMetrics) stats.miss(caching);
+      if (updateCacheMetrics) stats.miss(caching, key.isPrimary());
     }
     return contentBlock;
   }
@@ -275,7 +275,7 @@ public class SlabCache implements SlabItemActionWatcher, BlockCache, HeapSize {
 
   @Override
   public void onEviction(BlockCacheKey key, SingleSizeCache notifier) {
-    stats.evicted();
+    stats.evicted(key.isPrimary());
     backingStore.remove(key);
   }
   

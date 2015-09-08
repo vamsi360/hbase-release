@@ -119,7 +119,7 @@ public class CombinedBlockCache implements BlockCache, HeapSize {
     return lruCache.getBlockCount() + bucketCache.getBlockCount();
   }
 
-  private static class CombinedCacheStats extends CacheStats {
+  public static class CombinedCacheStats extends CacheStats {
     private final CacheStats lruCacheStats;
     private final CacheStats bucketCacheStats;
 
@@ -146,6 +146,11 @@ public class CombinedBlockCache implements BlockCache, HeapSize {
     }
 
     @Override
+    public long getPrimaryMissCount() {
+      return lruCacheStats.getPrimaryMissCount() + bucketCacheStats.getPrimaryMissCount();
+    }
+
+    @Override
     public long getMissCachingCount() {
       return lruCacheStats.getMissCachingCount()
           + bucketCacheStats.getMissCachingCount();
@@ -156,6 +161,10 @@ public class CombinedBlockCache implements BlockCache, HeapSize {
       return lruCacheStats.getHitCount() + bucketCacheStats.getHitCount();
     }
 
+    @Override
+    public long getPrimaryHitCount() {
+      return lruCacheStats.getPrimaryHitCount() + bucketCacheStats.getPrimaryHitCount();
+    }
     @Override
     public long getHitCachingCount() {
       return lruCacheStats.getHitCachingCount()
@@ -172,6 +181,12 @@ public class CombinedBlockCache implements BlockCache, HeapSize {
     public long getEvictedCount() {
       return lruCacheStats.getEvictedCount()
           + bucketCacheStats.getEvictedCount();
+    }
+
+    @Override
+    public long getPrimaryEvictedCount() {
+      return lruCacheStats.getPrimaryEvictedCount()
+          + bucketCacheStats.getPrimaryEvictedCount();
     }
 
     @Override

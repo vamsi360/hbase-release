@@ -277,7 +277,7 @@ public class HFileReaderV2 extends AbstractHFileReader {
       // Check cache for block. If found return.
       long metaBlockOffset = metaBlockIndexReader.getRootBlockOffset(block);
       BlockCacheKey cacheKey = new BlockCacheKey(name, metaBlockOffset,
-          DataBlockEncoding.NONE, BlockType.META);
+          DataBlockEncoding.NONE, BlockType.META, this.isPrimaryReplicaReader());
 
       cacheBlock &= cacheConf.shouldCacheDataOnRead();
       if (cacheConf.isBlockCacheEnabled()) {
@@ -346,7 +346,7 @@ public class HFileReaderV2 extends AbstractHFileReader {
     BlockCacheKey cacheKey =
         new BlockCacheKey(name, dataBlockOffset,
             dataBlockEncoder.getDataBlockEncoding(),
-            expectedBlockType);
+            expectedBlockType, this.isPrimaryReplicaReader());
 
     boolean useLock = false;
     IdLock.Entry lockEntry = null;

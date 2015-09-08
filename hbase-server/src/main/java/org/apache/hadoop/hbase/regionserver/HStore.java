@@ -632,7 +632,8 @@ public class HStore implements Store {
     info.setRegionCoprocessorHost(this.region.getCoprocessorHost());
     StoreFile storeFile = new StoreFile(this.getFileSystem(), info, this.conf, this.cacheConf,
       this.family.getBloomFilterType());
-    storeFile.createReader();
+    StoreFile.Reader r = storeFile.createReader();
+    r.setReplicaStoreFile(isPrimaryReplicaStore());
     return storeFile;
   }
 
@@ -1088,7 +1089,7 @@ public class HStore implements Store {
     // actually more correct, since memstore get put at the end.
     List<StoreFileScanner> sfScanners = StoreFileScanner
       .getScannersForStoreFiles(storeFilesToScan, cacheBlocks, usePread, isCompaction, matcher,
-        readPt);
+        readPt, isPrimaryReplicaStore());
     List<KeyValueScanner> scanners =
       new ArrayList<KeyValueScanner>(sfScanners.size()+1);
     scanners.addAll(sfScanners);
@@ -2261,5 +2262,10 @@ public class HStore implements Store {
   @Override
   public boolean hasTooManyStoreFiles() {
     return getStorefilesCount() > this.blockingFileCount;
+  }
+
+  @Override
+  public boolean isPrimaryReplicaStore() {
+    return getRegionInfo().getReplicaId() == HRegionInfo.DEFAULT_REPLICA_ID;
   }
 }

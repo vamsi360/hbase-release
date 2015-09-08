@@ -154,11 +154,11 @@ public class SingleSizeCache implements BlockCache, HeapSize {
       boolean updateCacheMetrics) {
     CacheablePair contentBlock = backingMap.get(key);
     if (contentBlock == null) {
-      if (!repeat && updateCacheMetrics) stats.miss(caching);
+      if (!repeat && updateCacheMetrics) stats.miss(caching, key.isPrimary());
       return null;
     }
 
-    if (updateCacheMetrics) stats.hit(caching);
+    if (updateCacheMetrics) stats.hit(caching, key.isPrimary());
     // If lock cannot be obtained, that means we're undergoing eviction.
     try {
       contentBlock.recentlyAccessed.set(System.nanoTime());
@@ -220,7 +220,7 @@ public class SingleSizeCache implements BlockCache, HeapSize {
         actionWatcher.onEviction(key, this);
       }
     }
-    stats.evicted();
+    stats.evicted(key.isPrimary());
     size.addAndGet(-1 * evictedHeap);
   }
 
