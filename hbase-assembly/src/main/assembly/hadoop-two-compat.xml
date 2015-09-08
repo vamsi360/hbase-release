@@ -66,12 +66,12 @@
       <destName>LICENSE.txt</destName>
       <lineEnding>unix</lineEnding>
     </file>
-    <file>
+    <!--file>
       <source>${project.build.directory}/NOTICE.aggregate</source>
       <outputDirectory>.</outputDirectory>
       <destName>NOTICE.txt</destName>
       <lineEnding>unix</lineEnding>
-    </file>
+    </file-->
     <file>
       <source>${basedir}/src/main/resources/META-INF/LEGAL</source>
       <outputDirectory>.</outputDirectory>
