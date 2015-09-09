@@ -207,7 +207,7 @@
               </execution>
             </executions>
             <configuration>
-              <baseDir>${basedir}</baseDir>
+              <basedir>${basedir}</basedir>
               <includes>
                 <include>target/win/**/*</include>
               </includes>
