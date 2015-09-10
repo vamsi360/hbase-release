@@ -464,7 +464,7 @@ function InstallBinaries(
         $unzipExpr = $unzipExpr.Replace("@DEST", "`"$nodeInstallRoot`"")
         ### We ignore the error code of the unzip command for now to be
         ### consistent with prior behavior.
-        Invoke-Ps $unzipExpr
+        Invoke-PsChk $unzipExpr
     }
     else
     {
