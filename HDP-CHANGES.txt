@@ -1,3 +1,6 @@
+HBASE-13471 Fix a possible infinite loop in doMiniBatchMutation (Rajesh Nishtala)
+HBASE-12635 Delete acl notify znode of table after the table is deleted (Shaohui Liu)
+HBASE-14314 Metrics for block cache should take region replicas into account
 HBASE-13768 ZooKeeper znodes are bootstrapped with insecure ACLs in a secure configuration (Enis Soztutar)
 HBASE-13169 ModifyTable increasing the region replica count should also auto-setup RRRE
 HBASE-13515 Handle FileNotFoundException in region replica replay for flush/compaction events
