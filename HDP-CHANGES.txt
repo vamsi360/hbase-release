@@ -1,3 +1,4 @@
+HBASE-12366 Add login code as AuthUtil (Srikanth Srungarapu)
 HBASE-13471 Fix a possible infinite loop in doMiniBatchMutation (Rajesh Nishtala)
 HBASE-12635 Delete acl notify znode of table after the table is deleted (Shaohui Liu)
 HBASE-14314 Metrics for block cache should take region replicas into account
