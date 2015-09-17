@@ -935,7 +935,9 @@ public class RpcClientImpl extends AbstractRpcClient {
         } catch (IOException e) {
           // We set the value inside the synchronized block, this way the next in line
           //  won't even try to write
-          shouldCloseConnection.set(true);
+          if (markClosed(e)) {
+            close();
+          }
           writeException = e;
           interrupt();
         }
@@ -1173,6 +1175,13 @@ public class RpcClientImpl extends AbstractRpcClient {
             " connections.");
         Thread.currentThread().interrupt();
         return;
+      }
+      for (Connection conn : connections.values()) {
+        if (conn.shouldCloseConnection.get()) {
+          LOG.debug("Closing " + conn);
+          conn.close();
+          connections.removeValue(conn.remoteId, conn);
+        }
       }
     }
   }
