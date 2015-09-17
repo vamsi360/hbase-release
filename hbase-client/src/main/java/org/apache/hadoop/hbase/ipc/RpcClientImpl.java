@@ -208,7 +208,7 @@ public class RpcClientImpl extends AbstractRpcClient {
      */
     private class CallSender extends Thread implements Closeable {
       protected final BlockingQueue<CallFuture> callsToWrite;
-
+      boolean closeBySelf = false;
 
       public CallFuture sendCall(Call call, int priority, Span span)
           throws InterruptedException, IOException {
@@ -228,6 +228,11 @@ public class RpcClientImpl extends AbstractRpcClient {
         callsToWrite.offer(CallFuture.DEATH_PILL);
         // We don't care if we can't add the death pill to the queue: the writer
         //  won't be blocked in the 'take', as its queue is full.
+      }
+
+      @Override
+      public String toString() {
+        return "(queueSize: " + callsToWrite.size() + " closeBySelf: " + closeBySelf + ")";
       }
 
       CallSender(String name, Configuration conf) {
@@ -251,7 +256,6 @@ public class RpcClientImpl extends AbstractRpcClient {
        */
       @Override
       public void run() {
-        boolean closeBySelf = false;
         while (!shouldCloseConnection.get()) {
           CallFuture cts = null;
           try {
@@ -389,6 +393,12 @@ public class RpcClientImpl extends AbstractRpcClient {
       } else {
         callSender = null;
       }
+    }
+
+    @Override
+    public String toString() {
+      return "(shouldClose: " + shouldCloseConnection + " callSender: " + callSender +
+          " remoteId: " + remoteId + ")";
     }
 
     private UserInformation getUserInfo(UserGroupInformation ugi) {
@@ -1166,6 +1176,7 @@ public class RpcClientImpl extends AbstractRpcClient {
       }
     }
 
+    long start = EnvironmentEdgeManager.currentTime();
     // wait until all connections are closed
     while (!connections.isEmpty()) {
       try {
@@ -1175,6 +1186,15 @@ public class RpcClientImpl extends AbstractRpcClient {
             " connections.");
         Thread.currentThread().interrupt();
         return;
+      }
+      // the following is for debugging purpose
+      if (EnvironmentEdgeManager.currentTime() - start > 30000) {
+        start = EnvironmentEdgeManager.currentTime();
+        synchronized (connections) {
+          for (Connection conn : connections.values()) {
+            LOG.info("Waiting on " + conn + " to close");
+          }
+        }
       }
     }
   }
