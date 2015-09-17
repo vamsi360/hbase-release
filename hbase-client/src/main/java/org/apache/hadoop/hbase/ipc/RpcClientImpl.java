@@ -1120,7 +1120,6 @@ public class RpcClientImpl extends AbstractRpcClient {
         // In case the CallSender did not setupIOStreams() yet, the Connection may not be started
         // at all (if CallSender has a cancelled Call it can happen). See HBASE-13851
         if (!conn.isAlive()) {
-          conn.markClosed(new InterruptedIOException("RpcClient is closing"));
           if (connsToClose == null) {
             connsToClose = new HashSet<Connection>();
           }
@@ -1130,6 +1129,7 @@ public class RpcClientImpl extends AbstractRpcClient {
     }
     if (connsToClose != null) {
       for (Connection conn : connsToClose) {
+        conn.markClosed(new InterruptedIOException("RpcClient is closing"));
         conn.close();
       }
     }
