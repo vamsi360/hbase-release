@@ -1176,13 +1176,6 @@ public class RpcClientImpl extends AbstractRpcClient {
         Thread.currentThread().interrupt();
         return;
       }
-      for (Connection conn : connections.values()) {
-        if (conn.shouldCloseConnection.get()) {
-          LOG.debug("Closing " + conn);
-          conn.close();
-          connections.removeValue(conn.remoteId, conn);
-        }
-      }
     }
   }
 
