@@ -10,6 +10,7 @@ BUG-22418 Update jackson version to 1.9.13
 BUG-29025 Windows incompatibility with unicode (Chinese characters)
 
 Following are the changes on top of Apache HBase 1.1.2
+HBASE-14449 Rewrite deadlock prevention for concurrent connection close
 HBASE-14269 FuzzyRowFilter omits certain rows when multiple fuzzy key exist
 HBASE-14313 After a Connection sees ConnectionClosingException it never recovers (Elliott Clark)
 HBASE-14302 TableSnapshotInputFormat should not create back references when restoring snapshot
