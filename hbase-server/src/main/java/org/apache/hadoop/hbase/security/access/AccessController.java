@@ -1009,6 +1009,7 @@ public class AccessController extends BaseMasterAndRegionObserver
     // wait till the acl table is created.
     if (AccessControlLists.isAclTable(desc)) {
       this.aclTabAvailable = true;
+      LOG.info(AccessControlLists.ACL_TABLE_NAME + " is created.");
     } else if (!(TableName.NAMESPACE_TABLE_NAME.equals(desc.getTableName()))) {
       if (!aclTabAvailable) {
         LOG.warn("Not adding owner permission for table " + desc.getTableName() + ". "
@@ -1224,7 +1225,9 @@ public class AccessController extends BaseMasterAndRegionObserver
       .getConnection(), AccessControlLists.ACL_TABLE_NAME)) {
       // initialize the ACL storage table
       AccessControlLists.createACLTable(ctx.getEnvironment().getMasterServices());
+      LOG.info("Creating " + AccessControlLists.ACL_TABLE_NAME + " table.");
     } else {
+      LOG.info(AccessControlLists.ACL_TABLE_NAME + " is existing.");
       aclTabAvailable = true;
     }
   }
