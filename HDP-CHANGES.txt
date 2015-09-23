@@ -1,4 +1,4 @@
-HDP-2.3 is based on Apache HBase 1.1.1
+HDP-2.3 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.1
 
