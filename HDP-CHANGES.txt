@@ -1,3 +1,4 @@
+HBASE-14280 Bulk Upload from HA cluster to remote HA hbase cluster fails (Ankit Singhal)
 HBASE-12464 meta table region assignment stuck in the FAILED_OPEN state due to region server not fully ready to serve
 HBASE-12366 Add login code as AuthUtil (Srikanth Srungarapu)
 HBASE-13471 Fix a possible infinite loop in doMiniBatchMutation (Rajesh Nishtala)
