@@ -892,7 +892,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       String masterOrRS = isMaster ? "master" : "regionserver";
       return Strings.domainNamePointerToHostName(DNS.getDefaultHost(
         conf.get("hbase." + masterOrRS + ".dns.interface", "default"),
-        conf.get("hbase." + masterOrRS + ".dns.nameserver", "default")));
+        conf.get("hbase." + masterOrRS + ".dns.nameserver", "default"), true));
     } else {
       LOG.info("hostname is configured to be " + hostname);
       return hostname;
