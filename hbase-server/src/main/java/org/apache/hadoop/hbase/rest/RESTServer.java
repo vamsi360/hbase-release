@@ -91,7 +91,7 @@ public class RESTServer implements Constants {
     if (userProvider.isHadoopSecurityEnabled() && userProvider.isHBaseSecurityEnabled()) {
       String machineName = Strings.domainNamePointerToHostName(
         DNS.getDefaultHost(conf.get(REST_DNS_INTERFACE, "default"),
-          conf.get(REST_DNS_NAMESERVER, "default")));
+          conf.get(REST_DNS_NAMESERVER, "default"), true));
       String keytabFilename = conf.get(REST_KEYTAB_FILE);
       Preconditions.checkArgument(keytabFilename != null && !keytabFilename.isEmpty(),
         REST_KEYTAB_FILE + " should be set if security is enabled");

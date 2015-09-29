@@ -438,7 +438,7 @@ MasterServices, Server {
     if (hostname == null || hostname.length() == 0) {
       this.hostname = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
         conf.get("hbase.master.dns.interface", "default"),
-        conf.get("hbase.master.dns.nameserver", "default")));
+        conf.get("hbase.master.dns.nameserver", "default"), true));
     } else {
       LOG.info("hostname is " + hostname);
     }

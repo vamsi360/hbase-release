@@ -610,7 +610,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     if (hostname == null || hostname.isEmpty()) {
       String h = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
         conf.get("hbase.regionserver.dns.interface", "default"),
-        conf.get("hbase.regionserver.dns.nameserver", "default")));
+        conf.get("hbase.regionserver.dns.nameserver", "default"), true));
       // Server to handle client requests.
       hostname = conf.get("hbase.regionserver.ipc.address", h);
     } else {
