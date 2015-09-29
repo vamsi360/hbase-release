@@ -430,7 +430,7 @@ MasterServices, Server {
     // Server to handle client requests.
     String hostname = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
       conf.get("hbase.master.dns.interface", "default"),
-      conf.get("hbase.master.dns.nameserver", "default")));
+      conf.get("hbase.master.dns.nameserver", "default"), true));
     int port = conf.getInt(HConstants.MASTER_PORT, HConstants.DEFAULT_MASTER_PORT);
     // Test that the hostname is reachable
     InetSocketAddress initialIsa = new InetSocketAddress(hostname, port);

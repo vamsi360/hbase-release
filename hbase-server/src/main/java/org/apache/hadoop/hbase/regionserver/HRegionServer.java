@@ -597,7 +597,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       HConstants.DEFAULT_HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD);
     String h = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
         conf.get("hbase.regionserver.dns.interface", "default"),
-        conf.get("hbase.regionserver.dns.nameserver", "default")));
+        conf.get("hbase.regionserver.dns.nameserver", "default"), true));
     // Server to handle client requests.
     String hostname = conf.get("hbase.regionserver.ipc.address", h);
     int port = conf.getInt(HConstants.REGIONSERVER_PORT,

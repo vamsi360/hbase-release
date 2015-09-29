@@ -102,7 +102,7 @@ public class HQuorumPeer {
     Configuration conf = HBaseConfiguration.create();
     String myAddress = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
         conf.get("hbase.zookeeper.dns.interface","default"),
-        conf.get("hbase.zookeeper.dns.nameserver","default")));
+        conf.get("hbase.zookeeper.dns.nameserver","default"), true));
 
     List<String> ips = new ArrayList<String>();
 
