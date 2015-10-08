@@ -77,7 +77,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.io.hfile.HFile;
-import org.apache.hadoop.hbase.ipc.RequestContext;
+import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.master.RegionPlan;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -368,11 +368,7 @@ public class AccessController extends BaseRegionObserver
 
   private void logResult(AuthResult result) {
     if (AUDITLOG.isTraceEnabled()) {
-      RequestContext ctx = RequestContext.get();
-      InetAddress remoteAddr = null;
-      if (ctx != null) {
-        remoteAddr = ctx.getRemoteAddress();
-      }
+      InetAddress remoteAddr = RpcServer.getRemoteAddress();
       AUDITLOG.trace("Access " + (result.isAllowed() ? "allowed" : "denied") +
           " for user " + (result.getUser() != null ? result.getUser().getShortName() : "UNKNOWN") +
           "; reason: " + result.getReason() +
@@ -388,8 +384,8 @@ public class AccessController extends BaseRegionObserver
    * otherwise the currently logged in user is used.
    */
   private User getActiveUser() throws IOException {
-    User user = RequestContext.getRequestUser();
-    if (!RequestContext.isInRequestContext()) {
+    User user = RpcServer.getRequestUser();
+    if (user == null) {
       // for non-rpc handling, fallback to system user
       user = userProvider.getCurrent();
     }
@@ -1954,14 +1950,11 @@ public class AccessController extends BaseRegionObserver
    * If so, we assume that access control is correctly enforced based on
    * the checks performed in preScannerOpen()
    */
-  private void requireScannerOwner(InternalScanner s)
-      throws AccessDeniedException {
-    if (RequestContext.isInRequestContext()) {
-      String requestUserName = RequestContext.getRequestUserName();
-      String owner = scannerOwners.get(s);
-      if (owner != null && !owner.equals(requestUserName)) {
-        throw new AccessDeniedException("User '"+ requestUserName +"' is not the scanner owner!");
-      }
+  private void requireScannerOwner(InternalScanner s) throws AccessDeniedException {
+    String requestUserName = RpcServer.getRequestUserName();
+    String owner = scannerOwners.get(s);
+    if (owner != null && !owner.equals(requestUserName)) {
+      throw new AccessDeniedException("User '"+ requestUserName +"' is not the scanner owner!");
     }
   }
 

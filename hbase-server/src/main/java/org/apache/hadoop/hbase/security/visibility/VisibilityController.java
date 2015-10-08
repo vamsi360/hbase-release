@@ -83,7 +83,7 @@ import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.io.hfile.HFile;
 import org.apache.hadoop.hbase.io.util.StreamUtils;
-import org.apache.hadoop.hbase.ipc.RequestContext;
+import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.master.RegionPlan;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
@@ -1046,12 +1046,11 @@ public class VisibilityController extends BaseRegionObserver implements MasterOb
    * access control is correctly enforced based on the checks performed in preScannerOpen()
    */
   private void requireScannerOwner(InternalScanner s) throws AccessDeniedException {
-    if (RequestContext.isInRequestContext()) {
-      String requestUName = RequestContext.getRequestUserName();
-      String owner = scannerOwners.get(s);
-      if (owner != null && !owner.equals(requestUName)) {
-        throw new AccessDeniedException("User '" + requestUName + "' is not the scanner owner!");
-      }
+    // This is duplicated code!
+    String requestUName = RpcServer.getRequestUserName();
+    String owner = scannerOwners.get(s);
+    if (owner != null && !owner.equals(requestUName)) {
+      throw new AccessDeniedException("User '" + requestUName + "' is not the scanner owner!");
     }
   }
 
@@ -1133,9 +1132,8 @@ public class VisibilityController extends BaseRegionObserver implements MasterOb
   }
 
   private User getActiveUser() throws IOException {
-    User user = RequestContext.getRequestUser();
-    if (!RequestContext.isInRequestContext()) {
-      // for non-rpc handling, fallback to system user
+    User user = RpcServer.getRequestUser();
+    if (user == null) {
       user = User.getCurrent();
     }
     if (LOG.isTraceEnabled()) {

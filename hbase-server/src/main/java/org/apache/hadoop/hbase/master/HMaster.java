@@ -88,7 +88,6 @@ import org.apache.hadoop.hbase.exceptions.UnknownProtocolException;
 import org.apache.hadoop.hbase.executor.ExecutorService;
 import org.apache.hadoop.hbase.executor.ExecutorType;
 import org.apache.hadoop.hbase.ipc.FifoRpcScheduler;
-import org.apache.hadoop.hbase.ipc.RequestContext;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.ipc.RpcServer.BlockingServiceAndInterface;
 import org.apache.hadoop.hbase.ipc.RpcServerInterface;
@@ -1654,8 +1653,7 @@ MasterServices, Server {
    * @return Client info for use as prefix on an audit log string; who did an action
    */
   String getClientIdAuditPrefix() {
-    return "Client=" + RequestContext.getRequestUserName() + "/" +
-      RequestContext.get().getRemoteAddress();
+    return "Client=" + RpcServer.getRequestUserName() + "/" + RpcServer.getRemoteAddress();
   }
 
   public boolean synchronousBalanceSwitch(final boolean b) throws IOException {
