@@ -21843,6 +21843,16 @@ public final class MasterProtos {
 
   public interface BalanceRequestOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
+
+    // optional bool force = 1;
+    /**
+     * <code>optional bool force = 1;</code>
+     */
+    boolean hasForce();
+    /**
+     * <code>optional bool force = 1;</code>
+     */
+    boolean getForce();
   }
   /**
    * Protobuf type {@code BalanceRequest}
@@ -21877,6 +21887,7 @@ public final class MasterProtos {
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       initFields();
+      int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
@@ -21892,6 +21903,11 @@ public final class MasterProtos {
                                      extensionRegistry, tag)) {
                 done = true;
               }
+              break;
+            }
+            case 8: {
+              bitField0_ |= 0x00000001;
+              force_ = input.readBool();
               break;
             }
           }
@@ -21933,7 +21949,25 @@ public final class MasterProtos {
       return PARSER;
     }
 
+    private int bitField0_;
+    // optional bool force = 1;
+    public static final int FORCE_FIELD_NUMBER = 1;
+    private boolean force_;
+    /**
+     * <code>optional bool force = 1;</code>
+     */
+    public boolean hasForce() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional bool force = 1;</code>
+     */
+    public boolean getForce() {
+      return force_;
+    }
+
     private void initFields() {
+      force_ = false;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -21947,6 +21981,9 @@ public final class MasterProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBool(1, force_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -21956,6 +21993,10 @@ public final class MasterProtos {
       if (size != -1) return size;
 
       size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(1, force_);
+      }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
       return size;
@@ -21979,6 +22020,11 @@ public final class MasterProtos {
       org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BalanceRequest other = (org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BalanceRequest) obj;
 
       boolean result = true;
+      result = result && (hasForce() == other.hasForce());
+      if (hasForce()) {
+        result = result && (getForce()
+            == other.getForce());
+      }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -21992,6 +22038,10 @@ public final class MasterProtos {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptorForType().hashCode();
+      if (hasForce()) {
+        hash = (37 * hash) + FORCE_FIELD_NUMBER;
+        hash = (53 * hash) + hashBoolean(getForce());
+      }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -22101,6 +22151,8 @@ public final class MasterProtos {
 
       public Builder clear() {
         super.clear();
+        force_ = false;
+        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
 
@@ -22127,6 +22179,13 @@ public final class MasterProtos {
 
       public org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BalanceRequest buildPartial() {
         org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BalanceRequest result = new org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BalanceRequest(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.force_ = force_;
+        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -22142,6 +22201,9 @@ public final class MasterProtos {
 
       public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BalanceRequest other) {
         if (other == org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BalanceRequest.getDefaultInstance()) return this;
+        if (other.hasForce()) {
+          setForce(other.getForce());
+        }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
@@ -22165,6 +22227,40 @@ public final class MasterProtos {
             mergeFrom(parsedMessage);
           }
         }
+        return this;
+      }
+      private int bitField0_;
+
+      // optional bool force = 1;
+      private boolean force_ ;
+      /**
+       * <code>optional bool force = 1;</code>
+       */
+      public boolean hasForce() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional bool force = 1;</code>
+       */
+      public boolean getForce() {
+        return force_;
+      }
+      /**
+       * <code>optional bool force = 1;</code>
+       */
+      public Builder setForce(boolean value) {
+        bitField0_ |= 0x00000001;
+        force_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool force = 1;</code>
+       */
+      public Builder clearForce() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        force_ = false;
+        onChanged();
         return this;
       }
 
@@ -43468,130 +43564,130 @@ public final class MasterProtos {
       "stTableNamesByNamespaceResponse\022\035\n\ttable" +
       "Name\030\001 \003(\0132\n.TableName\"\021\n\017ShutdownReques" +
       "t\"\022\n\020ShutdownResponse\"\023\n\021StopMasterReque" +
-      "st\"\024\n\022StopMasterResponse\"\020\n\016BalanceReque" +
-      "st\"\'\n\017BalanceResponse\022\024\n\014balancer_ran\030\001 " +
-      "\002(\010\"<\n\031SetBalancerRunningRequest\022\n\n\002on\030\001",
-      " \002(\010\022\023\n\013synchronous\030\002 \001(\010\"8\n\032SetBalancer" +
-      "RunningResponse\022\032\n\022prev_balance_value\030\001 " +
-      "\001(\010\"\027\n\025RunCatalogScanRequest\"-\n\026RunCatal" +
-      "ogScanResponse\022\023\n\013scan_result\030\001 \001(\005\"-\n\033E" +
-      "nableCatalogJanitorRequest\022\016\n\006enable\030\001 \002" +
-      "(\010\"2\n\034EnableCatalogJanitorResponse\022\022\n\npr" +
-      "ev_value\030\001 \001(\010\" \n\036IsCatalogJanitorEnable" +
-      "dRequest\"0\n\037IsCatalogJanitorEnabledRespo" +
-      "nse\022\r\n\005value\030\001 \002(\010\"9\n\017SnapshotRequest\022&\n" +
-      "\010snapshot\030\001 \002(\0132\024.SnapshotDescription\",\n",
-      "\020SnapshotResponse\022\030\n\020expected_timeout\030\001 " +
-      "\002(\003\"\036\n\034GetCompletedSnapshotsRequest\"H\n\035G" +
-      "etCompletedSnapshotsResponse\022\'\n\tsnapshot" +
-      "s\030\001 \003(\0132\024.SnapshotDescription\"?\n\025DeleteS" +
-      "napshotRequest\022&\n\010snapshot\030\001 \002(\0132\024.Snaps" +
-      "hotDescription\"\030\n\026DeleteSnapshotResponse" +
-      "\"@\n\026RestoreSnapshotRequest\022&\n\010snapshot\030\001" +
-      " \002(\0132\024.SnapshotDescription\"\031\n\027RestoreSna" +
-      "pshotResponse\"?\n\025IsSnapshotDoneRequest\022&" +
-      "\n\010snapshot\030\001 \001(\0132\024.SnapshotDescription\"U",
-      "\n\026IsSnapshotDoneResponse\022\023\n\004done\030\001 \001(\010:\005" +
-      "false\022&\n\010snapshot\030\002 \001(\0132\024.SnapshotDescri" +
-      "ption\"F\n\034IsRestoreSnapshotDoneRequest\022&\n" +
-      "\010snapshot\030\001 \001(\0132\024.SnapshotDescription\"4\n" +
-      "\035IsRestoreSnapshotDoneResponse\022\023\n\004done\030\001" +
-      " \001(\010:\005false\"=\n\033GetSchemaAlterStatusReque" +
-      "st\022\036\n\ntable_name\030\001 \002(\0132\n.TableName\"T\n\034Ge" +
-      "tSchemaAlterStatusResponse\022\035\n\025yet_to_upd" +
-      "ate_regions\030\001 \001(\r\022\025\n\rtotal_regions\030\002 \001(\r" +
-      "\"=\n\032GetTableDescriptorsRequest\022\037\n\013table_",
-      "names\030\001 \003(\0132\n.TableName\"A\n\033GetTableDescr" +
-      "iptorsResponse\022\"\n\014table_schema\030\001 \003(\0132\014.T" +
-      "ableSchema\"\026\n\024GetTableNamesRequest\"8\n\025Ge" +
-      "tTableNamesResponse\022\037\n\013table_names\030\001 \003(\013" +
-      "2\n.TableName\"\031\n\027GetClusterStatusRequest\"" +
-      "B\n\030GetClusterStatusResponse\022&\n\016cluster_s" +
-      "tatus\030\001 \002(\0132\016.ClusterStatus\"\030\n\026IsMasterR" +
-      "unningRequest\"4\n\027IsMasterRunningResponse" +
-      "\022\031\n\021is_master_running\030\001 \002(\010\"@\n\024ExecProce" +
-      "dureRequest\022(\n\tprocedure\030\001 \002(\0132\025.Procedu",
-      "reDescription\"1\n\025ExecProcedureResponse\022\030" +
-      "\n\020expected_timeout\030\001 \002(\003\"B\n\026IsProcedureD" +
-      "oneRequest\022(\n\tprocedure\030\001 \001(\0132\025.Procedur" +
-      "eDescription\"W\n\027IsProcedureDoneResponse\022" +
-      "\023\n\004done\030\001 \001(\010:\005false\022\'\n\010snapshot\030\002 \001(\0132\025" +
-      ".ProcedureDescription2\356\026\n\rMasterService\022" +
-      "S\n\024GetSchemaAlterStatus\022\034.GetSchemaAlter" +
-      "StatusRequest\032\035.GetSchemaAlterStatusResp" +
-      "onse\022P\n\023GetTableDescriptors\022\033.GetTableDe" +
-      "scriptorsRequest\032\034.GetTableDescriptorsRe",
-      "sponse\022>\n\rGetTableNames\022\025.GetTableNamesR" +
-      "equest\032\026.GetTableNamesResponse\022G\n\020GetClu" +
-      "sterStatus\022\030.GetClusterStatusRequest\032\031.G" +
-      "etClusterStatusResponse\022D\n\017IsMasterRunni" +
-      "ng\022\027.IsMasterRunningRequest\032\030.IsMasterRu" +
-      "nningResponse\0222\n\tAddColumn\022\021.AddColumnRe" +
-      "quest\032\022.AddColumnResponse\022;\n\014DeleteColum" +
-      "n\022\024.DeleteColumnRequest\032\025.DeleteColumnRe" +
-      "sponse\022;\n\014ModifyColumn\022\024.ModifyColumnReq" +
-      "uest\032\025.ModifyColumnResponse\0225\n\nMoveRegio",
-      "n\022\022.MoveRegionRequest\032\023.MoveRegionRespon" +
-      "se\022Y\n\026DispatchMergingRegions\022\036.DispatchM" +
-      "ergingRegionsRequest\032\037.DispatchMergingRe" +
-      "gionsResponse\022;\n\014AssignRegion\022\024.AssignRe" +
-      "gionRequest\032\025.AssignRegionResponse\022A\n\016Un" +
-      "assignRegion\022\026.UnassignRegionRequest\032\027.U" +
-      "nassignRegionResponse\022>\n\rOfflineRegion\022\025" +
-      ".OfflineRegionRequest\032\026.OfflineRegionRes" +
-      "ponse\0228\n\013DeleteTable\022\023.DeleteTableReques" +
-      "t\032\024.DeleteTableResponse\0228\n\013EnableTable\022\023",
-      ".EnableTableRequest\032\024.EnableTableRespons" +
-      "e\022;\n\014DisableTable\022\024.DisableTableRequest\032" +
-      "\025.DisableTableResponse\0228\n\013ModifyTable\022\023." +
-      "ModifyTableRequest\032\024.ModifyTableResponse" +
-      "\0228\n\013CreateTable\022\023.CreateTableRequest\032\024.C" +
-      "reateTableResponse\022/\n\010Shutdown\022\020.Shutdow" +
-      "nRequest\032\021.ShutdownResponse\0225\n\nStopMaste" +
-      "r\022\022.StopMasterRequest\032\023.StopMasterRespon" +
-      "se\022,\n\007Balance\022\017.BalanceRequest\032\020.Balance" +
-      "Response\022M\n\022SetBalancerRunning\022\032.SetBala",
-      "ncerRunningRequest\032\033.SetBalancerRunningR" +
-      "esponse\022A\n\016RunCatalogScan\022\026.RunCatalogSc" +
-      "anRequest\032\027.RunCatalogScanResponse\022S\n\024En" +
-      "ableCatalogJanitor\022\034.EnableCatalogJanito" +
-      "rRequest\032\035.EnableCatalogJanitorResponse\022" +
-      "\\\n\027IsCatalogJanitorEnabled\022\037.IsCatalogJa" +
-      "nitorEnabledRequest\032 .IsCatalogJanitorEn" +
-      "abledResponse\022L\n\021ExecMasterService\022\032.Cop" +
-      "rocessorServiceRequest\032\033.CoprocessorServ" +
-      "iceResponse\022/\n\010Snapshot\022\020.SnapshotReques",
-      "t\032\021.SnapshotResponse\022V\n\025GetCompletedSnap" +
-      "shots\022\035.GetCompletedSnapshotsRequest\032\036.G" +
-      "etCompletedSnapshotsResponse\022A\n\016DeleteSn" +
-      "apshot\022\026.DeleteSnapshotRequest\032\027.DeleteS" +
-      "napshotResponse\022A\n\016IsSnapshotDone\022\026.IsSn" +
-      "apshotDoneRequest\032\027.IsSnapshotDoneRespon" +
-      "se\022D\n\017RestoreSnapshot\022\027.RestoreSnapshotR" +
-      "equest\032\030.RestoreSnapshotResponse\022V\n\025IsRe" +
-      "storeSnapshotDone\022\035.IsRestoreSnapshotDon" +
-      "eRequest\032\036.IsRestoreSnapshotDoneResponse",
-      "\022>\n\rExecProcedure\022\025.ExecProcedureRequest" +
-      "\032\026.ExecProcedureResponse\022D\n\017IsProcedureD" +
-      "one\022\027.IsProcedureDoneRequest\032\030.IsProcedu" +
-      "reDoneResponse\022D\n\017ModifyNamespace\022\027.Modi" +
-      "fyNamespaceRequest\032\030.ModifyNamespaceResp" +
-      "onse\022D\n\017CreateNamespace\022\027.CreateNamespac" +
-      "eRequest\032\030.CreateNamespaceResponse\022D\n\017De" +
-      "leteNamespace\022\027.DeleteNamespaceRequest\032\030" +
-      ".DeleteNamespaceResponse\022Y\n\026GetNamespace" +
-      "Descriptor\022\036.GetNamespaceDescriptorReque",
-      "st\032\037.GetNamespaceDescriptorResponse\022_\n\030L" +
-      "istNamespaceDescriptors\022 .ListNamespaceD" +
-      "escriptorsRequest\032!.ListNamespaceDescrip" +
-      "torsResponse\022t\n\037ListTableDescriptorsByNa" +
-      "mespace\022\'.ListTableDescriptorsByNamespac" +
-      "eRequest\032(.ListTableDescriptorsByNamespa" +
-      "ceResponse\022b\n\031ListTableNamesByNamespace\022" +
-      "!.ListTableNamesByNamespaceRequest\032\".Lis" +
-      "tTableNamesByNamespaceResponseBB\n*org.ap" +
-      "ache.hadoop.hbase.protobuf.generatedB\014Ma",
-      "sterProtosH\001\210\001\001\240\001\001"
+      "st\"\024\n\022StopMasterResponse\"\037\n\016BalanceReque" +
+      "st\022\r\n\005force\030\001 \001(\010\"\'\n\017BalanceResponse\022\024\n\014" +
+      "balancer_ran\030\001 \002(\010\"<\n\031SetBalancerRunning",
+      "Request\022\n\n\002on\030\001 \002(\010\022\023\n\013synchronous\030\002 \001(\010" +
+      "\"8\n\032SetBalancerRunningResponse\022\032\n\022prev_b" +
+      "alance_value\030\001 \001(\010\"\027\n\025RunCatalogScanRequ" +
+      "est\"-\n\026RunCatalogScanResponse\022\023\n\013scan_re" +
+      "sult\030\001 \001(\005\"-\n\033EnableCatalogJanitorReques" +
+      "t\022\016\n\006enable\030\001 \002(\010\"2\n\034EnableCatalogJanito" +
+      "rResponse\022\022\n\nprev_value\030\001 \001(\010\" \n\036IsCatal" +
+      "ogJanitorEnabledRequest\"0\n\037IsCatalogJani" +
+      "torEnabledResponse\022\r\n\005value\030\001 \002(\010\"9\n\017Sna" +
+      "pshotRequest\022&\n\010snapshot\030\001 \002(\0132\024.Snapsho",
+      "tDescription\",\n\020SnapshotResponse\022\030\n\020expe" +
+      "cted_timeout\030\001 \002(\003\"\036\n\034GetCompletedSnapsh" +
+      "otsRequest\"H\n\035GetCompletedSnapshotsRespo" +
+      "nse\022\'\n\tsnapshots\030\001 \003(\0132\024.SnapshotDescrip" +
+      "tion\"?\n\025DeleteSnapshotRequest\022&\n\010snapsho" +
+      "t\030\001 \002(\0132\024.SnapshotDescription\"\030\n\026DeleteS" +
+      "napshotResponse\"@\n\026RestoreSnapshotReques" +
+      "t\022&\n\010snapshot\030\001 \002(\0132\024.SnapshotDescriptio" +
+      "n\"\031\n\027RestoreSnapshotResponse\"?\n\025IsSnapsh" +
+      "otDoneRequest\022&\n\010snapshot\030\001 \001(\0132\024.Snapsh",
+      "otDescription\"U\n\026IsSnapshotDoneResponse\022" +
+      "\023\n\004done\030\001 \001(\010:\005false\022&\n\010snapshot\030\002 \001(\0132\024" +
+      ".SnapshotDescription\"F\n\034IsRestoreSnapsho" +
+      "tDoneRequest\022&\n\010snapshot\030\001 \001(\0132\024.Snapsho" +
+      "tDescription\"4\n\035IsRestoreSnapshotDoneRes" +
+      "ponse\022\023\n\004done\030\001 \001(\010:\005false\"=\n\033GetSchemaA" +
+      "lterStatusRequest\022\036\n\ntable_name\030\001 \002(\0132\n." +
+      "TableName\"T\n\034GetSchemaAlterStatusRespons" +
+      "e\022\035\n\025yet_to_update_regions\030\001 \001(\r\022\025\n\rtota" +
+      "l_regions\030\002 \001(\r\"=\n\032GetTableDescriptorsRe",
+      "quest\022\037\n\013table_names\030\001 \003(\0132\n.TableName\"A" +
+      "\n\033GetTableDescriptorsResponse\022\"\n\014table_s" +
+      "chema\030\001 \003(\0132\014.TableSchema\"\026\n\024GetTableNam" +
+      "esRequest\"8\n\025GetTableNamesResponse\022\037\n\013ta" +
+      "ble_names\030\001 \003(\0132\n.TableName\"\031\n\027GetCluste" +
+      "rStatusRequest\"B\n\030GetClusterStatusRespon" +
+      "se\022&\n\016cluster_status\030\001 \002(\0132\016.ClusterStat" +
+      "us\"\030\n\026IsMasterRunningRequest\"4\n\027IsMaster" +
+      "RunningResponse\022\031\n\021is_master_running\030\001 \002" +
+      "(\010\"@\n\024ExecProcedureRequest\022(\n\tprocedure\030",
+      "\001 \002(\0132\025.ProcedureDescription\"1\n\025ExecProc" +
+      "edureResponse\022\030\n\020expected_timeout\030\001 \002(\003\"" +
+      "B\n\026IsProcedureDoneRequest\022(\n\tprocedure\030\001" +
+      " \001(\0132\025.ProcedureDescription\"W\n\027IsProcedu" +
+      "reDoneResponse\022\023\n\004done\030\001 \001(\010:\005false\022\'\n\010s" +
+      "napshot\030\002 \001(\0132\025.ProcedureDescription2\356\026\n" +
+      "\rMasterService\022S\n\024GetSchemaAlterStatus\022\034" +
+      ".GetSchemaAlterStatusRequest\032\035.GetSchema" +
+      "AlterStatusResponse\022P\n\023GetTableDescripto" +
+      "rs\022\033.GetTableDescriptorsRequest\032\034.GetTab",
+      "leDescriptorsResponse\022>\n\rGetTableNames\022\025" +
+      ".GetTableNamesRequest\032\026.GetTableNamesRes" +
+      "ponse\022G\n\020GetClusterStatus\022\030.GetClusterSt" +
+      "atusRequest\032\031.GetClusterStatusResponse\022D" +
+      "\n\017IsMasterRunning\022\027.IsMasterRunningReque" +
+      "st\032\030.IsMasterRunningResponse\0222\n\tAddColum" +
+      "n\022\021.AddColumnRequest\032\022.AddColumnResponse" +
+      "\022;\n\014DeleteColumn\022\024.DeleteColumnRequest\032\025" +
+      ".DeleteColumnResponse\022;\n\014ModifyColumn\022\024." +
+      "ModifyColumnRequest\032\025.ModifyColumnRespon",
+      "se\0225\n\nMoveRegion\022\022.MoveRegionRequest\032\023.M" +
+      "oveRegionResponse\022Y\n\026DispatchMergingRegi" +
+      "ons\022\036.DispatchMergingRegionsRequest\032\037.Di" +
+      "spatchMergingRegionsResponse\022;\n\014AssignRe" +
+      "gion\022\024.AssignRegionRequest\032\025.AssignRegio" +
+      "nResponse\022A\n\016UnassignRegion\022\026.UnassignRe" +
+      "gionRequest\032\027.UnassignRegionResponse\022>\n\r" +
+      "OfflineRegion\022\025.OfflineRegionRequest\032\026.O" +
+      "fflineRegionResponse\0228\n\013DeleteTable\022\023.De" +
+      "leteTableRequest\032\024.DeleteTableResponse\0228",
+      "\n\013EnableTable\022\023.EnableTableRequest\032\024.Ena" +
+      "bleTableResponse\022;\n\014DisableTable\022\024.Disab" +
+      "leTableRequest\032\025.DisableTableResponse\0228\n" +
+      "\013ModifyTable\022\023.ModifyTableRequest\032\024.Modi" +
+      "fyTableResponse\0228\n\013CreateTable\022\023.CreateT" +
+      "ableRequest\032\024.CreateTableResponse\022/\n\010Shu" +
+      "tdown\022\020.ShutdownRequest\032\021.ShutdownRespon" +
+      "se\0225\n\nStopMaster\022\022.StopMasterRequest\032\023.S" +
+      "topMasterResponse\022,\n\007Balance\022\017.BalanceRe" +
+      "quest\032\020.BalanceResponse\022M\n\022SetBalancerRu",
+      "nning\022\032.SetBalancerRunningRequest\032\033.SetB" +
+      "alancerRunningResponse\022A\n\016RunCatalogScan" +
+      "\022\026.RunCatalogScanRequest\032\027.RunCatalogSca" +
+      "nResponse\022S\n\024EnableCatalogJanitor\022\034.Enab" +
+      "leCatalogJanitorRequest\032\035.EnableCatalogJ" +
+      "anitorResponse\022\\\n\027IsCatalogJanitorEnable" +
+      "d\022\037.IsCatalogJanitorEnabledRequest\032 .IsC" +
+      "atalogJanitorEnabledResponse\022L\n\021ExecMast" +
+      "erService\022\032.CoprocessorServiceRequest\032\033." +
+      "CoprocessorServiceResponse\022/\n\010Snapshot\022\020",
+      ".SnapshotRequest\032\021.SnapshotResponse\022V\n\025G" +
+      "etCompletedSnapshots\022\035.GetCompletedSnaps" +
+      "hotsRequest\032\036.GetCompletedSnapshotsRespo" +
+      "nse\022A\n\016DeleteSnapshot\022\026.DeleteSnapshotRe" +
+      "quest\032\027.DeleteSnapshotResponse\022A\n\016IsSnap" +
+      "shotDone\022\026.IsSnapshotDoneRequest\032\027.IsSna" +
+      "pshotDoneResponse\022D\n\017RestoreSnapshot\022\027.R" +
+      "estoreSnapshotRequest\032\030.RestoreSnapshotR" +
+      "esponse\022V\n\025IsRestoreSnapshotDone\022\035.IsRes" +
+      "toreSnapshotDoneRequest\032\036.IsRestoreSnaps",
+      "hotDoneResponse\022>\n\rExecProcedure\022\025.ExecP" +
+      "rocedureRequest\032\026.ExecProcedureResponse\022" +
+      "D\n\017IsProcedureDone\022\027.IsProcedureDoneRequ" +
+      "est\032\030.IsProcedureDoneResponse\022D\n\017ModifyN" +
+      "amespace\022\027.ModifyNamespaceRequest\032\030.Modi" +
+      "fyNamespaceResponse\022D\n\017CreateNamespace\022\027" +
+      ".CreateNamespaceRequest\032\030.CreateNamespac" +
+      "eResponse\022D\n\017DeleteNamespace\022\027.DeleteNam" +
+      "espaceRequest\032\030.DeleteNamespaceResponse\022" +
+      "Y\n\026GetNamespaceDescriptor\022\036.GetNamespace",
+      "DescriptorRequest\032\037.GetNamespaceDescript" +
+      "orResponse\022_\n\030ListNamespaceDescriptors\022 " +
+      ".ListNamespaceDescriptorsRequest\032!.ListN" +
+      "amespaceDescriptorsResponse\022t\n\037ListTable" +
+      "DescriptorsByNamespace\022\'.ListTableDescri" +
+      "ptorsByNamespaceRequest\032(.ListTableDescr" +
+      "iptorsByNamespaceResponse\022b\n\031ListTableNa" +
+      "mesByNamespace\022!.ListTableNamesByNamespa" +
+      "ceRequest\032\".ListTableNamesByNamespaceRes" +
+      "ponseBB\n*org.apache.hadoop.hbase.protobu",
+      "f.generatedB\014MasterProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -43867,7 +43963,7 @@ public final class MasterProtos {
           internal_static_BalanceRequest_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_BalanceRequest_descriptor,
-              new java.lang.String[] { });
+              new java.lang.String[] { "Force", });
           internal_static_BalanceResponse_descriptor =
             getDescriptor().getMessageTypes().get(45);
           internal_static_BalanceResponse_fieldAccessorTable = new

@@ -1824,7 +1824,25 @@ public class HBaseAdmin implements Abortable, Closeable {
   throws MasterNotRunningException, ZooKeeperConnectionException, ServiceException {
     MasterKeepAliveConnection stub = connection.getKeepAliveMasterService();
     try {
-      return stub.balance(null,RequestConverter.buildBalanceRequest()).getBalancerRan();
+      return stub.balance(null,RequestConverter.buildBalanceRequest(false)).getBalancerRan();
+    } finally {
+      stub.close();
+    }
+  }
+
+  /**
+   * Invoke the balancer.  Will run the balancer and if regions to move, it will
+   * go ahead and do the reassignments. If there is region in transition, force parameter of true
+   * would still run balancer. Can *not* run for other reasons.  Check
+   * logs.
+   * @param force whether we should force balance even if there is region in transition
+   * @return True if balancer ran, false otherwise.
+   */
+  public boolean balancer(final boolean force)
+  throws MasterNotRunningException, ZooKeeperConnectionException, ServiceException {
+    MasterKeepAliveConnection stub = connection.getKeepAliveMasterService();
+    try {
+      return stub.balance(null,RequestConverter.buildBalanceRequest(force)).getBalancerRan();
     } finally {
       stub.close();
     }
