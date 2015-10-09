@@ -21,7 +21,7 @@ package org.apache.hadoop.hbase.client;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.ipc.RpcCallContext;
 import org.apache.hadoop.hbase.ipc.RpcServer;
-import org.apache.hadoop.hbase.protobuf.generated.RPCProtos;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 
 
 /**
@@ -36,11 +36,11 @@ public final class VersionInfoUtil {
 
   public static boolean currentClientHasMinimumVersion(int major, int minor) {
     RpcCallContext call = RpcServer.getCurrentCall();
-    RPCProtos.VersionInfo versionInfo = call != null ? call.getClientVersionInfo() : null;
+    HBaseProtos.VersionInfo versionInfo = call != null ? call.getClientVersionInfo() : null;
     return hasMinimumVersion(versionInfo, major, minor);
   }
 
-  public static boolean hasMinimumVersion(RPCProtos.VersionInfo versionInfo,
+  public static boolean hasMinimumVersion(HBaseProtos.VersionInfo versionInfo,
                                           int major,
                                           int minor) {
     if (versionInfo != null) {
