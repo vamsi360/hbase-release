@@ -10,6 +10,7 @@ HBASE-14309 Allow load balancer to operate when there is region in transition by
 HBASE-14475 Region split requests are always audited with "hbase" user rather than request user
 HBASE-14359 HTable#close will hang forever if unchecked error/exception thrown in AsyncProcess#sendMultiAction
 HBASE-14342 Recursive call in RegionMergeTransactionImpl.getJournal()
+HBASE-14314 Metrics for block cache should take region replicas into account
 
 HBASE-11658 Piped commands to hbase shell should return non-zero if shell command failed
 HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
