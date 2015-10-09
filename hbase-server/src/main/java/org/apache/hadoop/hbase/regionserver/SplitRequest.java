@@ -19,6 +19,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,6 +27,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.DroppedSnapshotException;
 import org.apache.hadoop.hbase.RemoteExceptionHandler;
 import org.apache.hadoop.hbase.master.TableLockManager.TableLock;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.StringUtils;
 
@@ -40,13 +42,15 @@ class SplitRequest implements Runnable {
   private final HRegion parent;
   private final byte[] midKey;
   private final HRegionServer server;
+  private final User user;
   private TableLock tableLock;
 
-  SplitRequest(HRegion region, byte[] midKey, HRegionServer hrs) {
+  SplitRequest(HRegion region, byte[] midKey, HRegionServer hrs, User user) {
     Preconditions.checkNotNull(hrs);
     this.parent = region;
     this.midKey = midKey;
     this.server = hrs;
+    this.user = user;
   }
 
   @Override
@@ -54,13 +58,7 @@ class SplitRequest implements Runnable {
     return "regionName=" + parent + ", midKey=" + Bytes.toStringBinary(midKey);
   }
 
-  @Override
-  public void run() {
-    if (this.server.isStopping() || this.server.isStopped()) {
-      LOG.debug("Skipping split because server is stopping=" +
-        this.server.isStopping() + " or stopped=" + this.server.isStopped());
-      return;
-    }
+  private void doSplitting() {
     try {
       final long startTime = System.currentTimeMillis();
       SplitTransaction st = new SplitTransaction(parent, midKey);
@@ -129,6 +127,31 @@ class SplitRequest implements Runnable {
         }
       }
       releaseTableLock();
+    }
+  }
+
+  @Override
+  public void run() {
+    if (this.server.isStopping() || this.server.isStopped()) {
+      LOG.debug("Skipping split because server is stopping=" +
+        this.server.isStopping() + " or stopped=" + this.server.isStopped());
+      return;
+    }
+    if (this.user == null) doSplitting();
+    else {
+      try {
+        user.getUGI().doAs(new PrivilegedExceptionAction<Void>() {
+          @Override
+          public Void run() throws Exception {
+            doSplitting();
+            return null;
+          }
+        });
+      } catch (InterruptedException ie) {
+        Thread.currentThread().interrupt();
+      } catch (IOException ioe) {
+        LOG.error("Encountered exception while splitting", ioe);
+      }
     }
   }
 
