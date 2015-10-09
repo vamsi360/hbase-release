@@ -21,7 +21,6 @@ package org.apache.hadoop.hbase.security.access;
 import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
 import com.google.protobuf.Service;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -39,7 +38,7 @@ import org.apache.hadoop.hbase.coprocessor.BulkLoadObserver;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorService;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
-import org.apache.hadoop.hbase.ipc.RpcServer;
+import org.apache.hadoop.hbase.ipc.RequestContext;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
@@ -336,8 +335,8 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
   }
 
   private User getActiveUser() {
-    User user = RpcServer.getRequestUser();
-    if (user == null) {
+    User user = RequestContext.getRequestUser();
+    if (!RequestContext.isInRequestContext()) {
       return null;
     }
 

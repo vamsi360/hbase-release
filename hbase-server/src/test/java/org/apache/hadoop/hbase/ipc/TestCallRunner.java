@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.ipc;
 
 import org.apache.hadoop.hbase.SmallTests;
+import org.apache.hadoop.hbase.security.UserProvider;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
@@ -33,7 +34,7 @@ public class TestCallRunner {
     Mockito.when(mockRpcServer.isStarted()).thenReturn(true);
     RpcServer.Call mockCall = Mockito.mock(RpcServer.Call.class);
     mockCall.connection = Mockito.mock(RpcServer.Connection.class);
-    CallRunner cr = new CallRunner(mockRpcServer, mockCall);
+    CallRunner cr = new CallRunner(mockRpcServer, mockCall, new UserProvider());
     cr.run();
   }
 }

@@ -284,7 +284,7 @@ public class TestCompaction {
 
     CountDownLatch latch = new CountDownLatch(1);
     TrackableCompactionRequest request = new TrackableCompactionRequest(latch);
-    thread.requestCompaction(r, store, "test custom comapction", Store.PRIORITY_USER, request,null);
+    thread.requestCompaction(r, store, "test custom comapction", Store.PRIORITY_USER, request);
     // wait for the latch to complete.
     latch.await();
 
@@ -320,7 +320,7 @@ public class TestCompaction {
     }
 
     thread.requestCompaction(r, "test mulitple custom comapctions", Store.PRIORITY_USER,
-      Collections.unmodifiableList(requests), null);
+      Collections.unmodifiableList(requests));
 
     // wait for the latch to complete.
     latch.await();

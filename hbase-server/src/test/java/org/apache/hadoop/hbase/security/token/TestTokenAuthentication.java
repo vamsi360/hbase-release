@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.ipc.BlockingRpcCallback;
 import org.apache.hadoop.hbase.ipc.FifoRpcScheduler;
+import org.apache.hadoop.hbase.ipc.RequestContext;
 import org.apache.hadoop.hbase.ipc.RpcClient;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.ipc.RpcServer.BlockingServiceAndInterface;
@@ -275,7 +276,7 @@ public class TestTokenAuthentication {
     public AuthenticationProtos.GetAuthenticationTokenResponse getAuthenticationToken(
         RpcController controller, AuthenticationProtos.GetAuthenticationTokenRequest request)
       throws ServiceException {
-      LOG.debug("Authentication token request from "+ RpcServer.getRequestUserName());
+      LOG.debug("Authentication token request from "+RequestContext.getRequestUserName());
       // ignore passed in controller -- it's always null
       ServerRpcController serverController = new ServerRpcController();
       BlockingRpcCallback<AuthenticationProtos.GetAuthenticationTokenResponse> callback =
@@ -293,7 +294,7 @@ public class TestTokenAuthentication {
     public AuthenticationProtos.WhoAmIResponse whoAmI(
         RpcController controller, AuthenticationProtos.WhoAmIRequest request)
       throws ServiceException {
-      LOG.debug("whoAmI() request from " + RpcServer.getRequestUserName());
+      LOG.debug("whoAmI() request from "+RequestContext.getRequestUserName());
       // ignore passed in controller -- it's always null
       ServerRpcController serverController = new ServerRpcController();
       BlockingRpcCallback<AuthenticationProtos.WhoAmIResponse> callback =
