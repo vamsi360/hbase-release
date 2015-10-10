@@ -13,6 +13,8 @@ HBASE-14342 Recursive call in RegionMergeTransactionImpl.getJournal()
 HBASE-14314 Metrics for block cache should take region replicas into account
 HBASE-13103 [ergonomics] add region size balancing as a feature of master (Mikhail Antonov)
 HBASE-14367 Add normalization support to shell (Mikhail Antonov)
+HBASE-14578 URISyntaxException during snapshot restore for table with user defined namespace
+HBASE-14581 Znode cleanup throws auth exception in secure mode
 
 HBASE-11658 Piped commands to hbase shell should return non-zero if shell command failed
 HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
