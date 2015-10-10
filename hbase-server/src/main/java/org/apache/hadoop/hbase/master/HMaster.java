@@ -113,6 +113,9 @@ import org.apache.hadoop.hbase.master.procedure.ModifyTableProcedure;
 import org.apache.hadoop.hbase.master.procedure.ProcedurePrepareLatch;
 import org.apache.hadoop.hbase.master.procedure.ProcedureSyncWait;
 import org.apache.hadoop.hbase.master.procedure.TruncateTableProcedure;
+import org.apache.hadoop.hbase.master.normalizer.RegionNormalizer;
+import org.apache.hadoop.hbase.master.normalizer.RegionNormalizerChore;
+import org.apache.hadoop.hbase.master.normalizer.RegionNormalizerFactory;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
 import org.apache.hadoop.hbase.monitoring.MemoryBoundedLogMessageBuffer;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
@@ -148,6 +151,7 @@ import org.apache.hadoop.hbase.zookeeper.DrainingServerTracker;
 import org.apache.hadoop.hbase.zookeeper.LoadBalancerTracker;
 import org.apache.hadoop.hbase.zookeeper.MasterAddressTracker;
 import org.apache.hadoop.hbase.zookeeper.MetaTableLocator;
+import org.apache.hadoop.hbase.zookeeper.RegionNormalizerTracker;
 import org.apache.hadoop.hbase.zookeeper.RegionServerTracker;
 import org.apache.hadoop.hbase.zookeeper.ZKClusterId;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
@@ -247,6 +251,9 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
   // Tracker for load balancer state
   LoadBalancerTracker loadBalancerTracker;
 
+  // Tracker for region normalizer state
+  private RegionNormalizerTracker regionNormalizerTracker;
+
   /** Namespace stuff */
   private TableNamespaceManager tableNamespaceManager;
 
@@ -281,7 +288,9 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
   private volatile boolean serverShutdownHandlerEnabled = false;
 
   LoadBalancer balancer;
+  private RegionNormalizer normalizer;
   private BalancerChore balancerChore;
+  private RegionNormalizerChore normalizerChore;
   private ClusterStatusChore clusterStatusChore;
   private ClusterStatusPublisher clusterStatusPublisherChore = null;
 
@@ -575,8 +584,12 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
   void initializeZKBasedSystemTrackers() throws IOException,
       InterruptedException, KeeperException, CoordinatedStateException {
     this.balancer = LoadBalancerFactory.getLoadBalancer(conf);
+    this.normalizer = RegionNormalizerFactory.getRegionNormalizer(conf);
+    this.normalizer.setMasterServices(this);
     this.loadBalancerTracker = new LoadBalancerTracker(zooKeeper, this);
     this.loadBalancerTracker.start();
+    this.regionNormalizerTracker = new RegionNormalizerTracker(zooKeeper, this);
+    this.regionNormalizerTracker.start();
     this.assignmentManager = new AssignmentManager(this, serverManager,
       this.balancer, this.service, this.metricsMaster,
       this.tableLockManager);
@@ -772,6 +785,8 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     getChoreService().scheduleChore(clusterStatusChore);
     this.balancerChore = new BalancerChore(this);
     getChoreService().scheduleChore(balancerChore);
+    this.normalizerChore = new RegionNormalizerChore(this);
+    getChoreService().scheduleChore(normalizerChore);
     this.catalogJanitorChore = new CatalogJanitor(this, this);
     getChoreService().scheduleChore(catalogJanitorChore);
 
@@ -1207,6 +1222,9 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     if (this.balancerChore != null) {
       this.balancerChore.cancel(true);
     }
+    if (this.normalizerChore != null) {
+      this.normalizerChore.cancel(true);
+    }
     if (this.clusterStatusChore != null) {
       this.clusterStatusChore.cancel(true);
     }
@@ -1348,6 +1366,47 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
   }
 
   /**
+   * Perform normalization of cluster (invoked by {@link RegionNormalizerChore}).
+   *
+   * @return true if normalization step was performed successfully, false otherwise
+   *   (specifically, if HMaster hasn't been initialized properly or normalization
+   *   is globally disabled)
+   * @throws IOException, CoordinatedStateException
+   */
+  public boolean normalizeRegions() throws IOException, CoordinatedStateException {
+    if (!this.initialized) {
+      LOG.debug("Master has not been initialized, don't run region normalizer.");
+      return false;
+    }
+
+    if (!this.regionNormalizerTracker.isNormalizerOn()) {
+      LOG.debug("Region normalization is disabled, don't run region normalizer.");
+      return false;
+    }
+
+    synchronized (this.normalizer) {
+      // Don't run the normalizer concurrently
+      List<TableName> allEnabledTables = new ArrayList<>(
+        this.assignmentManager.getTableStateManager().getTablesInStates(
+          ZooKeeperProtos.Table.State.ENABLED));
+
+      Collections.shuffle(allEnabledTables);
+
+      for(TableName table : allEnabledTables) {
+        if (table.isSystemTable() || !getTableDescriptors().get(table).isNormalizationEnabled()) {
+          LOG.debug("Skipping normalization for table: " + table + ", as it's either system"
+            + " table or doesn't have auto normalization turned on");
+          continue;
+        }
+        this.normalizer.computePlanForTable(table).execute(clusterConnection.getAdmin());
+      }
+    }
+    // If Region did not generate any plans, it means the cluster is already balanced.
+    // Return true indicating a success.
+    return true;
+  }
+
+  /**
    * @return Client info for use as prefix on an audit log string; who did an action
    */
   String getClientIdAuditPrefix() {
@@ -1369,7 +1428,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
       final HRegionInfo region_b, final boolean forcible) throws IOException {
     checkInitialized();
     this.service.submit(new DispatchMergingRegionHandler(this,
-        this.catalogJanitorChore, region_a, region_b, forcible));
+      this.catalogJanitorChore, region_a, region_b, forcible));
   }
 
   void move(final byte[] encodedRegionName,
@@ -1636,7 +1695,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
           HConstants.DEFAULT_ZK_SESSION_TIMEOUT);
         // If we're a backup master, stall until a primary to writes his address
         if (conf.getBoolean(HConstants.MASTER_TYPE_BACKUP,
-            HConstants.DEFAULT_MASTER_TYPE_BACKUP)) {
+          HConstants.DEFAULT_MASTER_TYPE_BACKUP)) {
           LOG.debug("HMaster started in backup mode. "
             + "Stalling until master znode is written.");
           // This will only be a minute or so while the cluster starts up,
@@ -2591,6 +2650,17 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
   }
 
   /**
+   * Queries the state of the {@link RegionNormalizerTracker}. If it's not initialized,
+   * false is returned.
+   */
+   public boolean isNormalizerOn() {
+    if (null == regionNormalizerTracker) {
+      return false;
+    }
+    return regionNormalizerTracker.isNormalizerOn();
+  }
+
+  /**
    * Fetch the configured {@link LoadBalancer} class name. If none is set, a default is returned.
    *
    * @return The name of the {@link LoadBalancer} in use.
@@ -2598,5 +2668,12 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
   public String getLoadBalancerClassName() {
     return conf.get(HConstants.HBASE_MASTER_LOADBALANCER_CLASS, LoadBalancerFactory
         .getDefaultLoadBalancerClass().getName());
+  }
+
+  /**
+   * @return RegionNormalizerTracker instance
+   */
+  public RegionNormalizerTracker getRegionNormalizerTracker() {
+    return regionNormalizerTracker;
   }
 }
