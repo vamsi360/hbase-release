@@ -225,6 +225,7 @@ import org.apache.hadoop.hbase.security.UserProvider;
 import org.apache.hadoop.hbase.trace.SpanReceiverHost;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.CompressionTest;
+import org.apache.hadoop.hbase.util.DNS;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.FSUtils;
@@ -246,7 +247,6 @@ import org.apache.hadoop.hbase.zookeeper.ZooKeeperNodeTracker;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.metrics.util.MBeanUtil;
-import org.apache.hadoop.net.DNS;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.zookeeper.KeeperException;
@@ -611,7 +611,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     if (hostname == null || hostname.isEmpty()) {
       String h = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
         conf.get("hbase.regionserver.dns.interface", "default"),
-        conf.get("hbase.regionserver.dns.nameserver", "default"), true));
+        conf.get("hbase.regionserver.dns.nameserver", "default")));
       // Server to handle client requests.
       hostname = conf.get("hbase.regionserver.ipc.address", h);
     } else {
