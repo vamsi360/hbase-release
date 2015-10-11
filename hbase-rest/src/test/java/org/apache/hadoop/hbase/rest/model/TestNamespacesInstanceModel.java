@@ -87,7 +87,6 @@ public class TestNamespacesInstanceModel extends TestModelBase<NamespacesInstanc
     checkModel(buildTestModel());
   }
 
-  @Override
   @Test
   public void testFromXML() throws Exception {
     checkModel(fromXML(AS_XML));
