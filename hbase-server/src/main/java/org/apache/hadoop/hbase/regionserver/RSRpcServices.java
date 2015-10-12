@@ -164,6 +164,7 @@ import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Counter;
+import org.apache.hadoop.hbase.util.DNS;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
@@ -171,7 +172,6 @@ import org.apache.hadoop.hbase.util.Strings;
 import org.apache.hadoop.hbase.wal.WALKey;
 import org.apache.hadoop.hbase.wal.WALSplitter;
 import org.apache.hadoop.hbase.zookeeper.ZKSplitLog;
-import org.apache.hadoop.net.DNS;
 import org.apache.zookeeper.KeeperException;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -892,7 +892,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       String masterOrRS = isMaster ? "master" : "regionserver";
       return Strings.domainNamePointerToHostName(DNS.getDefaultHost(
         conf.get("hbase." + masterOrRS + ".dns.interface", "default"),
-        conf.get("hbase." + masterOrRS + ".dns.nameserver", "default"), true));
+        conf.get("hbase." + masterOrRS + ".dns.nameserver", "default")));
     } else {
       LOG.info("hostname is configured to be " + hostname);
       return hostname;

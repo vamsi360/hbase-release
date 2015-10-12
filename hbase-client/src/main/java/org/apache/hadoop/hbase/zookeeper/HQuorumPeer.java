@@ -22,8 +22,8 @@ import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.util.DNS;
 import org.apache.hadoop.hbase.util.Strings;
-import org.apache.hadoop.net.DNS;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
@@ -105,7 +105,7 @@ public class HQuorumPeer {
     Configuration conf = HBaseConfiguration.create();
     String myAddress = Strings.domainNamePointerToHostName(DNS.getDefaultHost(
         conf.get("hbase.zookeeper.dns.interface","default"),
-        conf.get("hbase.zookeeper.dns.nameserver","default"), true));
+        conf.get("hbase.zookeeper.dns.nameserver","default")));
 
     List<String> ips = new ArrayList<String>();
 
