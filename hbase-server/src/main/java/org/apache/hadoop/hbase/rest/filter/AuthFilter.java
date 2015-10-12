@@ -32,8 +32,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.util.DNS;
 import org.apache.hadoop.hbase.util.Strings;
-import org.apache.hadoop.net.DNS;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.authentication.server.AuthenticationFilter;
 
@@ -66,7 +66,7 @@ public class AuthFilter extends AuthenticationFilter {
           try {
             String machineName = Strings.domainNamePointerToHostName(
               DNS.getDefaultHost(conf.get(REST_DNS_INTERFACE, "default"),
-                conf.get(REST_DNS_NAMESERVER, "default"), true));
+                conf.get(REST_DNS_NAMESERVER, "default")));
             value = SecurityUtil.getServerPrincipal(value, machineName);
           } catch (IOException ie) {
             throw new ServletException("Failed to retrieve server principal", ie);

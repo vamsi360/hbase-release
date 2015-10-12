@@ -36,11 +36,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.rest.filter.AuthFilter;
 import org.apache.hadoop.hbase.security.UserProvider;
+import org.apache.hadoop.hbase.util.DNS;
 import org.apache.hadoop.hbase.util.HttpServerUtil;
 import org.apache.hadoop.hbase.util.InfoServer;
 import org.apache.hadoop.hbase.util.Strings;
 import org.apache.hadoop.hbase.util.VersionInfo;
-import org.apache.hadoop.net.DNS;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
@@ -91,7 +91,7 @@ public class RESTServer implements Constants {
     if (userProvider.isHadoopSecurityEnabled() && userProvider.isHBaseSecurityEnabled()) {
       String machineName = Strings.domainNamePointerToHostName(
         DNS.getDefaultHost(conf.get(REST_DNS_INTERFACE, "default"),
-          conf.get(REST_DNS_NAMESERVER, "default"), true));
+          conf.get(REST_DNS_NAMESERVER, "default")));
       String keytabFilename = conf.get(REST_KEYTAB_FILE);
       Preconditions.checkArgument(keytabFilename != null && !keytabFilename.isEmpty(),
         REST_KEYTAB_FILE + " should be set if security is enabled");
