@@ -625,6 +625,10 @@ public class ConnectionManager {
 
     private final Configuration conf;
 
+    // cache the configuration value for tables so that we can avoid calling
+    // the expensive Configuration to fetch the value multiple times.
+    private final TableConfiguration tableConfig;
+
     // Client rpc instance.
     private RpcClient rpcClient;
 
@@ -637,6 +641,10 @@ public class ConnectionManager {
     private boolean managed;
 
     private User user;
+
+    private RpcRetryingCallerFactory rpcCallerFactory;
+
+    private RpcControllerFactory rpcControllerFactory;
 
     /**
      * Cluster registry of basic info such as clusterid and meta region location.
@@ -693,6 +701,7 @@ public class ConnectionManager {
               }, conf, listenerClass);
         }
       }
+
       this.cacheMetaLocationEnabled = conf.getBoolean(CACHE_META_LOCATION_ENABLED,
         DEFAULT_CACHE_META_LOCATION_ENABLED);
     }
@@ -702,11 +711,11 @@ public class ConnectionManager {
      */
     protected HConnectionImplementation(Configuration conf) {
       this.conf = conf;
+      this.tableConfig = new TableConfiguration(conf);
       this.closed = false;
       this.pause = conf.getLong(HConstants.HBASE_CLIENT_PAUSE,
           HConstants.DEFAULT_HBASE_CLIENT_PAUSE);
-      this.numTries = conf.getInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER,
-          HConstants.DEFAULT_HBASE_CLIENT_RETRIES_NUMBER);
+      this.numTries = tableConfig.getRetriesNumber();
       this.rpcTimeout = conf.getInt(
           HConstants.HBASE_RPC_TIMEOUT_KEY,
           HConstants.DEFAULT_HBASE_RPC_TIMEOUT);
@@ -725,6 +734,8 @@ public class ConnectionManager {
       this.prefetchRegionLimit = conf.getInt(
           HConstants.HBASE_CLIENT_PREFETCH_LIMIT,
           HConstants.DEFAULT_HBASE_CLIENT_PREFETCH_LIMIT);
+      this.rpcCallerFactory = RpcRetryingCallerFactory.instantiate(conf);
+      this.rpcControllerFactory = RpcControllerFactory.instantiate(conf);
     }
 
     @Override
@@ -757,7 +768,7 @@ public class ConnectionManager {
       if (managed) {
         throw new IOException("The connection has to be unmanaged.");
       }
-      return new HTable(tableName, this, pool);
+      return new HTable(tableName, this, tableConfig, rpcCallerFactory, rpcControllerFactory, pool);
     }
 
     private ExecutorService getBatchPool() {
