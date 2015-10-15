@@ -120,7 +120,6 @@ import org.apache.hadoop.hbase.io.hfile.HFile;
 import org.apache.hadoop.hbase.ipc.HBaseRPCErrorHandler;
 import org.apache.hadoop.hbase.ipc.PayloadCarryingRpcController;
 import org.apache.hadoop.hbase.ipc.PriorityFunction;
-import org.apache.hadoop.hbase.ipc.RequestContext;
 import org.apache.hadoop.hbase.ipc.RpcCallContext;
 import org.apache.hadoop.hbase.ipc.RpcClient;
 import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
@@ -1508,7 +1507,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
               } else {
                 this.instance.compactSplitThread.requestCompaction(r, s, getName()
                     + " requests major compaction; use configured priority",
-                  this.majorCompactPriority, null, null);
+                  this.majorCompactPriority, null);
               }
             }
           } catch (IOException e) {
@@ -4009,7 +4008,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         splitPoint = request.getSplitPoint().toByteArray();
       }
       region.forceSplit(splitPoint);
-      compactSplitThread.requestSplit(region, region.checkSplit(), RequestContext.getRequestUser());
+      compactSplitThread.requestSplit(region, region.checkSplit());
       return SplitRegionResponse.newBuilder().build();
     } catch (DroppedSnapshotException ex) {
       abort("Replay of WAL required. Forcing server shutdown", ex);
@@ -4101,10 +4100,10 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
       String log = "User-triggered " + (major ? "major " : "") + "compaction" + familyLogMsg;
       if(family != null) {
         compactSplitThread.requestCompaction(region, store, log,
-          Store.PRIORITY_USER, null, RequestContext.getRequestUser());
+          Store.PRIORITY_USER, null);
       } else {
         compactSplitThread.requestCompaction(region, log,
-          Store.PRIORITY_USER, null, RequestContext.getRequestUser());
+          Store.PRIORITY_USER, null);
       }
       return CompactRegionResponse.newBuilder().build();
     } catch (IOException ie) {
