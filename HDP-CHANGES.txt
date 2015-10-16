@@ -4,6 +4,7 @@ HBASE-14581 Znode cleanup throws auth exception in secure mode
 HBASE-14309 Allow load balancer to operate when there is region in transition by adding force flag
 HBASE-14207 Region was hijacked and remained in transition when RS failed to open a region and later regionplan changed to new RS on retry (Pankaj Kumar)
 HBASE-14280 Bulk Upload from HA cluster to remote HA hbase cluster fails (Ankit Singhal)
+HBASE-14361 ReplicationSink should create Connection instances lazily
 HBASE-12464 meta table region assignment stuck in the FAILED_OPEN state due to region server not fully ready to serve
 HBASE-12366 Add login code as AuthUtil (Srikanth Srungarapu)
 HBASE-13471 Fix a possible infinite loop in doMiniBatchMutation (Rajesh Nishtala)
