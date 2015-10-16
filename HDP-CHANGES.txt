@@ -32,3 +32,4 @@ HBASE-14269 FuzzyRowFilter omits certain rows when multiple fuzzy key exist
 HBASE-14313 After a Connection sees ConnectionClosingException it never recovers (Elliott Clark)
 HBASE-14302 TableSnapshotInputFormat should not create back references when restoring snapshot
 BUG-45027/BUG-45361 Fix hostname used with Kerberos on Dual-Homed clusters.
+HBASE-14536 Balancer & SSH interfering with each other leading to unavailability
