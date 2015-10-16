@@ -22,6 +22,7 @@
 # on but this script and balancer will end up fighting each other).
 require 'optparse'
 require File.join(File.dirname(__FILE__), 'thread-pool')
+require 'tmpdir'
 include Java
 import org.apache.hadoop.hbase.HConstants
 import org.apache.hadoop.hbase.HBaseConfiguration
