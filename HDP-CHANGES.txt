@@ -1,3 +1,5 @@
+HBASE-14475 Region split requests are always audited with "hbase" user rather than request user
+HBASE-14605 Split fails due to 'No valid credentials' error when SecureBulkLoadEndpoint#start tries to access hdfs
 HBASE-12128 Cache configuration and RpcController selection for Table in Connection (Stephen Yuan Jiang)
 HBASE-14497 Reverse Scan threw StackOverflow caused by readPt checking (Yerui Sun)
 HBASE-14581 Znode cleanup throws auth exception in secure mode
