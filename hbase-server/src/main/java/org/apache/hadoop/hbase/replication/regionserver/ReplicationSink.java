@@ -71,12 +71,9 @@ public class ReplicationSink {
 
   private static final Log LOG = LogFactory.getLog(ReplicationSink.class);
   private final Configuration conf;
-  // Volatile because of note in here -- look for double-checked locking:
-  // http://www.oracle.com/technetwork/articles/javase/bloch-effective-08-qa-140880.html
-  private volatile Connection sharedHtableCon;
+  private final Connection sharedHtableCon;
   private final MetricsSink metrics;
   private final AtomicLong totalReplicatedEdits = new AtomicLong();
-  private final Object sharedHtableConLock = new Object();
 
   /**
    * Create a sink for replication
@@ -90,6 +87,7 @@ public class ReplicationSink {
     this.conf = HBaseConfiguration.create(conf);
     decorateConf();
     this.metrics = new MetricsSink();
+    this.sharedHtableCon = ConnectionFactory.createConnection(this.conf);
   }
 
   /**
@@ -214,14 +212,7 @@ public class ReplicationSink {
    */
   public void stopReplicationSinkServices() {
     try {
-      if (this.sharedHtableCon != null) {
-        synchronized (sharedHtableConLock) {
-          if (this.sharedHtableCon != null) {
-            this.sharedHtableCon.close();
-            this.sharedHtableCon = null;
-          }
-        }
-      }
+      this.sharedHtableCon.close();
     } catch (IOException e) {
       LOG.warn("IOException while closing the connection", e); // ignoring as we are closing.
     }
@@ -240,17 +231,7 @@ public class ReplicationSink {
     }
     Table table = null;
     try {
-      // See https://en.wikipedia.org/wiki/Double-checked_locking
-      Connection connection = this.sharedHtableCon;
-      if (connection == null) {
-        synchronized (sharedHtableConLock) {
-          connection = this.sharedHtableCon;
-          if (connection == null) {
-            connection = this.sharedHtableCon = ConnectionFactory.createConnection(this.conf);
-          }
-        }
-      }
-      table = connection.getTable(tableName);
+      table = this.sharedHtableCon.getTable(tableName);
       for (List<Row> rows : allRows) {
         table.batch(rows);
       }
