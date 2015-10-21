@@ -236,16 +236,6 @@ public class RegionStates {
   }
 
   /**
-   * @return True if hbase:meta table region is in transition.
-   */
-  public synchronized boolean isMetaRegionInTransition() {
-    for (RegionState state : regionsInTransition.values()) {
-      if (state.getRegion().isMetaRegion()) return true;
-    }
-    return false;
-  }
-
-  /**
    * @return True if specified region assigned, and not in transition.
    */
   public synchronized boolean isRegionOnline(final HRegionInfo hri) {

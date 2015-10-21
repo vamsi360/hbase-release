@@ -222,7 +222,6 @@ message StopMasterResponse {
 }
 
 message BalanceRequest {
-  optional bool force = 1;
 }
 
 message BalanceResponse {

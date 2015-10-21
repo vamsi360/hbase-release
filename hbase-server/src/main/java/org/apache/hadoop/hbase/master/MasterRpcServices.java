@@ -392,8 +392,7 @@ public class MasterRpcServices extends RSRpcServices
   public BalanceResponse balance(RpcController controller,
       BalanceRequest request) throws ServiceException {
     try {
-      return BalanceResponse.newBuilder().setBalancerRan(master.balance(
-        request.hasForce() ? request.getForce() : false)).build();
+      return BalanceResponse.newBuilder().setBalancerRan(master.balance()).build();
     } catch (IOException ex) {
       throw new ServiceException(ex);
     }

@@ -102,8 +102,8 @@ module Hbase
     #----------------------------------------------------------------------------------------------
     # Requests a cluster balance
     # Returns true if balancer ran
-    def balancer(force)
-      @admin.balancer(java.lang.Boolean::valueOf(force))
+    def balancer()
+      @admin.balancer()
     end
 
     #----------------------------------------------------------------------------------------------
