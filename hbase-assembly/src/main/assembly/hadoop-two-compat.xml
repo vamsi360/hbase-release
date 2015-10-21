@@ -53,9 +53,17 @@
         <outputDirectory>lib</outputDirectory>
         <unpack>false</unpack>
         <dependencySets>
-          <dependencySet/>
+          <dependencySet>
+            <excludes>
+                <exclude>org.apache.hbase:hbase-common*</exclude>
+            </excludes>
+           <useTransitiveFiltering>true</useTransitiveFiltering>
+          </dependencySet>
         </dependencySets>
       </binaries>
+      <excludes>
+        <exclude>org.apache.hbase:hbase-testing-util</exclude>
+      </excludes>
     </moduleSet>
   </moduleSets>
   <!-- Include the generated LICENSE and NOTICE files -->
