@@ -17,6 +17,7 @@ HBASE-14581 Znode cleanup throws auth exception in secure mode
 HBASE-14565 Make ZK connection timeout configurable in MiniZooKeeperCluster
 HBASE-14591 Region with reference hfile may split after a forced split in IncreasingToUpperBoundRegionSplitPolicy (Shaohui Liu)
 HBASE-14598 ByteBufferOutputStream grows its HeapByteBuffer beyond JVM limitations (Ian Friedman)
+HBASE-14268 Improve KeyLocker (Hiroshi Ikeda)
 
 HBASE-11658 Piped commands to hbase shell should return non-zero if shell command failed
 HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
