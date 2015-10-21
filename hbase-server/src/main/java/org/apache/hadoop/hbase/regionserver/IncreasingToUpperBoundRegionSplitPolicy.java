@@ -65,7 +65,7 @@ extends ConstantSizeRegionSplitPolicy {
 
   @Override
   protected boolean shouldSplit() {
-    boolean force = region.shouldForceSplit();
+    if (region.shouldForceSplit()) return true;
     boolean foundABigStore = false;
     // Get count of regions that have the same common table as this.region
     int tableRegionsCount = getCountOfCommonTableRegions();
@@ -89,7 +89,7 @@ extends ConstantSizeRegionSplitPolicy {
       }
     }
 
-    return foundABigStore | force;
+    return foundABigStore;
   }
 
   /**
