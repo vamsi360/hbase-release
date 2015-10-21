@@ -978,20 +978,15 @@ class AsyncProcess {
           } else {
             try {
               pool.submit(runnable);
-            } catch (Throwable t) {
-              if (t instanceof RejectedExecutionException) {
-                // This should never happen. But as the pool is provided by the end user,
-               // let's secure this a little.
-               LOG.warn("#" + id + ", the task was rejected by the pool. This is unexpected." +
-                  " Server is " + server.getServerName(), t);
-              } else {
-                // see #HBASE-14359 for more details
-                LOG.warn("Caught unexpected exception/error: ", t);
-              }
+            } catch (RejectedExecutionException ree) {
+              // This should never happen. But as the pool is provided by the end user, let's secure
+              //  this a little.
               decTaskCounters(multiAction.getRegions(), server);
-              // We're likely to fail again, but this will increment the attempt counter,
-             // so it will finish.
-              receiveGlobalFailure(multiAction, server, numAttempt, t);
+              LOG.warn("#" + id + ", the task was rejected by the pool. This is unexpected." +
+                  " Server is " + server.getServerName(), ree);
+              // We're likely to fail again, but this will increment the attempt counter, so it will
+              //  finish.
+              receiveGlobalFailure(multiAction, server, numAttempt, ree);
             }
           }
         }
