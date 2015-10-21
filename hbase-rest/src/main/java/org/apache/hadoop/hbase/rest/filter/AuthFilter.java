@@ -66,7 +66,7 @@ public class AuthFilter extends AuthenticationFilter {
           try {
             String machineName = Strings.domainNamePointerToHostName(
               DNS.getDefaultHost(conf.get(REST_DNS_INTERFACE, "default"),
-                conf.get(REST_DNS_NAMESERVER, "default"), true));
+                conf.get(REST_DNS_NAMESERVER, "default")));
             value = SecurityUtil.getServerPrincipal(value, machineName);
           } catch (IOException ie) {
             throw new ServletException("Failed to retrieve server principal", ie);
