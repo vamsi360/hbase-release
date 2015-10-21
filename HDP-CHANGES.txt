@@ -5,7 +5,6 @@ Following are the changes on top of Apache HBase 1.1.1
 HBASE-14445 ExportSnapshot does not honor -chmod option
 HBASE-13250 chown of ExportSnapshot does not cover all path and files (He Liangliang)
 HBASE-14280 Bulk Upload from HA cluster to remote HA hbase cluster fails (Ankit Singhal)
-HBASE-14497 Reverse Scan threw StackOverflow caused by readPt checking (Yerui Sun)
 
 HBASE-11658 Piped commands to hbase shell should return non-zero if shell command failed
 HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
