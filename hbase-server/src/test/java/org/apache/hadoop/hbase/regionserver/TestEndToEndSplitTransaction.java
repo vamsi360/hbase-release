@@ -108,7 +108,7 @@ public class TestEndToEndSplitTransaction {
     split.prepare();
 
     // 1. phase I
-    PairOfSameType<HRegion> regions = split.createDaughters(server, server);
+    PairOfSameType<HRegion> regions = split.createDaughters(server, server, null);
     assertFalse(test(con, tableName, firstRow, server));
     assertFalse(test(con, tableName, lastRow, server));
 
@@ -139,7 +139,7 @@ public class TestEndToEndSplitTransaction {
 
     // 4. phase III
     split.transitionZKNode(server, server, regions.getFirst(),
-        regions.getSecond());
+        regions.getSecond(), null);
     assertTrue(test(con, tableName, firstRow, server));
     assertTrue(test(con, tableName, lastRow, server));
   }

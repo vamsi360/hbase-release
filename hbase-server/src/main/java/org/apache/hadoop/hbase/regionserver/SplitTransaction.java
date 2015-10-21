@@ -24,6 +24,7 @@ import static org.apache.hadoop.hbase.executor.EventType.RS_ZK_REGION_SPLITTING;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -50,6 +51,7 @@ import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.executor.EventType;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.CancelableProgressable;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
@@ -209,12 +211,13 @@ public class SplitTransaction {
    * @param server Hosting server instance.  Can be null when testing (won't try
    * and update in zk if a null server)
    * @param services Used to online/offline regions.
+   * @param user
    * @throws IOException If thrown, transaction failed.
    *    Call {@link #rollback(Server, RegionServerServices)}
    * @return Regions created
    */
   /* package */PairOfSameType<HRegion> createDaughters(final Server server,
-      final RegionServerServices services) throws IOException {
+      final RegionServerServices services, User user) throws IOException {
     LOG.info("Starting split of region " + this.parent);
     if ((server != null && server.isStopped()) ||
         (services != null && services.isStopping())) {
@@ -225,12 +228,26 @@ public class SplitTransaction {
 
     // Coprocessor callback
     if (this.parent.getCoprocessorHost() != null) {
-      this.parent.getCoprocessorHost().preSplit();
-    }
-
-    // Coprocessor callback
-    if (this.parent.getCoprocessorHost() != null) {
-      this.parent.getCoprocessorHost().preSplit(this.splitrow);
+      if (user == null) {
+        // TODO: Remove one of these
+        parent.getCoprocessorHost().preSplit();
+        parent.getCoprocessorHost().preSplit(splitrow);
+      } else {
+        try {
+          user.getUGI().doAs(new PrivilegedExceptionAction<Void>() {
+            @Override
+            public Void run() throws Exception {
+              parent.getCoprocessorHost().preSplit();
+              parent.getCoprocessorHost().preSplit(splitrow);
+              return null;
+            }
+          });
+        } catch (InterruptedException ie) {
+          InterruptedIOException iioe = new InterruptedIOException();
+          iioe.initCause(ie);
+          throw iioe;
+        }
+      }
     }
 
     // If true, no cluster to write meta edits to or to update znodes in.
@@ -242,10 +259,26 @@ public class SplitTransaction {
 
     PairOfSameType<HRegion> daughterRegions = stepsBeforePONR(server, services, testing);
 
-    List<Mutation> metaEntries = new ArrayList<Mutation>();
+    final List<Mutation> metaEntries = new ArrayList<Mutation>();
+    boolean ret = false;
     if (this.parent.getCoprocessorHost() != null) {
-      if (this.parent.getCoprocessorHost().
-          preSplitBeforePONR(this.splitrow, metaEntries)) {
+      if (user == null) {
+        ret = parent.getCoprocessorHost().preSplitBeforePONR(splitrow, metaEntries);
+      } else {
+        try {
+          ret = user.getUGI().doAs(new PrivilegedExceptionAction<Boolean>() {
+            @Override
+            public Boolean run() throws Exception {
+              return parent.getCoprocessorHost().preSplitBeforePONR(splitrow, metaEntries);
+            }
+          });
+        } catch (InterruptedException ie) {
+          InterruptedIOException iioe = new InterruptedIOException();
+          iioe.initCause(ie);
+          throw iioe;
+        }
+      }
+      if (ret) {
         throw new IOException("Coprocessor bypassing region "
             + this.parent.getRegionNameAsString() + " split.");
       }
@@ -438,7 +471,7 @@ public class SplitTransaction {
    *          Call {@link #rollback(Server, RegionServerServices)}
    */
   /* package */void transitionZKNode(final Server server,
-      final RegionServerServices services, HRegion a, HRegion b)
+      final RegionServerServices services, final HRegion a, final HRegion b, User user)
       throws IOException {
     // Tell master about split by updating zk.  If we fail, abort.
     if (server != null && server.getZooKeeper() != null) {
@@ -476,7 +509,23 @@ public class SplitTransaction {
 
     // Coprocessor callback
     if (this.parent.getCoprocessorHost() != null) {
-      this.parent.getCoprocessorHost().postSplit(a,b);
+      if (user == null) {
+        this.parent.getCoprocessorHost().postSplit(a, b);
+      } else {
+        try {
+          user.getUGI().doAs(new PrivilegedExceptionAction<Void>() {
+            @Override
+            public Void run() throws Exception {
+              parent.getCoprocessorHost().postSplit(a, b);
+              return null;
+            }
+          });
+        } catch (InterruptedException ie) {
+          InterruptedIOException iioe = new InterruptedIOException();
+          iioe.initCause(ie);
+          throw iioe;
+        }
+      }
     }
 
     // Leaving here, the splitdir with its dross will be in place but since the
@@ -554,6 +603,15 @@ public class SplitTransaction {
     }
   }
 
+  public PairOfSameType<HRegion> execute(final Server server,
+    final RegionServerServices services)
+        throws IOException {
+    if (User.isHBaseSecurityEnabled(parent.getBaseConf())) {
+      LOG.warn("Should use execute(Server, RegionServerServices, User)");
+    }
+    return execute(server, services, null);
+  }
+
   /**
    * Run the transaction.
    * @param server Hosting server instance.  Can be null when testing (won't try
@@ -566,20 +624,36 @@ public class SplitTransaction {
    * @see #rollback(Server, RegionServerServices)
    */
   public PairOfSameType<HRegion> execute(final Server server,
-      final RegionServerServices services)
+      final RegionServerServices services, User user)
   throws IOException {
-    PairOfSameType<HRegion> regions = createDaughters(server, services);
+    PairOfSameType<HRegion> regions = createDaughters(server, services, user);
     if (this.parent.getCoprocessorHost() != null) {
-      this.parent.getCoprocessorHost().preSplitAfterPONR();
+      if (user == null) {
+        parent.getCoprocessorHost().preSplitAfterPONR();
+      } else {
+        try {
+          user.getUGI().doAs(new PrivilegedExceptionAction<Void>() {
+            @Override
+            public Void run() throws Exception {
+              parent.getCoprocessorHost().preSplitAfterPONR();
+              return null;
+            }
+          });
+        } catch (InterruptedException ie) {
+          InterruptedIOException iioe = new InterruptedIOException();
+          iioe.initCause(ie);
+          throw iioe;
+        }
+      }
     }
-    return stepsAfterPONR(server, services, regions);
+    return stepsAfterPONR(server, services, regions, user);
   }
 
   public PairOfSameType<HRegion> stepsAfterPONR(final Server server,
-      final RegionServerServices services, PairOfSameType<HRegion> regions)
+      final RegionServerServices services, PairOfSameType<HRegion> regions, User user)
       throws IOException {
     openDaughters(server, services, regions.getFirst(), regions.getSecond());
-    transitionZKNode(server, services, regions.getFirst(), regions.getSecond());
+    transitionZKNode(server, services, regions.getFirst(), regions.getSecond(), user);
     return regions;
   }
 
@@ -795,6 +869,14 @@ public class SplitTransaction {
       return null;
     }
   }
+  
+  public boolean rollback(final Server server, final RegionServerServices services)
+      throws IOException {
+    if (User.isHBaseSecurityEnabled(parent.getBaseConf())) {
+      LOG.warn("Should use rollback(Server, RegionServerServices, User)");
+    }
+    return rollback(server, services, null);
+  }
 
   /**
    * @param server Hosting server instance (May be null when testing).
@@ -804,11 +886,27 @@ public class SplitTransaction {
    * of no return and so now need to abort the server to minimize damage.
    */
   @SuppressWarnings("deprecation")
-  public boolean rollback(final Server server, final RegionServerServices services)
+  public boolean rollback(final Server server, final RegionServerServices services, User user)
   throws IOException {
     // Coprocessor callback
     if (this.parent.getCoprocessorHost() != null) {
-      this.parent.getCoprocessorHost().preRollBackSplit();
+      if (user == null) {
+        this.parent.getCoprocessorHost().preRollBackSplit();
+      } else {
+        try {
+          user.getUGI().doAs(new PrivilegedExceptionAction<Void>() {
+            @Override
+            public Void run() throws Exception {
+              parent.getCoprocessorHost().preRollBackSplit();
+              return null;
+            }
+          });
+        } catch (InterruptedException ie) {
+          InterruptedIOException iioe = new InterruptedIOException();
+          iioe.initCause(ie);
+          throw iioe;
+        }
+      }
     }
 
     boolean result = true;
@@ -870,7 +968,23 @@ public class SplitTransaction {
     }
     // Coprocessor callback
     if (this.parent.getCoprocessorHost() != null) {
-      this.parent.getCoprocessorHost().postRollBackSplit();
+      if (user == null) {
+        this.parent.getCoprocessorHost().postRollBackSplit();
+      } else {
+        try {
+          user.getUGI().doAs(new PrivilegedExceptionAction<Void>() {
+            @Override
+            public Void run() throws Exception {
+              parent.getCoprocessorHost().postRollBackSplit();
+              return null;
+            }
+          });
+        } catch (InterruptedException ie) {
+          InterruptedIOException iioe = new InterruptedIOException();
+          iioe.initCause(ie);
+          throw iioe;
+        }
+      }
     }
     return result;
   }

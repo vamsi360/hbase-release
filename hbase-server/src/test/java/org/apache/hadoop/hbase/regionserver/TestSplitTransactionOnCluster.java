@@ -80,6 +80,7 @@ import org.apache.hadoop.hbase.master.RegionState;
 import org.apache.hadoop.hbase.master.RegionStates;
 import org.apache.hadoop.hbase.master.RegionState.State;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
@@ -822,7 +823,7 @@ public class TestSplitTransactionOnCluster {
       SplitTransaction st = new SplitTransaction(region, Bytes.toBytes("row2"));
       try {
         st.prepare();
-        st.createDaughters(regionServer, regionServer);
+        st.createDaughters(regionServer, regionServer, null);
       } catch (IOException e) {
 
       }
@@ -1206,8 +1207,8 @@ public class TestSplitTransactionOnCluster {
     }
 
     @Override
-    void transitionZKNode(Server server, RegionServerServices services, HRegion a, HRegion b)
-        throws IOException {
+    void transitionZKNode(Server server, RegionServerServices services, HRegion a, HRegion b,
+        User user) throws IOException {
       if (this.currentRegion.getRegionInfo().getTable().getNameAsString()
           .equals("testShouldFailSplitIfZNodeDoesNotExistDueToPrevRollBack")) {
         try {
@@ -1219,7 +1220,7 @@ public class TestSplitTransactionOnCluster {
         }
 
       }
-      super.transitionZKNode(server, services, a, b);
+      super.transitionZKNode(server, services, a, b, user);
       if (this.currentRegion.getRegionInfo().getTable().getNameAsString()
           .equals("testShouldFailSplitIfZNodeDoesNotExistDueToPrevRollBack")) {
         firstSplitCompleted = true;
@@ -1478,7 +1479,7 @@ public class TestSplitTransactionOnCluster {
         throws IOException {
       RegionCoprocessorEnvironment environment = ctx.getEnvironment();
       HRegionServer rs = (HRegionServer) environment.getRegionServerServices();
-      st.stepsAfterPONR(rs, rs, daughterRegions);
+      st.stepsAfterPONR(rs, rs, daughterRegions, null);
     }
 
   }
