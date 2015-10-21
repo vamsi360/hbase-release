@@ -47,7 +47,6 @@ public class TestZooKeeperWatcher {
 
     assertFalse(watcher.isClientReadable(watcher.tableLockZNode));
     assertFalse(watcher.isClientReadable(watcher.balancerZNode));
-    assertFalse(watcher.isClientReadable(watcher.getRegionNormalizerZNode()));
     assertFalse(watcher.isClientReadable(watcher.clusterStateZNode));
     assertFalse(watcher.isClientReadable(watcher.drainingZNode));
     assertFalse(watcher.isClientReadable(watcher.recoveringRegionsZNode));
