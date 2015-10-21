@@ -145,9 +145,9 @@ public class MemcachedBlockCache implements BlockCache {
       // Update stats if this request doesn't have it turned off 100% of the time
       if (updateCacheMetrics) {
         if (result == null) {
-          cacheStats.miss(caching, cacheKey.isPrimary());
+          cacheStats.miss(caching);
         } else {
-          cacheStats.hit(caching, cacheKey.isPrimary());
+          cacheStats.hit(caching);
         }
       }
     }

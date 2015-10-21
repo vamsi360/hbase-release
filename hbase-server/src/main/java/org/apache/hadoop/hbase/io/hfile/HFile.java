@@ -439,10 +439,6 @@ public class HFile {
      * Return the file context of the HFile this reader belongs to
      */
     HFileContext getFileContext();
-    
-    boolean isPrimaryReplicaReader();
-
-    void setPrimaryReplicaReader(boolean isPrimaryReplicaReader);
   }
 
   /**

@@ -80,10 +80,6 @@ public class StoreFileScanner implements KeyValueScanner {
     this.hasMVCCInfo = hasMVCC;
   }
 
-  boolean isPrimaryReplica() {
-    return reader.isPrimaryReplicaReader();
-  }
-
   /**
    * Return an array of scanners corresponding to the given
    * set of store files.
@@ -103,7 +99,7 @@ public class StoreFileScanner implements KeyValueScanner {
       Collection<StoreFile> files, boolean cacheBlocks, boolean usePread,
       boolean isCompaction, long readPt) throws IOException {
     return getScannersForStoreFiles(files, cacheBlocks, usePread, isCompaction,
-        null, readPt, true);
+        null, readPt);
   }
 
   /**
@@ -113,26 +109,17 @@ public class StoreFileScanner implements KeyValueScanner {
    */
   public static List<StoreFileScanner> getScannersForStoreFiles(
       Collection<StoreFile> files, boolean cacheBlocks, boolean usePread,
-      boolean isCompaction, ScanQueryMatcher matcher, long readPt, boolean isPrimaryReplica)
-          throws IOException {
+      boolean isCompaction, ScanQueryMatcher matcher, long readPt) throws IOException {
     List<StoreFileScanner> scanners = new ArrayList<StoreFileScanner>(
         files.size());
     for (StoreFile file : files) {
       StoreFile.Reader r = file.createReader();
-      r.setReplicaStoreFile(isPrimaryReplica);
       StoreFileScanner scanner = r.getStoreFileScanner(cacheBlocks, usePread,
           isCompaction, readPt);
       scanner.setScanQueryMatcher(matcher);
       scanners.add(scanner);
     }
     return scanners;
-  }
-
-  public static List<StoreFileScanner> getScannersForStoreFiles(
-    Collection<StoreFile> files, boolean cacheBlocks, boolean usePread,
-    boolean isCompaction, ScanQueryMatcher matcher, long readPt) throws IOException {
-    return getScannersForStoreFiles(files, cacheBlocks, usePread, isCompaction,
-      matcher, readPt, true);
   }
 
   public String toString() {

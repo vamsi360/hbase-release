@@ -30,7 +30,6 @@ public class BlockCacheKey implements HeapSize, java.io.Serializable {
   private static final long serialVersionUID = -5199992013113130534L;
   private final String hfileName;
   private final long offset;
-  private final boolean isPrimaryReplicaBlock;
 
   /**
    * Construct a new BlockCacheKey
@@ -38,11 +37,6 @@ public class BlockCacheKey implements HeapSize, java.io.Serializable {
    * @param offset Offset of the block into the file
    */
   public BlockCacheKey(String hfileName, long offset) {
-    this(hfileName, offset, true);
-  }
-
-  public BlockCacheKey(String hfileName, long offset, boolean isPrimaryReplica) {
-    this.isPrimaryReplicaBlock = isPrimaryReplica;
     this.hfileName = hfileName;
     this.offset = offset;
   }
@@ -69,7 +63,7 @@ public class BlockCacheKey implements HeapSize, java.io.Serializable {
     return String.format("%s_%d", hfileName, offset);
   }
 
-  public static final long FIXED_OVERHEAD = ClassSize.align(ClassSize.OBJECT +Bytes.SIZEOF_BOOLEAN +
+  public static final long FIXED_OVERHEAD = ClassSize.align(ClassSize.OBJECT +
           ClassSize.REFERENCE + // this.hfileName
           Bytes.SIZEOF_LONG);    // this.offset
 
@@ -89,10 +83,6 @@ public class BlockCacheKey implements HeapSize, java.io.Serializable {
    */
   public String getHfileName() {
     return hfileName;
-  }
-
-  public boolean isPrimary() {
-    return isPrimaryReplicaBlock;
   }
 
   public long getOffset() {
