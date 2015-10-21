@@ -824,7 +824,7 @@ public class RegionMergeTransactionImpl implements RegionMergeTransaction {
 
   @Override
   public List<JournalEntry> getJournal() {
-    return journal;
+    return getJournal();
   }
 
   @Override
