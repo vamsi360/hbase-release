@@ -22,6 +22,7 @@
 # on but this script and balancer will end up fighting each other).
 require 'optparse'
 require File.join(File.dirname(__FILE__), 'thread-pool')
+require 'tmpdir'
 include Java
 import org.apache.hadoop.hbase.HConstants
 import org.apache.hadoop.hbase.HBaseConfiguration
@@ -427,11 +428,10 @@ end
 def getFilename(options, targetServer, port)
   filename = options[:file]
   if not filename
-    filename = "/tmp/" + ENV['USER'] + targetServer + ":" + port
+    filename = File.join(Dir.tmpdir(), ENV['USER'] + targetServer + "_" + port.to_s)
   end
   return filename
 end
-
 
 # Do command-line parsing
 options = {}
@@ -440,7 +440,7 @@ optparse = OptionParser.new do |opts|
   opts.separator 'Load or unload regions by moving one at a time'
   options[:file] = nil
   options[:maxthreads] = 1
-  opts.on('-f', '--filename=FILE', 'File to save regions list into unloading, or read from loading; default /tmp/<hostname:port>') do |file|
+  opts.on('-f', '--filename=FILE', 'File to save regions list into unloading, or read from loading; default /USER_TMP_DIR/<hostname_port>') do |file|
     options[:file] = file
   end
   opts.on('-h', '--help', 'Display usage information') do
