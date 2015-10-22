@@ -50,7 +50,7 @@ public class CompactionConfiguration {
   public static final String RATIO_KEY = CONFIG_PREFIX + "ratio";
   public static final String MIN_KEY = CONFIG_PREFIX + "min";
   public static final String MAX_KEY = CONFIG_PREFIX + "max";
-
+  public static final String HBASE_HSTORE_COMPACTION_DELAY = CONFIG_PREFIX+"delay";
   Configuration conf;
   StoreConfigInformation storeConfigInfo;
 
@@ -63,6 +63,7 @@ public class CompactionConfiguration {
   long throttlePoint;
   long majorCompactionPeriod;
   float majorCompactionJitter;
+  long compactionDelay;
 
   CompactionConfiguration(Configuration conf, StoreConfigInformation storeConfigInfo) {
     this.conf = conf;
@@ -82,7 +83,8 @@ public class CompactionConfiguration {
     majorCompactionPeriod = conf.getLong(HConstants.MAJOR_COMPACTION_PERIOD, 1000*60*60*24*7);
     // Make it 0.5 so jitter has us fall evenly either side of when the compaction should run
     majorCompactionJitter = conf.getFloat("hbase.hregion.majorcompaction.jitter", 0.50F);
-
+    //In ms, but hbase.hstore.compaction.delay is in sec
+    compactionDelay = conf.getLong(HBASE_HSTORE_COMPACTION_DELAY, 0) * 1000;
     LOG.info(this);
   }
 
@@ -165,5 +167,9 @@ public class CompactionConfiguration {
    */
   float getMajorCompactionJitter() {
     return majorCompactionJitter;
+  }
+
+  public long getCompactionDelay() {
+    return compactionDelay;
   }
 }

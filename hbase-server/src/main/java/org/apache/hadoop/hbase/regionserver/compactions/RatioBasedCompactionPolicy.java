@@ -111,6 +111,7 @@ public class RatioBasedCompactionPolicy extends CompactionPolicy {
     if (!majorCompaction) {
       // we're doing a minor compaction, let's see what files are applicable
       candidateSelection = filterBulk(candidateSelection);
+      candidateSelection = filterDelayed(candidateSelection);
       candidateSelection = applyCompactionPolicy(candidateSelection, mayUseOffPeak, mayBeStuck);
       candidateSelection = checkMinFilesCriteria(candidateSelection);
     }
@@ -118,6 +119,29 @@ public class RatioBasedCompactionPolicy extends CompactionPolicy {
     CompactionRequest result = new CompactionRequest(candidateSelection);
     result.setOffPeak(!candidateSelection.isEmpty() && !majorCompaction && mayUseOffPeak);
     return result;
+  }
+
+  private ArrayList<StoreFile> filterDelayed(ArrayList<StoreFile> candidates) {
+    final long delay = comConf.getCompactionDelay();
+    final long currentTime= System.currentTimeMillis();
+    if(delay == 0){
+      return candidates;
+    }
+    int pos = -1;
+    for(int i = 0; i < candidates.size(); i++){
+      StoreFile sf = candidates.get(i);
+      // TODO: min, max 
+      Long ts = sf.getReader().getMaxTimestamp();
+      if(ts == null || currentTime - delay > ts){ 
+        continue;
+      } else{
+       pos = i; break;
+      }
+    }  
+    if(pos >=0){
+      candidates.subList(pos, candidates.size()).clear();
+    }
+    return candidates;    
   }
 
   /**
