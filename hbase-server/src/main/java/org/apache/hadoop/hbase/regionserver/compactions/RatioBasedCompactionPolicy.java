@@ -94,7 +94,7 @@ public class RatioBasedCompactionPolicy extends CompactionPolicy {
         " eligible, " + storeConfigInfo.getBlockingFileCount() + " blocking");
 
     if (!forceMajor) {
-      candidateSelection = skipLargeFiles(candidateSelection);
+      candidateSelection = skipLargeFiles(candidateSelection, mayUseOffPeak);
     }
 
     // Force a major compaction if this is a user-requested major compaction,
@@ -150,10 +150,11 @@ public class RatioBasedCompactionPolicy extends CompactionPolicy {
    * exclude all files above maxCompactSize
    * Also save all references. We MUST compact them
    */
-  private ArrayList<StoreFile> skipLargeFiles(ArrayList<StoreFile> candidates) {
+  private ArrayList<StoreFile> skipLargeFiles(ArrayList<StoreFile> candidates, 
+    boolean mayUseOffpeak) {
     int pos = 0;
     while (pos < candidates.size() && !candidates.get(pos).isReference()
-      && (candidates.get(pos).getReader().length() > comConf.getMaxCompactSize())) {
+      && (candidates.get(pos).getReader().length() > comConf.getMaxCompactSize(mayUseOffpeak))) {
       ++pos;
     }
     if (pos > 0) {

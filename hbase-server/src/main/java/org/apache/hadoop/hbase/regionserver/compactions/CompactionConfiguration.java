@@ -51,10 +51,13 @@ public class CompactionConfiguration {
   public static final String MIN_KEY = CONFIG_PREFIX + "min";
   public static final String MAX_KEY = CONFIG_PREFIX + "max";
   public static final String HBASE_HSTORE_COMPACTION_DELAY = CONFIG_PREFIX+"delay";
+  public static final String HBASE_HSTORE_COMPACTION_MAX_SIZE_OFFPEAK_KEY =
+       "hbase.hstore.compaction.max.size.offpeak";
   Configuration conf;
   StoreConfigInformation storeConfigInfo;
 
   long maxCompactSize;
+  long offPeakMaxCompactSize;
   long minCompactSize;
   int minFilesToCompact;
   int maxFilesToCompact;
@@ -70,6 +73,8 @@ public class CompactionConfiguration {
     this.storeConfigInfo = storeConfigInfo;
 
     maxCompactSize = conf.getLong(CONFIG_PREFIX + "max.size", Long.MAX_VALUE);
+    offPeakMaxCompactSize = conf.getLong(HBASE_HSTORE_COMPACTION_MAX_SIZE_OFFPEAK_KEY,
+       maxCompactSize);
     minCompactSize = conf.getLong(CONFIG_PREFIX + "min.size",
         storeConfigInfo.getMemstoreFlushSize());
     minFilesToCompact = Math.max(2, conf.getInt(MIN_KEY,
@@ -85,16 +90,18 @@ public class CompactionConfiguration {
     majorCompactionJitter = conf.getFloat("hbase.hregion.majorcompaction.jitter", 0.50F);
     //In ms, but hbase.hstore.compaction.delay is in sec
     compactionDelay = conf.getLong(HBASE_HSTORE_COMPACTION_DELAY, 0) * 1000;
+
     LOG.info(this);
   }
 
   @Override
   public String toString() {
     return String.format(
-      "size [%d, %d); files [%d, %d); ratio %f; off-peak ratio %f; throttle point %d;"
+      "size [%d, %d, %d); files [%d, %d); ratio %f; off-peak ratio %f; throttle point %d;"
       + " major period %d, major jitter %f",
       minCompactSize,
       maxCompactSize,
+      offPeakMaxCompactSize,
       minFilesToCompact,
       maxFilesToCompact,
       compactionRatio,
@@ -171,5 +178,17 @@ public class CompactionConfiguration {
 
   public long getCompactionDelay() {
     return compactionDelay;
+  }
+
+  public long getOffPeakMaxCompactSize() {
+    return offPeakMaxCompactSize;
+  }
+  
+  public long getMaxCompactSize(boolean mayUseOffpeak) {
+    if (mayUseOffpeak) {
+      return getOffPeakMaxCompactSize();
+    } else {
+      return getMaxCompactSize();
+    }
   }
 }
