@@ -212,7 +212,7 @@ public class TestDefaultCompactSelection extends TestCase {
     // big size + threshold
     compactEquals(sfCreate(tooBig, tooBig, 700,700) /* empty */);
     // small files = don't care about ratio
-    compactEquals(sfCreate(7,1,1), 7,1,1);
+    compactEquals(sfCreate(2,1,1), 2,1,1);
 
     // don't exceed max file compact threshold
     // note:  file selection starts with largest to smallest.

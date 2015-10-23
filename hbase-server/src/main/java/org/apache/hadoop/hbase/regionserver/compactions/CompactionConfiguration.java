@@ -76,7 +76,7 @@ public class CompactionConfiguration {
     offPeakMaxCompactSize = conf.getLong(HBASE_HSTORE_COMPACTION_MAX_SIZE_OFFPEAK_KEY,
        maxCompactSize);
     minCompactSize = conf.getLong(CONFIG_PREFIX + "min.size",
-        storeConfigInfo.getMemstoreFlushSize());
+        storeConfigInfo.getMemstoreFlushSize()/2);
     minFilesToCompact = Math.max(2, conf.getInt(MIN_KEY,
           /*old name*/ conf.getInt("hbase.hstore.compactionThreshold", 3)));
     maxFilesToCompact = conf.getInt(MAX_KEY, 10);
