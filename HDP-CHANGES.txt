@@ -18,6 +18,7 @@ HBASE-14565 Make ZK connection timeout configurable in MiniZooKeeperCluster
 HBASE-14591 Region with reference hfile may split after a forced split in IncreasingToUpperBoundRegionSplitPolicy (Shaohui Liu)
 HBASE-14361 ReplicationSink should create Connection instances lazily
 HBASE-14621 ReplicationLogCleaner stuck on RS crash (Ashu)
+HBASE-14624 BucketCache.freeBlock is too expensive
 
 HBASE-11658 Piped commands to hbase shell should return non-zero if shell command failed
 HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
