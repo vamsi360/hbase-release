@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.security.Superusers;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
@@ -61,5 +62,20 @@ public class TestZKUtil {
     Assert.assertEquals(aclList.size(), 2); // 1+1, since ACL will be set for the creator by default
     Assert.assertTrue(aclList.contains(new ACL(Perms.ALL, new Id("sasl", "user1"))));
     Assert.assertTrue(aclList.contains(Ids.CREATOR_ALL_ACL.iterator().next()));
+  }
+  
+  @Test
+  public void testCreateACL() throws ZooKeeperConnectionException, IOException {
+    Configuration conf = HBaseConfiguration.create();
+    conf.set(Superusers.SUPERUSER_CONF_KEY, "user1,@group1,user2,@group2,user3");
+    String node = "/hbase/testCreateACL";
+    ZooKeeperWatcher watcher = new ZooKeeperWatcher(conf, node, null, false);
+    List<ACL> aclList = ZKUtil.createACL(watcher, node, true);
+    Assert.assertEquals(aclList.size(), 4); // 3+1, since ACL will be set for the creator by default
+    Assert.assertFalse(aclList.contains(new ACL(Perms.ALL, new Id("sasl", "@group1"))));
+    Assert.assertFalse(aclList.contains(new ACL(Perms.ALL, new Id("sasl", "@group2"))));
+    Assert.assertTrue(aclList.contains(new ACL(Perms.ALL, new Id("sasl", "user1"))));
+    Assert.assertTrue(aclList.contains(new ACL(Perms.ALL, new Id("sasl", "user2"))));
+    Assert.assertTrue(aclList.contains(new ACL(Perms.ALL, new Id("sasl", "user3"))));
   }
 }
