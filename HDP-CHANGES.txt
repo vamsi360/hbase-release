@@ -1,3 +1,4 @@
+HBASE-14680 Two configs for snapshot timeout and better defaults
 HBASE-14621 ReplicationLogCleaner stuck on RS crash (Ashu)
 HBASE-14475 Region split requests are always audited with "hbase" user rather than request user
 HBASE-14605 Split fails due to 'No valid credentials' error when SecureBulkLoadEndpoint#start tries to access hdfs

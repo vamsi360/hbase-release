@@ -1244,4 +1244,18 @@ possible configurations would overwhelm and obscure the important.
     procedure. After implementing your own MasterProcedureManager, just put it in HBase's classpath
     and add the fully qualified class name here.</description>
   </property>
+  <property>
+    <name>hbase.snapshot.master.timeout.millis</name>
+    <value>300000</value>
+    <description>
+       Timeout for master for the snapshot procedure execution
+    </description>
+   </property>
+     <property>
+    <name>hbase.snapshot.region.timeout</name>
+    <value>300000</value>
+    <description>
+       Timeout for regionservers to keep threads in snapshot request pool waiting
+    </description>
+   </property>
 </configuration>

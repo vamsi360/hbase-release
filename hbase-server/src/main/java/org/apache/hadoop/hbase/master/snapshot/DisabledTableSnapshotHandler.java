@@ -27,11 +27,12 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.errorhandling.ForeignException;
-import org.apache.hadoop.hbase.errorhandling.TimeoutExceptionInjector;
 import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.master.MetricsMaster;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
@@ -54,7 +55,6 @@ import org.apache.zookeeper.KeeperException;
 @InterfaceStability.Evolving
 public class DisabledTableSnapshotHandler extends TakeSnapshotHandler {
   private static final Log LOG = LogFactory.getLog(DisabledTableSnapshotHandler.class);
-  private final TimeoutExceptionInjector timeoutInjector;
 
   /**
    * @param snapshot descriptor of the snapshot to take
@@ -63,9 +63,6 @@ public class DisabledTableSnapshotHandler extends TakeSnapshotHandler {
   public DisabledTableSnapshotHandler(SnapshotDescription snapshot,
       final MasterServices masterServices) {
     super(snapshot, masterServices);
-
-    // setup the timer
-    timeoutInjector = TakeSnapshotUtils.getMasterTimerAndBindToMonitor(snapshot, conf, monitor);
   }
 
   @Override
@@ -79,10 +76,6 @@ public class DisabledTableSnapshotHandler extends TakeSnapshotHandler {
   public void snapshotRegions(List<Pair<HRegionInfo, ServerName>> regionsAndLocations)
       throws IOException, KeeperException {
     try {
-      timeoutInjector.start();
-
-      Path snapshotDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);
-
       // 1. get all the regions hosting this table.
 
       // extract each pair to separate lists
@@ -124,10 +117,6 @@ public class DisabledTableSnapshotHandler extends TakeSnapshotHandler {
     } finally {
       LOG.debug("Marking snapshot" + ClientSnapshotDescriptionUtils.toString(snapshot)
           + " as finished.");
-
-      // 6. mark the timer as finished - even if we got an exception, we don't need to time the
-      // operation any further
-      timeoutInjector.complete();
     }
   }
 }
