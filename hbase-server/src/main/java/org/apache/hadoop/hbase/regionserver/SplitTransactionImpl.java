@@ -579,6 +579,13 @@ public class SplitTransactionImpl implements SplitTransaction {
     return regions;
   }
 
+	@Deprecated
+  public PairOfSameType<Region> stepsAfterPONR(final Server server,
+      final RegionServerServices services, final PairOfSameType<Region> regions)
+      throws IOException {
+    return stepsAfterPONR(server, services, regions, null);
+  }
+
   public PairOfSameType<Region> stepsAfterPONR(final Server server,
       final RegionServerServices services, final PairOfSameType<Region> regions, User user)
       throws IOException {
