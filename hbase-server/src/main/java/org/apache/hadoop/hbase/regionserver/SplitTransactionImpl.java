@@ -224,6 +224,12 @@ public class SplitTransactionImpl implements SplitTransaction {
    *    Call {@link #rollback(Server, RegionServerServices)}
    * @return Regions created
    */
+  @Deprecated
+  /* package */PairOfSameType<Region> createDaughters(final Server server,
+      final RegionServerServices services) throws IOException {
+    return createDaughters(server, services, null);
+  }
+
   /* package */PairOfSameType<Region> createDaughters(final Server server,
       final RegionServerServices services, User user) throws IOException {
     LOG.info("Starting split of region " + this.parent);
