@@ -56,6 +56,11 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -99,6 +104,7 @@ import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
@@ -1282,9 +1288,12 @@ public class TestHRegion {
 
       MultithreadedTestUtil.TestContext ctx = new MultithreadedTestUtil.TestContext(CONF);
       final AtomicReference<OperationStatus[]> retFromThread = new AtomicReference<OperationStatus[]>();
+      final CountDownLatch startingPuts = new CountDownLatch(1);
+      final CountDownLatch startingClose = new CountDownLatch(1);
       TestThread putter = new TestThread(ctx) {
         @Override
         public void doWork() throws IOException {
+          startingPuts.countDown();
           retFromThread.set(region.batchMutate(puts));
         }
       };
@@ -1292,20 +1301,12 @@ public class TestHRegion {
       ctx.addThread(putter);
       ctx.startThreads();
 
-      LOG.info("...waiting for put thread to sync first time");
-      long startWait = System.currentTimeMillis();
-      while (metricsAssertHelper.getCounter("syncTimeNumOps", source) == syncs + 2) {
-        Thread.sleep(100);
-        if (System.currentTimeMillis() - startWait > 10000) {
-          fail("Timed out waiting for thread to sync first minibatch");
-        }
-      }
       LOG.info("...releasing row lock, which should let put thread continue");
       rowLock.release();
       LOG.info("...joining on thread");
       ctx.stop();
       LOG.info("...checking that next batch was synced");
-      metricsAssertHelper.assertCounter("syncTimeNumOps", syncs + 4, source);
+      metricsAssertHelper.assertCounter("syncTimeNumOps", syncs + 3, source);
       codes = retFromThread.get();
       for (int i = 0; i < 10; i++) {
         assertEquals((i == 5) ? OperationStatusCode.BAD_FAMILY : OperationStatusCode.SUCCESS,
@@ -5689,6 +5690,53 @@ public class TestHRegion {
       region = null;
       CONF.setLong("hbase.busy.wait.duration", defaultBusyWaitDuration);
     }
+  }
+
+  @Test(timeout = 30000)
+  public void testBatchMutateWithWrongRegionException() throws IOException, InterruptedException {
+    final byte[] a = Bytes.toBytes("a");
+    final byte[] b = Bytes.toBytes("b");
+    final byte[] c = Bytes.toBytes("c"); // exclusive
+
+    int prevLockTimeout = CONF.getInt("hbase.rowlock.wait.duration", 30000);
+    CONF.setInt("hbase.rowlock.wait.duration", 3000);
+    final HRegion region = initHRegion(tableName, a, c, name.getMethodName(), CONF, false, fam1);
+
+    Mutation[] mutations = new Mutation[] {
+        new Put(a).addImmutable(fam1, null, null),
+        new Put(c).addImmutable(fam1, null, null), // this is outside the region boundary
+        new Put(b).addImmutable(fam1, null, null),
+    };
+
+    OperationStatus[] status = region.batchMutate(mutations);
+    assertEquals(status[0].getOperationStatusCode(), OperationStatusCode.SUCCESS);
+    assertEquals(status[1].getOperationStatusCode(), OperationStatusCode.SANITY_CHECK_FAILURE);
+    assertEquals(status[2].getOperationStatusCode(), OperationStatusCode.SUCCESS);
+
+    // test with a leaked row lock
+    ExecutorService exec = Executors.newSingleThreadExecutor();
+    exec.submit(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        region.getRowLock(b);
+        return null;
+      }
+    });
+    exec.shutdown();
+    exec.awaitTermination(30, TimeUnit.SECONDS);
+
+    mutations = new Mutation[] {
+        new Put(a).addImmutable(fam1, null, null),
+        new Put(b).addImmutable(fam1, null, null),
+    };
+
+    try {
+      status = region.batchMutate(mutations);
+      fail("Failed to throw exception");
+    } catch (IOException expected) {
+    }
+
+    CONF.setInt("hbase.rowlock.wait.duration", prevLockTimeout);
   }
 
   static HRegion initHRegion(byte[] tableName, String callingMethod,
