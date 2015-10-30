@@ -203,3 +203,4 @@ HBASE-10347 HRegionInfo changes for adding replicaId and MetaEditor/MetaReader c
 HBASE-10277 refactor AsyncProcess
 HBASE-10427 clean up HRegionLocation/ServerName usage
 HBASE-10472 Manage the interruption in ZKUtil#getData
+HBASE-13825 Use ProtobufUtil#mergeFrom and ProtobufUtil#mergeDelimitedFrom in place of builder methods of same name
