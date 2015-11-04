@@ -1989,9 +1989,10 @@ public class FSHLog implements WAL {
         // syncRunner. We should never get an exception in here. HBASE-11145 was because queue
         // was sized exactly to the count of user handlers but we could have more if we factor in
         // meta handlers doing opens and closes.
-        int index = Math.abs(this.syncRunnerIndex++) % this.syncRunners.length;
+        this.syncRunnerIndex = (this.syncRunnerIndex + 1) % this.syncRunners.length;
         try {
-          this.syncRunners[index].offer(sequence, this.syncFutures, this.syncFuturesCount);
+          this.syncRunners[this.syncRunnerIndex].offer(sequence, this.syncFutures,
+            this.syncFuturesCount);
         } catch (Exception e) {
           cleanupOutstandingSyncsOnException(sequence, e);
           throw e;
