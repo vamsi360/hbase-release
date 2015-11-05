@@ -495,7 +495,7 @@ function InstallBinaries(
         New-Item -Path "$hbaseLogsDir" -type directory | Out-Null
     }
 
-    GiveFullPermissions "$hbaseLogsDir" "Users"
+    GiveFullPermissions "$hbaseLogsDir" "*S-1-5-32-545"
 
     [Environment]::SetEnvironmentVariable( "HBASE_CONF_DIR", "$ENV:HBASE_HOME\conf", [EnvironmentVariableTarget]::Machine )
 
