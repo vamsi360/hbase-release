@@ -1,3 +1,7 @@
+HBASE-13437 ThriftServer leaks ZooKeeper connections (Winger Pun)
+HBASE-14302 TableSnapshotInputFormat should not create back references when restoring snapshot
+HBASE-14624 BucketCache.freeBlock is too expensive
+HBASE-14689 Addendum and unit test for HBASE-13471
 HBASE-14680 Two configs for snapshot timeout and better defaults
 HBASE-14621 ReplicationLogCleaner stuck on RS crash (Ashu)
 HBASE-14475 Region split requests are always audited with "hbase" user rather than request user
