@@ -24,6 +24,7 @@ HBASE-14605 Split fails due to 'No valid credentials' error when SecureBulkLoadE
 HBASE-14759 Avoid using Math.abs when selecting SyncRunner in FSHLog
 HBASE-14268 Improve KeyLocker (Hiroshi Ikeda)
 HBASE-14706 RegionLocationFinder should return multiple servernames by top host (Guanghao Zhang)
+HBASE-14463 Severe performance downgrade when parallel reading a single key from BucketCache (Yu Li)
 
 HBASE-11658 Piped commands to hbase shell should return non-zero if shell command failed
 HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
