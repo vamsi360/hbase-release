@@ -23,6 +23,7 @@ HBASE-14475 Region split requests are always audited with hbase user rather than
 HBASE-14605 Split fails due to 'No valid credentials' error when SecureBulkLoadEndpoint#start tries to access hdfs
 HBASE-14759 Avoid using Math.abs when selecting SyncRunner in FSHLog
 HBASE-14268 Improve KeyLocker (Hiroshi Ikeda)
+HBASE-14706 RegionLocationFinder should return multiple servernames by top host (Guanghao Zhang)
 
 HBASE-11658 Piped commands to hbase shell should return non-zero if shell command failed
 HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
