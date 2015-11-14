@@ -73,6 +73,7 @@ class DefaultStoreFileManager implements StoreFileManager {
 
   @Override
   public final Collection<StoreFile> getStorefiles() {
+    // TODO: I can return a null list of StoreFiles? That'll mess up clients. St.Ack 20151111
     return storefiles;
   }
 
