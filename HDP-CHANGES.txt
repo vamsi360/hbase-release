@@ -26,6 +26,8 @@ HBASE-14268 Improve KeyLocker (Hiroshi Ikeda)
 HBASE-14706 RegionLocationFinder should return multiple servernames by top host (Guanghao Zhang)
 HBASE-14463 Severe performance downgrade when parallel reading a single key from BucketCache (Yu Li)
 HBASE-14631 Region merge request should be audited with request user through proper scope of doAs() calls to region observer notifications
+HBASE-14809 Grant / revoke Namespace admin permission to group
+HBASE-14788 Splitting a region does not support the hbase.rs.evictblocksonclose config when closing source region
 
 HBASE-11658 Piped commands to hbase shell should return non-zero if shell command failed
 HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
