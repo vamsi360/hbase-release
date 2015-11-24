@@ -144,6 +144,7 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
       if(status == null) {
         throw new IllegalStateException("Failed to create staging directory");
       }
+      LOG.debug("Permission for " + baseStagingDir + " is " + status.getPermission());
       if(!status.getPermission().equals(PERM_HIDDEN)) {
         throw new IllegalStateException(
             "Directory already exists but permissions aren't set to '-rwx--x--x' ");
