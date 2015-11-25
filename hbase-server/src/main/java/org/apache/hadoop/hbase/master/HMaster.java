@@ -1397,7 +1397,8 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
       Collections.shuffle(allEnabledTables);
 
       for(TableName table : allEnabledTables) {
-        if (table.isSystemTable() || !getTableDescriptors().get(table).isNormalizationEnabled()) {
+        if (table.isSystemTable() || (getTableDescriptors().get(table) != null &&
+          !getTableDescriptors().get(table).isNormalizationEnabled())) {
           LOG.debug("Skipping normalization for table: " + table + ", as it's either system"
             + " table or doesn't have auto normalization turned on");
           continue;
