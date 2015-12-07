@@ -31,6 +31,7 @@ HBASE-14788 Splitting a region does not support the hbase.rs.evictblocksonclose 
 HBASE-14207 Region was hijacked and remained in transition when RS failed to open a region and later regionplan changed to new RS on retry (Pankaj Kumar)
 HBASE-14885 NullPointerException in HMaster#normalizeRegions() due to missing TableDescriptor
 HBASE-14893 Race between mutation on region and region closing operation leads to NotServingRegionException
+HBASE-14799 Commons-collections object deserialization remote command execution vulnerability (Andrew Purtell)
 
 HBASE-11658 Piped commands to hbase shell should return non-zero if shell command failed
 HBASE-11940 Add utility scripts for snapshotting / restoring all tables in cluster
