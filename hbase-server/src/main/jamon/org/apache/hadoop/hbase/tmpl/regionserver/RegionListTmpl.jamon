@@ -96,7 +96,9 @@
 
         <%for HRegionInfo r: onlineRegions %>
         <tr>
-            <td><% r.getRegionNameAsString() %></td>
+            <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+              <% r.getRegionNameAsString() %></a>
+            </td>
             <td><% Bytes.toStringBinary(r.getStartKey()) %></td>
             <td><% Bytes.toStringBinary(r.getEndKey()) %></td>
             <td><% r.getReplicaId() %></td>
@@ -122,7 +124,9 @@
         <%java>
             RegionLoad load = regionServer.createRegionLoad(r.getEncodedName());
         </%java>
-            <td><% r.getRegionNameAsString() %></td>
+            <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+              <% r.getRegionNameAsString() %></a>
+            </td>
             <%if load != null %>
             <td><% load.getReadRequestsCount() %></td>
             <td><% load.getWriteRequestsCount() %></td>
@@ -155,7 +159,9 @@
         <%java>
             RegionLoad load = regionServer.createRegionLoad(r.getEncodedName());
         </%java>
-            <td><% r.getRegionNameAsString() %></td>
+            <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+              <% r.getRegionNameAsString() %></a>
+            </td>
             <%if load != null %>
             <td><% load.getStores() %></td>
             <td><% load.getStorefiles() %></td>
@@ -198,7 +204,9 @@
             ((float) load.getCurrentCompactedKVs() / load.getTotalCompactingKVs())) + "%";
             }
         </%java>
-            <td><% r.getRegionNameAsString() %></td>
+            <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+              <% r.getRegionNameAsString() %></a>
+            </td>
             <%if load != null %>
             <td><% load.getTotalCompactingKVs() %></td>
             <td><% load.getCurrentCompactedKVs() %></td>
@@ -225,7 +233,9 @@
         <%java>
             RegionLoad load = regionServer.createRegionLoad(r.getEncodedName());
         </%java>
-            <td><% r.getRegionNameAsString() %></td>
+            <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+              <% r.getRegionNameAsString() %></a>
+            </td>
             <%if load != null %>
             <td><% TraditionalBinaryPrefix.long2String(
                 load.getMemstoreSizeMB() * TraditionalBinaryPrefix.MEGA.value, "B", 1) %></td>
