@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.CellScannable;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.util.ReflectionUtils;
+import org.mortbay.log.Log;
 
 /**
  * Factory to create a {@link PayloadCarryingRpcController}
@@ -55,7 +56,16 @@ public class RpcControllerFactory {
     String rpcControllerFactoryClazz =
         configuration.get(CUSTOM_CONTROLLER_CONF_KEY,
           RpcControllerFactory.class.getName());
-    return ReflectionUtils.instantiateWithCustomCtor(rpcControllerFactoryClazz,
-      new Class[] { Configuration.class }, new Object[] { configuration });
+    try {
+      return ReflectionUtils.instantiateWithCustomCtor(rpcControllerFactoryClazz,
+        new Class[] { Configuration.class }, new Object[] { configuration });
+    } catch (UnsupportedOperationException | NoClassDefFoundError ex) {
+      // HBASE-14960: In case the RPCController is in a non-HBase jar (Phoenix), but the application
+      // is a pure HBase application, we want to fallback to the default one.
+      Log.warn("Cannot load configured \"" + CUSTOM_CONTROLLER_CONF_KEY + "\" ("
+          + rpcControllerFactoryClazz + ") from hbase-site.xml, falling back to use "
+          + "default RpcControllerFactory");
+      return new RpcControllerFactory(configuration);
+    }
   }
 }
