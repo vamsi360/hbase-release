@@ -250,8 +250,6 @@ public final class Canary implements Tool {
     long startTime = 0;
     long currentTimeLength = 0;
     // Get a connection to use in below.
-    // try-with-resources jdk7 construct. See
-    // http://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html
     try (Connection connection = ConnectionFactory.createConnection(this.conf)) {
       do {
         // Do monitor !!
@@ -314,8 +312,8 @@ public final class Canary implements Tool {
     System.err.println("      which means to enable regionserver mode");
     System.err.println("   -daemon        Continuous check at defined intervals.");
     System.err.println("   -interval <N>  Interval between checks (sec)");
-    System.err.println("   -e             Use region/regionserver as regular expression");
-    System.err.println("      which means the region/regionserver is regular expression pattern");
+    System.err.println("   -e             Use table/regionserver as regular expression");
+    System.err.println("      which means the table/regionserver is regular expression pattern");
     System.err.println("   -f <B>         stop whole program if first error occurs," +
         " default is true");
     System.err.println("   -t <N>         timeout for a check, default is 600000 (milisecs)");
@@ -387,6 +385,7 @@ public final class Canary implements Tool {
       this.sink = sink;
     }
 
+    @Override
     public abstract void run();
 
     protected boolean initAdmin() {
@@ -442,11 +441,17 @@ public final class Canary implements Tool {
         HTableDescriptor[] tds = null;
         Set<String> tmpTables = new TreeSet<String>();
         try {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(String.format("reading list of tables"));
+          }
+          tds = this.admin.listTables(pattern);
+          if (tds == null) {
+            tds = new HTableDescriptor[0];
+          }
           for (String monitorTarget : monitorTargets) {
             pattern = Pattern.compile(monitorTarget);
-            tds = this.admin.listTables(pattern);
-            if (tds != null) {
-              for (HTableDescriptor td : tds) {
+            for (HTableDescriptor td : tds) {
+              if (pattern.matcher(td.getNameAsString()).matches()) {
                 tmpTables.add(td.getNameAsString());
               }
             }
@@ -476,11 +481,13 @@ public final class Canary implements Tool {
      * canary entry point to monitor all the tables.
      */
     private void sniff() throws Exception {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("reading list of tables"));
+      }
       for (HTableDescriptor table : admin.listTables()) {
         Canary.sniff(admin, sink, table);
       }
     }
-
   }
 
   /**
@@ -497,6 +504,10 @@ public final class Canary implements Tool {
    */
   private static void sniff(final Admin admin, final Sink sink, String tableName)
       throws Exception {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("checking table is enabled and getting table descriptor for table %s",
+        tableName));
+    }
     if (admin.isTableAvailable(TableName.valueOf(tableName))) {
       sniff(admin, sink, admin.getTableDescriptor(TableName.valueOf(tableName)));
     } else {
@@ -509,6 +520,10 @@ public final class Canary implements Tool {
    */
   private static void sniff(final Admin admin, final Sink sink, HTableDescriptor tableDesc)
       throws Exception {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("reading list of regions for table %s", tableDesc.getTableName()));
+    }
+
     Table table = null;
 
     try {
@@ -615,6 +630,9 @@ public final class Canary implements Tool {
       List<String> foundTableNames = new ArrayList<String>();
       TableName[] tableNames = null;
 
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("reading list of tables"));
+      }
       try {
         tableNames = this.admin.listTableNames();
       } catch (IOException e) {
@@ -714,6 +732,9 @@ public final class Canary implements Tool {
       Table table = null;
       RegionLocator regionLocator = null;
       try {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("reading list of tables and locations"));
+        }
         HTableDescriptor[] tableDescs = this.admin.listTables();
         List<HRegionInfo> regions = null;
         for (HTableDescriptor tableDesc : tableDescs) {
