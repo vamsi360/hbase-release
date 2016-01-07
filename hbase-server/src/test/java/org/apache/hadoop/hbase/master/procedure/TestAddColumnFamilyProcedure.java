@@ -27,9 +27,9 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.InvalidFamilyOperationException;
+import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.procedure2.ProcedureExecutor;
-import org.apache.hadoop.hbase.procedure2.ProcedureResult;
 import org.apache.hadoop.hbase.procedure2.ProcedureTestingUtility;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProcedureProtos.AddColumnFamilyState;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
@@ -141,10 +141,11 @@ public class TestAddColumnFamilyProcedure {
     ProcedureTestingUtility.waitProcedure(procExec, procId2);
 
     // Second add should fail with InvalidFamilyOperationException
-    ProcedureResult result = procExec.getResult(procId2);
+    ProcedureInfo result = procExec.getResult(procId2);
     assertTrue(result.isFailed());
-    LOG.debug("Add failed with exception: " + result.getException());
-    assertTrue(result.getException().getCause() instanceof InvalidFamilyOperationException);
+    LOG.debug("Add failed with exception: " + result.getExceptionFullMessage());
+    assertTrue(
+      ProcedureTestingUtility.getExceptionCause(result) instanceof InvalidFamilyOperationException);
 
     // Do the same add the existing column family - this time offline
     UTIL.getHBaseAdmin().disableTable(tableName);
@@ -157,8 +158,9 @@ public class TestAddColumnFamilyProcedure {
     // Second add should fail with InvalidFamilyOperationException
     result = procExec.getResult(procId3);
     assertTrue(result.isFailed());
-    LOG.debug("Add failed with exception: " + result.getException());
-    assertTrue(result.getException().getCause() instanceof InvalidFamilyOperationException);
+    LOG.debug("Add failed with exception: " + result.getExceptionFullMessage());
+    assertTrue(
+      ProcedureTestingUtility.getExceptionCause(result) instanceof InvalidFamilyOperationException);
   }
 
   @Test(timeout = 60000)

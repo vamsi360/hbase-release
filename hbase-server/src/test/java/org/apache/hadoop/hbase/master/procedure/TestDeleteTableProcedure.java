@@ -24,11 +24,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.procedure2.ProcedureExecutor;
-import org.apache.hadoop.hbase.procedure2.ProcedureResult;
 import org.apache.hadoop.hbase.procedure2.ProcedureTestingUtility;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProcedureProtos.DeleteTableState;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
@@ -137,10 +137,10 @@ public class TestDeleteTableProcedure {
       UTIL.getHBaseCluster().getMaster(), tableName, regions, "f");
 
     // Second delete should fail with TableNotFound
-    ProcedureResult result = procExec.getResult(procId2);
+    ProcedureInfo result = procExec.getResult(procId2);
     assertTrue(result.isFailed());
-    LOG.debug("Delete failed with exception: " + result.getException());
-    assertTrue(result.getException().getCause() instanceof TableNotFoundException);
+    LOG.debug("Delete failed with exception: " + result.getExceptionFullMessage());
+    assertTrue(ProcedureTestingUtility.getExceptionCause(result) instanceof TableNotFoundException);
   }
 
   @Test(timeout=60000)
