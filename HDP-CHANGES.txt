@@ -2,6 +2,11 @@ HDP-2.3 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.1
 
+HBASE-14432 Procedure V2 - enforce ACL on procedure admin tasks (Stephen Yuan Jiang)
+HBASE-14488 Procedure V2 - shell command to abort a procedure (Stephen Yuan Jiang)
+HBASE-14487 Procedure V2 - shell command to list all procedures (Stephen Yuan Jiang)
+HBASE-14107 Procedure V2 - Administrative Task: Provide an API to List all procedures (Stephen Yuan Jiang)
+HBASE-14108 Procedure V2 - Administrative Task: provide an API to abort a procedure (Stephen Yuan Jiang)
 HBASE-14445 ExportSnapshot does not honor -chmod option
 HBASE-13250 chown of ExportSnapshot does not cover all path and files (He Liangliang)
 HBASE-14280 Bulk Upload from HA cluster to remote HA hbase cluster fails (Ankit Singhal)
