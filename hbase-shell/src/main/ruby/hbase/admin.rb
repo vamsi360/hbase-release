@@ -1016,9 +1016,15 @@ module Hbase
 
 
     #----------------------------------------------------------------------------------------------
-    # Drops a table
+    # Drops a namespace
     def drop_namespace(namespace_name)
       @admin.deleteNamespace(namespace_name)
+    end
+
+    #----------------------------------------------------------------------------------------------
+    # List all procedures
+    def list_procedures()
+      @admin.listProcedures()
     end
 
   end
