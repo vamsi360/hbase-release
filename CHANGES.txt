@@ -93,7 +93,7 @@ Release Nodes - HBase - Version 1.1.2 08/21/2015
     * [HBASE-14002] - Add --noReplicationSetup option to IntegrationTestReplication
     * [HBASE-14097] - Log link to client scan troubleshooting section when scanner exceptions happen.
     * [HBASE-14260] - don't build javadocs for hbase-protocol module
-
+    * [HBASE-14468] - Compaction improvements: FIFO compaction policy
 
 
 
