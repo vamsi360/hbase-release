@@ -7,6 +7,7 @@ HBASE-14987 Compaction marker whose region name doesn't match current region's n
 HBASE-14471 Thrift -  HTTP Error 413 full HEAD if using kerberos authentication
 HBASE-15035 bulkloading hfiles with tags that require splits do not preserve tags (Jonathan Hsieh)
 HBASE-14761 Deletes with and without visibility expression do not delete the matching mutation (Ram)
+HBASE-14575 Relax region read lock for compactions
 HBASE-15022 replication_admin.rb throws undefined method 'getZooKeeperClusterKey' for ZKUtil (Matteo)
 HBASE-14866 VerifyReplication should use peer configuration in peer connection (Gary Helmling)
 HBASE-14928 Start row should be set for query through HBase REST gateway involving globbing option
