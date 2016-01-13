@@ -1,7 +1,10 @@
-HDP-2.3 is based on Apache HBase 1.1.2
+HDP-2.4 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.1
 
+HBASE-14947 WALProcedureStore improvements (Matteo Bertozzi)
+HBASE-14843 TestWALProcedureStore.testLoad is flakey (Matteo Bertozz)
+HBASE-14712 Increase MasterProcWALs clean up granularity (Matteo Bertozzi)
 HBASE-14468 Compaction improvements: FIFO compaction policy (Vladimir Rodionov)
 HBASE-14987 Compaction marker whose region name doesn't match current region's needs to be handled
 HBASE-14471 Thrift -  HTTP Error 413 full HEAD if using kerberos authentication
