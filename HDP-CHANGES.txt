@@ -2,6 +2,7 @@ HDP-2.4 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.1
 
+HBASE-14963 Remove Guava dependency from HBase client code (ddas)
 HBASE-14947 WALProcedureStore improvements (Matteo Bertozzi)
 HBASE-14843 TestWALProcedureStore.testLoad is flakey (Matteo Bertozz)
 HBASE-14712 Increase MasterProcWALs clean up granularity (Matteo Bertozzi)
