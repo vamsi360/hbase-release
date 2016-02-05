@@ -809,9 +809,11 @@ public abstract class BaseLoadBalancer implements LoadBalancer {
           i++;
           lowestLocalityServerIndex = serverIndicesSortedByLocality[i];
         }
-        LOG.debug("Lowest locality region server with non zero regions is "
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Lowest locality region server with non zero regions is "
             + servers[lowestLocalityServerIndex].getHostname() + " with locality "
             + localityPerServer[lowestLocalityServerIndex]);
+        }
         return lowestLocalityServerIndex;
       }
     }
@@ -834,9 +836,11 @@ public abstract class BaseLoadBalancer implements LoadBalancer {
             lowestLocalityRegionIndex = j;
           }
         }
-        LOG.debug(" Lowest locality region index is " + lowestLocalityRegionIndex
+        if (LOG.isTraceEnabled()) {
+          LOG.debug(" Lowest locality region index is " + lowestLocalityRegionIndex
             + " and its region server contains " + regionsPerServer[serverIndex].length
             + " regions");
+        }
         return regionsPerServer[serverIndex][lowestLocalityRegionIndex];
       } else {
         return -1;
