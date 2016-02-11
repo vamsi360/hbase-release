@@ -1302,8 +1302,14 @@ class AsyncProcess {
           errorsByServer.reportServerError(server);
           canRetry = errorsByServer.canRetryMore(numAttempt);
         }
-        connection.updateCachedLocations(
-            tableName, region, actions.get(0).getAction().getRow(), throwable, server);
+        if (null == tableName) {
+          // For multi-actions, we don't have a table name, but we want to make sure to clear the
+          // cache in case there were location-related exceptions
+          connection.clearCaches(server);
+        } else {
+          connection.updateCachedLocations(
+              tableName, region, actions.get(0).getAction().getRow(), throwable, server);
+        }
         failureCount += actions.size();
 
         for (Action<Row> action : actions) {
