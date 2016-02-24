@@ -23,10 +23,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
 
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.io.util.StreamUtils;
 import org.apache.hadoop.hbase.procedure2.Procedure;
 import org.apache.hadoop.hbase.procedure2.store.ProcedureStoreTracker;
@@ -113,7 +113,7 @@ public final class ProcedureWALFormat {
    * |      offset     |-----+
    * +-----------------+
    */
-  public static void writeTrailer(FSDataOutputStream stream, ProcedureStoreTracker tracker)
+  public static long writeTrailer(FSDataOutputStream stream, ProcedureStoreTracker tracker)
       throws IOException {
     long offset = stream.getPos();
 
@@ -128,6 +128,7 @@ public final class ProcedureWALFormat {
     stream.write(TRAILER_VERSION);
     StreamUtils.writeLong(stream, TRAILER_MAGIC);
     StreamUtils.writeLong(stream, offset);
+    return stream.getPos() - offset;
   }
 
   public static ProcedureWALHeader readHeader(InputStream stream)
