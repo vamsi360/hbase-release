@@ -91,6 +91,7 @@ import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ProcedureDescripti
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier.RegionSpecifierType;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableSchema;
+import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AddColumnRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AssignRegionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.CreateNamespaceRequest;
@@ -4336,5 +4337,35 @@ public class HBaseAdmin implements Admin {
         callable.throwTimeoutException(EnvironmentEdgeManager.currentTime() - startTime);
       }
     }
+  }
+
+  @Override
+  public boolean[] setSplitOrMergeEnabled(final boolean enabled, final boolean synchronous,
+                                          final MasterSwitchType... switchTypes)
+    throws IOException {
+    return executeCallable(new MasterCallable<boolean[]>(getConnection()) {
+      @Override
+      public boolean[] call(int callTimeout) throws ServiceException {
+        MasterProtos.SetSplitOrMergeEnabledResponse response = master.setSplitOrMergeEnabled(null,
+          RequestConverter.buildSetSplitOrMergeEnabledRequest(enabled, synchronous, switchTypes));
+        boolean[] result = new boolean[switchTypes.length];
+        int i = 0;
+        for (Boolean prevValue : response.getPrevValueList()) {
+          result[i++] = prevValue;
+        }
+        return result;
+      }
+    });
+  }
+
+  @Override
+  public boolean isSplitOrMergeEnabled(final MasterSwitchType switchType) throws IOException {
+    return executeCallable(new MasterCallable<Boolean>(getConnection()) {
+      @Override
+      public Boolean call(int callTimeout) throws ServiceException {
+        return master.isSplitOrMergeEnabled(null,
+          RequestConverter.buildIsSplitOrMergeEnabledRequest(switchType)).getEnabled();
+      }
+    });
   }
 }
