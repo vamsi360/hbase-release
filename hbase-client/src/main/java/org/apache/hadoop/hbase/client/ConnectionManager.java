@@ -2057,15 +2057,29 @@ class ConnectionManager {
         }
 
         @Override
-        public IsNormalizerEnabledResponse isNormalizerEnabled(RpcController controller,
-            IsNormalizerEnabledRequest request) throws ServiceException {
-          return stub.isNormalizerEnabled(controller, request);
-        }
-
-        @Override
         public IsBalancerEnabledResponse isBalancerEnabled(RpcController controller,
             IsBalancerEnabledRequest request) throws ServiceException {
           return stub.isBalancerEnabled(controller, request);
+        }
+
+        @Override
+        public MasterProtos.SetSplitOrMergeEnabledResponse setSplitOrMergeEnabled(
+          RpcController controller,
+          MasterProtos.SetSplitOrMergeEnabledRequest request) throws ServiceException {
+          return stub.setSplitOrMergeEnabled(controller, request);
+        }
+
+        @Override
+        public MasterProtos.IsSplitOrMergeEnabledResponse isSplitOrMergeEnabled(
+          RpcController controller,
+          MasterProtos.IsSplitOrMergeEnabledRequest request) throws ServiceException {
+          return stub.isSplitOrMergeEnabled(controller, request);
+        }
+
+        @Override
+        public IsNormalizerEnabledResponse isNormalizerEnabled(RpcController controller,
+            IsNormalizerEnabledRequest request) throws ServiceException {
+          return stub.isNormalizerEnabled(controller, request);
         }
       };
     }

@@ -236,6 +236,7 @@ public class HBaseFsck extends Configured implements Closeable {
    ***********/
   private static boolean details = false; // do we display the full report
   private long timelag = DEFAULT_TIME_LAG; // tables whose modtime is older
+  private static boolean disableSplitAndMerge = false; // disable split and merge
   private boolean fixAssignments = false; // fix assignment errors?
   private boolean fixMeta = false; // fix meta errors?
   private boolean checkHdfs = true; // load and check fs consistency?
@@ -696,11 +697,30 @@ public class HBaseFsck extends Configured implements Closeable {
 
     // turn the balancer off
     boolean oldBalancer = admin.setBalancerRunning(false, true);
+    boolean[] oldSplitAndMerge = null;
+    if (shouldDisableSplitAndMerge()) {
+      oldSplitAndMerge = admin.setSplitOrMergeEnabled(false, false,
+        Admin.MasterSwitchType.SPLIT, Admin.MasterSwitchType.MERGE);
+    }
+
     try {
       onlineConsistencyRepair();
     }
     finally {
       admin.setBalancerRunning(oldBalancer, false);
+
+      if (shouldDisableSplitAndMerge()) {
+        if (oldSplitAndMerge != null) {
+          if (oldSplitAndMerge[0] && oldSplitAndMerge[1]) {
+            admin.setSplitOrMergeEnabled(true, false,
+              Admin.MasterSwitchType.SPLIT, Admin.MasterSwitchType.MERGE);
+          } else if (oldSplitAndMerge[0]) {
+            admin.setSplitOrMergeEnabled(true, false, Admin.MasterSwitchType.SPLIT);
+          } else if (oldSplitAndMerge[1]) {
+            admin.setSplitOrMergeEnabled(true, false, Admin.MasterSwitchType.MERGE);
+          }
+        }
+      }
     }
 
     if (checkRegionBoundaries) {
@@ -4155,6 +4175,22 @@ public class HBaseFsck extends Configured implements Closeable {
   }
 
   /**
+   * Disable the split and merge
+   */
+  public static void setDisableSplitAndMerge() {
+    disableSplitAndMerge = true;
+  }
+
+  /**
+   * The split and merge should be disabled if we are modifying HBase.
+   * It can be disabled if you want to prevent region movement from causing
+   * false positives.
+   */
+  public boolean shouldDisableSplitAndMerge() {
+    return fixAny || disableSplitAndMerge;
+  }
+
+  /**
    * Set summary mode.
    * Print only summary of the tables and status (OK or INCONSISTENT)
    */
@@ -4509,6 +4545,8 @@ public class HBaseFsck extends Configured implements Closeable {
         return printUsageAndExit();
       } else if (cmd.equals("-details")) {
         setDisplayFullReport();
+      }  else if (cmd.equals("-disableSplitAndMerge")) {
+        setDisableSplitAndMerge();
       } else if (cmd.equals("-timelag")) {
         if (i == args.length - 1) {
           errors.reportError(ERROR_CODE.WRONG_USAGE, "HBaseFsck: -timelag needs a value.");
