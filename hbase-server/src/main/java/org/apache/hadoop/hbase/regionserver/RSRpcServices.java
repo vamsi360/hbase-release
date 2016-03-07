@@ -2344,6 +2344,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
             region.startRegionOperation(Operation.SCAN);
             try {
               int i = 0;
+              long before = EnvironmentEdgeManager.currentTime();
               synchronized(scanner) {
                 boolean stale = (region.getRegionInfo().getReplicaId() != 0);
                 boolean clientHandlesPartials =
@@ -2458,9 +2459,12 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
                 }
               }
               region.updateReadRequestsCount(i);
-              region.getMetrics().updateScanNext(totalCellSize);
+              long end = EnvironmentEdgeManager.currentTime();
+              region.getMetrics().updateScanSize(totalCellSize);
+              region.getMetrics().updateScanTime(end - before);
               if (regionServer.metricsRegionServer != null) {
-                regionServer.metricsRegionServer.updateScannerNext(totalCellSize);
+                regionServer.metricsRegionServer.updateScanSize(totalCellSize);
+                regionServer.metricsRegionServer.updateScanTime(end - before);
               }
             } finally {
               region.closeRegionOperation();
