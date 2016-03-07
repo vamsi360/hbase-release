@@ -50,3 +50,4 @@ HBASE-14302 TableSnapshotInputFormat should not create back references when rest
 BUG-45027/BUG-45361 Fix hostname used with Kerberos on Dual-Homed clusters.
 HBASE-14536 Balancer & SSH interfering with each other leading to unavailability
 HBASE-14680 Two configs for snapshot timeout and better defaults
+HBASE-14283 Reverse scan doesn’t work with HFile inline index/bloom blocks
