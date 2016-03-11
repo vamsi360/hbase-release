@@ -60,6 +60,7 @@ public class MetricsWAL extends WALActionsListener.Base {
     source.incrementAppendCount();
     source.incrementAppendTime(time);
     source.incrementAppendSize(size);
+    source.incrementWrittenBytes(size);
 
     if (time > 1000) {
       source.incrementSlowAppendCount();
