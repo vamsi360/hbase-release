@@ -54,6 +54,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.TableDescriptors;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableStateManager;
 import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.HConnectionTestingUtility;
 import org.apache.hadoop.hbase.client.Result;
@@ -260,7 +261,7 @@ public class TestCatalogJanitor {
     public MasterCoprocessorHost getMasterCoprocessorHost() {
       return null;
     }
-    
+
     @Override
     public MasterQuotaManager getMasterQuotaManager() {
       return null;
@@ -429,6 +430,10 @@ public class TestCatalogJanitor {
     public long deleteTable(TableName tableName) throws IOException {
       return -1;
     }
+    @Override
+    public LoadBalancer getLoadBalancer() {
+      return null;
+    }
 
     @Override
     public void truncateTable(TableName tableName, boolean preserveSplits) throws IOException { }
@@ -486,6 +491,12 @@ public class TestCatalogJanitor {
     public long getLastMajorCompactionTimestampForRegion(byte[] regionName) throws IOException {
       // Auto-generated method stub
       return 0;
+    }
+
+    @Override
+    public TableStateManager getTableStateManager() {
+      // TODO Auto-generated method stub
+      return null;
     }
   }
 

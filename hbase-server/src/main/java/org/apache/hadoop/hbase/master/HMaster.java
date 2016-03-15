@@ -18,6 +18,13 @@
  */
 package org.apache.hadoop.hbase.master;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Service;
+
+
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.lang.reflect.Constructor;
@@ -73,6 +80,7 @@ import org.apache.hadoop.hbase.TableDescriptors;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.TableStateManager;
 import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Admin;
@@ -173,11 +181,6 @@ import org.apache.zookeeper.KeeperException;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.servlet.Context;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
-import com.google.protobuf.Descriptors;
-import com.google.protobuf.Service;
 
 /**
  * HMaster is the "master server" for HBase. An HBase cluster has one active
@@ -349,7 +352,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
   SnapshotManager snapshotManager;
   // monitor for distributed procedures
   MasterProcedureManagerHost mpmHost;
-  
+
   // it is assigned after 'initialized' guard set to true, so should be volatile
   private volatile MasterQuotaManager quotaManager;
 
@@ -821,7 +824,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
 
     status.setStatus("Starting namespace manager");
     initNamespace();
-    
+
     if (this.cpHost != null) {
       try {
         this.cpHost.preMasterInitialization();
@@ -834,7 +837,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     LOG.info("Master has completed initialization");
     configurationManager.registerObserver(this.balancer);
     initialized = true;
-    
+
     status.setStatus("Starting quota manager");
     initQuotaManager();
 
@@ -1496,11 +1499,14 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
       final byte[] destServerName) throws HBaseIOException {
     RegionState regionState = assignmentManager.getRegionStates().
       getRegionState(Bytes.toString(encodedRegionName));
-    if (regionState == null) {
+
+    HRegionInfo hri;
+    if (regionState != null) {
+      hri = regionState.getRegion();
+    } else {
       throw new UnknownRegionException(Bytes.toStringBinary(encodedRegionName));
     }
 
-    HRegionInfo hri = regionState.getRegion();
     ServerName dest;
     if (destServerName == null || destServerName.length == 0) {
       LOG.info("Passed destination servername is null/empty so " +
@@ -1513,7 +1519,12 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
         return;
       }
     } else {
-      dest = ServerName.valueOf(Bytes.toString(destServerName));
+      ServerName candidate = ServerName.valueOf(Bytes.toString(destServerName));
+      dest = balancer.randomAssignment(hri, Lists.newArrayList(candidate));
+      if (dest == null) {
+        LOG.debug("Unable to determine a plan to assign " + hri);
+        return;
+      }
       if (dest.equals(serverName) && balancer instanceof BaseLoadBalancer
           && !((BaseLoadBalancer)balancer).shouldBeOnMaster(hri)) {
         // To avoid unnecessary region moving later by balancer. Don't put user
@@ -1723,7 +1734,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     }
   }
 
-  private void checkCompactionPolicy(Configuration conf, HTableDescriptor htd) 
+  private void checkCompactionPolicy(Configuration conf, HTableDescriptor htd)
       throws IOException {
     // FIFO compaction has some requirements
     // Actually FCP ignores periodic major compactions
@@ -1781,7 +1792,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
       }
     }
   }
-  
+
   // HBASE-13350 - Helper method to log warning on sanity check failures if checks disabled.
   private static void warnOrThrowExceptionForFailure(boolean logWarn, String confKey,
       String message, Exception cause) throws IOException {
@@ -2304,7 +2315,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
   public MasterCoprocessorHost getMasterCoprocessorHost() {
     return cpHost;
   }
-  
+
   @Override
   public MasterQuotaManager getMasterQuotaManager() {
     return quotaManager;
@@ -2918,5 +2929,15 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
 
   public SplitOrMergeTracker getSplitOrMergeTracker() {
     return splitOrMergeTracker;
+  }
+
+  @Override
+  public LoadBalancer getLoadBalancer() {
+    return balancer;
+  }
+
+  @Override
+  public TableStateManager getTableStateManager() {
+    return assignmentManager.getTableStateManager();
   }
 }

@@ -845,6 +845,32 @@ public class MetaTableAccessor {
   }
 
   /**
+   * A Visitor that skips offline regions and split parents
+   */
+  public static abstract class DefaultVisitorBase implements Visitor {
+
+    public DefaultVisitorBase() {
+      super();
+    }
+
+    public abstract boolean visitInternal(Result rowResult) throws IOException;
+
+    @Override
+    public boolean visit(Result rowResult) throws IOException {
+      HRegionInfo info = getHRegionInfo(rowResult);
+      if (info == null) {
+        return true;
+      }
+
+      //skip over offline and split regions
+      if (!(info.isOffline() || info.isSplit())) {
+        return visitInternal(rowResult);
+      }
+      return true;
+    }
+  }
+
+  /**
    * A {@link Visitor} that collects content out of passed {@link Result}.
    */
   static abstract class CollectingVisitor<T> implements Visitor {

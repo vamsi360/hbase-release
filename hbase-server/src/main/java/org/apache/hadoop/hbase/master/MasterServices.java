@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.TableDescriptors;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.TableStateManager;
 import org.apache.hadoop.hbase.master.procedure.MasterProcedureEnv;
 import org.apache.hadoop.hbase.procedure2.ProcedureExecutor;
 import org.apache.hadoop.hbase.executor.ExecutorService;
@@ -244,7 +245,7 @@ public interface MasterServices extends Server {
    * @param procId ID of the procedure
    * @param mayInterruptIfRunning if the proc completed at least one step, should it be aborted?
    * @return true if aborted, false if procedure already completed or does not exist
-   * @throws IOException 
+   * @throws IOException
    */
   public boolean abortProcedure(final long procId, final boolean mayInterruptIfRunning)
       throws IOException;
@@ -302,4 +303,11 @@ public interface MasterServices extends Server {
    * @throws IOException
    */
   public long getLastMajorCompactionTimestampForRegion(byte[] regionName) throws IOException;
+
+  /**
+   * @return load balancer
+   */
+  public LoadBalancer getLoadBalancer();
+
+  public TableStateManager getTableStateManager();
 }

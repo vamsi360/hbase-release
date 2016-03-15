@@ -18,8 +18,14 @@
  */
 package org.apache.hadoop.hbase;
 
+import com.google.common.net.HostAndPort;
 import com.google.common.net.InetAddresses;
 import com.google.protobuf.InvalidProtocolBufferException;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
@@ -28,11 +34,6 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos;
 import org.apache.hadoop.hbase.util.Addressing;
 import org.apache.hadoop.hbase.util.Bytes;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Instance of an HBase ServerName.
@@ -53,7 +54,7 @@ import java.util.regex.Pattern;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
-public class ServerName implements Comparable<ServerName>, Serializable {
+  public class ServerName implements Comparable<ServerName>, Serializable {
   private static final long serialVersionUID = 1367463982557264981L;
 
   /**
@@ -90,6 +91,7 @@ public class ServerName implements Comparable<ServerName>, Serializable {
   private final String hostnameOnly;
   private final int port;
   private final long startcode;
+  private transient HostAndPort hostAndPort;
 
   /**
    * Cached versioned bytes of this ServerName instance.
@@ -104,7 +106,7 @@ public class ServerName implements Comparable<ServerName>, Serializable {
     this.hostnameOnly = hostname;
     this.port = port;
     this.startcode = startcode;
-    this.servername = getServerName(this.hostnameOnly, port, startcode);
+    this.servername = getServerName(hostname, port, startcode);
   }
 
   /**
@@ -188,7 +190,8 @@ public class ServerName implements Comparable<ServerName>, Serializable {
    * in compares, etc.
    */
   public String toShortString() {
-    return Addressing.createHostAndPortStr(getHostNameMinusDomain(this.hostnameOnly), this.port);
+    return Addressing.createHostAndPortStr(
+        getHostNameMinusDomain(hostnameOnly), port);
   }
 
   /**
@@ -255,7 +258,14 @@ public class ServerName implements Comparable<ServerName>, Serializable {
    * {@link Addressing#createHostAndPortStr(String, int)}
    */
   public String getHostAndPort() {
-    return Addressing.createHostAndPortStr(this.hostnameOnly, this.port);
+    return Addressing.createHostAndPortStr(hostnameOnly, port);
+  }
+
+  public HostAndPort getHostPort() {
+    if (hostAndPort == null) {
+      hostAndPort = HostAndPort.fromParts(hostnameOnly, port);
+    }
+    return hostAndPort;
   }
 
   /**

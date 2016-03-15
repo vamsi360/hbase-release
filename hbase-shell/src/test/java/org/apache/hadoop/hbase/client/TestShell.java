@@ -30,7 +30,7 @@ import org.junit.experimental.categories.Category;
 public class TestShell extends AbstractTestShell {
   @Test
   public void testRunShellTests() throws IOException {
-    System.setProperty("shell.test.exclude", "replication_admin_test.rb");
+    System.setProperty("shell.test.exclude", "replication_admin_test.rb,rsgroup_shell_test.rb");
     // Start all ruby tests
     jruby.runScriptlet(PathType.ABSOLUTE, "src/test/ruby/tests_runner.rb");
   }
