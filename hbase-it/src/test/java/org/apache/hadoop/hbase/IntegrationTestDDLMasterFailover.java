@@ -67,7 +67,7 @@ import org.junit.experimental.categories.Category;
  * </ul>
  * <br/>
  *
- * The threads run for a period of time (default 20 minutes) then are stopped at the end of
+ * The threads run for a period of time (default 45 minutes) then are stopped at the end of
  * runtime. Verification is performed towards those checkpoints:
  * <ol>
  *     <li>No Actions throw Exceptions.</li>
@@ -91,7 +91,7 @@ public class IntegrationTestDDLMasterFailover extends IntegrationTestBase {
 
   private static final int SERVER_COUNT = 1; // number of slaves for the smallest cluster
 
-  protected static final long DEFAULT_RUN_TIME = 20 * 60 * 1000;
+  protected static final long DEFAULT_RUN_TIME = 45 * 60 * 1000;
 
   protected static final int DEFAULT_NUM_THREADS = 20;
 
