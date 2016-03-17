@@ -1,11 +1,25 @@
-HDP-2.4 is based on Apache HBase 1.1.2
+HDP-2.6 is based on Apache HBase 1.1.2
 
-Following are the changes on top of Apache HBase 1.1.1
 
+Following are the changes on top of Apache HBase 1.1.2
+
+HBASE-14407 NotServingRegion: hbase region closed forever (Shuaifeng Zhou)
 HBASE-14963 Remove Guava dependency from HBase client code (ddas)
 HBASE-14947 WALProcedureStore improvements (Matteo Bertozzi)
 HBASE-14843 TestWALProcedureStore.testLoad is flakey (Matteo Bertozz)
 HBASE-14712 Increase MasterProcWALs clean up granularity (Matteo Bertozzi)
+HBASE-14449 Rewrite deadlock prevention for concurrent connection close
+HBASE-14258 Make region_mover.rb script case insensitive with regard to hostname
+HBASE-14269 FuzzyRowFilter omits certain rows when multiple fuzzy key exist
+HBASE-14313 After a Connection sees ConnectionClosingException it never recovers (Elliott Clark)
+HBASE-14302 TableSnapshotInputFormat should not create back references when restoring snapshot
+BUG-45027/BUG-45361 Fix hostname used with Kerberos on Dual-Homed clusters.
+HBASE-14536 Balancer & SSH interfering with each other leading to unavailability
+HBASE-14680 Two configs for snapshot timeout and better defaults
+
+
+Following are the changes on top of Apache HBase 1.1.1
+
 HBASE-14468 Compaction improvements: FIFO compaction policy (Vladimir Rodionov)
 HBASE-14987 Compaction marker whose region name doesn't match current region's needs to be handled
 HBASE-14471 Thrift -  HTTP Error 413 full HEAD if using kerberos authentication
@@ -60,12 +74,3 @@ BUG-28682 HBase - Address Security Issues in Jetty 6.1.26
 BUG-22418 Update jackson version to 1.9.13 
 BUG-29025 Windows incompatibility with unicode (Chinese characters)
 
-Following are the changes on top of Apache HBase 1.1.2
-HBASE-14449 Rewrite deadlock prevention for concurrent connection close
-HBASE-14258 Make region_mover.rb script case insensitive with regard to hostname
-HBASE-14269 FuzzyRowFilter omits certain rows when multiple fuzzy key exist
-HBASE-14313 After a Connection sees ConnectionClosingException it never recovers (Elliott Clark)
-HBASE-14302 TableSnapshotInputFormat should not create back references when restoring snapshot
-BUG-45027/BUG-45361 Fix hostname used with Kerberos on Dual-Homed clusters.
-HBASE-14536 Balancer & SSH interfering with each other leading to unavailability
-HBASE-14680 Two configs for snapshot timeout and better defaults
