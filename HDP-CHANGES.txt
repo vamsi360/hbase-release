@@ -10,6 +10,7 @@ BUG-22418 Update jackson version to 1.9.13
 BUG-29025 Windows incompatibility with unicode (Chinese characters)
 
 Following are the changes on top of Apache HBase 1.1.2
+HBASE-14307 Incorrect use of positional read api in HFileBlock
 HBASE-14449 Rewrite deadlock prevention for concurrent connection close
 HBASE-14258 Make region_mover.rb script case insensitive with regard to hostname
 HBASE-14269 FuzzyRowFilter omits certain rows when multiple fuzzy key exist
