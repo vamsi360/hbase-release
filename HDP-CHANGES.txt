@@ -209,3 +209,4 @@ HBASE-10427 clean up HRegionLocation/ServerName usage
 HBASE-10472 Manage the interruption in ZKUtil#getData
 HBASE-13825 Use ProtobufUtil#mergeFrom and ProtobufUtil#mergeDelimitedFrom in place of builder methods of same name
 HBASE-14594 Use new DNS API introduced in HADOOP-12437
+HBASE-14307 Incorrect use of positional read api in HFileBlock
