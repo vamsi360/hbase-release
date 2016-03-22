@@ -3315,4 +3315,9 @@ public class HRegionServer extends HasThread implements
     }
     return max;
   }
+
+  @Override
+  public MetricsRegionServer getMetrics() {
+    return metricsRegionServer;
+  }
 }

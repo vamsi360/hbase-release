@@ -2377,6 +2377,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     // Otherwise, the snapshot content while backed up in the wal, it will not
     // be part of the current running servers state.
     boolean compactionRequested = false;
+    long flushedOutputFileSize = 0;
     try {
       // A.  Flush memstore to all the HStores.
       // Keep running vector of all store files that includes both old and the
@@ -2397,6 +2398,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
           compactionRequested = true;
         }
         committedFiles.put(it.next().getFamily().getName(), flush.getCommittedFiles());
+        flushedOutputFileSize += flush.getOutputFileSize();
       }
       storeFlushCtxs.clear();
 
@@ -2484,10 +2486,14 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     LOG.info(msg);
     status.setStatus(msg);
 
+    if (rsServices != null && rsServices.getMetrics() != null) {
+      rsServices.getMetrics().updateFlush(time - startTime,
+        totalFlushableSizeOfFlushableStores, flushedOutputFileSize);
+    }
+
     return new FlushResultImpl(compactionRequested ?
         FlushResult.Result.FLUSHED_COMPACTION_NEEDED :
-          FlushResult.Result.FLUSHED_NO_COMPACTION_NEEDED,
-        flushOpSeqId);
+          FlushResult.Result.FLUSHED_NO_COMPACTION_NEEDED, flushOpSeqId);
   }
 
   /**

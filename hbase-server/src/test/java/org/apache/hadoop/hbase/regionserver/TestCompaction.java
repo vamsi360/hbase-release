@@ -87,7 +87,7 @@ public class TestCompaction {
   static final Log LOG = LogFactory.getLog(TestCompaction.class.getName());
   private static final HBaseTestingUtility UTIL = HBaseTestingUtility.createLocalHTU();
   protected Configuration conf = UTIL.getConfiguration();
-  
+
   private HRegion r = null;
   private HTableDescriptor htd = null;
   private static final byte [] COLUMN_FAMILY = fam1;
@@ -159,6 +159,7 @@ public class TestCompaction {
 
       HRegion spyR = spy(r);
       doAnswer(new Answer() {
+        @Override
         public Object answer(InvocationOnMock invocation) throws Throwable {
           r.writestate.writesEnabled = false;
           return invocation.callRealMethod();
@@ -456,6 +457,7 @@ public class TestCompaction {
     @Override
     public void cancelCompaction(Object object) {}
 
+    @Override
     public int getPriority() {
       return Integer.MIN_VALUE; // some invalid value, see createStoreMock
     }

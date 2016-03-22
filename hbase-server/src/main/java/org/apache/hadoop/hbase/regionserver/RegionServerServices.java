@@ -230,4 +230,9 @@ public interface RegionServerServices extends OnlineRegions, FavoredNodesForRegi
    * @return all the online tables in this RS
    */
   Set<TableName> getOnlineTables();
+
+  /**
+   * @return the metrics tracker for the region server
+   */
+  MetricsRegionServer getMetrics();
 }
