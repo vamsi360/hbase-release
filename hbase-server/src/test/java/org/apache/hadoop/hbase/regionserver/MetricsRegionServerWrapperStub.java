@@ -310,4 +310,9 @@ public class MetricsRegionServerWrapperStub implements MetricsRegionServerWrappe
   public int getSplitQueueSize() {
     return 0;
   }
+
+  @Override
+  public long getAverageRegionSize() {
+    return 10000000;
+  }
 }
