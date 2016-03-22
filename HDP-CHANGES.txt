@@ -77,4 +77,4 @@ BUG-35784 Update httpcore version to 4.2.5
 BUG-28682 HBase - Address Security Issues in Jetty 6.1.26
 BUG-22418 Update jackson version to 1.9.13 
 BUG-29025 Windows incompatibility with unicode (Chinese characters)
-
+HBASE-15220 Change two logs in SimpleRegionNormalizer to INFO level
