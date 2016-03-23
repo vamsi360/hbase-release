@@ -79,3 +79,4 @@ BUG-22418 Update jackson version to 1.9.13
 BUG-29025 Windows incompatibility with unicode (Chinese characters)
 HBASE-15220 Change two logs in SimpleRegionNormalizer to INFO level
 HBASE-13153 Bulk Loaded HFile Replication (Ashish Singhi)
+HBASE-15018 Inconsistent way of handling TimeoutException in the rpc client implementations (Ashish Singhi)
