@@ -229,11 +229,10 @@ public class AsyncRpcClient extends AbstractRpcClient {
       if (e.getCause() instanceof IOException) {
         throw (IOException) e.getCause();
       } else {
-        throw wrapException(addr, (Exception) e.getCause());
+        throw new IOException(e.getCause());
       }
     } catch (TimeoutException e) {
-      CallTimeoutException cte = new CallTimeoutException(promise.toString());
-      throw wrapException(addr, cte);
+      throw new CallTimeoutException(promise.toString());
     }
   }
 
