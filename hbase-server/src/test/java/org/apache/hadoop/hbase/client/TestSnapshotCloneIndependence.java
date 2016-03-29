@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hbase.client;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -55,14 +56,14 @@ public class TestSnapshotCloneIndependence {
   /** Set to true on Windows platforms */
   private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
-  private static final HBaseTestingUtility UTIL = new HBaseTestingUtility();
+  protected static final HBaseTestingUtility UTIL = new HBaseTestingUtility();
 
-  private static final int NUM_RS = 2;
+  protected static final int NUM_RS = 2;
   private static final String STRING_TABLE_NAME = "test";
   private static final String TEST_FAM_STR = "fam";
-  private static final byte[] TEST_FAM = Bytes.toBytes(TEST_FAM_STR);
-  private static final TableName TABLE_NAME = TableName.valueOf(STRING_TABLE_NAME);
-  private static final int CLEANER_INTERVAL = 10;
+  protected static final byte[] TEST_FAM = Bytes.toBytes(TEST_FAM_STR);
+  protected static final TableName TABLE_NAME = TableName.valueOf(STRING_TABLE_NAME);
+  private static final int CLEANER_INTERVAL = 100;
 
   /**
    * Setup the config for the cluster and start it
@@ -74,7 +75,9 @@ public class TestSnapshotCloneIndependence {
     UTIL.startMiniCluster(NUM_RS);
   }
 
-  private static void setupConf(Configuration conf) {
+  protected static void setupConf(Configuration conf) {
+    // Up the handlers; this test needs more than usual.
+    conf.setInt(HConstants.REGION_SERVER_HIGH_PRIORITY_HANDLER_COUNT, 15);
     // enable snapshot support
     conf.setBoolean(SnapshotManager.HBASE_SNAPSHOT_ENABLED, true);
     // disable the ui
@@ -103,7 +106,7 @@ public class TestSnapshotCloneIndependence {
 
   @Before
   public void setup() throws Exception {
-    UTIL.createTable(TABLE_NAME, TEST_FAM);
+    createTable(TABLE_NAME, TEST_FAM);
   }
 
   @After
@@ -193,7 +196,7 @@ public class TestSnapshotCloneIndependence {
   private static void waitOnSplit(final HTable t, int originalCount) throws Exception {
     for (int i = 0; i < 200; i++) {
       try {
-        Thread.sleep(50);
+        Thread.sleep(500);
       } catch (InterruptedException e) {
         // Restore the interrupted status
         Thread.currentThread().interrupt();
@@ -219,9 +222,9 @@ public class TestSnapshotCloneIndependence {
     final TableName localTableName =
         TableName.valueOf(STRING_TABLE_NAME + startTime);
 
-    try (Table original = UTIL.createTable(localTableName, TEST_FAM)) {
-      UTIL.loadTable(original, TEST_FAM);
-      final int origTableRowCount = UTIL.countRows(original);
+    try (Table original = createTable(localTableName, TEST_FAM)) {
+      loadData(original, TEST_FAM);
+      final int origTableRowCount = countRows(original);
 
       // Take a snapshot
       final String snapshotNameAsString = "snapshot_" + localTableName;
@@ -237,7 +240,10 @@ public class TestSnapshotCloneIndependence {
       admin.cloneSnapshot(snapshotName, cloneTableName);
 
       try (Table clonedTable = new HTable(UTIL.getConfiguration(), cloneTableName)){
-        final int clonedTableRowCount = UTIL.countRows(clonedTable);
+        // Make sure that all the regions are available before starting
+        UTIL.waitUntilAllRegionsAssigned(cloneTableName);
+
+        final int clonedTableRowCount = countRows(clonedTable);
 
         Assert.assertEquals(
           "The line counts of original and cloned tables do not match after clone. ",
@@ -252,10 +258,10 @@ public class TestSnapshotCloneIndependence {
 
         // Verify that it is not present in the original table
         Assert.assertEquals("The row count of the original table was not modified by the put",
-          origTableRowCount + 1, UTIL.countRows(original));
+          origTableRowCount + 1, countRows(original));
         Assert.assertEquals(
           "The row count of the cloned table changed as a result of addition to the original",
-          clonedTableRowCount, UTIL.countRows(clonedTable));
+          clonedTableRowCount, countRows(clonedTable));
 
         p = new Put(Bytes.toBytes(rowKey));
         p.add(TEST_FAM, Bytes.toBytes("someQualifier"), Bytes.toBytes("someString"));
@@ -264,9 +270,9 @@ public class TestSnapshotCloneIndependence {
         // Verify that the new family is not in the restored table's description
         Assert.assertEquals(
           "The row count of the original table was modified by the put to the clone",
-          origTableRowCount + 1, UTIL.countRows(original));
+          origTableRowCount + 1, countRows(original));
         Assert.assertEquals("The row count of the cloned table was not modified by the put",
-          clonedTableRowCount + 1, UTIL.countRows(clonedTable));
+          clonedTableRowCount + 1, countRows(clonedTable));
       }
     }
   }
@@ -284,9 +290,9 @@ public class TestSnapshotCloneIndependence {
     final long startTime = System.currentTimeMillis();
     final TableName localTableName =
         TableName.valueOf(STRING_TABLE_NAME + startTime);
-    HTable original = UTIL.createTable(localTableName, TEST_FAM);
-    UTIL.loadTable(original, TEST_FAM);
-    final int loadedTableCount = UTIL.countRows(original);
+    Table original = createTable(localTableName, TEST_FAM);
+    loadData(original, TEST_FAM);
+    final int loadedTableCount = countRows(original);
     System.out.println("Original table has: " + loadedTableCount + " rows");
 
     final String snapshotNameAsString = "snapshot_" + localTableName;
@@ -306,7 +312,7 @@ public class TestSnapshotCloneIndependence {
     admin.cloneSnapshot(snapshotName, cloneTableName);
 
     // Verify that region information is the same pre-split
-    original.clearRegionCache();
+    ((HTable)original).clearRegionCache();
     List<HRegionInfo> originalTableHRegions = admin.getTableRegions(localTableName);
 
     final int originalRegionCount = originalTableHRegions.size();
@@ -317,7 +323,7 @@ public class TestSnapshotCloneIndependence {
 
     // Split a region on the parent table
     admin.splitRegion(originalTableHRegions.get(0).getRegionName());
-    waitOnSplit(original, originalRegionCount);
+    waitOnSplit((HTable)original, originalRegionCount);
 
     // Verify that the cloned table region is not split
     final int cloneTableRegionCount2 = admin.getTableRegions(cloneTableName).size();
@@ -340,8 +346,8 @@ public class TestSnapshotCloneIndependence {
     final long startTime = System.currentTimeMillis();
     final TableName localTableName =
         TableName.valueOf(STRING_TABLE_NAME + startTime);
-    HTable original = UTIL.createTable(localTableName, TEST_FAM);
-    UTIL.loadTable(original, TEST_FAM);
+    Table original = createTable(localTableName, TEST_FAM);
+    loadData(original, TEST_FAM);
 
     final String snapshotNameAsString = "snapshot_" + localTableName;
 
@@ -399,8 +405,8 @@ public class TestSnapshotCloneIndependence {
     final TableName localTableName =
         TableName.valueOf(STRING_TABLE_NAME + startTime);
 
-    try (Table original = UTIL.createTable(localTableName, TEST_FAM)) {
-      UTIL.loadTable(original, TEST_FAM);
+    try (Table original = createTable(localTableName, TEST_FAM)) {
+      loadData(original, TEST_FAM);
     }
 
     // Take a snapshot
@@ -423,15 +429,29 @@ public class TestSnapshotCloneIndependence {
     admin.deleteSnapshot(snapshotName);
 
     // Wait for cleaner run and DFS heartbeats so that anything that is deletable is fully deleted
-    Thread.sleep(10000);
+    do {
+      Thread.sleep(5000);
+    } while (!admin.listSnapshots(snapshotNameAsString).isEmpty());
 
     try (Table original = UTIL.getConnection().getTable(localTableName)) {
       try (Table clonedTable = UTIL.getConnection().getTable(cloneTableName)) {
         // Verify that all regions of both tables are readable
-        final int origTableRowCount = UTIL.countRows(original);
-        final int clonedTableRowCount = UTIL.countRows(clonedTable);
+        final int origTableRowCount = countRows(original);
+        final int clonedTableRowCount = countRows(clonedTable);
         Assert.assertEquals(origTableRowCount, clonedTableRowCount);
       }
     }
+  }
+
+  protected Table createTable(final TableName table, byte[] family) throws Exception {
+    return UTIL.createTable(table, family);
+  }
+
+  protected void loadData(final Table table, byte[]... families) throws Exception {
+    UTIL.loadTable(table, families);
+  }
+
+  protected int countRows(final Table table, final byte[]... families) throws Exception {
+    return UTIL.countRows(table, families);
   }
 }
