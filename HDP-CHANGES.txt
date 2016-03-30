@@ -80,3 +80,4 @@ BUG-29025 Windows incompatibility with unicode (Chinese characters)
 HBASE-15220 Change two logs in SimpleRegionNormalizer to INFO level
 HBASE-13153 Bulk Loaded HFile Replication (Ashish Singhi)
 HBASE-15425 Failing to write bulk load event marker in the WAL is ignored (Ashish Singhi)
+HBASE-14493 Upgrade the jamon-runtime dependency (Andrew Purtell)
