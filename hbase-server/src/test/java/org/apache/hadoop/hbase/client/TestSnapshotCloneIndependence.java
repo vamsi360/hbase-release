@@ -188,7 +188,7 @@ public class TestSnapshotCloneIndependence {
     runTestSnapshotDeleteIndependent(false);
   }
 
-  @Test (timeout=300000)
+  @Ignore ("Flakey test") @Test (timeout=300000)
   public void testOnlineSnapshotDeleteIndependent() throws Exception {
     runTestSnapshotDeleteIndependent(true);
   }
