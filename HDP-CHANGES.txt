@@ -84,3 +84,4 @@ HBASE-14493 Upgrade the jamon-runtime dependency (Andrew Purtell)
 HBASE-14110 Add CostFunction for balancing primary region replicas
 HBASE-15439 getMaximumAllowedTimeBetweenRuns in ScheduledChore ignores the TimeUnit (Jingcheng)
 HBASE-15039 HMaster and RegionServers should try to refresh token keys from zk when facing InvalidToken (Yong Zhang)
+HBASE-15234 Don't abort ReplicationLogCleaner on ZooKeeper errors (Gary)
