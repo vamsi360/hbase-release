@@ -87,3 +87,4 @@ HBASE-15039 HMaster and RegionServers should try to refresh token keys from zk w
 HBASE-15234 Don't abort ReplicationLogCleaner on ZooKeeper errors (Gary)
 HBASE-15181 A simple implementation of date based tiered compaction (Clara)
 HBASE-15389 Write out multiple files when compaction (Duo Zhang)
+HBASE-15085 IllegalStateException was thrown when scanning on bulkloaded HFiles
