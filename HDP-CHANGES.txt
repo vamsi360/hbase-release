@@ -89,3 +89,4 @@ HBASE-15181 A simple implementation of date based tiered compaction (Clara)
 HBASE-15389 Write out multiple files when compaction (Duo Zhang)
 HBASE-15085 IllegalStateException was thrown when scanning on bulkloaded HFiles
 HBASE-14812 Fix ResultBoundedCompletionService deadlock (Elliott Clark)
+HBASE-15252 Data loss when replaying WAL if HDFS timeout (Matteo)
