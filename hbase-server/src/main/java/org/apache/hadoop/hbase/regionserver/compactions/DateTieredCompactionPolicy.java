@@ -100,7 +100,7 @@ public class DateTieredCompactionPolicy extends RatioBasedCompactionPolicy {
 
     ArrayList<StoreFile> candidates = new ArrayList<StoreFile>(storeFiles);
     candidates = filterBulk(candidates);
-    candidates = skipLargeFiles(candidates, true);
+    candidates = skipLargeFiles(candidates);
     try {
       candidates = applyCompactionPolicy(candidates, true, false, now);
     } catch (Exception e) {
