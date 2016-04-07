@@ -44,10 +44,38 @@ import org.apache.hadoop.hbase.util.Bytes;
  * as well as the proper javadoc, will be added in HBASE-7967.
  */
 @InterfaceAudience.Private
-public class StripeCompactor extends Compactor {
+public class StripeCompactor extends AbstractMultiOutputCompactor<StripeMultiFileWriter> {
   private static final Log LOG = LogFactory.getLog(StripeCompactor.class);
   public StripeCompactor(Configuration conf, Store store) {
     super(conf, store);
+  }
+
+  private final class StripeInternalScannerFactory implements InternalScannerFactory {
+
+    private final byte[] majorRangeFromRow;
+
+    private final byte[] majorRangeToRow;
+
+    public StripeInternalScannerFactory(byte[] majorRangeFromRow, byte[] majorRangeToRow) {
+      this.majorRangeFromRow = majorRangeFromRow;
+      this.majorRangeToRow = majorRangeToRow;
+    }
+
+    @Override
+    public ScanType getScanType(CompactionRequest request) {
+      // If majorRangeFromRow and majorRangeToRow are not null, then we will not use the return
+      // value to create InternalScanner. See the createScanner method below. The return value is
+      // also used when calling coprocessor hooks.
+      return ScanType.COMPACT_RETAIN_DELETES;
+    }
+
+    @Override
+    public InternalScanner createScanner(List<StoreFileScanner> scanners, ScanType scanType,
+        FileDetails fd, long smallestReadPoint) throws IOException {
+      return (majorRangeFromRow == null) ? StripeCompactor.this.createScanner(store, scanners,
+        scanType, smallestReadPoint, fd.earliestPutTs) : StripeCompactor.this.createScanner(store,
+        scanners, smallestReadPoint, fd.earliestPutTs, majorRangeFromRow, majorRangeToRow);
+    }
   }
 
   public List<Path> compact(CompactionRequest request, List<byte[]> targetBoundaries,
@@ -61,106 +89,32 @@ public class StripeCompactor extends Compactor {
       }
       LOG.debug(sb.toString());
     }
-    StripeMultiFileWriter writer = new StripeMultiFileWriter.BoundaryMultiWriter(
-        targetBoundaries, majorRangeFromRow, majorRangeToRow);
-    return compactInternal(writer, request, majorRangeFromRow, majorRangeToRow,
-      throughputController);
+    StripeMultiFileWriter writer =
+        new StripeMultiFileWriter.BoundaryMultiWriter(store.getComparator(), targetBoundaries,
+          majorRangeFromRow, majorRangeToRow);
+    return compact(writer, request, new StripeInternalScannerFactory(majorRangeFromRow,
+      majorRangeToRow), throughputController, null);
   }
 
   public List<Path> compact(CompactionRequest request, int targetCount, long targetSize,
       byte[] left, byte[] right, byte[] majorRangeFromRow, byte[] majorRangeToRow,
       CompactionThroughputController throughputController) throws IOException {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Executing compaction with " + targetSize
-          + " target file size, no more than " + targetCount + " files, in ["
-          + Bytes.toString(left) + "] [" + Bytes.toString(right) + "] range");
+      LOG.debug("Executing compaction with " + targetSize + " target file size, no more than "
+          + targetCount + " files, in [" + Bytes.toString(left) + "] [" + Bytes.toString(right)
+          + "] range");
     }
-    StripeMultiFileWriter writer = new StripeMultiFileWriter.SizeMultiWriter(
-        targetCount, targetSize, left, right);
-    return compactInternal(writer, request, majorRangeFromRow, majorRangeToRow,
-      throughputController);
+    StripeMultiFileWriter writer =
+        new StripeMultiFileWriter.SizeMultiWriter(store.getComparator(), targetCount, targetSize,
+          left, right);
+    return compact(writer, request, new StripeInternalScannerFactory(majorRangeFromRow,
+      majorRangeToRow), throughputController, null);
   }
 
-  private List<Path> compactInternal(StripeMultiFileWriter mw, CompactionRequest request,
-      byte[] majorRangeFromRow, byte[] majorRangeToRow,
-      CompactionThroughputController throughputController) throws IOException {
-    final Collection<StoreFile> filesToCompact = request.getFiles();
-    final FileDetails fd = getFileDetails(filesToCompact, request.isMajor());
-    this.progress = new CompactionProgress(fd.maxKeyCount);
-
-    long smallestReadPoint = getSmallestReadPoint();
-    List<StoreFileScanner> scanners = createFileScanners(filesToCompact, smallestReadPoint);
-
-    boolean finished = false;
-    InternalScanner scanner = null;
-    boolean cleanSeqId = false;
-    try {
-      // Get scanner to use.
-      ScanType coprocScanType = ScanType.COMPACT_RETAIN_DELETES;
-      scanner = preCreateCoprocScanner(request, coprocScanType, fd.earliestPutTs, scanners);
-      if (scanner == null) {
-        scanner = (majorRangeFromRow == null)
-            ? createScanner(store, scanners,
-                ScanType.COMPACT_RETAIN_DELETES, smallestReadPoint, fd.earliestPutTs)
-            : createScanner(store, scanners,
-                smallestReadPoint, fd.earliestPutTs, majorRangeFromRow, majorRangeToRow);
-      }
-      scanner = postCreateCoprocScanner(request, coprocScanType, scanner);
-      if (scanner == null) {
-        // NULL scanner returned from coprocessor hooks means skip normal processing.
-        return new ArrayList<Path>();
-      }
-
-      // Create the writer factory for compactions.
-      if(fd.minSeqIdToKeep > 0) {
-        smallestReadPoint = Math.min(fd.minSeqIdToKeep, smallestReadPoint);
-        cleanSeqId = true;
-      }
-
-      final boolean needMvcc = fd.maxMVCCReadpoint > 0;
-
-      final Compression.Algorithm compression = store.getFamily().getCompactionCompression();
-      StripeMultiFileWriter.WriterFactory factory = new StripeMultiFileWriter.WriterFactory() {
-        @Override
-        public Writer createWriter() throws IOException {
-          return store.createWriterInTmp(
-              fd.maxKeyCount, compression, true, needMvcc, fd.maxTagsLength > 0);
-        }
-      };
-
-      // Prepare multi-writer, and perform the compaction using scanner and writer.
-      // It is ok here if storeScanner is null.
-      StoreScanner storeScanner = (scanner instanceof StoreScanner) ? (StoreScanner)scanner : null;
-      mw.init(storeScanner, factory, store.getComparator());
-      finished =
-          performCompaction(scanner, mw, smallestReadPoint, cleanSeqId, throughputController);
-      if (!finished) {
-        throw new InterruptedIOException( "Aborting compaction of store " + store +
-            " in region " + store.getRegionInfo().getRegionNameAsString() +
-            " because it was interrupted.");
-      }
-    } finally {
-      if (scanner != null) {
-        try {
-          scanner.close();
-        } catch (Throwable t) {
-          // Don't fail the compaction if this fails.
-          LOG.error("Failed to close scanner after compaction.", t);
-        }
-      }
-      if (!finished) {
-        for (Path leftoverFile : mw.abortWriters()) {
-          try {
-            store.getFileSystem().delete(leftoverFile, false);
-          } catch (Exception ex) {
-            LOG.error("Failed to delete the leftover file after an unfinished compaction.", ex);
-          }
-        }
-      }
-    }
-
-    assert finished : "We should have exited the method on all error paths";
-    List<Path> newFiles = mw.commitWriters(fd.maxSeqId, request.isMajor());
+  @Override
+  protected List<Path> commitMultiWriter(StripeMultiFileWriter writer, FileDetails fd,
+      CompactionRequest request) throws IOException {
+    List<Path> newFiles = writer.commitWriters(fd.maxSeqId, request.isMajor());
     assert !newFiles.isEmpty() : "Should have produced an empty file to preserve metadata.";
     return newFiles;
   }
