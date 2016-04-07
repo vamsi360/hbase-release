@@ -75,3 +75,4 @@ HBASE-15221 Reload the cache on re-tried puts in HTableMultiplexer and adds a cl
 HBASE-15232 Handle region location cache mgmt in AsyncProcess for multi()'s
 HBASE-15220 Change two logs in SimpleRegionNormalizer to INFO level
 HBASE-14883 TestSplitTransactionOnCluster#testFailedSplit flakey
+HBASE-14812 Fix ResultBoundedCompletionService deadlock (Elliott Clark)
