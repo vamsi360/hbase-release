@@ -124,7 +124,8 @@ public class ModifyTableHandler extends TableEventHandler {
                     " from table=" + this.tableName);
           for (HRegionInfo hri: hris) {
             // Delete the family directory in FS for all the regions one by one
-            mfs.deleteFamilyFromFS(hri, familyName);
+            mfs.deleteFamilyFromFS(hri, familyName,
+              getTableDescriptor().getFamily(familyName).isMobEnabled());
           }
         }
       }

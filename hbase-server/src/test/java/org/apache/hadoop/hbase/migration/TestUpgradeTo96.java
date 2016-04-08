@@ -210,7 +210,8 @@ public class TestUpgradeTo96 {
     t.setConf(TEST_UTIL.getConfiguration());
     FileLink fileLink = t.getFileLinkWithPreNSPath(aFileLink);
     //assert it has 6 paths (2 NS, 2 Pre NS, and 2 .tmp)  to look.
-    assertTrue(fileLink.getLocations().length == 6);
+    Path[] paths = fileLink.getLocations();
+    assertTrue(paths.length == 7);
     for (Path p : fileLink.getLocations()) {
       if (p.equals(preNamespaceArchivePath)) preNSArchivePathExists = true;
       if (p.equals(preNamespaceTablePath)) preNSTablePathExists = true;

@@ -65,6 +65,7 @@ import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
+import org.apache.hadoop.hbase.client.ConnectionManager.HConnectionImplementation;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitor;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitorBase;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
@@ -1898,7 +1899,7 @@ public class HBaseAdmin implements Admin {
   @Override
   public void compact(final TableName tableName)
     throws IOException {
-    compact(tableName, null, false);
+    compact(tableName, null, false, CompactType.NORMAL);
   }
 
   /**
@@ -1930,7 +1931,7 @@ public class HBaseAdmin implements Admin {
     try {
       compactRegion(tableNameOrRegionName, null, false);
     } catch (IllegalArgumentException e) {
-      compact(TableName.valueOf(tableNameOrRegionName), null, false);
+      compact(TableName.valueOf(tableNameOrRegionName), null, false, CompactType.NORMAL);
     }
   }
 
@@ -1940,7 +1941,7 @@ public class HBaseAdmin implements Admin {
   @Override
   public void compact(final TableName tableName, final byte[] columnFamily)
     throws IOException {
-    compact(tableName, columnFamily, false);
+    compact(tableName, columnFamily, false, CompactType.NORMAL);
   }
 
   /**
@@ -1973,7 +1974,7 @@ public class HBaseAdmin implements Admin {
       compactRegion(tableNameOrRegionName, columnFamily, false);
     } catch (IllegalArgumentException e) {
       // Bad region, try table
-      compact(TableName.valueOf(tableNameOrRegionName), columnFamily, false);
+      compact(TableName.valueOf(tableNameOrRegionName), columnFamily, false, CompactType.NORMAL);
     }
   }
 
@@ -1994,7 +1995,7 @@ public class HBaseAdmin implements Admin {
   @Override
   public void majorCompact(final TableName tableName)
   throws IOException {
-    compact(tableName, null, true);
+    compact(tableName, null, true, CompactType.NORMAL);
   }
 
   /**
@@ -2027,7 +2028,7 @@ public class HBaseAdmin implements Admin {
       compactRegion(tableNameOrRegionName, null, true);
     } catch (IllegalArgumentException e) {
       // Invalid region, try table
-      compact(TableName.valueOf(tableNameOrRegionName), null, true);
+      compact(TableName.valueOf(tableNameOrRegionName), null, true, CompactType.NORMAL);
     }
   }
 
@@ -2037,7 +2038,7 @@ public class HBaseAdmin implements Admin {
   @Override
   public void majorCompact(final TableName tableName, final byte[] columnFamily)
   throws IOException {
-    compact(tableName, columnFamily, true);
+    compact(tableName, columnFamily, true, CompactType.NORMAL);
   }
 
   /**
@@ -2070,7 +2071,7 @@ public class HBaseAdmin implements Admin {
       compactRegion(tableNameOrRegionName, columnFamily, true);
     } catch (IllegalArgumentException e) {
       // Invalid region, try table
-      compact(TableName.valueOf(tableNameOrRegionName), columnFamily, true);
+      compact(TableName.valueOf(tableNameOrRegionName), columnFamily, true, CompactType.NORMAL);
     }
   }
 
@@ -2084,32 +2085,41 @@ public class HBaseAdmin implements Admin {
    * @throws IOException if a remote or network exception occurs
    * @throws InterruptedException
    */
-  private void compact(final TableName tableName, final byte[] columnFamily,final boolean major)
-  throws IOException {
-    ZooKeeperWatcher zookeeper = null;
-    try {
-      checkTableExists(tableName);
-      zookeeper = new ZooKeeperWatcher(conf, ZK_IDENTIFIER_PREFIX + connection.toString(),
+  private void compact(final TableName tableName, final byte[] columnFamily,final boolean major,
+      CompactType compactType) throws IOException {
+    switch (compactType) {
+    case MOB:
+      ServerName master = getMasterAddress();
+      compact(master, getMobRegionInfo(tableName), major, columnFamily);
+      break;
+    case NORMAL:
+    default:
+      ZooKeeperWatcher zookeeper = null;
+      try {
+        checkTableExists(tableName);
+        zookeeper = new ZooKeeperWatcher(conf, ZK_IDENTIFIER_PREFIX + connection.toString(),
           new ThrowableAbortable());
-      List<Pair<HRegionInfo, ServerName>> pairs =
-        MetaTableAccessor.getTableRegionsAndLocations(zookeeper, connection, tableName);
-      for (Pair<HRegionInfo, ServerName> pair: pairs) {
-        if (pair.getFirst().isOffline()) continue;
-        if (pair.getSecond() == null) continue;
-        try {
-          compact(pair.getSecond(), pair.getFirst(), major, columnFamily);
-        } catch (NotServingRegionException e) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Trying to" + (major ? " major" : "") + " compact " +
-              pair.getFirst() + ": " +
-              StringUtils.stringifyException(e));
+        List<Pair<HRegionInfo, ServerName>> pairs =
+            MetaTableAccessor.getTableRegionsAndLocations(zookeeper, connection, tableName);
+        for (Pair<HRegionInfo, ServerName> pair: pairs) {
+          if (pair.getFirst().isOffline()) continue;
+          if (pair.getSecond() == null) continue;
+          try {
+            compact(pair.getSecond(), pair.getFirst(), major, columnFamily);
+          } catch (NotServingRegionException e) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Trying to" + (major ? " major" : "") + " compact " +
+                  pair.getFirst() + ": " +
+                  StringUtils.stringifyException(e));
+            }
           }
         }
+      } finally {
+        if (zookeeper != null) {
+          zookeeper.close();
+        }
       }
-    } finally {
-      if (zookeeper != null) {
-        zookeeper.close();
-      }
+      break;
     }
   }
 
@@ -3147,64 +3157,82 @@ public class HBaseAdmin implements Admin {
    * {@inheritDoc}
    */
   @Override
-  public CompactionState getCompactionState(final TableName tableName)
+  public CompactionState getCompactionState(final TableName tableName, CompactType compactType)
   throws IOException {
     CompactionState state = CompactionState.NONE;
-    ZooKeeperWatcher zookeeper =
-      new ZooKeeperWatcher(conf, ZK_IDENTIFIER_PREFIX + connection.toString(),
-        new ThrowableAbortable());
-    try {
-      checkTableExists(tableName);
-      List<Pair<HRegionInfo, ServerName>> pairs =
-        MetaTableAccessor.getTableRegionsAndLocations(zookeeper, connection, tableName);
-      for (Pair<HRegionInfo, ServerName> pair: pairs) {
-        if (pair.getFirst().isOffline()) continue;
-        if (pair.getSecond() == null) continue;
+    checkTableExists(tableName);
+    switch (compactType) {
+      case MOB:
         try {
-          ServerName sn = pair.getSecond();
-          AdminService.BlockingInterface admin = this.connection.getAdmin(sn);
+          ServerName master = getMasterAddress();
+          HRegionInfo info = getMobRegionInfo(tableName);
           GetRegionInfoRequest request = RequestConverter.buildGetRegionInfoRequest(
-            pair.getFirst().getRegionName(), true);
-          GetRegionInfoResponse response = admin.getRegionInfo(null, request);
-          switch (response.getCompactionState()) {
-          case MAJOR_AND_MINOR:
-            return CompactionState.MAJOR_AND_MINOR;
-          case MAJOR:
-            if (state == CompactionState.MINOR) {
-              return CompactionState.MAJOR_AND_MINOR;
-            }
-            state = CompactionState.MAJOR;
-            break;
-          case MINOR:
-            if (state == CompactionState.MAJOR) {
-              return CompactionState.MAJOR_AND_MINOR;
-            }
-            state = CompactionState.MINOR;
-            break;
-          case NONE:
-          default: // nothing, continue
-          }
-        } catch (NotServingRegionException e) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Trying to get compaction state of " +
-              pair.getFirst() + ": " +
-              StringUtils.stringifyException(e));
-          }
-        } catch (RemoteException e) {
-          if (e.getMessage().indexOf(NotServingRegionException.class.getName()) >= 0) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Trying to get compaction state of " + pair.getFirst() + ": "
-                + StringUtils.stringifyException(e));
-            }
-          } else {
-            throw e;
-          }
+                  info.getRegionName(), true);
+          GetRegionInfoResponse response = this.connection.getAdmin(master)
+                  .getRegionInfo(null, request);
+          state = response.getCompactionState();
+        } catch (ServiceException se) {
+          throw ProtobufUtil.getRemoteException(se);
         }
-      }
-    } catch (ServiceException se) {
-      throw ProtobufUtil.getRemoteException(se);
-    } finally {
-      zookeeper.close();
+        break;
+      case NORMAL:
+        ZooKeeperWatcher zookeeper =
+        new ZooKeeperWatcher(conf, ZK_IDENTIFIER_PREFIX + connection.toString(),
+          new ThrowableAbortable());
+        try {
+          checkTableExists(tableName);
+          List<Pair<HRegionInfo, ServerName>> pairs =
+              MetaTableAccessor.getTableRegionsAndLocations(zookeeper, connection, tableName);
+          for (Pair<HRegionInfo, ServerName> pair: pairs) {
+            if (pair.getFirst().isOffline()) continue;
+            if (pair.getSecond() == null) continue;
+            try {
+              ServerName sn = pair.getSecond();
+              AdminService.BlockingInterface admin = this.connection.getAdmin(sn);
+              GetRegionInfoRequest request = RequestConverter.buildGetRegionInfoRequest(
+                pair.getFirst().getRegionName(), true);
+              GetRegionInfoResponse response = admin.getRegionInfo(null, request);
+              switch (response.getCompactionState()) {
+              case MAJOR_AND_MINOR:
+                return CompactionState.MAJOR_AND_MINOR;
+              case MAJOR:
+                if (state == CompactionState.MINOR) {
+                  return CompactionState.MAJOR_AND_MINOR;
+                }
+                state = CompactionState.MAJOR;
+                break;
+              case MINOR:
+                if (state == CompactionState.MAJOR) {
+                  return CompactionState.MAJOR_AND_MINOR;
+                }
+                state = CompactionState.MINOR;
+                break;
+              case NONE:
+              default: // nothing, continue
+              }
+            } catch (NotServingRegionException e) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Trying to get compaction state of " +
+                    pair.getFirst() + ": " +
+                    StringUtils.stringifyException(e));
+              }
+            } catch (RemoteException e) {
+              if (e.getMessage().indexOf(NotServingRegionException.class.getName()) >= 0) {
+                if (LOG.isDebugEnabled()) {
+                  LOG.debug("Trying to get compaction state of " + pair.getFirst() + ": "
+                      + StringUtils.stringifyException(e));
+                }
+              } else {
+                throw e;
+              }
+            }
+          }
+        } catch (ServiceException se) {
+          throw ProtobufUtil.getRemoteException(se);
+        } finally {
+          zookeeper.close();
+        }
+        break;
     }
     return state;
   }
@@ -4185,6 +4213,18 @@ public class HBaseAdmin implements Admin {
     }
   }
 
+  private ServerName getMasterAddress() throws IOException {
+    // TODO: Fix!  Reaching into internal implementation!!!!
+    HConnectionImplementation connection =
+            (HConnectionImplementation)this.connection;
+    ZooKeeperKeepAliveConnection zkw = connection.getKeepAliveZooKeeperWatcher();
+    try {
+      return MasterAddressTracker.getMasterAddress(zkw);
+    } catch (KeeperException e) {
+      throw new IOException("Failed to get master server name from MasterAddressTracker", e);
+    }
+  }
+
   @Override
   public long getLastMajorCompactionTimestamp(final TableName tableName) throws IOException {
     return executeCallable(new MasterCallable<Long>(getConnection()) {
@@ -4212,6 +4252,48 @@ public class HBaseAdmin implements Admin {
         return master.getLastMajorCompactionTimestampForRegion(null, req).getCompactionTimestamp();
       }
     });
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void compact(final TableName tableName, final byte[] columnFamily, CompactType compactType)
+    throws IOException, InterruptedException {
+    compact(tableName, columnFamily, false, compactType);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void compact(final TableName tableName, CompactType compactType)
+    throws IOException, InterruptedException {
+    compact(tableName, null, false, compactType);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void majorCompact(final TableName tableName, final byte[] columnFamily,
+    CompactType compactType) throws IOException, InterruptedException {
+    compact(tableName, columnFamily, true, compactType);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void majorCompact(final TableName tableName, CompactType compactType)
+          throws IOException, InterruptedException {
+      compact(tableName, null, true, compactType);
+  }
+
+  @Override
+  public CompactionState getCompactionState(final TableName tableName)
+      throws IOException {
+    return getCompactionState(tableName, CompactType.NORMAL);
   }
 
   /**
@@ -4502,4 +4584,10 @@ public class HBaseAdmin implements Admin {
       }
     });
   }
+
+  private HRegionInfo getMobRegionInfo(TableName tableName) {
+    return new HRegionInfo(tableName, Bytes.toBytes(".mob"),
+            HConstants.EMPTY_END_ROW, false, 0);
+  }
+
 }

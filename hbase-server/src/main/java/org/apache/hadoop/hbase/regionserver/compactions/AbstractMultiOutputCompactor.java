@@ -125,8 +125,8 @@ public abstract class AbstractMultiOutputCompactor<T extends AbstractMultiFileWr
       StoreScanner storeScanner =
           (scanner instanceof StoreScanner) ? (StoreScanner) scanner : null;
       writer.init(storeScanner, writerFactory);
-      finished = performCompaction(scanner, writer, smallestReadPoint, cleanSeqId,
-        throughputController);
+      finished = performCompaction(fd, scanner, writer, smallestReadPoint, cleanSeqId,
+        throughputController, request.isMajor());
       if (!finished) {
         throw new InterruptedIOException("Aborting compaction of store " + store + " in region "
             + store.getRegionInfo().getRegionNameAsString() + " because it was interrupted.");

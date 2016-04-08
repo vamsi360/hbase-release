@@ -2399,6 +2399,16 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
     return count;
   }
 
+  public int countRows(final Table table, final Scan scan) throws IOException {
+    ResultScanner results = table.getScanner(scan);
+    int count = 0;
+    for (@SuppressWarnings("unused") Result res : results) {
+      count++;
+    }
+    results.close();
+    return count;
+  }
+
   public int countRows(final Table table, final byte[]... families) throws IOException {
     Scan scan = new Scan();
     for (byte[] family: families) {

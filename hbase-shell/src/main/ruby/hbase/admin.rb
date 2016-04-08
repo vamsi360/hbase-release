@@ -56,12 +56,25 @@ module Hbase
 
     #----------------------------------------------------------------------------------------------
     # Requests a table or region or column family compaction
-    def compact(table_or_region_name, family = nil)
-      if family == nil
-        @admin.compact(table_or_region_name)
+    def compact(table_or_region_name, family = nil, type = "NORMAL")
+      if type == "NORMAL"
+        if family == nil
+          @admin.compact(table_or_region_name)
+        else
+          # We are compacting a column family within a region.
+          @admin.compact(table_or_region_name, family)
+        end
+      elsif type == "MOB"
+        if family == nil
+          @admin.compact(org.apache.hadoop.hbase.TableName.valueOf(table_or_region_name),
+          org.apache.hadoop.hbase.client.Admin::CompactType::MOB)
+        else
+          # We are compacting a mob column family within a table.
+          @admin.compact(org.apache.hadoop.hbase.TableName.valueOf(table_or_region_name), family.to_java_bytes,
+          org.apache.hadoop.hbase.client.Admin::CompactType::MOB)
+        end
       else
-        # We are compacting a column family within a region.
-        @admin.compact(table_or_region_name, family)
+         raise ArgumentError, "only NORMAL or MOB accepted for type!"
       end
     end
 
@@ -72,12 +85,25 @@ module Hbase
 
     #----------------------------------------------------------------------------------------------
     # Requests a table or region or column family major compaction
-    def major_compact(table_or_region_name, family = nil)
-      if family == nil
-        @admin.majorCompact(table_or_region_name)
+    def major_compact(table_or_region_name, family = nil, type = "NORMAL")
+      if type == "NORMAL"
+        if family == nil
+          @admin.majorCompact(table_or_region_name)
+        else
+          # We are major compacting a column family within a region or table.
+          @admin.majorCompact(table_or_region_name, family)
+        end
+      elsif type == "MOB"
+        if family == nil
+          @admin.majorCompact(org.apache.hadoop.hbase.TableName.valueOf(table_or_region_name),
+          org.apache.hadoop.hbase.client.Admin::CompactType::MOB)
+        else
+          # We are major compacting a mob column family within a table.
+          @admin.majorCompact(org.apache.hadoop.hbase.TableName.valueOf(table_or_region_name),
+          family.to_java_bytes, org.apache.hadoop.hbase.client.Admin::CompactType::MOB)
+        end
       else
-        # We are major compacting a column family within a region or table.
-        @admin.majorCompact(table_or_region_name, family)
+        raise ArgumentError, "only NORMAL or MOB accepted for type!"
       end
     end
 
@@ -829,6 +855,8 @@ module Hbase
       family.setCompressTags(JBoolean.valueOf(arg.delete(org.apache.hadoop.hbase.HColumnDescriptor::COMPRESS_TAGS))) if arg.include?(org.apache.hadoop.hbase.HColumnDescriptor::COMPRESS_TAGS)
       family.setPrefetchBlocksOnOpen(JBoolean.valueOf(arg.delete(org.apache.hadoop.hbase.HColumnDescriptor::PREFETCH_BLOCKS_ON_OPEN))) if arg.include?(org.apache.hadoop.hbase.HColumnDescriptor::PREFETCH_BLOCKS_ON_OPEN)
       family.setValue(COMPRESSION_COMPACT, arg.delete(COMPRESSION_COMPACT)) if arg.include?(COMPRESSION_COMPACT)
+      family.setMobEnabled(JBoolean.valueOf(arg.delete(org.apache.hadoop.hbase.HColumnDescriptor::IS_MOB))) if arg.include?(org.apache.hadoop.hbase.HColumnDescriptor::IS_MOB)
+      family.setMobThreshold(JLong.valueOf(arg.delete(org.apache.hadoop.hbase.HColumnDescriptor::MOB_THRESHOLD))) if arg.include?(org.apache.hadoop.hbase.HColumnDescriptor::MOB_THRESHOLD)
       if arg.include?(org.apache.hadoop.hbase.HColumnDescriptor::BLOOMFILTER)
         bloomtype = arg.delete(org.apache.hadoop.hbase.HColumnDescriptor::BLOOMFILTER).upcase
         unless org.apache.hadoop.hbase.regionserver.BloomType.constants.include?(bloomtype)

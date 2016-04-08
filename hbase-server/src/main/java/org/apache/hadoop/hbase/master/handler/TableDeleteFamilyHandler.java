@@ -67,7 +67,8 @@ public class TableDeleteFamilyHandler extends TableEventHandler {
     MasterFileSystem mfs = this.masterServices.getMasterFileSystem();
     for (HRegionInfo hri : hris) {
       // Delete the family directory in FS for all the regions one by one
-      mfs.deleteFamilyFromFS(hri, familyName);
+      mfs.deleteFamilyFromFS(hri, familyName,
+        getTableDescriptor().getFamily(this.familyName).isMobEnabled());
     }
     if (cpHost != null) {
       cpHost.postDeleteColumnHandler(this.tableName, this.familyName);

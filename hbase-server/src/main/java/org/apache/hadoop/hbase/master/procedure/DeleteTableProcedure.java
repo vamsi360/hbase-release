@@ -27,16 +27,12 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.TableNotDisabledException;
-import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.backup.HFileArchiver;
-import org.apache.hadoop.hbase.MetaTableAccessor;
 import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Result;
@@ -44,6 +40,8 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.exceptions.HBaseException;
+import org.apache.hadoop.hbase.mob.MobConstants;
+import org.apache.hadoop.hbase.mob.MobUtils;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.master.AssignmentManager;
 import org.apache.hadoop.hbase.master.MasterCoprocessorHost;
@@ -344,9 +342,25 @@ public class DeleteTableProcedure
       LOG.debug("Table '" + tableName + "' archived!");
     }
 
+    // Archive mob data
+    Path mobTableDir = FSUtils.getTableDir(new Path(mfs.getRootDir(), MobConstants.MOB_DIR_NAME),
+            tableName);
+    Path regionDir =
+            new Path(mobTableDir, MobUtils.getMobRegionInfo(tableName).getEncodedName());
+    if (fs.exists(regionDir)) {
+      HFileArchiver.archiveRegion(fs, mfs.getRootDir(), mobTableDir, regionDir);
+    }
+
     // Delete table directory from FS (temp directory)
     if (!fs.delete(tempTableDir, true) && fs.exists(tempTableDir)) {
       throw new IOException("Couldn't delete " + tempTableDir);
+    }
+
+    // Delete the table directory where the mob files are saved
+    if (mobTableDir != null && fs.exists(mobTableDir)) {
+      if (!fs.delete(mobTableDir, true)) {
+        throw new IOException("Couldn't delete mob dir " + mobTableDir);
+      }
     }
   }
 
