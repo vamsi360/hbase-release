@@ -99,3 +99,4 @@ HBASE-15213 Fix increment performance regression caused by HBASE-8763 on branch-
 HBASE-14380 Correct data gets skipped along with bad data in importTsv bulk load thru TsvImporterTextMapper (Bhupendra Kumar Jain)
 HBASE-14229 Flushing canceled by coprocessor still leads to memstoreSize set down (Yerui Sun)
 HBASE-14867 SimpleRegionNormalizer needs to have better heuristics to trigger merge operation
+HBASE-11339 HBase MOB (Jingcheng Du)
