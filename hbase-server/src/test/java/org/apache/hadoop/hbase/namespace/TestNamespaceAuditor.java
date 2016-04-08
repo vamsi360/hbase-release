@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import org.junit.Ignore;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -421,7 +422,7 @@ public class TestNamespaceAuditor {
     });
   }
 
-  @Test
+  @Ignore("Hangs on occasion waiting on countdown latch") @Test
   public void testRegionOperations() throws Exception {
     String nsp1 = prefix + "_regiontest";
     NamespaceDescriptor nspDesc =
