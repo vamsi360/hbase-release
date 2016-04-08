@@ -17,8 +17,10 @@
  */
 package org.apache.hadoop.hbase.regionserver;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CompatibilitySingletonFactory;
 
 /**
@@ -31,25 +33,33 @@ import org.apache.hadoop.hbase.CompatibilitySingletonFactory;
 @InterfaceStability.Evolving
 @InterfaceAudience.Private
 public class MetricsRegionServer {
-  private MetricsRegionServerSource serverSource;
-  private MetricsRegionServerWrapper regionServerWrapper;
+  private final MetricsRegionServerSource serverSource;
+  private final MetricsRegionServerWrapper regionServerWrapper;
 
-  public MetricsRegionServer(MetricsRegionServerWrapper regionServerWrapper) {
-    this(regionServerWrapper,
+  private final MetricsUserAggregate userAggregate;
+
+  public MetricsRegionServer(Configuration conf, MetricsRegionServerWrapper regionServerWrapper) {
+    this(conf, regionServerWrapper,
         CompatibilitySingletonFactory.getInstance(MetricsRegionServerSourceFactory.class)
             .createServer(regionServerWrapper));
 
   }
 
-  MetricsRegionServer(MetricsRegionServerWrapper regionServerWrapper,
+  MetricsRegionServer(Configuration conf, MetricsRegionServerWrapper regionServerWrapper,
                       MetricsRegionServerSource serverSource) {
     this.regionServerWrapper = regionServerWrapper;
     this.serverSource = serverSource;
+    this.userAggregate = new MetricsUserAggregate(conf);
   }
 
   // for unit-test usage
   public MetricsRegionServerSource getMetricsSource() {
     return serverSource;
+  }
+
+  @VisibleForTesting
+  public MetricsUserAggregate getMetricsUserAggregate() {
+    return userAggregate;
   }
 
   public MetricsRegionServerWrapper getRegionServerWrapper() {
@@ -61,6 +71,7 @@ public class MetricsRegionServer {
       serverSource.incrSlowPut();
     }
     serverSource.updatePut(t);
+    userAggregate.updatePut(t);
   }
 
   public void updateDelete(long t) {
@@ -68,6 +79,7 @@ public class MetricsRegionServer {
       serverSource.incrSlowDelete();
     }
     serverSource.updateDelete(t);
+    userAggregate.updateDelete(t);
   }
 
   public void updateGet(long t) {
@@ -75,6 +87,7 @@ public class MetricsRegionServer {
       serverSource.incrSlowGet();
     }
     serverSource.updateGet(t);
+    userAggregate.updateGet(t);
   }
 
   public void updateIncrement(long t) {
@@ -82,6 +95,7 @@ public class MetricsRegionServer {
       serverSource.incrSlowIncrement();
     }
     serverSource.updateIncrement(t);
+    userAggregate.updateIncrement(t);
   }
 
   public void updateAppend(long t) {
@@ -89,10 +103,12 @@ public class MetricsRegionServer {
       serverSource.incrSlowAppend();
     }
     serverSource.updateAppend(t);
+    userAggregate.updateAppend(t);
   }
 
   public void updateReplay(long t){
     serverSource.updateReplay(t);
+    userAggregate.updateReplay(t);
   }
 
   public void updateScanSize(long scanSize){
@@ -101,6 +117,7 @@ public class MetricsRegionServer {
 
   public void updateScanTime(long t) {
     serverSource.updateScanTime(t);
+    userAggregate.updateScanTime(t);
   }
 
   public void updateSplitTime(long t) {

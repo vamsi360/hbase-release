@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import org.apache.hadoop.hbase.CompatibilityFactory;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.test.MetricsAssertHelper;
 import org.junit.Before;
@@ -47,7 +48,7 @@ public class TestMetricsRegionServer {
   @Before
   public void setUp() {
     wrapper = new MetricsRegionServerWrapperStub();
-    rsm = new MetricsRegionServer(wrapper);
+    rsm = new MetricsRegionServer(HBaseConfiguration.create(), wrapper);
     serverSource = rsm.getMetricsSource();
   }
 
