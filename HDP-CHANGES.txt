@@ -91,3 +91,4 @@ HBASE-15085 IllegalStateException was thrown when scanning on bulkloaded HFiles
 HBASE-14812 Fix ResultBoundedCompletionService deadlock (Elliott Clark)
 HBASE-15252 Data loss when replaying WAL if HDFS timeout (Matteo)
 HBASE-15400 Use DateTieredCompactor for Date Tiered Compaction (Clara Xiong)
+HBASE-15187 Integrate CSRF prevention filter to REST gateway
