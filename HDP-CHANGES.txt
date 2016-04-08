@@ -98,3 +98,4 @@ HBASE-15218 On RS crash and replay of WAL, loosing all Tags in Cells (Anoop)
 HBASE-15213 Fix increment performance regression caused by HBASE-8763 on branch-1.0 (Junegunn Choi)
 HBASE-14380 Correct data gets skipped along with bad data in importTsv bulk load thru TsvImporterTextMapper (Bhupendra Kumar Jain)
 HBASE-14229 Flushing canceled by coprocessor still leads to memstoreSize set down (Yerui Sun)
+HBASE-14867 SimpleRegionNormalizer needs to have better heuristics to trigger merge operation
