@@ -92,3 +92,4 @@ HBASE-14812 Fix ResultBoundedCompletionService deadlock (Elliott Clark)
 HBASE-15252 Data loss when replaying WAL if HDFS timeout (Matteo)
 HBASE-15400 Use DateTieredCompactor for Date Tiered Compaction (Clara Xiong)
 HBASE-15187 Integrate CSRF prevention filter to REST gateway
+HBASE-14347 Add a switch to DynamicClassLoader to disable it (huaxiang sun)
