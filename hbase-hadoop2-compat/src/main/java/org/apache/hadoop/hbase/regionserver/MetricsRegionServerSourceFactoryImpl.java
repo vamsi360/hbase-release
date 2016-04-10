@@ -30,6 +30,7 @@ public class MetricsRegionServerSourceFactoryImpl implements MetricsRegionServer
     private Object aggLock = new Object();
     private MetricsRegionAggregateSourceImpl regionAggImpl;
     private MetricsUserAggregateSourceImpl userAggImpl;
+    private MetricsTableAggregateSourceImpl tblAggImpl;
   }
 
   private synchronized MetricsRegionAggregateSourceImpl getRegionAggregate() {
@@ -51,6 +52,16 @@ public class MetricsRegionServerSourceFactoryImpl implements MetricsRegionServer
   }
 
   @Override
+  public synchronized MetricsTableAggregateSourceImpl getTableAggregate() {
+    synchronized (FactoryStorage.INSTANCE.aggLock) {
+      if (FactoryStorage.INSTANCE.tblAggImpl == null) {
+        FactoryStorage.INSTANCE.tblAggImpl = new MetricsTableAggregateSourceImpl();
+      }
+      return FactoryStorage.INSTANCE.tblAggImpl;
+    }
+  }
+
+  @Override
   public synchronized MetricsRegionServerSource createServer(
       MetricsRegionServerWrapper regionServerWrapper) {
     return new MetricsRegionServerSourceImpl(regionServerWrapper);
@@ -64,5 +75,10 @@ public class MetricsRegionServerSourceFactoryImpl implements MetricsRegionServer
   @Override
   public MetricsUserSource createUser(String shortUserName) {
     return new MetricsUserSourceImpl(shortUserName, getUserAggregate());
+  }
+
+  @Override
+  public MetricsTableSource createTable(String table, MetricsTableWrapperAggregate wrapper) {
+    return new MetricsTableSourceImpl(table, getTableAggregate(), wrapper);
   }
 }
