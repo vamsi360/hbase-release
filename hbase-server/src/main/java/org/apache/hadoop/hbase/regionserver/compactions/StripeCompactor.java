@@ -72,14 +72,16 @@ public class StripeCompactor extends AbstractMultiOutputCompactor<StripeMultiFil
     @Override
     public InternalScanner createScanner(List<StoreFileScanner> scanners, ScanType scanType,
         FileDetails fd, long smallestReadPoint) throws IOException {
-      return (majorRangeFromRow == null) ? StripeCompactor.this.createScanner(store, scanners,
-        scanType, smallestReadPoint, fd.earliestPutTs) : StripeCompactor.this.createScanner(store,
-        scanners, smallestReadPoint, fd.earliestPutTs, majorRangeFromRow, majorRangeToRow);
+      return (majorRangeFromRow == null)
+          ? StripeCompactor.this.createScanner(store, scanners, scanType, smallestReadPoint,
+            fd.earliestPutTs)
+          : StripeCompactor.this.createScanner(store, scanners, smallestReadPoint, fd.earliestPutTs,
+            majorRangeFromRow, majorRangeToRow);
     }
   }
 
-  public List<Path> compact(CompactionRequest request, List<byte[]> targetBoundaries,
-      byte[] majorRangeFromRow, byte[] majorRangeToRow,
+  public List<Path> compact(CompactionRequest request, final List<byte[]> targetBoundaries,
+      final byte[] majorRangeFromRow, final byte[] majorRangeToRow,
       CompactionThroughputController throughputController) throws IOException {
     if (LOG.isDebugEnabled()) {
       StringBuilder sb = new StringBuilder();
@@ -89,30 +91,44 @@ public class StripeCompactor extends AbstractMultiOutputCompactor<StripeMultiFil
       }
       LOG.debug(sb.toString());
     }
-    StripeMultiFileWriter writer =
-        new StripeMultiFileWriter.BoundaryMultiWriter(store.getComparator(), targetBoundaries,
-          majorRangeFromRow, majorRangeToRow);
-    return compact(writer, request, new StripeInternalScannerFactory(majorRangeFromRow,
-      majorRangeToRow), throughputController, null);
+    return compact(request, new StripeInternalScannerFactory(majorRangeFromRow, majorRangeToRow),
+      new CellSinkFactory<StripeMultiFileWriter>() {
+
+        @Override
+        public StripeMultiFileWriter createWriter(InternalScanner scanner, FileDetails fd,
+            boolean shouldDropBehind) throws IOException {
+          StripeMultiFileWriter writer = new StripeMultiFileWriter.BoundaryMultiWriter(
+              store.getComparator(), targetBoundaries, majorRangeFromRow, majorRangeToRow);
+          initMultiWriter(writer, scanner, fd, shouldDropBehind);
+          return writer;
+        }
+      }, throughputController);
   }
 
-  public List<Path> compact(CompactionRequest request, int targetCount, long targetSize,
-      byte[] left, byte[] right, byte[] majorRangeFromRow, byte[] majorRangeToRow,
+  public List<Path> compact(CompactionRequest request, final int targetCount, final long targetSize,
+    final byte[] left, final byte[] right, byte[] majorRangeFromRow, byte[] majorRangeToRow,
       CompactionThroughputController throughputController) throws IOException {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Executing compaction with " + targetSize + " target file size, no more than "
-          + targetCount + " files, in [" + Bytes.toString(left) + "] [" + Bytes.toString(right)
-          + "] range");
+      LOG.debug(
+        "Executing compaction with " + targetSize + " target file size, no more than " + targetCount
+            + " files, in [" + Bytes.toString(left) + "] [" + Bytes.toString(right) + "] range");
     }
-    StripeMultiFileWriter writer =
-        new StripeMultiFileWriter.SizeMultiWriter(store.getComparator(), targetCount, targetSize,
-          left, right);
-    return compact(writer, request, new StripeInternalScannerFactory(majorRangeFromRow,
-      majorRangeToRow), throughputController, null);
+    return compact(request, new StripeInternalScannerFactory(majorRangeFromRow, majorRangeToRow),
+      new CellSinkFactory<StripeMultiFileWriter>() {
+
+        @Override
+        public StripeMultiFileWriter createWriter(InternalScanner scanner, FileDetails fd,
+            boolean shouldDropBehind) throws IOException {
+          StripeMultiFileWriter writer = new StripeMultiFileWriter.SizeMultiWriter(
+              store.getComparator(), targetCount, targetSize, left, right);
+          initMultiWriter(writer, scanner, fd, shouldDropBehind);
+          return writer;
+        }
+      }, throughputController);
   }
 
   @Override
-  protected List<Path> commitMultiWriter(StripeMultiFileWriter writer, FileDetails fd,
+  protected List<Path> commitWriter(StripeMultiFileWriter writer, FileDetails fd,
       CompactionRequest request) throws IOException {
     List<Path> newFiles = writer.commitWriters(fd.maxSeqId, request.isMajor());
     assert !newFiles.isEmpty() : "Should have produced an empty file to preserve metadata.";

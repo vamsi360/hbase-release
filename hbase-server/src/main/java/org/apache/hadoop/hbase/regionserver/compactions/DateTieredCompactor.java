@@ -51,34 +51,29 @@ public class DateTieredCompactor extends AbstractMultiOutputCompactor<DateTiered
     return StoreFile.getMaxSequenceIdInList(request.getFiles()) == store.getMaxSequenceId();
   }
 
-  public List<Path> compact(final CompactionRequest request, List<Long> lowerBoundaries,
+  public List<Path> compact(final CompactionRequest request, final List<Long> lowerBoundaries,
     CompactionThroughputController throughputController, User user) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing compaction with " + lowerBoundaries.size()
           + "windows, lower boundaries: " + lowerBoundaries);
     }
 
-    DateTieredMultiFileWriter writer =
-        new DateTieredMultiFileWriter(lowerBoundaries, needEmptyFile(request));
-    return compact(writer, request, new InternalScannerFactory() {
+    return compact(request, defaultScannerFactory,
+      new CellSinkFactory<DateTieredMultiFileWriter>() {
 
-      @Override
-      public ScanType getScanType(CompactionRequest request) {
-        return request.isAllFiles() ? ScanType.COMPACT_DROP_DELETES
-            : ScanType.COMPACT_RETAIN_DELETES;
-      }
-
-      @Override
-      public InternalScanner createScanner(List<StoreFileScanner> scanners, ScanType scanType,
-          FileDetails fd, long smallestReadPoint) throws IOException {
-        return DateTieredCompactor.this.createScanner(store, scanners, scanType, smallestReadPoint,
-          fd.earliestPutTs);
-      }
-    }, throughputController, user);
+        @Override
+        public DateTieredMultiFileWriter createWriter(InternalScanner scanner, FileDetails fd,
+            boolean shouldDropBehind) throws IOException {
+          DateTieredMultiFileWriter writer = new DateTieredMultiFileWriter(lowerBoundaries,
+              needEmptyFile(request));
+          initMultiWriter(writer, scanner, fd, shouldDropBehind);
+          return writer;
+        }
+      }, throughputController);
   }
 
   @Override
-  protected List<Path> commitMultiWriter(DateTieredMultiFileWriter writer, FileDetails fd,
+  protected List<Path> commitWriter(DateTieredMultiFileWriter writer, FileDetails fd,
       CompactionRequest request) throws IOException {
     return writer.commitWriters(fd.maxSeqId, request.isAllFiles());
   }

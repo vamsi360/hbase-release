@@ -36,8 +36,10 @@ import org.apache.hadoop.hbase.TagType;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.regionserver.*;
 import org.apache.hadoop.hbase.regionserver.StoreFile.Writer;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionThroughputController;
 import org.apache.hadoop.hbase.regionserver.compactions.DefaultCompactor;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -49,6 +51,44 @@ public class DefaultMobStoreCompactor extends DefaultCompactor {
   private static final Log LOG = LogFactory.getLog(DefaultMobStoreCompactor.class);
   private long mobSizeThreshold;
   private HMobStore mobStore;
+
+  private final InternalScannerFactory scannerFactory = new InternalScannerFactory() {
+
+    @Override
+    public ScanType getScanType(CompactionRequest request) {
+      return request.isRetainDeleteMarkers() ? ScanType.COMPACT_RETAIN_DELETES
+          : ScanType.COMPACT_DROP_DELETES;
+    }
+
+    @Override
+    public InternalScanner createScanner(List<StoreFileScanner> scanners,
+        ScanType scanType, FileDetails fd, long smallestReadPoint) throws IOException {
+      Scan scan = new Scan();
+      scan.setMaxVersions(store.getFamily().getMaxVersions());
+      if (scanType == ScanType.COMPACT_DROP_DELETES) {
+        // In major compaction, we need to write the delete markers to del files, so we have to
+        // retain the them in scanning.
+        scanType = ScanType.COMPACT_RETAIN_DELETES;
+        return new MobCompactionStoreScanner(store, store.getScanInfo(), scan, scanners,
+            scanType, smallestReadPoint, fd.earliestPutTs, true);
+      } else {
+        return new MobCompactionStoreScanner(store, store.getScanInfo(), scan, scanners,
+            scanType, smallestReadPoint, fd.earliestPutTs, false);
+      }
+    }
+  };
+
+  private final CellSinkFactory<Writer> writerFactory = new CellSinkFactory<Writer>() {
+
+    @Override
+    public Writer createWriter(InternalScanner scanner,
+        org.apache.hadoop.hbase.regionserver.compactions.Compactor.FileDetails fd,
+        boolean shouldDropBehind) throws IOException {
+      // make this writer with tags always because of possible new cells with tags.
+      return store.createWriterInTmp(fd.maxKeyCount, compactionCompression, true, true, true);
+    }
+  };
+
   public DefaultMobStoreCompactor(Configuration conf, Store store) {
     super(conf, store);
     // The mob cells reside in the mob-enabled column family which is held by HMobStore.
@@ -62,36 +102,10 @@ public class DefaultMobStoreCompactor extends DefaultCompactor {
     mobSizeThreshold = store.getFamily().getMobThreshold();
   }
 
-  /**
-   * Creates a writer for a new file in a temporary directory.
-   * @param fd The file details.
-   * @param smallestReadPoint The smallest mvcc readPoint across all the scanners in this region.
-   * @return Writer for a new StoreFile in the tmp dir.
-   * @throws IOException
-   */
   @Override
-  protected Writer createTmpWriter(FileDetails fd, long smallestReadPoint) throws IOException {
-    // make this writer with tags always because of possible new cells with tags.
-    StoreFile.Writer writer = store.createWriterInTmp(fd.maxKeyCount, this.compactionCompression,
-      true, true, true);
-    return writer;
-  }
-
-  @Override
-  protected InternalScanner createScanner(Store store, List<StoreFileScanner> scanners,
-      ScanType scanType, long smallestReadPoint, long earliestPutTs) throws IOException {
-    Scan scan = new Scan();
-    scan.setMaxVersions(store.getFamily().getMaxVersions());
-    if (scanType == ScanType.COMPACT_DROP_DELETES) {
-      // In major compaction, we need to write the delete markers to del files, so we have to
-      // retain the them in scanning.
-      scanType = ScanType.COMPACT_RETAIN_DELETES;
-      return new MobCompactionStoreScanner(store, store.getScanInfo(), scan, scanners,
-          scanType, smallestReadPoint, earliestPutTs, true);
-    } else {
-      return new MobCompactionStoreScanner(store, store.getScanInfo(), scan, scanners,
-          scanType, smallestReadPoint, earliestPutTs, false);
-    }
+  public List<Path> compact(CompactionRequest request,
+    CompactionThroughputController throughputController) throws IOException {
+    return compact(request, scannerFactory, writerFactory, throughputController);
   }
 
   // TODO refactor to take advantage of the throughput controller.
@@ -157,8 +171,7 @@ public class DefaultMobStoreCompactor extends DefaultCompactor {
     boolean hasMore;
     Path path = MobUtils.getMobFamilyPath(conf, store.getTableName(), store.getColumnFamilyName());
     byte[] fileName = null;
-    StoreFile.Writer mobFileWriter = null;
-    StoreFile.Writer delFileWriter = null;
+    Writer mobFileWriter = null, delFileWriter = null;
     long mobCells = 0;
     long deleteMarkersCount = 0;
     Tag tableNameTag = new Tag(TagType.MOB_TABLE_NAME_TAG_TYPE, store.getTableName()
