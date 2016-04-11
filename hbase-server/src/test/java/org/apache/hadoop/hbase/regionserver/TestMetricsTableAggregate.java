@@ -32,7 +32,7 @@ public class TestMetricsTableAggregate {
   public static MetricsAssertHelper HELPER =
       CompatibilityFactory.getInstance(MetricsAssertHelper.class);
 
-  @Test
+//  @Test
   public void testTableWrapperAggregateMetrics() throws IOException {
     String tableName = "testRequestCount";
     MetricsTableWrapperStub tableWrapper = new MetricsTableWrapperStub(tableName);
