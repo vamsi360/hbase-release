@@ -63,6 +63,8 @@ import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.backup.BackupRequest;
+import org.apache.hadoop.hbase.backup.BackupClientUtil;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.client.ConnectionManager.HConnectionImplementation;
@@ -87,6 +89,8 @@ import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.RollWALWriterReque
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.RollWALWriterResponse;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.StopServerRequest;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.UpdateConfigurationRequest;
+import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest;
+import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NameStringPair;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ProcedureDescription;
@@ -551,14 +555,6 @@ public class HBaseAdmin implements Admin {
     return getTableDescriptor(TableName.valueOf(tableName));
   }
 
-  private long getPauseTime(int tries) {
-    int triesCount = tries;
-    if (triesCount >= HConstants.RETRY_BACKOFF.length) {
-      triesCount = HConstants.RETRY_BACKOFF.length - 1;
-    }
-    return this.pause * HConstants.RETRY_BACKOFF[triesCount];
-  }
-
   /**
    * Creates a new table.
    * Synchronous operation.
@@ -831,7 +827,7 @@ public class HBaseAdmin implements Admin {
         }
 
         try {
-          Thread.sleep(getAdmin().getPauseTime(tries++));
+          Thread.sleep(getPauseTime(tries++, getAdmin().pause));
         } catch (InterruptedException e) {
           throw new InterruptedIOException("Interrupted when opening" +
             " regions; " + actualRegCount.get() + " of " + numRegs +
@@ -1077,7 +1073,7 @@ public class HBaseAdmin implements Admin {
       if (enabled) {
         break;
       }
-      long sleep = getPauseTime(tries);
+      long sleep = getPauseTime(tries, pause);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Sleeping= " + sleep + "ms, waiting for all regions to be " +
           "enabled in " + tableName);
@@ -2586,6 +2582,94 @@ public class HBaseAdmin implements Admin {
     ProtobufUtil.split(admin, hri, splitPoint);
   }
 
+  @Override
+  public Future<String> backupTablesAsync(final BackupRequest userRequest) throws IOException {
+    BackupClientUtil.checkTargetDir(userRequest.getTargetRootDir(), conf);
+    if (userRequest.getTableList() != null) {
+      for (TableName table : userRequest.getTableList()) {
+        if (!tableExists(table)) {
+          throw new DoNotRetryIOException(table + "does not exist");
+        }
+      }
+    }
+
+    BackupTablesResponse response = executeCallable(
+      new MasterCallable<BackupTablesResponse>(getConnection()) {
+        @Override
+        public BackupTablesResponse call(int callTimeout) throws ServiceException {
+          BackupTablesRequest request = RequestConverter.buildBackupTablesRequest(
+            userRequest.getBackupType(), userRequest.getTableList(), userRequest.getTargetRootDir(),
+            userRequest.getWorkers(), userRequest.getBandwidth());
+          return master.backupTables(null, request);
+        }
+      });
+    return new TableBackupFuture(this, TableName.BACKUP_TABLE_NAME, response);
+  }
+
+  /**
+   * Do a get with a timeout against the passed in <code>future<code>.
+   */
+  private static <T> T get(final Future<T> future, final long timeout, final TimeUnit units)
+  throws IOException {
+    try {
+      // TODO: how long should we wait? Spin forever?
+      return future.get(timeout, units);
+    } catch (InterruptedException e) {
+      throw new InterruptedIOException("Interrupt while waiting on " + future);
+    } catch (TimeoutException e) {
+      throw new TimeoutIOException(e);
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof IOException) {
+        throw (IOException)e.getCause();
+      } else {
+        throw new IOException(e.getCause());
+      }
+    }
+  }
+
+  @Override
+  public String backupTables(final BackupRequest userRequest) throws IOException {
+    return get(
+      backupTablesAsync(userRequest),
+      syncWaitTimeout,
+      TimeUnit.MILLISECONDS);
+  }
+
+  public static class TableBackupFuture extends TableFuture<String> {
+    String backupId;
+    public TableBackupFuture(final HBaseAdmin admin, final TableName tableName,
+        final BackupTablesResponse response) {
+      super(admin, tableName,
+          (response != null && response.hasProcId()) ? response.getProcId() : null);
+      backupId = response.getBackupId();
+    }
+
+    String getBackupId() {
+      return backupId;
+    }
+
+    @Override
+    public String getOperationType() {
+      return "BACKUP";
+    }
+
+    @Override
+    protected String convertResult(final GetProcedureResultResponse response) throws IOException {
+      if (response.hasException()) {
+        throw ForeignExceptionUtil.toIOException(response.getException());
+      }
+      ByteString result = response.getResult();
+      if (result == null) return null;
+      return Bytes.toStringBinary(result.toByteArray());
+    }
+
+    @Override
+    protected String postOperationResult(final String result,
+        final long deadlineTs) throws IOException, TimeoutException {
+      return result;
+    }
+  }
+
   /**
    * Modify an existing table, more IRB friendly version.
    * Asynchronous operation.  This means that it may be a while before your
@@ -3437,12 +3521,16 @@ public class HBaseAdmin implements Admin {
       IllegalArgumentException {
     // actually take the snapshot
     SnapshotResponse response = takeSnapshotAsync(snapshot);
+    waitForSnapshot(snapshot, response.getExpectedTimeout(), getConnection());
+  }
+
+  public void waitForSnapshot(SnapshotDescription snapshot, long max,
+      HConnection conn) throws IOException {
     final IsSnapshotDoneRequest request = IsSnapshotDoneRequest.newBuilder().setSnapshot(snapshot)
         .build();
     IsSnapshotDoneResponse done = null;
     long start = EnvironmentEdgeManager.currentTime();
-    long max = response.getExpectedTimeout();
-    long maxPauseTime = max / this.numRetries;
+    long maxPauseTime = max / numRetries;
     int tries = 0;
     LOG.debug("Waiting a max of " + max + " ms for snapshot '" +
         ClientSnapshotDescriptionUtils.toString(snapshot) + "'' to complete. (max " +
@@ -3451,7 +3539,7 @@ public class HBaseAdmin implements Admin {
         || ((EnvironmentEdgeManager.currentTime() - start) < max && !done.getDone())) {
       try {
         // sleep a backoff <= pauseTime amount
-        long sleep = getPauseTime(tries++);
+        long sleep = getPauseTime(tries++, pause);
         sleep = sleep > maxPauseTime ? maxPauseTime : sleep;
         LOG.debug("(#" + tries + ") Sleeping: " + sleep +
           "ms while waiting for snapshot completion.");
@@ -3460,7 +3548,7 @@ public class HBaseAdmin implements Admin {
         throw (InterruptedIOException)new InterruptedIOException("Interrupted").initCause(e);
       }
       LOG.debug("Getting current status of snapshot from master...");
-      done = executeCallable(new MasterCallable<IsSnapshotDoneResponse>(getConnection()) {
+      done = executeCallable(new MasterCallable<IsSnapshotDoneResponse>(conn) {
         @Override
         public IsSnapshotDoneResponse call(int callTimeout) throws ServiceException {
           return master.isSnapshotDone(null, request);
@@ -3829,7 +3917,7 @@ public class HBaseAdmin implements Admin {
         || ((EnvironmentEdgeManager.currentTime() - start) < max && !done)) {
       try {
         // sleep a backoff <= pauseTime amount
-        long sleep = getPauseTime(tries++);
+        long sleep = getPauseTime(tries++, pause);
         sleep = sleep > maxPauseTime ? maxPauseTime : sleep;
         LOG.debug("(#" + tries + ") Sleeping: " + sleep +
           "ms while waiting for procedure completion.");
@@ -3912,7 +4000,7 @@ public class HBaseAdmin implements Admin {
     while (!done.getDone()) {
       try {
         // sleep a backoff <= pauseTime amount
-        long sleep = getPauseTime(tries++);
+        long sleep = getPauseTime(tries++, pause);
         sleep = sleep > maxPauseTime ? maxPauseTime : sleep;
         LOG.debug(tries + ") Sleeping: " + sleep + " ms while we wait for snapshot restore to complete.");
         Thread.sleep(sleep);
@@ -4183,6 +4271,14 @@ public class HBaseAdmin implements Admin {
     return new RegionServerCoprocessorRpcChannel(connection, sn);
   }
 
+  public static long getPauseTime(int tries, long pause) {
+    int triesCount = tries;
+    if (triesCount >= HConstants.RETRY_BACKOFF.length) {
+      triesCount = HConstants.RETRY_BACKOFF.length - 1;
+    }
+    return pause * HConstants.RETRY_BACKOFF[triesCount];
+  }
+
   @Override
   public void updateConfiguration(ServerName server) throws IOException {
     try {
@@ -4440,7 +4536,7 @@ public class HBaseAdmin implements Admin {
         }
 
         try {
-          Thread.sleep(getAdmin().getPauseTime(tries++));
+          Thread.sleep(getPauseTime(tries++, getAdmin().pause));
         } catch (InterruptedException e) {
           throw new InterruptedException(
             "Interrupted while waiting for the result of proc " + procId);
@@ -4506,6 +4602,19 @@ public class HBaseAdmin implements Admin {
         throws IOException, TimeoutException {
       return result;
     }
+    /**
+     * Called after the operation is terminated with a failure.
+     * this allows to perform extra steps after the procedure is terminated.
+     * it allows to apply transformations to the result that will be returned by get().
+     * The default implementation will rethrow the exception
+     * @param exception the exception got from fetching the result
+     * @param deadlineTs the timestamp after which this method should throw a TimeoutException
+     * @return the result of the procedure, which may be the same as the passed one
+     */
+    protected V postOperationFailure(final IOException exception, final long deadlineTs)
+        throws IOException, TimeoutException {
+      throw exception;
+    }
 
     /**
      * Called after the operation is terminated with a failure.
@@ -4542,7 +4651,7 @@ public class HBaseAdmin implements Admin {
           serverEx = e;
         }
         try {
-          Thread.sleep(getAdmin().getPauseTime(tries++));
+          Thread.sleep(getPauseTime(tries++, getAdmin().pause));
         } catch (InterruptedException e) {
           callable.throwInterruptedException();
         }
@@ -4552,6 +4661,180 @@ public class HBaseAdmin implements Admin {
       } else {
         callable.throwTimeoutException(EnvironmentEdgeManager.currentTime() - startTime);
       }
+    }
+  }
+  
+  @InterfaceAudience.Private
+  @InterfaceStability.Evolving
+  protected static abstract class TableFuture<V> extends ProcedureFuture<V> {
+    private final TableName tableName;
+
+    public TableFuture(final HBaseAdmin admin, final TableName tableName, final Long procId) {
+      super(admin, procId);
+      this.tableName = tableName;
+    }
+
+    @Override
+    public String toString() {
+      return getDescription();
+    }
+
+    /**
+     * @return the table name
+     */
+    protected TableName getTableName() {
+      return tableName;
+    }
+
+    /**
+     * @return the table descriptor
+     */
+    protected HTableDescriptor getTableDescriptor() throws IOException {
+      return getAdmin().getTableDescriptorByTableName(getTableName());
+    }
+    /**
+     * @return the operation type like CREATE, DELETE, DISABLE etc.
+     */
+    public abstract String getOperationType();
+
+    /**
+     * @return a description of the operation
+     */
+    protected String getDescription() {
+      return "Operation: " + getOperationType() + ", "
+          + "Table Name: " + tableName.getNameWithNamespaceInclAsString();
+
+    };
+
+    protected abstract class TableWaitForStateCallable implements WaitForStateCallable {
+      @Override
+      public void throwInterruptedException() throws InterruptedIOException {
+        throw new InterruptedIOException("Interrupted while waiting for operation: "
+            + getOperationType() + " on table: " + tableName.getNameWithNamespaceInclAsString());
+      }
+
+      @Override
+      public void throwTimeoutException(long elapsedTime) throws TimeoutException {
+        throw new TimeoutException("The operation: " + getOperationType() + " on table: " +
+            tableName.getNameAsString() + " has not completed after " + elapsedTime + "ms");
+      }
+    }
+
+    @Override
+    protected V postOperationResult(final V result, final long deadlineTs)
+        throws IOException, TimeoutException {
+      LOG.info(getDescription() + " completed");
+      return super.postOperationResult(result, deadlineTs);
+    }
+
+    @Override
+    protected V postOperationFailure(final IOException exception, final long deadlineTs)
+        throws IOException, TimeoutException {
+      LOG.info(getDescription() + " failed with " + exception.getMessage());
+      return super.postOperationFailure(exception, deadlineTs);
+    }
+
+    protected void waitForTableEnabled(final long deadlineTs)
+        throws IOException, TimeoutException {
+      waitForState(deadlineTs, new TableWaitForStateCallable() {
+        @Override
+        public boolean checkState(int tries) throws IOException {
+          try {
+            if (getAdmin().isTableAvailable(tableName)) {
+              return true;
+            }
+          } catch (TableNotFoundException tnfe) {
+            LOG.debug("Table " + tableName.getNameWithNamespaceInclAsString()
+                + " was not enabled, sleeping. tries=" + tries);
+          }
+          return false;
+        }
+      });
+    }
+
+    protected void waitForTableDisabled(final long deadlineTs)
+        throws IOException, TimeoutException {
+      waitForState(deadlineTs, new TableWaitForStateCallable() {
+        @Override
+        public boolean checkState(int tries) throws IOException {
+          return getAdmin().isTableDisabled(tableName);
+        }
+      });
+    }
+
+    protected void waitTableNotFound(final long deadlineTs)
+        throws IOException, TimeoutException {
+      waitForState(deadlineTs, new TableWaitForStateCallable() {
+        @Override
+        public boolean checkState(int tries) throws IOException {
+          return !getAdmin().tableExists(tableName);
+        }
+      });
+    }
+
+    protected void waitForSchemaUpdate(final long deadlineTs)
+        throws IOException, TimeoutException {
+      waitForState(deadlineTs, new TableWaitForStateCallable() {
+        @Override
+        public boolean checkState(int tries) throws IOException {
+          return getAdmin().getAlterStatus(tableName).getFirst() == 0;
+        }
+      });
+    }
+
+    protected void waitForAllRegionsOnline(final long deadlineTs, final byte[][] splitKeys)
+        throws IOException, TimeoutException {
+      final HTableDescriptor desc = getTableDescriptor();
+      final AtomicInteger actualRegCount = new AtomicInteger(0);
+      final MetaTableAccessor.Visitor visitor = new MetaTableAccessor.Visitor() {
+        @Override
+        public boolean visit(Result rowResult) throws IOException {
+          RegionLocations list = MetaTableAccessor.getRegionLocations(rowResult);
+          if (list == null) {
+            LOG.warn("No serialized HRegionInfo in " + rowResult);
+            return true;
+          }
+          HRegionLocation l = list.getRegionLocation();
+          if (l == null) {
+            return true;
+          }
+          if (!l.getRegionInfo().getTable().equals(desc.getTableName())) {
+            return false;
+          }
+          if (l.getRegionInfo().isOffline() || l.getRegionInfo().isSplit()) return true;
+          HRegionLocation[] locations = list.getRegionLocations();
+          for (HRegionLocation location : locations) {
+            if (location == null) continue;
+            ServerName serverName = location.getServerName();
+            // Make sure that regions are assigned to server
+            if (serverName != null && serverName.getHostAndPort() != null) {
+              actualRegCount.incrementAndGet();
+            }
+          }
+          return true;
+        }
+      };
+
+      int tries = 0;
+      int numRegs = (splitKeys == null ? 1 : splitKeys.length + 1) * desc.getRegionReplication();
+      while (EnvironmentEdgeManager.currentTime() < deadlineTs) {
+        actualRegCount.set(0);
+        // MetaTableAccessor.scanMetaForTableRegions(getAdmin().getConnection(), visitor,
+        //   desc.getTableName());
+        if (actualRegCount.get() == numRegs) {
+          // all the regions are online
+          return;
+        }
+
+        try {
+          Thread.sleep(getPauseTime(tries++, getAdmin().pause));
+        } catch (InterruptedException e) {
+          throw new InterruptedIOException("Interrupted when opening" + " regions; "
+              + actualRegCount.get() + " of " + numRegs + " regions processed so far");
+        }
+      }
+      throw new TimeoutException("Only " + actualRegCount.get() + " of " + numRegs
+          + " regions are online; retries exhausted.");
     }
   }
 

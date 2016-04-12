@@ -55,6 +55,7 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.TableDescriptors;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableStateManager;
+import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.HConnectionTestingUtility;
 import org.apache.hadoop.hbase.client.Result;
@@ -65,6 +66,8 @@ import org.apache.hadoop.hbase.executor.ExecutorService;
 import org.apache.hadoop.hbase.io.Reference;
 import org.apache.hadoop.hbase.master.CatalogJanitor.SplitParentFirstComparator;
 import org.apache.hadoop.hbase.master.procedure.MasterProcedureEnv;
+import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
+import org.apache.hadoop.hbase.procedure.MasterProcedureManagerHost;
 import org.apache.hadoop.hbase.procedure2.ProcedureExecutor;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
@@ -81,6 +84,7 @@ import org.apache.hadoop.hbase.regionserver.HStore;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.HFileArchiveUtil;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.Triple;
 import org.apache.hadoop.hbase.zookeeper.MetaTableLocator;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
@@ -235,6 +239,16 @@ public class TestCatalogJanitor {
         throws IOException {
       // no-op
       return -1;
+    }
+
+    @Override
+    public SnapshotManager getSnapshotManager() {
+      return null;
+    }
+
+    @Override
+    public MasterProcedureManagerHost getMasterProcedureManagerHost() {
+      return null;
     }
 
     @Override
@@ -415,6 +429,16 @@ public class TestCatalogJanitor {
     public List<ProcedureInfo> listProcedures() throws IOException {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    @Override
+    public Pair<Long, String> backupTables(
+        final BackupType type,
+        final List<TableName> tableList,
+        final String targetRootDir, final int workers,
+        final long bandwidth) throws IOException {
+      return null;
+    }
+
 
     @Override
     public List<HTableDescriptor> listTableDescriptorsByNamespace(String name) throws IOException {

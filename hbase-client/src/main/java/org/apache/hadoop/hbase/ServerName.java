@@ -138,6 +138,9 @@ import org.apache.hadoop.hbase.util.Bytes;
       throw new IllegalArgumentException("Bad passed hostname, serverName=" + serverName);
     }
     int index = serverName.indexOf(SERVERNAME_SEPARATOR);
+    if (index < 0) {
+      return serverName;
+    }
     return serverName.substring(0, index);
   }
 

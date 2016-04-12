@@ -1735,6 +1735,13 @@ class ConnectionManager {
           return stub.listProcedures(controller, request);
         }
         @Override
+        public MasterProtos.BackupTablesResponse backupTables(
+            RpcController controller,
+            MasterProtos.BackupTablesRequest request)  throws ServiceException {
+          return stub.backupTables(controller, request);
+        }
+
+        @Override
         public AddColumnResponse addColumn(RpcController controller, AddColumnRequest request)
         throws ServiceException {
           return stub.addColumn(controller, request);

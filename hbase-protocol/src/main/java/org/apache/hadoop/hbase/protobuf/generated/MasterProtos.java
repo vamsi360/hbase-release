@@ -48830,13 +48830,13 @@ public final class MasterProtos {
      */
     long getProcId();
 
-    // optional bool mayInterruptIfRunning = 2 [default = true];
+    // optional bool may_interrupt_if_running = 2 [default = true];
     /**
-     * <code>optional bool mayInterruptIfRunning = 2 [default = true];</code>
+     * <code>optional bool may_interrupt_if_running = 2 [default = true];</code>
      */
     boolean hasMayInterruptIfRunning();
     /**
-     * <code>optional bool mayInterruptIfRunning = 2 [default = true];</code>
+     * <code>optional bool may_interrupt_if_running = 2 [default = true];</code>
      */
     boolean getMayInterruptIfRunning();
   }
@@ -48957,17 +48957,17 @@ public final class MasterProtos {
       return procId_;
     }
 
-    // optional bool mayInterruptIfRunning = 2 [default = true];
-    public static final int MAYINTERRUPTIFRUNNING_FIELD_NUMBER = 2;
+    // optional bool may_interrupt_if_running = 2 [default = true];
+    public static final int MAY_INTERRUPT_IF_RUNNING_FIELD_NUMBER = 2;
     private boolean mayInterruptIfRunning_;
     /**
-     * <code>optional bool mayInterruptIfRunning = 2 [default = true];</code>
+     * <code>optional bool may_interrupt_if_running = 2 [default = true];</code>
      */
     public boolean hasMayInterruptIfRunning() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional bool mayInterruptIfRunning = 2 [default = true];</code>
+     * <code>optional bool may_interrupt_if_running = 2 [default = true];</code>
      */
     public boolean getMayInterruptIfRunning() {
       return mayInterruptIfRunning_;
@@ -49067,7 +49067,7 @@ public final class MasterProtos {
         hash = (53 * hash) + hashLong(getProcId());
       }
       if (hasMayInterruptIfRunning()) {
-        hash = (37 * hash) + MAYINTERRUPTIFRUNNING_FIELD_NUMBER;
+        hash = (37 * hash) + MAY_INTERRUPT_IF_RUNNING_FIELD_NUMBER;
         hash = (53 * hash) + hashBoolean(getMayInterruptIfRunning());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
@@ -49305,22 +49305,22 @@ public final class MasterProtos {
         return this;
       }
 
-      // optional bool mayInterruptIfRunning = 2 [default = true];
+      // optional bool may_interrupt_if_running = 2 [default = true];
       private boolean mayInterruptIfRunning_ = true;
       /**
-       * <code>optional bool mayInterruptIfRunning = 2 [default = true];</code>
+       * <code>optional bool may_interrupt_if_running = 2 [default = true];</code>
        */
       public boolean hasMayInterruptIfRunning() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional bool mayInterruptIfRunning = 2 [default = true];</code>
+       * <code>optional bool may_interrupt_if_running = 2 [default = true];</code>
        */
       public boolean getMayInterruptIfRunning() {
         return mayInterruptIfRunning_;
       }
       /**
-       * <code>optional bool mayInterruptIfRunning = 2 [default = true];</code>
+       * <code>optional bool may_interrupt_if_running = 2 [default = true];</code>
        */
       public Builder setMayInterruptIfRunning(boolean value) {
         bitField0_ |= 0x00000002;
@@ -49329,7 +49329,7 @@ public final class MasterProtos {
         return this;
       }
       /**
-       * <code>optional bool mayInterruptIfRunning = 2 [default = true];</code>
+       * <code>optional bool may_interrupt_if_running = 2 [default = true];</code>
        */
       public Builder clearMayInterruptIfRunning() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -54197,6 +54197,1789 @@ public final class MasterProtos {
     // @@protoc_insertion_point(class_scope:MajorCompactionTimestampResponse)
   }
 
+  public interface BackupTablesRequestOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+
+    // required .BackupType type = 1;
+    /**
+     * <code>required .BackupType type = 1;</code>
+     */
+    boolean hasType();
+    /**
+     * <code>required .BackupType type = 1;</code>
+     */
+    org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType getType();
+
+    // repeated .TableName tables = 2;
+    /**
+     * <code>repeated .TableName tables = 2;</code>
+     */
+    java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName> 
+        getTablesList();
+    /**
+     * <code>repeated .TableName tables = 2;</code>
+     */
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTables(int index);
+    /**
+     * <code>repeated .TableName tables = 2;</code>
+     */
+    int getTablesCount();
+    /**
+     * <code>repeated .TableName tables = 2;</code>
+     */
+    java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> 
+        getTablesOrBuilderList();
+    /**
+     * <code>repeated .TableName tables = 2;</code>
+     */
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTablesOrBuilder(
+        int index);
+
+    // required string target_root_dir = 3;
+    /**
+     * <code>required string target_root_dir = 3;</code>
+     */
+    boolean hasTargetRootDir();
+    /**
+     * <code>required string target_root_dir = 3;</code>
+     */
+    java.lang.String getTargetRootDir();
+    /**
+     * <code>required string target_root_dir = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getTargetRootDirBytes();
+
+    // optional int64 workers = 4;
+    /**
+     * <code>optional int64 workers = 4;</code>
+     */
+    boolean hasWorkers();
+    /**
+     * <code>optional int64 workers = 4;</code>
+     */
+    long getWorkers();
+
+    // optional int64 bandwidth = 5;
+    /**
+     * <code>optional int64 bandwidth = 5;</code>
+     */
+    boolean hasBandwidth();
+    /**
+     * <code>optional int64 bandwidth = 5;</code>
+     */
+    long getBandwidth();
+  }
+  /**
+   * Protobuf type {@code BackupTablesRequest}
+   */
+  public static final class BackupTablesRequest extends
+      com.google.protobuf.GeneratedMessage
+      implements BackupTablesRequestOrBuilder {
+    // Use BackupTablesRequest.newBuilder() to construct.
+    private BackupTablesRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private BackupTablesRequest(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final BackupTablesRequest defaultInstance;
+    public static BackupTablesRequest getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public BackupTablesRequest getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private BackupTablesRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 8: {
+              int rawValue = input.readEnum();
+              org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType value = org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType.valueOf(rawValue);
+              if (value == null) {
+                unknownFields.mergeVarintField(1, rawValue);
+              } else {
+                bitField0_ |= 0x00000001;
+                type_ = value;
+              }
+              break;
+            }
+            case 18: {
+              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+                tables_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName>();
+                mutable_bitField0_ |= 0x00000002;
+              }
+              tables_.add(input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.PARSER, extensionRegistry));
+              break;
+            }
+            case 26: {
+              bitField0_ |= 0x00000002;
+              targetRootDir_ = input.readBytes();
+              break;
+            }
+            case 32: {
+              bitField0_ |= 0x00000004;
+              workers_ = input.readInt64();
+              break;
+            }
+            case 40: {
+              bitField0_ |= 0x00000008;
+              bandwidth_ = input.readInt64();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+          tables_ = java.util.Collections.unmodifiableList(tables_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.internal_static_BackupTablesRequest_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.internal_static_BackupTablesRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest.class, org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<BackupTablesRequest> PARSER =
+        new com.google.protobuf.AbstractParser<BackupTablesRequest>() {
+      public BackupTablesRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new BackupTablesRequest(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<BackupTablesRequest> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    // required .BackupType type = 1;
+    public static final int TYPE_FIELD_NUMBER = 1;
+    private org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType type_;
+    /**
+     * <code>required .BackupType type = 1;</code>
+     */
+    public boolean hasType() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required .BackupType type = 1;</code>
+     */
+    public org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType getType() {
+      return type_;
+    }
+
+    // repeated .TableName tables = 2;
+    public static final int TABLES_FIELD_NUMBER = 2;
+    private java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName> tables_;
+    /**
+     * <code>repeated .TableName tables = 2;</code>
+     */
+    public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName> getTablesList() {
+      return tables_;
+    }
+    /**
+     * <code>repeated .TableName tables = 2;</code>
+     */
+    public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> 
+        getTablesOrBuilderList() {
+      return tables_;
+    }
+    /**
+     * <code>repeated .TableName tables = 2;</code>
+     */
+    public int getTablesCount() {
+      return tables_.size();
+    }
+    /**
+     * <code>repeated .TableName tables = 2;</code>
+     */
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTables(int index) {
+      return tables_.get(index);
+    }
+    /**
+     * <code>repeated .TableName tables = 2;</code>
+     */
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTablesOrBuilder(
+        int index) {
+      return tables_.get(index);
+    }
+
+    // required string target_root_dir = 3;
+    public static final int TARGET_ROOT_DIR_FIELD_NUMBER = 3;
+    private java.lang.Object targetRootDir_;
+    /**
+     * <code>required string target_root_dir = 3;</code>
+     */
+    public boolean hasTargetRootDir() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>required string target_root_dir = 3;</code>
+     */
+    public java.lang.String getTargetRootDir() {
+      java.lang.Object ref = targetRootDir_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          targetRootDir_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>required string target_root_dir = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTargetRootDirBytes() {
+      java.lang.Object ref = targetRootDir_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        targetRootDir_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    // optional int64 workers = 4;
+    public static final int WORKERS_FIELD_NUMBER = 4;
+    private long workers_;
+    /**
+     * <code>optional int64 workers = 4;</code>
+     */
+    public boolean hasWorkers() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional int64 workers = 4;</code>
+     */
+    public long getWorkers() {
+      return workers_;
+    }
+
+    // optional int64 bandwidth = 5;
+    public static final int BANDWIDTH_FIELD_NUMBER = 5;
+    private long bandwidth_;
+    /**
+     * <code>optional int64 bandwidth = 5;</code>
+     */
+    public boolean hasBandwidth() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>optional int64 bandwidth = 5;</code>
+     */
+    public long getBandwidth() {
+      return bandwidth_;
+    }
+
+    private void initFields() {
+      type_ = org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType.FULL;
+      tables_ = java.util.Collections.emptyList();
+      targetRootDir_ = "";
+      workers_ = 0L;
+      bandwidth_ = 0L;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+
+      if (!hasType()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!hasTargetRootDir()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      for (int i = 0; i < getTablesCount(); i++) {
+        if (!getTables(i).isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeEnum(1, type_.getNumber());
+      }
+      for (int i = 0; i < tables_.size(); i++) {
+        output.writeMessage(2, tables_.get(i));
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(3, getTargetRootDirBytes());
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeInt64(4, workers_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeInt64(5, bandwidth_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, type_.getNumber());
+      }
+      for (int i = 0; i < tables_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, tables_.get(i));
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(3, getTargetRootDirBytes());
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(4, workers_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(5, bandwidth_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest)) {
+        return super.equals(obj);
+      }
+      org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest other = (org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest) obj;
+
+      boolean result = true;
+      result = result && (hasType() == other.hasType());
+      if (hasType()) {
+        result = result &&
+            (getType() == other.getType());
+      }
+      result = result && getTablesList()
+          .equals(other.getTablesList());
+      result = result && (hasTargetRootDir() == other.hasTargetRootDir());
+      if (hasTargetRootDir()) {
+        result = result && getTargetRootDir()
+            .equals(other.getTargetRootDir());
+      }
+      result = result && (hasWorkers() == other.hasWorkers());
+      if (hasWorkers()) {
+        result = result && (getWorkers()
+            == other.getWorkers());
+      }
+      result = result && (hasBandwidth() == other.hasBandwidth());
+      if (hasBandwidth()) {
+        result = result && (getBandwidth()
+            == other.getBandwidth());
+      }
+      result = result &&
+          getUnknownFields().equals(other.getUnknownFields());
+      return result;
+    }
+
+    private int memoizedHashCode = 0;
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      if (hasType()) {
+        hash = (37 * hash) + TYPE_FIELD_NUMBER;
+        hash = (53 * hash) + hashEnum(getType());
+      }
+      if (getTablesCount() > 0) {
+        hash = (37 * hash) + TABLES_FIELD_NUMBER;
+        hash = (53 * hash) + getTablesList().hashCode();
+      }
+      if (hasTargetRootDir()) {
+        hash = (37 * hash) + TARGET_ROOT_DIR_FIELD_NUMBER;
+        hash = (53 * hash) + getTargetRootDir().hashCode();
+      }
+      if (hasWorkers()) {
+        hash = (37 * hash) + WORKERS_FIELD_NUMBER;
+        hash = (53 * hash) + hashLong(getWorkers());
+      }
+      if (hasBandwidth()) {
+        hash = (37 * hash) + BANDWIDTH_FIELD_NUMBER;
+        hash = (53 * hash) + hashLong(getBandwidth());
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code BackupTablesRequest}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.internal_static_BackupTablesRequest_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.internal_static_BackupTablesRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest.class, org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest.Builder.class);
+      }
+
+      // Construct using org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          getTablesFieldBuilder();
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        type_ = org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType.FULL;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        if (tablesBuilder_ == null) {
+          tables_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000002);
+        } else {
+          tablesBuilder_.clear();
+        }
+        targetRootDir_ = "";
+        bitField0_ = (bitField0_ & ~0x00000004);
+        workers_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000008);
+        bandwidth_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000010);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.internal_static_BackupTablesRequest_descriptor;
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest getDefaultInstanceForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest.getDefaultInstance();
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest build() {
+        org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest buildPartial() {
+        org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest result = new org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.type_ = type_;
+        if (tablesBuilder_ == null) {
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            tables_ = java.util.Collections.unmodifiableList(tables_);
+            bitField0_ = (bitField0_ & ~0x00000002);
+          }
+          result.tables_ = tables_;
+        } else {
+          result.tables_ = tablesBuilder_.build();
+        }
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.targetRootDir_ = targetRootDir_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.workers_ = workers_;
+        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.bandwidth_ = bandwidth_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest) {
+          return mergeFrom((org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest other) {
+        if (other == org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest.getDefaultInstance()) return this;
+        if (other.hasType()) {
+          setType(other.getType());
+        }
+        if (tablesBuilder_ == null) {
+          if (!other.tables_.isEmpty()) {
+            if (tables_.isEmpty()) {
+              tables_ = other.tables_;
+              bitField0_ = (bitField0_ & ~0x00000002);
+            } else {
+              ensureTablesIsMutable();
+              tables_.addAll(other.tables_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.tables_.isEmpty()) {
+            if (tablesBuilder_.isEmpty()) {
+              tablesBuilder_.dispose();
+              tablesBuilder_ = null;
+              tables_ = other.tables_;
+              bitField0_ = (bitField0_ & ~0x00000002);
+              tablesBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getTablesFieldBuilder() : null;
+            } else {
+              tablesBuilder_.addAllMessages(other.tables_);
+            }
+          }
+        }
+        if (other.hasTargetRootDir()) {
+          bitField0_ |= 0x00000004;
+          targetRootDir_ = other.targetRootDir_;
+          onChanged();
+        }
+        if (other.hasWorkers()) {
+          setWorkers(other.getWorkers());
+        }
+        if (other.hasBandwidth()) {
+          setBandwidth(other.getBandwidth());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasType()) {
+          
+          return false;
+        }
+        if (!hasTargetRootDir()) {
+          
+          return false;
+        }
+        for (int i = 0; i < getTablesCount(); i++) {
+          if (!getTables(i).isInitialized()) {
+            
+            return false;
+          }
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      // required .BackupType type = 1;
+      private org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType type_ = org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType.FULL;
+      /**
+       * <code>required .BackupType type = 1;</code>
+       */
+      public boolean hasType() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required .BackupType type = 1;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType getType() {
+        return type_;
+      }
+      /**
+       * <code>required .BackupType type = 1;</code>
+       */
+      public Builder setType(org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        bitField0_ |= 0x00000001;
+        type_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required .BackupType type = 1;</code>
+       */
+      public Builder clearType() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        type_ = org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupType.FULL;
+        onChanged();
+        return this;
+      }
+
+      // repeated .TableName tables = 2;
+      private java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName> tables_ =
+        java.util.Collections.emptyList();
+      private void ensureTablesIsMutable() {
+        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+          tables_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName>(tables_);
+          bitField0_ |= 0x00000002;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> tablesBuilder_;
+
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName> getTablesList() {
+        if (tablesBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(tables_);
+        } else {
+          return tablesBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public int getTablesCount() {
+        if (tablesBuilder_ == null) {
+          return tables_.size();
+        } else {
+          return tablesBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTables(int index) {
+        if (tablesBuilder_ == null) {
+          return tables_.get(index);
+        } else {
+          return tablesBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public Builder setTables(
+          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName value) {
+        if (tablesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureTablesIsMutable();
+          tables_.set(index, value);
+          onChanged();
+        } else {
+          tablesBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public Builder setTables(
+          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder builderForValue) {
+        if (tablesBuilder_ == null) {
+          ensureTablesIsMutable();
+          tables_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          tablesBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public Builder addTables(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName value) {
+        if (tablesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureTablesIsMutable();
+          tables_.add(value);
+          onChanged();
+        } else {
+          tablesBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public Builder addTables(
+          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName value) {
+        if (tablesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureTablesIsMutable();
+          tables_.add(index, value);
+          onChanged();
+        } else {
+          tablesBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public Builder addTables(
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder builderForValue) {
+        if (tablesBuilder_ == null) {
+          ensureTablesIsMutable();
+          tables_.add(builderForValue.build());
+          onChanged();
+        } else {
+          tablesBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public Builder addTables(
+          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder builderForValue) {
+        if (tablesBuilder_ == null) {
+          ensureTablesIsMutable();
+          tables_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          tablesBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public Builder addAllTables(
+          java.lang.Iterable<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName> values) {
+        if (tablesBuilder_ == null) {
+          ensureTablesIsMutable();
+          super.addAll(values, tables_);
+          onChanged();
+        } else {
+          tablesBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public Builder clearTables() {
+        if (tablesBuilder_ == null) {
+          tables_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000002);
+          onChanged();
+        } else {
+          tablesBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public Builder removeTables(int index) {
+        if (tablesBuilder_ == null) {
+          ensureTablesIsMutable();
+          tables_.remove(index);
+          onChanged();
+        } else {
+          tablesBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder getTablesBuilder(
+          int index) {
+        return getTablesFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTablesOrBuilder(
+          int index) {
+        if (tablesBuilder_ == null) {
+          return tables_.get(index);  } else {
+          return tablesBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> 
+           getTablesOrBuilderList() {
+        if (tablesBuilder_ != null) {
+          return tablesBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(tables_);
+        }
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder addTablesBuilder() {
+        return getTablesFieldBuilder().addBuilder(
+            org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder addTablesBuilder(
+          int index) {
+        return getTablesFieldBuilder().addBuilder(
+            index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .TableName tables = 2;</code>
+       */
+      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder> 
+           getTablesBuilderList() {
+        return getTablesFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> 
+          getTablesFieldBuilder() {
+        if (tablesBuilder_ == null) {
+          tablesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder>(
+                  tables_,
+                  ((bitField0_ & 0x00000002) == 0x00000002),
+                  getParentForChildren(),
+                  isClean());
+          tables_ = null;
+        }
+        return tablesBuilder_;
+      }
+
+      // required string target_root_dir = 3;
+      private java.lang.Object targetRootDir_ = "";
+      /**
+       * <code>required string target_root_dir = 3;</code>
+       */
+      public boolean hasTargetRootDir() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>required string target_root_dir = 3;</code>
+       */
+      public java.lang.String getTargetRootDir() {
+        java.lang.Object ref = targetRootDir_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          targetRootDir_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>required string target_root_dir = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTargetRootDirBytes() {
+        java.lang.Object ref = targetRootDir_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          targetRootDir_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>required string target_root_dir = 3;</code>
+       */
+      public Builder setTargetRootDir(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        targetRootDir_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string target_root_dir = 3;</code>
+       */
+      public Builder clearTargetRootDir() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        targetRootDir_ = getDefaultInstance().getTargetRootDir();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string target_root_dir = 3;</code>
+       */
+      public Builder setTargetRootDirBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        targetRootDir_ = value;
+        onChanged();
+        return this;
+      }
+
+      // optional int64 workers = 4;
+      private long workers_ ;
+      /**
+       * <code>optional int64 workers = 4;</code>
+       */
+      public boolean hasWorkers() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      /**
+       * <code>optional int64 workers = 4;</code>
+       */
+      public long getWorkers() {
+        return workers_;
+      }
+      /**
+       * <code>optional int64 workers = 4;</code>
+       */
+      public Builder setWorkers(long value) {
+        bitField0_ |= 0x00000008;
+        workers_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int64 workers = 4;</code>
+       */
+      public Builder clearWorkers() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        workers_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // optional int64 bandwidth = 5;
+      private long bandwidth_ ;
+      /**
+       * <code>optional int64 bandwidth = 5;</code>
+       */
+      public boolean hasBandwidth() {
+        return ((bitField0_ & 0x00000010) == 0x00000010);
+      }
+      /**
+       * <code>optional int64 bandwidth = 5;</code>
+       */
+      public long getBandwidth() {
+        return bandwidth_;
+      }
+      /**
+       * <code>optional int64 bandwidth = 5;</code>
+       */
+      public Builder setBandwidth(long value) {
+        bitField0_ |= 0x00000010;
+        bandwidth_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int64 bandwidth = 5;</code>
+       */
+      public Builder clearBandwidth() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        bandwidth_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:BackupTablesRequest)
+    }
+
+    static {
+      defaultInstance = new BackupTablesRequest(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:BackupTablesRequest)
+  }
+
+  public interface BackupTablesResponseOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+
+    // optional uint64 proc_id = 1;
+    /**
+     * <code>optional uint64 proc_id = 1;</code>
+     */
+    boolean hasProcId();
+    /**
+     * <code>optional uint64 proc_id = 1;</code>
+     */
+    long getProcId();
+
+    // optional string backup_id = 2;
+    /**
+     * <code>optional string backup_id = 2;</code>
+     */
+    boolean hasBackupId();
+    /**
+     * <code>optional string backup_id = 2;</code>
+     */
+    java.lang.String getBackupId();
+    /**
+     * <code>optional string backup_id = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getBackupIdBytes();
+  }
+  /**
+   * Protobuf type {@code BackupTablesResponse}
+   */
+  public static final class BackupTablesResponse extends
+      com.google.protobuf.GeneratedMessage
+      implements BackupTablesResponseOrBuilder {
+    // Use BackupTablesResponse.newBuilder() to construct.
+    private BackupTablesResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private BackupTablesResponse(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final BackupTablesResponse defaultInstance;
+    public static BackupTablesResponse getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public BackupTablesResponse getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private BackupTablesResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 8: {
+              bitField0_ |= 0x00000001;
+              procId_ = input.readUInt64();
+              break;
+            }
+            case 18: {
+              bitField0_ |= 0x00000002;
+              backupId_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.internal_static_BackupTablesResponse_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.internal_static_BackupTablesResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.class, org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<BackupTablesResponse> PARSER =
+        new com.google.protobuf.AbstractParser<BackupTablesResponse>() {
+      public BackupTablesResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new BackupTablesResponse(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<BackupTablesResponse> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    // optional uint64 proc_id = 1;
+    public static final int PROC_ID_FIELD_NUMBER = 1;
+    private long procId_;
+    /**
+     * <code>optional uint64 proc_id = 1;</code>
+     */
+    public boolean hasProcId() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional uint64 proc_id = 1;</code>
+     */
+    public long getProcId() {
+      return procId_;
+    }
+
+    // optional string backup_id = 2;
+    public static final int BACKUP_ID_FIELD_NUMBER = 2;
+    private java.lang.Object backupId_;
+    /**
+     * <code>optional string backup_id = 2;</code>
+     */
+    public boolean hasBackupId() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional string backup_id = 2;</code>
+     */
+    public java.lang.String getBackupId() {
+      java.lang.Object ref = backupId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          backupId_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string backup_id = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getBackupIdBytes() {
+      java.lang.Object ref = backupId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        backupId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private void initFields() {
+      procId_ = 0L;
+      backupId_ = "";
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeUInt64(1, procId_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, getBackupIdBytes());
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(1, procId_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, getBackupIdBytes());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse)) {
+        return super.equals(obj);
+      }
+      org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse other = (org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse) obj;
+
+      boolean result = true;
+      result = result && (hasProcId() == other.hasProcId());
+      if (hasProcId()) {
+        result = result && (getProcId()
+            == other.getProcId());
+      }
+      result = result && (hasBackupId() == other.hasBackupId());
+      if (hasBackupId()) {
+        result = result && getBackupId()
+            .equals(other.getBackupId());
+      }
+      result = result &&
+          getUnknownFields().equals(other.getUnknownFields());
+      return result;
+    }
+
+    private int memoizedHashCode = 0;
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      if (hasProcId()) {
+        hash = (37 * hash) + PROC_ID_FIELD_NUMBER;
+        hash = (53 * hash) + hashLong(getProcId());
+      }
+      if (hasBackupId()) {
+        hash = (37 * hash) + BACKUP_ID_FIELD_NUMBER;
+        hash = (53 * hash) + getBackupId().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code BackupTablesResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.internal_static_BackupTablesResponse_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.internal_static_BackupTablesResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.class, org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.Builder.class);
+      }
+
+      // Construct using org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        procId_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        backupId_ = "";
+        bitField0_ = (bitField0_ & ~0x00000002);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.internal_static_BackupTablesResponse_descriptor;
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse getDefaultInstanceForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.getDefaultInstance();
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse build() {
+        org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse buildPartial() {
+        org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse result = new org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.procId_ = procId_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.backupId_ = backupId_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse) {
+          return mergeFrom((org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse other) {
+        if (other == org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.getDefaultInstance()) return this;
+        if (other.hasProcId()) {
+          setProcId(other.getProcId());
+        }
+        if (other.hasBackupId()) {
+          bitField0_ |= 0x00000002;
+          backupId_ = other.backupId_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      // optional uint64 proc_id = 1;
+      private long procId_ ;
+      /**
+       * <code>optional uint64 proc_id = 1;</code>
+       */
+      public boolean hasProcId() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional uint64 proc_id = 1;</code>
+       */
+      public long getProcId() {
+        return procId_;
+      }
+      /**
+       * <code>optional uint64 proc_id = 1;</code>
+       */
+      public Builder setProcId(long value) {
+        bitField0_ |= 0x00000001;
+        procId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint64 proc_id = 1;</code>
+       */
+      public Builder clearProcId() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        procId_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // optional string backup_id = 2;
+      private java.lang.Object backupId_ = "";
+      /**
+       * <code>optional string backup_id = 2;</code>
+       */
+      public boolean hasBackupId() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional string backup_id = 2;</code>
+       */
+      public java.lang.String getBackupId() {
+        java.lang.Object ref = backupId_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          backupId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string backup_id = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getBackupIdBytes() {
+        java.lang.Object ref = backupId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          backupId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string backup_id = 2;</code>
+       */
+      public Builder setBackupId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        backupId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string backup_id = 2;</code>
+       */
+      public Builder clearBackupId() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        backupId_ = getDefaultInstance().getBackupId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string backup_id = 2;</code>
+       */
+      public Builder setBackupIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        backupId_ = value;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:BackupTablesResponse)
+    }
+
+    static {
+      defaultInstance = new BackupTablesResponse(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:BackupTablesResponse)
+  }
+
   /**
    * Protobuf service {@code MasterService}
    */
@@ -54894,6 +56677,18 @@ public final class MasterProtos {
           org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresRequest request,
           com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresResponse> done);
 
+      /**
+       * <code>rpc backupTables(.BackupTablesRequest) returns (.BackupTablesResponse);</code>
+       *
+       * <pre>
+       ** backup table set 
+       * </pre>
+       */
+      public abstract void backupTables(
+          com.google.protobuf.RpcController controller,
+          org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest request,
+          com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse> done);
+
     }
 
     public static com.google.protobuf.Service newReflectiveService(
@@ -55339,6 +57134,14 @@ public final class MasterProtos {
           impl.listProcedures(controller, request, done);
         }
 
+        @java.lang.Override
+        public  void backupTables(
+            com.google.protobuf.RpcController controller,
+            org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest request,
+            com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse> done) {
+          impl.backupTables(controller, request, done);
+        }
+
       };
     }
 
@@ -55471,6 +57274,8 @@ public final class MasterProtos {
               return impl.abortProcedure(controller, (org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AbortProcedureRequest)request);
             case 54:
               return impl.listProcedures(controller, (org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresRequest)request);
+            case 55:
+              return impl.backupTables(controller, (org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest)request);
             default:
               throw new java.lang.AssertionError("Can't get here.");
           }
@@ -55595,6 +57400,8 @@ public final class MasterProtos {
               return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AbortProcedureRequest.getDefaultInstance();
             case 54:
               return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresRequest.getDefaultInstance();
+            case 55:
+              return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest.getDefaultInstance();
             default:
               throw new java.lang.AssertionError("Can't get here.");
           }
@@ -55719,6 +57526,8 @@ public final class MasterProtos {
               return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AbortProcedureResponse.getDefaultInstance();
             case 54:
               return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresResponse.getDefaultInstance();
+            case 55:
+              return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.getDefaultInstance();
             default:
               throw new java.lang.AssertionError("Can't get here.");
           }
@@ -56416,6 +58225,18 @@ public final class MasterProtos {
         org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresRequest request,
         com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresResponse> done);
 
+    /**
+     * <code>rpc backupTables(.BackupTablesRequest) returns (.BackupTablesResponse);</code>
+     *
+     * <pre>
+     ** backup table set 
+     * </pre>
+     */
+    public abstract void backupTables(
+        com.google.protobuf.RpcController controller,
+        org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest request,
+        com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse> done);
+
     public static final
         com.google.protobuf.Descriptors.ServiceDescriptor
         getDescriptor() {
@@ -56713,6 +58534,11 @@ public final class MasterProtos {
             com.google.protobuf.RpcUtil.<org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresResponse>specializeCallback(
               done));
           return;
+        case 55:
+          this.backupTables(controller, (org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest)request,
+            com.google.protobuf.RpcUtil.<org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse>specializeCallback(
+              done));
+          return;
         default:
           throw new java.lang.AssertionError("Can't get here.");
       }
@@ -56837,6 +58663,8 @@ public final class MasterProtos {
           return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AbortProcedureRequest.getDefaultInstance();
         case 54:
           return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresRequest.getDefaultInstance();
+        case 55:
+          return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest.getDefaultInstance();
         default:
           throw new java.lang.AssertionError("Can't get here.");
       }
@@ -56961,6 +58789,8 @@ public final class MasterProtos {
           return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AbortProcedureResponse.getDefaultInstance();
         case 54:
           return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresResponse.getDefaultInstance();
+        case 55:
+          return org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.getDefaultInstance();
         default:
           throw new java.lang.AssertionError("Can't get here.");
       }
@@ -57806,6 +59636,21 @@ public final class MasterProtos {
             org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresResponse.class,
             org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresResponse.getDefaultInstance()));
       }
+
+      public  void backupTables(
+          com.google.protobuf.RpcController controller,
+          org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest request,
+          com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse> done) {
+        channel.callMethod(
+          getDescriptor().getMethods().get(55),
+          controller,
+          request,
+          org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.getDefaultInstance(),
+          com.google.protobuf.RpcUtil.generalizeCallback(
+            done,
+            org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.class,
+            org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.getDefaultInstance()));
+      }
     }
 
     public static BlockingInterface newBlockingStub(
@@ -58087,6 +59932,11 @@ public final class MasterProtos {
       public org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresResponse listProcedures(
           com.google.protobuf.RpcController controller,
           org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresRequest request)
+          throws com.google.protobuf.ServiceException;
+
+      public org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse backupTables(
+          com.google.protobuf.RpcController controller,
+          org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest request)
           throws com.google.protobuf.ServiceException;
     }
 
@@ -58756,6 +60606,18 @@ public final class MasterProtos {
           org.apache.hadoop.hbase.protobuf.generated.MasterProtos.ListProceduresResponse.getDefaultInstance());
       }
 
+
+      public org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse backupTables(
+          com.google.protobuf.RpcController controller,
+          org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest request)
+          throws com.google.protobuf.ServiceException {
+        return (org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse) channel.callBlockingMethod(
+          getDescriptor().getMethods().get(55),
+          controller,
+          request,
+          org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse.getDefaultInstance());
+      }
+
     }
 
     // @@protoc_insertion_point(class_scope:MasterService)
@@ -59286,6 +61148,16 @@ public final class MasterProtos {
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_MajorCompactionTimestampResponse_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_BackupTablesRequest_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_BackupTablesRequest_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_BackupTablesResponse_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_BackupTablesResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -59295,264 +61167,271 @@ public final class MasterProtos {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\014Master.proto\032\013HBase.proto\032\014Client.prot" +
-      "o\032\023ClusterStatus.proto\032\023ErrorHandling.pr" +
-      "oto\032\017Procedure.proto\032\013Quota.proto\"`\n\020Add" +
-      "ColumnRequest\022\036\n\ntable_name\030\001 \002(\0132\n.Tabl" +
-      "eName\022,\n\017column_families\030\002 \002(\0132\023.ColumnF" +
-      "amilySchema\"\023\n\021AddColumnResponse\"J\n\023Dele" +
-      "teColumnRequest\022\036\n\ntable_name\030\001 \002(\0132\n.Ta" +
-      "bleName\022\023\n\013column_name\030\002 \002(\014\"\026\n\024DeleteCo" +
-      "lumnResponse\"c\n\023ModifyColumnRequest\022\036\n\nt" +
-      "able_name\030\001 \002(\0132\n.TableName\022,\n\017column_fa",
-      "milies\030\002 \002(\0132\023.ColumnFamilySchema\"\026\n\024Mod" +
-      "ifyColumnResponse\"\\\n\021MoveRegionRequest\022 " +
-      "\n\006region\030\001 \002(\0132\020.RegionSpecifier\022%\n\020dest" +
-      "_server_name\030\002 \001(\0132\013.ServerName\"\024\n\022MoveR" +
-      "egionResponse\"\200\001\n\035DispatchMergingRegions" +
-      "Request\022\"\n\010region_a\030\001 \002(\0132\020.RegionSpecif" +
-      "ier\022\"\n\010region_b\030\002 \002(\0132\020.RegionSpecifier\022" +
-      "\027\n\010forcible\030\003 \001(\010:\005false\" \n\036DispatchMerg" +
-      "ingRegionsResponse\"7\n\023AssignRegionReques" +
-      "t\022 \n\006region\030\001 \002(\0132\020.RegionSpecifier\"\026\n\024A",
-      "ssignRegionResponse\"O\n\025UnassignRegionReq" +
-      "uest\022 \n\006region\030\001 \002(\0132\020.RegionSpecifier\022\024" +
-      "\n\005force\030\002 \001(\010:\005false\"\030\n\026UnassignRegionRe" +
-      "sponse\"8\n\024OfflineRegionRequest\022 \n\006region" +
-      "\030\001 \002(\0132\020.RegionSpecifier\"\027\n\025OfflineRegio" +
-      "nResponse\"L\n\022CreateTableRequest\022\"\n\014table" +
-      "_schema\030\001 \002(\0132\014.TableSchema\022\022\n\nsplit_key" +
-      "s\030\002 \003(\014\"&\n\023CreateTableResponse\022\017\n\007proc_i" +
-      "d\030\001 \001(\004\"4\n\022DeleteTableRequest\022\036\n\ntable_n" +
-      "ame\030\001 \002(\0132\n.TableName\"&\n\023DeleteTableResp",
-      "onse\022\017\n\007proc_id\030\001 \001(\004\"T\n\024TruncateTableRe" +
-      "quest\022\035\n\ttableName\030\001 \002(\0132\n.TableName\022\035\n\016" +
-      "preserveSplits\030\002 \001(\010:\005false\"\027\n\025TruncateT" +
-      "ableResponse\"4\n\022EnableTableRequest\022\036\n\nta" +
-      "ble_name\030\001 \002(\0132\n.TableName\"&\n\023EnableTabl" +
-      "eResponse\022\017\n\007proc_id\030\001 \001(\004\"5\n\023DisableTab" +
-      "leRequest\022\036\n\ntable_name\030\001 \002(\0132\n.TableNam" +
-      "e\"\'\n\024DisableTableResponse\022\017\n\007proc_id\030\001 \001" +
-      "(\004\"X\n\022ModifyTableRequest\022\036\n\ntable_name\030\001" +
-      " \002(\0132\n.TableName\022\"\n\014table_schema\030\002 \002(\0132\014",
-      ".TableSchema\"\025\n\023ModifyTableResponse\"K\n\026C" +
-      "reateNamespaceRequest\0221\n\023namespaceDescri" +
-      "ptor\030\001 \002(\0132\024.NamespaceDescriptor\"\031\n\027Crea" +
-      "teNamespaceResponse\"/\n\026DeleteNamespaceRe" +
-      "quest\022\025\n\rnamespaceName\030\001 \002(\t\"\031\n\027DeleteNa" +
-      "mespaceResponse\"K\n\026ModifyNamespaceReques" +
-      "t\0221\n\023namespaceDescriptor\030\001 \002(\0132\024.Namespa" +
-      "ceDescriptor\"\031\n\027ModifyNamespaceResponse\"" +
-      "6\n\035GetNamespaceDescriptorRequest\022\025\n\rname" +
-      "spaceName\030\001 \002(\t\"S\n\036GetNamespaceDescripto",
-      "rResponse\0221\n\023namespaceDescriptor\030\001 \002(\0132\024" +
-      ".NamespaceDescriptor\"!\n\037ListNamespaceDes" +
-      "criptorsRequest\"U\n ListNamespaceDescript" +
-      "orsResponse\0221\n\023namespaceDescriptor\030\001 \003(\013" +
-      "2\024.NamespaceDescriptor\"?\n&ListTableDescr" +
-      "iptorsByNamespaceRequest\022\025\n\rnamespaceNam" +
-      "e\030\001 \002(\t\"L\n\'ListTableDescriptorsByNamespa" +
-      "ceResponse\022!\n\013tableSchema\030\001 \003(\0132\014.TableS" +
-      "chema\"9\n ListTableNamesByNamespaceReques" +
-      "t\022\025\n\rnamespaceName\030\001 \002(\t\"B\n!ListTableNam",
-      "esByNamespaceResponse\022\035\n\ttableName\030\001 \003(\013" +
-      "2\n.TableName\"\021\n\017ShutdownRequest\"\022\n\020Shutd" +
-      "ownResponse\"\023\n\021StopMasterRequest\"\024\n\022Stop" +
-      "MasterResponse\"\037\n\016BalanceRequest\022\r\n\005forc" +
-      "e\030\001 \001(\010\"\'\n\017BalanceResponse\022\024\n\014balancer_r" +
-      "an\030\001 \002(\010\"<\n\031SetBalancerRunningRequest\022\n\n" +
-      "\002on\030\001 \002(\010\022\023\n\013synchronous\030\002 \001(\010\"8\n\032SetBal" +
-      "ancerRunningResponse\022\032\n\022prev_balance_val" +
-      "ue\030\001 \001(\010\"\032\n\030IsBalancerEnabledRequest\",\n\031" +
-      "IsBalancerEnabledResponse\022\017\n\007enabled\030\001 \002",
-      "(\010\"n\n\035SetSplitOrMergeEnabledRequest\022\017\n\007e" +
-      "nabled\030\001 \002(\010\022\023\n\013synchronous\030\002 \001(\010\022\'\n\014swi" +
-      "tch_types\030\003 \003(\0162\021.MasterSwitchType\"4\n\036Se" +
-      "tSplitOrMergeEnabledResponse\022\022\n\nprev_val" +
-      "ue\030\001 \003(\010\"F\n\034IsSplitOrMergeEnabledRequest" +
-      "\022&\n\013switch_type\030\001 \002(\0162\021.MasterSwitchType" +
-      "\"0\n\035IsSplitOrMergeEnabledResponse\022\017\n\007ena" +
-      "bled\030\001 \002(\010\"\022\n\020NormalizeRequest\"+\n\021Normal" +
-      "izeResponse\022\026\n\016normalizer_ran\030\001 \002(\010\")\n\033S" +
-      "etNormalizerRunningRequest\022\n\n\002on\030\001 \002(\010\"=",
-      "\n\034SetNormalizerRunningResponse\022\035\n\025prev_n" +
-      "ormalizer_value\030\001 \001(\010\"\034\n\032IsNormalizerEna" +
-      "bledRequest\".\n\033IsNormalizerEnabledRespon" +
-      "se\022\017\n\007enabled\030\001 \002(\010\"\027\n\025RunCatalogScanReq" +
-      "uest\"-\n\026RunCatalogScanResponse\022\023\n\013scan_r" +
-      "esult\030\001 \001(\005\"-\n\033EnableCatalogJanitorReque" +
-      "st\022\016\n\006enable\030\001 \002(\010\"2\n\034EnableCatalogJanit" +
-      "orResponse\022\022\n\nprev_value\030\001 \001(\010\" \n\036IsCata" +
-      "logJanitorEnabledRequest\"0\n\037IsCatalogJan" +
-      "itorEnabledResponse\022\r\n\005value\030\001 \002(\010\"9\n\017Sn",
-      "apshotRequest\022&\n\010snapshot\030\001 \002(\0132\024.Snapsh" +
-      "otDescription\",\n\020SnapshotResponse\022\030\n\020exp" +
-      "ected_timeout\030\001 \002(\003\"\036\n\034GetCompletedSnaps" +
-      "hotsRequest\"H\n\035GetCompletedSnapshotsResp" +
-      "onse\022\'\n\tsnapshots\030\001 \003(\0132\024.SnapshotDescri" +
-      "ption\"?\n\025DeleteSnapshotRequest\022&\n\010snapsh" +
-      "ot\030\001 \002(\0132\024.SnapshotDescription\"\030\n\026Delete" +
-      "SnapshotResponse\"@\n\026RestoreSnapshotReque" +
-      "st\022&\n\010snapshot\030\001 \002(\0132\024.SnapshotDescripti" +
-      "on\"\031\n\027RestoreSnapshotResponse\"?\n\025IsSnaps",
-      "hotDoneRequest\022&\n\010snapshot\030\001 \001(\0132\024.Snaps" +
-      "hotDescription\"U\n\026IsSnapshotDoneResponse" +
-      "\022\023\n\004done\030\001 \001(\010:\005false\022&\n\010snapshot\030\002 \001(\0132" +
-      "\024.SnapshotDescription\"F\n\034IsRestoreSnapsh" +
-      "otDoneRequest\022&\n\010snapshot\030\001 \001(\0132\024.Snapsh" +
-      "otDescription\"4\n\035IsRestoreSnapshotDoneRe" +
-      "sponse\022\023\n\004done\030\001 \001(\010:\005false\"=\n\033GetSchema" +
-      "AlterStatusRequest\022\036\n\ntable_name\030\001 \002(\0132\n" +
-      ".TableName\"T\n\034GetSchemaAlterStatusRespon" +
-      "se\022\035\n\025yet_to_update_regions\030\001 \001(\r\022\025\n\rtot",
-      "al_regions\030\002 \001(\r\"\202\001\n\032GetTableDescriptors" +
-      "Request\022\037\n\013table_names\030\001 \003(\0132\n.TableName" +
-      "\022\r\n\005regex\030\002 \001(\t\022!\n\022include_sys_tables\030\003 " +
-      "\001(\010:\005false\022\021\n\tnamespace\030\004 \001(\t\"A\n\033GetTabl" +
-      "eDescriptorsResponse\022\"\n\014table_schema\030\001 \003" +
-      "(\0132\014.TableSchema\"[\n\024GetTableNamesRequest" +
-      "\022\r\n\005regex\030\001 \001(\t\022!\n\022include_sys_tables\030\002 " +
-      "\001(\010:\005false\022\021\n\tnamespace\030\003 \001(\t\"8\n\025GetTabl" +
-      "eNamesResponse\022\037\n\013table_names\030\001 \003(\0132\n.Ta" +
-      "bleName\"\031\n\027GetClusterStatusRequest\"B\n\030Ge",
-      "tClusterStatusResponse\022&\n\016cluster_status" +
-      "\030\001 \002(\0132\016.ClusterStatus\"\030\n\026IsMasterRunnin" +
-      "gRequest\"4\n\027IsMasterRunningResponse\022\031\n\021i" +
-      "s_master_running\030\001 \002(\010\"@\n\024ExecProcedureR" +
-      "equest\022(\n\tprocedure\030\001 \002(\0132\025.ProcedureDes" +
-      "cription\"F\n\025ExecProcedureResponse\022\030\n\020exp" +
-      "ected_timeout\030\001 \001(\003\022\023\n\013return_data\030\002 \001(\014" +
-      "\"B\n\026IsProcedureDoneRequest\022(\n\tprocedure\030" +
-      "\001 \001(\0132\025.ProcedureDescription\"W\n\027IsProced" +
-      "ureDoneResponse\022\023\n\004done\030\001 \001(\010:\005false\022\'\n\010",
-      "snapshot\030\002 \001(\0132\025.ProcedureDescription\",\n" +
-      "\031GetProcedureResultRequest\022\017\n\007proc_id\030\001 " +
-      "\002(\004\"\347\001\n\032GetProcedureResultResponse\0220\n\005st" +
-      "ate\030\001 \002(\0162!.GetProcedureResultResponse.S" +
-      "tate\022\022\n\nstart_time\030\002 \001(\004\022\023\n\013last_update\030" +
-      "\003 \001(\004\022\016\n\006result\030\004 \001(\014\022+\n\texception\030\005 \001(\013" +
-      "2\030.ForeignExceptionMessage\"1\n\005State\022\r\n\tN" +
-      "OT_FOUND\020\000\022\013\n\007RUNNING\020\001\022\014\n\010FINISHED\020\002\"M\n" +
-      "\025AbortProcedureRequest\022\017\n\007proc_id\030\001 \002(\004\022" +
-      "#\n\025mayInterruptIfRunning\030\002 \001(\010:\004true\"6\n\026",
-      "AbortProcedureResponse\022\034\n\024is_procedure_a" +
-      "borted\030\001 \002(\010\"\027\n\025ListProceduresRequest\"7\n" +
-      "\026ListProceduresResponse\022\035\n\tprocedure\030\001 \003" +
-      "(\0132\n.Procedure\"\273\001\n\017SetQuotaRequest\022\021\n\tus" +
-      "er_name\030\001 \001(\t\022\022\n\nuser_group\030\002 \001(\t\022\021\n\tnam" +
-      "espace\030\003 \001(\t\022\036\n\ntable_name\030\004 \001(\0132\n.Table" +
-      "Name\022\022\n\nremove_all\030\005 \001(\010\022\026\n\016bypass_globa" +
-      "ls\030\006 \001(\010\022\"\n\010throttle\030\007 \001(\0132\020.ThrottleReq" +
-      "uest\"\022\n\020SetQuotaResponse\"A\n\037MajorCompact" +
-      "ionTimestampRequest\022\036\n\ntable_name\030\001 \002(\0132",
-      "\n.TableName\"L\n(MajorCompactionTimestampF" +
-      "orRegionRequest\022 \n\006region\030\001 \002(\0132\020.Region" +
-      "Specifier\"@\n MajorCompactionTimestampRes" +
-      "ponse\022\034\n\024compaction_timestamp\030\001 \002(\003*(\n\020M" +
-      "asterSwitchType\022\t\n\005SPLIT\020\000\022\t\n\005MERGE\020\0012\267\037" +
-      "\n\rMasterService\022S\n\024GetSchemaAlterStatus\022" +
-      "\034.GetSchemaAlterStatusRequest\032\035.GetSchem" +
-      "aAlterStatusResponse\022P\n\023GetTableDescript" +
-      "ors\022\033.GetTableDescriptorsRequest\032\034.GetTa" +
-      "bleDescriptorsResponse\022>\n\rGetTableNames\022",
-      "\025.GetTableNamesRequest\032\026.GetTableNamesRe" +
-      "sponse\022G\n\020GetClusterStatus\022\030.GetClusterS" +
-      "tatusRequest\032\031.GetClusterStatusResponse\022" +
-      "D\n\017IsMasterRunning\022\027.IsMasterRunningRequ" +
-      "est\032\030.IsMasterRunningResponse\0222\n\tAddColu" +
-      "mn\022\021.AddColumnRequest\032\022.AddColumnRespons" +
-      "e\022;\n\014DeleteColumn\022\024.DeleteColumnRequest\032" +
-      "\025.DeleteColumnResponse\022;\n\014ModifyColumn\022\024" +
-      ".ModifyColumnRequest\032\025.ModifyColumnRespo" +
-      "nse\0225\n\nMoveRegion\022\022.MoveRegionRequest\032\023.",
-      "MoveRegionResponse\022Y\n\026DispatchMergingReg" +
-      "ions\022\036.DispatchMergingRegionsRequest\032\037.D" +
-      "ispatchMergingRegionsResponse\022;\n\014AssignR" +
-      "egion\022\024.AssignRegionRequest\032\025.AssignRegi" +
-      "onResponse\022A\n\016UnassignRegion\022\026.UnassignR" +
-      "egionRequest\032\027.UnassignRegionResponse\022>\n" +
-      "\rOfflineRegion\022\025.OfflineRegionRequest\032\026." +
-      "OfflineRegionResponse\0228\n\013DeleteTable\022\023.D" +
-      "eleteTableRequest\032\024.DeleteTableResponse\022" +
-      ">\n\rtruncateTable\022\025.TruncateTableRequest\032",
-      "\026.TruncateTableResponse\0228\n\013EnableTable\022\023" +
-      ".EnableTableRequest\032\024.EnableTableRespons" +
-      "e\022;\n\014DisableTable\022\024.DisableTableRequest\032" +
-      "\025.DisableTableResponse\0228\n\013ModifyTable\022\023." +
-      "ModifyTableRequest\032\024.ModifyTableResponse" +
-      "\0228\n\013CreateTable\022\023.CreateTableRequest\032\024.C" +
-      "reateTableResponse\022/\n\010Shutdown\022\020.Shutdow" +
-      "nRequest\032\021.ShutdownResponse\0225\n\nStopMaste" +
-      "r\022\022.StopMasterRequest\032\023.StopMasterRespon" +
-      "se\022,\n\007Balance\022\017.BalanceRequest\032\020.Balance",
-      "Response\022M\n\022SetBalancerRunning\022\032.SetBala" +
-      "ncerRunningRequest\032\033.SetBalancerRunningR" +
-      "esponse\022J\n\021IsBalancerEnabled\022\031.IsBalance" +
-      "rEnabledRequest\032\032.IsBalancerEnabledRespo" +
-      "nse\022Y\n\026SetSplitOrMergeEnabled\022\036.SetSplit" +
-      "OrMergeEnabledRequest\032\037.SetSplitOrMergeE" +
-      "nabledResponse\022V\n\025IsSplitOrMergeEnabled\022" +
-      "\035.IsSplitOrMergeEnabledRequest\032\036.IsSplit" +
-      "OrMergeEnabledResponse\0222\n\tNormalize\022\021.No" +
-      "rmalizeRequest\032\022.NormalizeResponse\022S\n\024Se",
-      "tNormalizerRunning\022\034.SetNormalizerRunnin" +
-      "gRequest\032\035.SetNormalizerRunningResponse\022" +
-      "P\n\023IsNormalizerEnabled\022\033.IsNormalizerEna" +
-      "bledRequest\032\034.IsNormalizerEnabledRespons" +
-      "e\022A\n\016RunCatalogScan\022\026.RunCatalogScanRequ" +
-      "est\032\027.RunCatalogScanResponse\022S\n\024EnableCa" +
-      "talogJanitor\022\034.EnableCatalogJanitorReque" +
-      "st\032\035.EnableCatalogJanitorResponse\022\\\n\027IsC" +
-      "atalogJanitorEnabled\022\037.IsCatalogJanitorE" +
-      "nabledRequest\032 .IsCatalogJanitorEnabledR",
-      "esponse\022L\n\021ExecMasterService\022\032.Coprocess" +
-      "orServiceRequest\032\033.CoprocessorServiceRes" +
-      "ponse\022/\n\010Snapshot\022\020.SnapshotRequest\032\021.Sn" +
-      "apshotResponse\022V\n\025GetCompletedSnapshots\022" +
-      "\035.GetCompletedSnapshotsRequest\032\036.GetComp" +
-      "letedSnapshotsResponse\022A\n\016DeleteSnapshot" +
-      "\022\026.DeleteSnapshotRequest\032\027.DeleteSnapsho" +
-      "tResponse\022A\n\016IsSnapshotDone\022\026.IsSnapshot" +
-      "DoneRequest\032\027.IsSnapshotDoneResponse\022D\n\017" +
-      "RestoreSnapshot\022\027.RestoreSnapshotRequest",
-      "\032\030.RestoreSnapshotResponse\022V\n\025IsRestoreS" +
-      "napshotDone\022\035.IsRestoreSnapshotDoneReque" +
-      "st\032\036.IsRestoreSnapshotDoneResponse\022>\n\rEx" +
-      "ecProcedure\022\025.ExecProcedureRequest\032\026.Exe" +
-      "cProcedureResponse\022E\n\024ExecProcedureWithR" +
-      "et\022\025.ExecProcedureRequest\032\026.ExecProcedur" +
-      "eResponse\022D\n\017IsProcedureDone\022\027.IsProcedu" +
-      "reDoneRequest\032\030.IsProcedureDoneResponse\022" +
-      "D\n\017ModifyNamespace\022\027.ModifyNamespaceRequ" +
-      "est\032\030.ModifyNamespaceResponse\022D\n\017CreateN",
-      "amespace\022\027.CreateNamespaceRequest\032\030.Crea" +
-      "teNamespaceResponse\022D\n\017DeleteNamespace\022\027" +
-      ".DeleteNamespaceRequest\032\030.DeleteNamespac" +
-      "eResponse\022Y\n\026GetNamespaceDescriptor\022\036.Ge" +
-      "tNamespaceDescriptorRequest\032\037.GetNamespa" +
-      "ceDescriptorResponse\022_\n\030ListNamespaceDes" +
-      "criptors\022 .ListNamespaceDescriptorsReque" +
-      "st\032!.ListNamespaceDescriptorsResponse\022t\n" +
-      "\037ListTableDescriptorsByNamespace\022\'.ListT" +
-      "ableDescriptorsByNamespaceRequest\032(.List",
-      "TableDescriptorsByNamespaceResponse\022b\n\031L" +
-      "istTableNamesByNamespace\022!.ListTableName" +
-      "sByNamespaceRequest\032\".ListTableNamesByNa" +
-      "mespaceResponse\022/\n\010SetQuota\022\020.SetQuotaRe" +
-      "quest\032\021.SetQuotaResponse\022f\n\037getLastMajor" +
-      "CompactionTimestamp\022 .MajorCompactionTim" +
-      "estampRequest\032!.MajorCompactionTimestamp" +
-      "Response\022x\n(getLastMajorCompactionTimest" +
-      "ampForRegion\022).MajorCompactionTimestampF" +
-      "orRegionRequest\032!.MajorCompactionTimesta",
-      "mpResponse\022M\n\022getProcedureResult\022\032.GetPr" +
-      "ocedureResultRequest\032\033.GetProcedureResul" +
-      "tResponse\022A\n\016AbortProcedure\022\026.AbortProce" +
-      "dureRequest\032\027.AbortProcedureResponse\022A\n\016" +
-      "ListProcedures\022\026.ListProceduresRequest\032\027" +
-      ".ListProceduresResponseBB\n*org.apache.ha" +
-      "doop.hbase.protobuf.generatedB\014MasterPro" +
-      "tosH\001\210\001\001\240\001\001"
+      "\n\014Master.proto\032\013HBase.proto\032\014Backup.prot" +
+      "o\032\014Client.proto\032\023ClusterStatus.proto\032\023Er" +
+      "rorHandling.proto\032\017Procedure.proto\032\013Quot" +
+      "a.proto\"`\n\020AddColumnRequest\022\036\n\ntable_nam" +
+      "e\030\001 \002(\0132\n.TableName\022,\n\017column_families\030\002" +
+      " \002(\0132\023.ColumnFamilySchema\"\023\n\021AddColumnRe" +
+      "sponse\"J\n\023DeleteColumnRequest\022\036\n\ntable_n" +
+      "ame\030\001 \002(\0132\n.TableName\022\023\n\013column_name\030\002 \002" +
+      "(\014\"\026\n\024DeleteColumnResponse\"c\n\023ModifyColu" +
+      "mnRequest\022\036\n\ntable_name\030\001 \002(\0132\n.TableNam",
+      "e\022,\n\017column_families\030\002 \002(\0132\023.ColumnFamil" +
+      "ySchema\"\026\n\024ModifyColumnResponse\"\\\n\021MoveR" +
+      "egionRequest\022 \n\006region\030\001 \002(\0132\020.RegionSpe" +
+      "cifier\022%\n\020dest_server_name\030\002 \001(\0132\013.Serve" +
+      "rName\"\024\n\022MoveRegionResponse\"\200\001\n\035Dispatch" +
+      "MergingRegionsRequest\022\"\n\010region_a\030\001 \002(\0132" +
+      "\020.RegionSpecifier\022\"\n\010region_b\030\002 \002(\0132\020.Re" +
+      "gionSpecifier\022\027\n\010forcible\030\003 \001(\010:\005false\" " +
+      "\n\036DispatchMergingRegionsResponse\"7\n\023Assi" +
+      "gnRegionRequest\022 \n\006region\030\001 \002(\0132\020.Region",
+      "Specifier\"\026\n\024AssignRegionResponse\"O\n\025Una" +
+      "ssignRegionRequest\022 \n\006region\030\001 \002(\0132\020.Reg" +
+      "ionSpecifier\022\024\n\005force\030\002 \001(\010:\005false\"\030\n\026Un" +
+      "assignRegionResponse\"8\n\024OfflineRegionReq" +
+      "uest\022 \n\006region\030\001 \002(\0132\020.RegionSpecifier\"\027" +
+      "\n\025OfflineRegionResponse\"L\n\022CreateTableRe" +
+      "quest\022\"\n\014table_schema\030\001 \002(\0132\014.TableSchem" +
+      "a\022\022\n\nsplit_keys\030\002 \003(\014\"&\n\023CreateTableResp" +
+      "onse\022\017\n\007proc_id\030\001 \001(\004\"4\n\022DeleteTableRequ" +
+      "est\022\036\n\ntable_name\030\001 \002(\0132\n.TableName\"&\n\023D",
+      "eleteTableResponse\022\017\n\007proc_id\030\001 \001(\004\"T\n\024T" +
+      "runcateTableRequest\022\035\n\ttableName\030\001 \002(\0132\n" +
+      ".TableName\022\035\n\016preserveSplits\030\002 \001(\010:\005fals" +
+      "e\"\027\n\025TruncateTableResponse\"4\n\022EnableTabl" +
+      "eRequest\022\036\n\ntable_name\030\001 \002(\0132\n.TableName" +
+      "\"&\n\023EnableTableResponse\022\017\n\007proc_id\030\001 \001(\004" +
+      "\"5\n\023DisableTableRequest\022\036\n\ntable_name\030\001 " +
+      "\002(\0132\n.TableName\"\'\n\024DisableTableResponse\022" +
+      "\017\n\007proc_id\030\001 \001(\004\"X\n\022ModifyTableRequest\022\036" +
+      "\n\ntable_name\030\001 \002(\0132\n.TableName\022\"\n\014table_",
+      "schema\030\002 \002(\0132\014.TableSchema\"\025\n\023ModifyTabl" +
+      "eResponse\"K\n\026CreateNamespaceRequest\0221\n\023n" +
+      "amespaceDescriptor\030\001 \002(\0132\024.NamespaceDesc" +
+      "riptor\"\031\n\027CreateNamespaceResponse\"/\n\026Del" +
+      "eteNamespaceRequest\022\025\n\rnamespaceName\030\001 \002" +
+      "(\t\"\031\n\027DeleteNamespaceResponse\"K\n\026ModifyN" +
+      "amespaceRequest\0221\n\023namespaceDescriptor\030\001" +
+      " \002(\0132\024.NamespaceDescriptor\"\031\n\027ModifyName" +
+      "spaceResponse\"6\n\035GetNamespaceDescriptorR" +
+      "equest\022\025\n\rnamespaceName\030\001 \002(\t\"S\n\036GetName",
+      "spaceDescriptorResponse\0221\n\023namespaceDesc" +
+      "riptor\030\001 \002(\0132\024.NamespaceDescriptor\"!\n\037Li" +
+      "stNamespaceDescriptorsRequest\"U\n ListNam" +
+      "espaceDescriptorsResponse\0221\n\023namespaceDe" +
+      "scriptor\030\001 \003(\0132\024.NamespaceDescriptor\"?\n&" +
+      "ListTableDescriptorsByNamespaceRequest\022\025" +
+      "\n\rnamespaceName\030\001 \002(\t\"L\n\'ListTableDescri" +
+      "ptorsByNamespaceResponse\022!\n\013tableSchema\030" +
+      "\001 \003(\0132\014.TableSchema\"9\n ListTableNamesByN" +
+      "amespaceRequest\022\025\n\rnamespaceName\030\001 \002(\t\"B",
+      "\n!ListTableNamesByNamespaceResponse\022\035\n\tt" +
+      "ableName\030\001 \003(\0132\n.TableName\"\021\n\017ShutdownRe" +
+      "quest\"\022\n\020ShutdownResponse\"\023\n\021StopMasterR" +
+      "equest\"\024\n\022StopMasterResponse\"\037\n\016BalanceR" +
+      "equest\022\r\n\005force\030\001 \001(\010\"\'\n\017BalanceResponse" +
+      "\022\024\n\014balancer_ran\030\001 \002(\010\"<\n\031SetBalancerRun" +
+      "ningRequest\022\n\n\002on\030\001 \002(\010\022\023\n\013synchronous\030\002" +
+      " \001(\010\"8\n\032SetBalancerRunningResponse\022\032\n\022pr" +
+      "ev_balance_value\030\001 \001(\010\"\032\n\030IsBalancerEnab" +
+      "ledRequest\",\n\031IsBalancerEnabledResponse\022",
+      "\017\n\007enabled\030\001 \002(\010\"n\n\035SetSplitOrMergeEnabl" +
+      "edRequest\022\017\n\007enabled\030\001 \002(\010\022\023\n\013synchronou" +
+      "s\030\002 \001(\010\022\'\n\014switch_types\030\003 \003(\0162\021.MasterSw" +
+      "itchType\"4\n\036SetSplitOrMergeEnabledRespon" +
+      "se\022\022\n\nprev_value\030\001 \003(\010\"F\n\034IsSplitOrMerge" +
+      "EnabledRequest\022&\n\013switch_type\030\001 \002(\0162\021.Ma" +
+      "sterSwitchType\"0\n\035IsSplitOrMergeEnabledR" +
+      "esponse\022\017\n\007enabled\030\001 \002(\010\"\022\n\020NormalizeReq" +
+      "uest\"+\n\021NormalizeResponse\022\026\n\016normalizer_" +
+      "ran\030\001 \002(\010\")\n\033SetNormalizerRunningRequest",
+      "\022\n\n\002on\030\001 \002(\010\"=\n\034SetNormalizerRunningResp" +
+      "onse\022\035\n\025prev_normalizer_value\030\001 \001(\010\"\034\n\032I" +
+      "sNormalizerEnabledRequest\".\n\033IsNormalize" +
+      "rEnabledResponse\022\017\n\007enabled\030\001 \002(\010\"\027\n\025Run" +
+      "CatalogScanRequest\"-\n\026RunCatalogScanResp" +
+      "onse\022\023\n\013scan_result\030\001 \001(\005\"-\n\033EnableCatal" +
+      "ogJanitorRequest\022\016\n\006enable\030\001 \002(\010\"2\n\034Enab" +
+      "leCatalogJanitorResponse\022\022\n\nprev_value\030\001" +
+      " \001(\010\" \n\036IsCatalogJanitorEnabledRequest\"0" +
+      "\n\037IsCatalogJanitorEnabledResponse\022\r\n\005val",
+      "ue\030\001 \002(\010\"9\n\017SnapshotRequest\022&\n\010snapshot\030" +
+      "\001 \002(\0132\024.SnapshotDescription\",\n\020SnapshotR" +
+      "esponse\022\030\n\020expected_timeout\030\001 \002(\003\"\036\n\034Get" +
+      "CompletedSnapshotsRequest\"H\n\035GetComplete" +
+      "dSnapshotsResponse\022\'\n\tsnapshots\030\001 \003(\0132\024." +
+      "SnapshotDescription\"?\n\025DeleteSnapshotReq" +
+      "uest\022&\n\010snapshot\030\001 \002(\0132\024.SnapshotDescrip" +
+      "tion\"\030\n\026DeleteSnapshotResponse\"@\n\026Restor" +
+      "eSnapshotRequest\022&\n\010snapshot\030\001 \002(\0132\024.Sna" +
+      "pshotDescription\"\031\n\027RestoreSnapshotRespo",
+      "nse\"?\n\025IsSnapshotDoneRequest\022&\n\010snapshot" +
+      "\030\001 \001(\0132\024.SnapshotDescription\"U\n\026IsSnapsh" +
+      "otDoneResponse\022\023\n\004done\030\001 \001(\010:\005false\022&\n\010s" +
+      "napshot\030\002 \001(\0132\024.SnapshotDescription\"F\n\034I" +
+      "sRestoreSnapshotDoneRequest\022&\n\010snapshot\030" +
+      "\001 \001(\0132\024.SnapshotDescription\"4\n\035IsRestore" +
+      "SnapshotDoneResponse\022\023\n\004done\030\001 \001(\010:\005fals" +
+      "e\"=\n\033GetSchemaAlterStatusRequest\022\036\n\ntabl" +
+      "e_name\030\001 \002(\0132\n.TableName\"T\n\034GetSchemaAlt" +
+      "erStatusResponse\022\035\n\025yet_to_update_region",
+      "s\030\001 \001(\r\022\025\n\rtotal_regions\030\002 \001(\r\"\202\001\n\032GetTa" +
+      "bleDescriptorsRequest\022\037\n\013table_names\030\001 \003" +
+      "(\0132\n.TableName\022\r\n\005regex\030\002 \001(\t\022!\n\022include" +
+      "_sys_tables\030\003 \001(\010:\005false\022\021\n\tnamespace\030\004 " +
+      "\001(\t\"A\n\033GetTableDescriptorsResponse\022\"\n\014ta" +
+      "ble_schema\030\001 \003(\0132\014.TableSchema\"[\n\024GetTab" +
+      "leNamesRequest\022\r\n\005regex\030\001 \001(\t\022!\n\022include" +
+      "_sys_tables\030\002 \001(\010:\005false\022\021\n\tnamespace\030\003 " +
+      "\001(\t\"8\n\025GetTableNamesResponse\022\037\n\013table_na" +
+      "mes\030\001 \003(\0132\n.TableName\"\031\n\027GetClusterStatu",
+      "sRequest\"B\n\030GetClusterStatusResponse\022&\n\016" +
+      "cluster_status\030\001 \002(\0132\016.ClusterStatus\"\030\n\026" +
+      "IsMasterRunningRequest\"4\n\027IsMasterRunnin" +
+      "gResponse\022\031\n\021is_master_running\030\001 \002(\010\"@\n\024" +
+      "ExecProcedureRequest\022(\n\tprocedure\030\001 \002(\0132" +
+      "\025.ProcedureDescription\"F\n\025ExecProcedureR" +
+      "esponse\022\030\n\020expected_timeout\030\001 \001(\003\022\023\n\013ret" +
+      "urn_data\030\002 \001(\014\"B\n\026IsProcedureDoneRequest" +
+      "\022(\n\tprocedure\030\001 \001(\0132\025.ProcedureDescripti" +
+      "on\"W\n\027IsProcedureDoneResponse\022\023\n\004done\030\001 ",
+      "\001(\010:\005false\022\'\n\010snapshot\030\002 \001(\0132\025.Procedure" +
+      "Description\",\n\031GetProcedureResultRequest" +
+      "\022\017\n\007proc_id\030\001 \002(\004\"\347\001\n\032GetProcedureResult" +
+      "Response\0220\n\005state\030\001 \002(\0162!.GetProcedureRe" +
+      "sultResponse.State\022\022\n\nstart_time\030\002 \001(\004\022\023" +
+      "\n\013last_update\030\003 \001(\004\022\016\n\006result\030\004 \001(\014\022+\n\te" +
+      "xception\030\005 \001(\0132\030.ForeignExceptionMessage" +
+      "\"1\n\005State\022\r\n\tNOT_FOUND\020\000\022\013\n\007RUNNING\020\001\022\014\n" +
+      "\010FINISHED\020\002\"P\n\025AbortProcedureRequest\022\017\n\007" +
+      "proc_id\030\001 \002(\004\022&\n\030may_interrupt_if_runnin",
+      "g\030\002 \001(\010:\004true\"6\n\026AbortProcedureResponse\022" +
+      "\034\n\024is_procedure_aborted\030\001 \002(\010\"\027\n\025ListPro" +
+      "ceduresRequest\"7\n\026ListProceduresResponse" +
+      "\022\035\n\tprocedure\030\001 \003(\0132\n.Procedure\"\273\001\n\017SetQ" +
+      "uotaRequest\022\021\n\tuser_name\030\001 \001(\t\022\022\n\nuser_g" +
+      "roup\030\002 \001(\t\022\021\n\tnamespace\030\003 \001(\t\022\036\n\ntable_n" +
+      "ame\030\004 \001(\0132\n.TableName\022\022\n\nremove_all\030\005 \001(" +
+      "\010\022\026\n\016bypass_globals\030\006 \001(\010\022\"\n\010throttle\030\007 " +
+      "\001(\0132\020.ThrottleRequest\"\022\n\020SetQuotaRespons" +
+      "e\"A\n\037MajorCompactionTimestampRequest\022\036\n\n",
+      "table_name\030\001 \002(\0132\n.TableName\"L\n(MajorCom" +
+      "pactionTimestampForRegionRequest\022 \n\006regi" +
+      "on\030\001 \002(\0132\020.RegionSpecifier\"@\n MajorCompa" +
+      "ctionTimestampResponse\022\034\n\024compaction_tim" +
+      "estamp\030\001 \002(\003\"\211\001\n\023BackupTablesRequest\022\031\n\004" +
+      "type\030\001 \002(\0162\013.BackupType\022\032\n\006tables\030\002 \003(\0132" +
+      "\n.TableName\022\027\n\017target_root_dir\030\003 \002(\t\022\017\n\007" +
+      "workers\030\004 \001(\003\022\021\n\tbandwidth\030\005 \001(\003\":\n\024Back" +
+      "upTablesResponse\022\017\n\007proc_id\030\001 \001(\004\022\021\n\tbac" +
+      "kup_id\030\002 \001(\t*(\n\020MasterSwitchType\022\t\n\005SPLI",
+      "T\020\000\022\t\n\005MERGE\020\0012\364\037\n\rMasterService\022S\n\024GetS" +
+      "chemaAlterStatus\022\034.GetSchemaAlterStatusR" +
+      "equest\032\035.GetSchemaAlterStatusResponse\022P\n" +
+      "\023GetTableDescriptors\022\033.GetTableDescripto" +
+      "rsRequest\032\034.GetTableDescriptorsResponse\022" +
+      ">\n\rGetTableNames\022\025.GetTableNamesRequest\032" +
+      "\026.GetTableNamesResponse\022G\n\020GetClusterSta" +
+      "tus\022\030.GetClusterStatusRequest\032\031.GetClust" +
+      "erStatusResponse\022D\n\017IsMasterRunning\022\027.Is" +
+      "MasterRunningRequest\032\030.IsMasterRunningRe",
+      "sponse\0222\n\tAddColumn\022\021.AddColumnRequest\032\022" +
+      ".AddColumnResponse\022;\n\014DeleteColumn\022\024.Del" +
+      "eteColumnRequest\032\025.DeleteColumnResponse\022" +
+      ";\n\014ModifyColumn\022\024.ModifyColumnRequest\032\025." +
+      "ModifyColumnResponse\0225\n\nMoveRegion\022\022.Mov" +
+      "eRegionRequest\032\023.MoveRegionResponse\022Y\n\026D" +
+      "ispatchMergingRegions\022\036.DispatchMergingR" +
+      "egionsRequest\032\037.DispatchMergingRegionsRe" +
+      "sponse\022;\n\014AssignRegion\022\024.AssignRegionReq" +
+      "uest\032\025.AssignRegionResponse\022A\n\016UnassignR",
+      "egion\022\026.UnassignRegionRequest\032\027.Unassign" +
+      "RegionResponse\022>\n\rOfflineRegion\022\025.Offlin" +
+      "eRegionRequest\032\026.OfflineRegionResponse\0228" +
+      "\n\013DeleteTable\022\023.DeleteTableRequest\032\024.Del" +
+      "eteTableResponse\022>\n\rtruncateTable\022\025.Trun" +
+      "cateTableRequest\032\026.TruncateTableResponse" +
+      "\0228\n\013EnableTable\022\023.EnableTableRequest\032\024.E" +
+      "nableTableResponse\022;\n\014DisableTable\022\024.Dis" +
+      "ableTableRequest\032\025.DisableTableResponse\022" +
+      "8\n\013ModifyTable\022\023.ModifyTableRequest\032\024.Mo",
+      "difyTableResponse\0228\n\013CreateTable\022\023.Creat" +
+      "eTableRequest\032\024.CreateTableResponse\022/\n\010S" +
+      "hutdown\022\020.ShutdownRequest\032\021.ShutdownResp" +
+      "onse\0225\n\nStopMaster\022\022.StopMasterRequest\032\023" +
+      ".StopMasterResponse\022,\n\007Balance\022\017.Balance" +
+      "Request\032\020.BalanceResponse\022M\n\022SetBalancer" +
+      "Running\022\032.SetBalancerRunningRequest\032\033.Se" +
+      "tBalancerRunningResponse\022J\n\021IsBalancerEn" +
+      "abled\022\031.IsBalancerEnabledRequest\032\032.IsBal" +
+      "ancerEnabledResponse\022Y\n\026SetSplitOrMergeE",
+      "nabled\022\036.SetSplitOrMergeEnabledRequest\032\037" +
+      ".SetSplitOrMergeEnabledResponse\022V\n\025IsSpl" +
+      "itOrMergeEnabled\022\035.IsSplitOrMergeEnabled" +
+      "Request\032\036.IsSplitOrMergeEnabledResponse\022" +
+      "2\n\tNormalize\022\021.NormalizeRequest\032\022.Normal" +
+      "izeResponse\022S\n\024SetNormalizerRunning\022\034.Se" +
+      "tNormalizerRunningRequest\032\035.SetNormalize" +
+      "rRunningResponse\022P\n\023IsNormalizerEnabled\022" +
+      "\033.IsNormalizerEnabledRequest\032\034.IsNormali" +
+      "zerEnabledResponse\022A\n\016RunCatalogScan\022\026.R",
+      "unCatalogScanRequest\032\027.RunCatalogScanRes" +
+      "ponse\022S\n\024EnableCatalogJanitor\022\034.EnableCa" +
+      "talogJanitorRequest\032\035.EnableCatalogJanit" +
+      "orResponse\022\\\n\027IsCatalogJanitorEnabled\022\037." +
+      "IsCatalogJanitorEnabledRequest\032 .IsCatal" +
+      "ogJanitorEnabledResponse\022L\n\021ExecMasterSe" +
+      "rvice\022\032.CoprocessorServiceRequest\032\033.Copr" +
+      "ocessorServiceResponse\022/\n\010Snapshot\022\020.Sna" +
+      "pshotRequest\032\021.SnapshotResponse\022V\n\025GetCo" +
+      "mpletedSnapshots\022\035.GetCompletedSnapshots",
+      "Request\032\036.GetCompletedSnapshotsResponse\022" +
+      "A\n\016DeleteSnapshot\022\026.DeleteSnapshotReques" +
+      "t\032\027.DeleteSnapshotResponse\022A\n\016IsSnapshot" +
+      "Done\022\026.IsSnapshotDoneRequest\032\027.IsSnapsho" +
+      "tDoneResponse\022D\n\017RestoreSnapshot\022\027.Resto" +
+      "reSnapshotRequest\032\030.RestoreSnapshotRespo" +
+      "nse\022V\n\025IsRestoreSnapshotDone\022\035.IsRestore" +
+      "SnapshotDoneRequest\032\036.IsRestoreSnapshotD" +
+      "oneResponse\022>\n\rExecProcedure\022\025.ExecProce" +
+      "dureRequest\032\026.ExecProcedureResponse\022E\n\024E",
+      "xecProcedureWithRet\022\025.ExecProcedureReque" +
+      "st\032\026.ExecProcedureResponse\022D\n\017IsProcedur" +
+      "eDone\022\027.IsProcedureDoneRequest\032\030.IsProce" +
+      "dureDoneResponse\022D\n\017ModifyNamespace\022\027.Mo" +
+      "difyNamespaceRequest\032\030.ModifyNamespaceRe" +
+      "sponse\022D\n\017CreateNamespace\022\027.CreateNamesp" +
+      "aceRequest\032\030.CreateNamespaceResponse\022D\n\017" +
+      "DeleteNamespace\022\027.DeleteNamespaceRequest" +
+      "\032\030.DeleteNamespaceResponse\022Y\n\026GetNamespa" +
+      "ceDescriptor\022\036.GetNamespaceDescriptorReq",
+      "uest\032\037.GetNamespaceDescriptorResponse\022_\n" +
+      "\030ListNamespaceDescriptors\022 .ListNamespac" +
+      "eDescriptorsRequest\032!.ListNamespaceDescr" +
+      "iptorsResponse\022t\n\037ListTableDescriptorsBy" +
+      "Namespace\022\'.ListTableDescriptorsByNamesp" +
+      "aceRequest\032(.ListTableDescriptorsByNames" +
+      "paceResponse\022b\n\031ListTableNamesByNamespac" +
+      "e\022!.ListTableNamesByNamespaceRequest\032\".L" +
+      "istTableNamesByNamespaceResponse\022/\n\010SetQ" +
+      "uota\022\020.SetQuotaRequest\032\021.SetQuotaRespons",
+      "e\022f\n\037getLastMajorCompactionTimestamp\022 .M" +
+      "ajorCompactionTimestampRequest\032!.MajorCo" +
+      "mpactionTimestampResponse\022x\n(getLastMajo" +
+      "rCompactionTimestampForRegion\022).MajorCom" +
+      "pactionTimestampForRegionRequest\032!.Major" +
+      "CompactionTimestampResponse\022M\n\022getProced" +
+      "ureResult\022\032.GetProcedureResultRequest\032\033." +
+      "GetProcedureResultResponse\022A\n\016AbortProce" +
+      "dure\022\026.AbortProcedureRequest\032\027.AbortProc" +
+      "edureResponse\022A\n\016ListProcedures\022\026.ListPr",
+      "oceduresRequest\032\027.ListProceduresResponse" +
+      "\022;\n\014backupTables\022\024.BackupTablesRequest\032\025" +
+      ".BackupTablesResponseBB\n*org.apache.hado" +
+      "op.hbase.protobuf.generatedB\014MasterProto" +
+      "sH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -60189,6 +62068,18 @@ public final class MasterProtos {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_MajorCompactionTimestampResponse_descriptor,
               new java.lang.String[] { "CompactionTimestamp", });
+          internal_static_BackupTablesRequest_descriptor =
+            getDescriptor().getMessageTypes().get(105);
+          internal_static_BackupTablesRequest_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_BackupTablesRequest_descriptor,
+              new java.lang.String[] { "Type", "Tables", "TargetRootDir", "Workers", "Bandwidth", });
+          internal_static_BackupTablesResponse_descriptor =
+            getDescriptor().getMessageTypes().get(106);
+          internal_static_BackupTablesResponse_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_BackupTablesResponse_descriptor,
+              new java.lang.String[] { "ProcId", "BackupId", });
           return null;
         }
       };
@@ -60196,6 +62087,7 @@ public final class MasterProtos {
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
           org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.getDescriptor(),
+          org.apache.hadoop.hbase.protobuf.generated.BackupProtos.getDescriptor(),
           org.apache.hadoop.hbase.protobuf.generated.ClientProtos.getDescriptor(),
           org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.getDescriptor(),
           org.apache.hadoop.hbase.protobuf.generated.ErrorHandlingProtos.getDescriptor(),

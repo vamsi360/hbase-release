@@ -1208,6 +1208,14 @@ public final class HConstants {
   public static final String REGION_SPLIT_THREADS_MAX =
     "hbase.regionserver.region.split.threads.max";
 
+  /**
+   * Backup/Restore constants
+   */
+  public final static String BACKUP_ENABLE_KEY = "hbase.backup.enable";
+  public final static boolean BACKUP_ENABLE_DEFAULT = true;
+  public final static String BACKUP_SYSTEM_TTL_KEY = "hbase.backup.system.ttl";
+  public final static int BACKUP_SYSTEM_TTL_DEFAULT = FOREVER;
+
   private HConstants() {
     // Can't be instantiated with this ctor.
   }

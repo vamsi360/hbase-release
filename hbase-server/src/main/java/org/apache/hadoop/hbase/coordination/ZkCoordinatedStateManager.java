@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.hbase.coordination;
 
+import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
@@ -26,6 +28,10 @@ import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.TableStateManager;
 import org.apache.hadoop.hbase.zookeeper.ZKTableStateManager;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
+import org.apache.hadoop.hbase.procedure.ProcedureCoordinatorRpcs;
+import org.apache.hadoop.hbase.procedure.ProcedureMemberRpcs;
+import org.apache.hadoop.hbase.procedure.ZKProcedureCoordinatorRpcs;
+import org.apache.hadoop.hbase.procedure.ZKProcedureMemberRpcs;
 import org.apache.zookeeper.KeeperException;
 
 /**
@@ -97,5 +103,16 @@ public class ZkCoordinatedStateManager extends BaseCoordinatedStateManager {
   @Override
   public RegionMergeCoordination getRegionMergeCoordination() {
     return regionMergeCoordination;
+  }
+
+  @Override
+  public ProcedureCoordinatorRpcs getProcedureCoordinatorRpcs(String procType, String coordNode)
+      throws IOException {
+    return new ZKProcedureCoordinatorRpcs(watcher, procType, coordNode);
+  }
+
+  @Override
+  public ProcedureMemberRpcs getProcedureMemberRpcs(String procType) throws IOException {
+    return new ZKProcedureMemberRpcs(watcher, procType);
   }
 }
