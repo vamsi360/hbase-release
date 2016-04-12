@@ -20,7 +20,8 @@ HBASE-14680 Two configs for snapshot timeout and better defaults
 HBASE-14283 Reverse scan doesn’t work with HFile inline index/bloom blocks
 HBASE-15221 Reload the cache on re-tried puts in HTableMultiplexer and adds a close() method to HTableMultiplexer
 HBASE-15232 Handle region location cache mgmt in AsyncProcess for multi()'s
-
+HBASE-15518 Add per-table metrics
+HBASE-15519 Add per-user metrics
 
 Following are the changes on top of Apache HBase 1.1.1
 
