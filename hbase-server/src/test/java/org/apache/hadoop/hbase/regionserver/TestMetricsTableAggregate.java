@@ -32,7 +32,7 @@ public class TestMetricsTableAggregate {
   public static MetricsAssertHelper HELPER =
       CompatibilityFactory.getInstance(MetricsAssertHelper.class);
 
-//  @Test
+  @Test
   public void testTableWrapperAggregateMetrics() throws IOException {
     String tableName = "testRequestCount";
     MetricsTableWrapperStub tableWrapper = new MetricsTableWrapperStub(tableName);
@@ -41,8 +41,8 @@ public class TestMetricsTableAggregate {
     MetricsTableAggregateSource agg = CompatibilitySingletonFactory
         .getInstance(MetricsRegionServerSourceFactory.class).getTableAggregate();
 
-    HELPER.assertGauge("Namespace_default_table_testRequestCount_metric_readRequestCount", 10, agg);
-    HELPER.assertGauge("Namespace_default_table_testRequestCount_metric_writeRequestCount", 20, agg);
-    HELPER.assertGauge("Namespace_default_table_testRequestCount_metric_totalRequestCount", 30, agg);
+    HELPER.assertCounter("Namespace_default_table_testRequestCount_metric_readRequestCount", 10, agg);
+    HELPER.assertCounter("Namespace_default_table_testRequestCount_metric_writeRequestCount", 20, agg);
+    HELPER.assertCounter("Namespace_default_table_testRequestCount_metric_totalRequestCount", 30, agg);
   }
 }
