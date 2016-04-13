@@ -3,6 +3,7 @@ HDP-2.6 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.2
 
+HBASE-15636 hard coded wait time out value in HBaseTestingUtility#waitUntilAllRegionsAssigned might cause test failure (Stephen Yuan Jiang)
 HBASE-14407 NotServingRegion: hbase region closed forever (Shuaifeng Zhou)
 HBASE-14307 Incorrect use of positional read api in HFileBlock (Chris Nauroth)
 HBASE-14963 Remove Guava dependency from HBase client code (ddas)
