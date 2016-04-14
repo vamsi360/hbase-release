@@ -105,3 +105,4 @@ HBASE-11339 HBase MOB (Jingcheng Du)
 HBASE-15527 Refactor Compactor related classes (Duo Zhang)
 HBASE-14030 HBase Backup/Restore Phase 1 with Proc V2
 HBASE-15592 Print Procedure WAL content (Jerry He)
+HBASE-14674 Rpc handler / task monitoring seems to be broken after 0.98 (Heng Chen)
