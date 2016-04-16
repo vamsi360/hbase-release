@@ -736,8 +736,6 @@ public class HRegionServer extends HasThread implements
           HConstants.DEFAULT_THREAD_WAKE_FREQUENCY);
         healthCheckChore = new HealthCheckChore(sleepTime, this, getConfiguration());
       }
-      this.pauseMonitor = new JvmPauseMonitor(conf);
-      pauseMonitor.start();
 
       initializeZooKeeper();
       if (!isStopped() && !isAborted()) {
@@ -1375,6 +1373,9 @@ public class HRegionServer extends HasThread implements
       this.metricsTable = new MetricsTable(new MetricsTableWrapperAggregateImpl(this));
       this.metricsRegionServer = new MetricsRegionServer(getConfiguration(),
         new MetricsRegionServerWrapperImpl(this), metricsTable);
+      // Now that we have a metrics source, start the pause monitor
+      this.pauseMonitor = new JvmPauseMonitor(conf, getMetrics().getMetricsSource());
+      pauseMonitor.start();
 
       startServiceThreads();
       startHeapMemoryManager();
