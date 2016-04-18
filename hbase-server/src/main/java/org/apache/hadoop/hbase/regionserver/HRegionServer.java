@@ -503,7 +503,6 @@ public class HRegionServer extends HasThread implements
     this.conf = conf;
     checkCodecs(this.conf);
     this.userProvider = UserProvider.instantiate(conf);
-    Superusers.initialize(conf);
     FSUtils.setupShortCircuitRead(this.conf);
     // Disable usage of meta replicas in the regionserver
     this.conf.setBoolean(HConstants.USE_META_REPLICAS, false);
@@ -552,6 +551,9 @@ public class HRegionServer extends HasThread implements
       "hbase.zookeeper.client.kerberos.principal", hostName);
     // login the server principal (if using secure Hadoop)
     login(userProvider, hostName);
+    // init superusers and add the server principal (if using security)
+    // or process owner as default super user.
+    Superusers.initialize(conf);
 
     regionServerAccounting = new RegionServerAccounting();
     cacheConfig = new CacheConfig(conf);
