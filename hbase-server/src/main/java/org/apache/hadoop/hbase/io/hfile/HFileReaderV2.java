@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.io.hfile;
 
 import java.io.DataInput;
 import java.io.IOException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -435,8 +436,14 @@ public class HFileReaderV2 extends AbstractHFileReader {
           traceScope.getSpan().addTimelineAnnotation("blockCacheMiss");
         }
         // Load block from filesystem.
-        HFileBlock hfileBlock = fsBlockReader.readBlockData(dataBlockOffset, onDiskBlockSize, -1,
-            pread);
+        HFileBlock hfileBlock;
+        try {
+          hfileBlock = fsBlockReader.readBlockData(dataBlockOffset, onDiskBlockSize, -1,
+              pread);
+        } catch (BufferUnderflowException bue) {
+          LOG.debug("readBlockData encountered exception for " + path, bue);
+          throw bue;
+        }
         validateBlockType(hfileBlock, expectedBlockType);
         HFileBlock unpacked = hfileBlock.unpack(hfileContext, fsBlockReader);
         BlockType.BlockCategory category = hfileBlock.getBlockType().getCategory();
