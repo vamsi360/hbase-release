@@ -109,3 +109,4 @@ HBASE-14674 Rpc handler / task monitoring seems to be broken after 0.98 (Heng Ch
 HBASE-14941 locate_region shell command (Matteo)
 HBASE-15621 Suppress Hbase SnapshotHFile cleaner error messages when a snaphot is going on (Huaxiang)
 HBASE-15622 Superusers does not consider the keytab credentials (Matteo)
+HBASE-15325 ResultScanner allowing partial result will miss the rest of the row if the region is moved between two rpc requests (Phil)
