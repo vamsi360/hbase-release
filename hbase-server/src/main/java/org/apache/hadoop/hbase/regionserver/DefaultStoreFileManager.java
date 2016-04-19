@@ -22,8 +22,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,10 +38,6 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.KVComparator;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionConfiguration;
-
-import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 /**
  * Default implementation of StoreFileManager. Not thread-safe.
@@ -48,16 +49,18 @@ class DefaultStoreFileManager implements StoreFileManager {
   private final KVComparator kvComparator;
   private final CompactionConfiguration comConf;
   private final int blockingFileCount;
-
+  private final Comparator<StoreFile> storeFileComparator;
   /**
    * List of store files inside this store. This is an immutable list that
    * is atomically replaced when its contents change.
    */
   private volatile ImmutableList<StoreFile> storefiles = null;
 
-  public DefaultStoreFileManager(KVComparator kvComparator, Configuration conf,
+  public DefaultStoreFileManager(KVComparator kvComparator,
+      Comparator<StoreFile> storeFileComparator, Configuration conf,
       CompactionConfiguration comConf) {
     this.kvComparator = kvComparator;
+    this.storeFileComparator = storeFileComparator;
     this.comConf = comConf;
     this.blockingFileCount =
         conf.getInt(HStore.BLOCKING_STOREFILES_KEY, HStore.DEFAULT_BLOCKING_STOREFILE_COUNT);
@@ -161,7 +164,7 @@ class DefaultStoreFileManager implements StoreFileManager {
   }
 
   private void sortAndSetStoreFiles(List<StoreFile> storeFiles) {
-    Collections.sort(storeFiles, StoreFile.Comparators.SEQ_ID);
+    Collections.sort(storeFiles, storeFileComparator);
     storefiles = ImmutableList.copyOf(storeFiles);
   }
 
@@ -173,6 +176,11 @@ class DefaultStoreFileManager implements StoreFileManager {
       return 0.0;
     }
     return (double) (storefileCount - minFilesToCompact) / (blockingFileCount - minFilesToCompact);
+  }
+
+  @Override
+  public Comparator<StoreFile> getStoreFileComparator() {
+    return storeFileComparator;
   }
 }
 
