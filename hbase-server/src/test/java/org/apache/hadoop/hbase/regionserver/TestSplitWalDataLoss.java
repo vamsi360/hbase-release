@@ -47,6 +47,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -71,6 +72,8 @@ public class TestSplitWalDataLoss {
   private byte[] family = Bytes.toBytes("f");
 
   private byte[] qualifier = Bytes.toBytes("q");
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   @Before
   public void setUp() throws Exception {
@@ -90,6 +93,8 @@ public class TestSplitWalDataLoss {
 
   @Test
   public void test() throws IOException, InterruptedException {
+    Assume.assumeTrue(!WINDOWS);
+
     final HRegionServer rs = testUtil.getRSForFirstRegionInTable(tableName);
     final HRegion region = (HRegion) rs.getOnlineRegions(tableName).get(0);
     HRegion spiedRegion = spy(region);

@@ -69,6 +69,7 @@ import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.server.datanode.DataNode;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -88,6 +89,8 @@ public class TestLogRolling  {
   private Admin admin;
   private MiniHBaseCluster cluster;
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   public TestLogRolling()  {
     this.server = null;
@@ -290,6 +293,7 @@ public class TestLogRolling  {
    */
   @Test
   public void testLogRollOnDatanodeDeath() throws Exception {
+    Assume.assumeTrue(!WINDOWS);
     TEST_UTIL.ensureSomeRegionServersAvailable(2);
     assertTrue("This test requires WAL file replication set to 2.",
       fs.getDefaultReplication(TEST_UTIL.getDataTestDirOnTestFS()) == 2);

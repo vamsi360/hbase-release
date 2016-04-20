@@ -56,6 +56,7 @@ import org.apache.hadoop.hbase.zookeeper.LoadBalancerTracker;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -67,6 +68,8 @@ import org.junit.experimental.categories.Category;
 public class TestMetaWithReplicas {
   static final Log LOG = LogFactory.getLog(TestMetaWithReplicas.class);
   private final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   @Before
   public void setup() throws Exception {
@@ -322,6 +325,7 @@ public class TestMetaWithReplicas {
 
   @Test
   public void testAccessingUnknownTables() throws Exception {
+    Assume.assumeTrue(!WINDOWS);
     Configuration conf = new Configuration(TEST_UTIL.getConfiguration());
     conf.setBoolean(HConstants.USE_META_REPLICAS, true);
     Table table = TEST_UTIL.getConnection().getTable(TableName.valueOf("RandomTable"));

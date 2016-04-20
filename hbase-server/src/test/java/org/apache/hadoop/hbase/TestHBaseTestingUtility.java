@@ -62,6 +62,7 @@ public class TestHBaseTestingUtility {
    */
   @Test (timeout=180000)
   public void testMultiClusters() throws Exception {
+    Assume.assumeTrue(!WINDOWS);
     // Create three clusters
 
     // Cluster 1.

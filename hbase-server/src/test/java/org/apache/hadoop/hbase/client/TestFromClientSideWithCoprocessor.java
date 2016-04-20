@@ -17,12 +17,16 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.coprocessor.MultiRowMutationEndpoint;
 import org.apache.hadoop.hbase.regionserver.NoOpScanPolicyObserver;
+import org.junit.Assume;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 /**
@@ -31,6 +35,9 @@ import org.junit.experimental.categories.Category;
  */
 @Category(LargeTests.class)
 public class TestFromClientSideWithCoprocessor extends TestFromClientSide {
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
+
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     Configuration conf = TEST_UTIL.getConfiguration();
@@ -39,5 +46,11 @@ public class TestFromClientSideWithCoprocessor extends TestFromClientSide {
     conf.setBoolean("hbase.table.sanity.checks", true); // enable for below tests
     // We need more than one region server in this test
     TEST_UTIL.startMiniCluster(SLAVES);
+  }
+
+  @Override @Test
+  public void testCheckAndDeleteWithCompareOp() throws IOException {
+    Assume.assumeTrue(!WINDOWS);
+    super.testCheckAndDeleteWithCompareOp();
   }
 }
