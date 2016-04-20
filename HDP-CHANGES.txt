@@ -113,3 +113,4 @@ HBASE-15325 ResultScanner allowing partial result will miss the rest of the row 
 HBASE-15665 Support using different StoreFileComparators for different CompactionPolicies (Duo Zhang)
 HBASE-15430 Failed taking snapshot - Manifest proto-message too large (JunHo Cho)
 HBASE-15406 Split / merge switch left disabled after early termination of hbck (Heng Chen)
+HBASE-15679 Assertion on wrong variable in TestReplicationThrottler#testThrottling
