@@ -49,6 +49,7 @@ import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.ModifyRegionUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
@@ -90,7 +91,7 @@ public class TestMasterFailoverWithProcedures {
     }
   }
 
-  @Test(timeout=60000)
+  @Ignore @Test(timeout=60000)
   public void testWalRecoverLease() throws Exception {
     final ProcedureStore masterStore = getMasterProcedureExecutor().getStore();
     assertTrue("expected WALStore for this test", masterStore instanceof WALProcedureStore);
