@@ -7821,6 +7821,24 @@ public final class WALProtos {
      */
     com.google.protobuf.ByteString
         getStoreFileBytes(int index);
+
+    // optional uint64 store_file_size = 4;
+    /**
+     * <code>optional uint64 store_file_size = 4;</code>
+     *
+     * <pre>
+     * size of store file
+     * </pre>
+     */
+    boolean hasStoreFileSize();
+    /**
+     * <code>optional uint64 store_file_size = 4;</code>
+     *
+     * <pre>
+     * size of store file
+     * </pre>
+     */
+    long getStoreFileSize();
   }
   /**
    * Protobuf type {@code StoreDescriptor}
@@ -7889,6 +7907,11 @@ public final class WALProtos {
                 mutable_bitField0_ |= 0x00000004;
               }
               storeFile_.add(input.readBytes());
+              break;
+            }
+            case 32: {
+              bitField0_ |= 0x00000004;
+              storeFileSize_ = input.readUInt64();
               break;
             }
           }
@@ -8051,10 +8074,35 @@ public final class WALProtos {
       return storeFile_.getByteString(index);
     }
 
+    // optional uint64 store_file_size = 4;
+    public static final int STORE_FILE_SIZE_FIELD_NUMBER = 4;
+    private long storeFileSize_;
+    /**
+     * <code>optional uint64 store_file_size = 4;</code>
+     *
+     * <pre>
+     * size of store file
+     * </pre>
+     */
+    public boolean hasStoreFileSize() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional uint64 store_file_size = 4;</code>
+     *
+     * <pre>
+     * size of store file
+     * </pre>
+     */
+    public long getStoreFileSize() {
+      return storeFileSize_;
+    }
+
     private void initFields() {
       familyName_ = com.google.protobuf.ByteString.EMPTY;
       storeHomeDir_ = "";
       storeFile_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      storeFileSize_ = 0L;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -8085,6 +8133,9 @@ public final class WALProtos {
       for (int i = 0; i < storeFile_.size(); i++) {
         output.writeBytes(3, storeFile_.getByteString(i));
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeUInt64(4, storeFileSize_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -8110,6 +8161,10 @@ public final class WALProtos {
         }
         size += dataSize;
         size += 1 * getStoreFileList().size();
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(4, storeFileSize_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -8146,6 +8201,11 @@ public final class WALProtos {
       }
       result = result && getStoreFileList()
           .equals(other.getStoreFileList());
+      result = result && (hasStoreFileSize() == other.hasStoreFileSize());
+      if (hasStoreFileSize()) {
+        result = result && (getStoreFileSize()
+            == other.getStoreFileSize());
+      }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -8170,6 +8230,10 @@ public final class WALProtos {
       if (getStoreFileCount() > 0) {
         hash = (37 * hash) + STORE_FILE_FIELD_NUMBER;
         hash = (53 * hash) + getStoreFileList().hashCode();
+      }
+      if (hasStoreFileSize()) {
+        hash = (37 * hash) + STORE_FILE_SIZE_FIELD_NUMBER;
+        hash = (53 * hash) + hashLong(getStoreFileSize());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -8286,6 +8350,8 @@ public final class WALProtos {
         bitField0_ = (bitField0_ & ~0x00000002);
         storeFile_ = com.google.protobuf.LazyStringArrayList.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000004);
+        storeFileSize_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
 
@@ -8328,6 +8394,10 @@ public final class WALProtos {
           bitField0_ = (bitField0_ & ~0x00000004);
         }
         result.storeFile_ = storeFile_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.storeFileSize_ = storeFileSize_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -8361,6 +8431,9 @@ public final class WALProtos {
             storeFile_.addAll(other.storeFile_);
           }
           onChanged();
+        }
+        if (other.hasStoreFileSize()) {
+          setStoreFileSize(other.getStoreFileSize());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -8656,6 +8729,55 @@ public final class WALProtos {
   }
   ensureStoreFileIsMutable();
         storeFile_.add(value);
+        onChanged();
+        return this;
+      }
+
+      // optional uint64 store_file_size = 4;
+      private long storeFileSize_ ;
+      /**
+       * <code>optional uint64 store_file_size = 4;</code>
+       *
+       * <pre>
+       * size of store file
+       * </pre>
+       */
+      public boolean hasStoreFileSize() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      /**
+       * <code>optional uint64 store_file_size = 4;</code>
+       *
+       * <pre>
+       * size of store file
+       * </pre>
+       */
+      public long getStoreFileSize() {
+        return storeFileSize_;
+      }
+      /**
+       * <code>optional uint64 store_file_size = 4;</code>
+       *
+       * <pre>
+       * size of store file
+       * </pre>
+       */
+      public Builder setStoreFileSize(long value) {
+        bitField0_ |= 0x00000008;
+        storeFileSize_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint64 store_file_size = 4;</code>
+       *
+       * <pre>
+       * size of store file
+       * </pre>
+       */
+      public Builder clearStoreFileSize() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        storeFileSize_ = 0L;
         onChanged();
         return this;
       }
@@ -11875,24 +11997,24 @@ public final class WALProtos {
       "\001 \002(\014\022\026\n\016store_home_dir\030\002 \002(\t\022\024\n\014flush_o" +
       "utput\030\003 \003(\t\"S\n\013FlushAction\022\017\n\013START_FLUS" +
       "H\020\000\022\020\n\014COMMIT_FLUSH\020\001\022\017\n\013ABORT_FLUSH\020\002\022\020" +
-      "\n\014CANNOT_FLUSH\020\003\"R\n\017StoreDescriptor\022\023\n\013f" +
+      "\n\014CANNOT_FLUSH\020\003\"k\n\017StoreDescriptor\022\023\n\013f" +
       "amily_name\030\001 \002(\014\022\026\n\016store_home_dir\030\002 \002(\t",
-      "\022\022\n\nstore_file\030\003 \003(\t\"\215\001\n\022BulkLoadDescrip" +
-      "tor\022\036\n\ntable_name\030\001 \002(\0132\n.TableName\022\033\n\023e" +
-      "ncoded_region_name\030\002 \002(\014\022 \n\006stores\030\003 \003(\013" +
-      "2\020.StoreDescriptor\022\030\n\020bulkload_seq_num\030\004" +
-      " \002(\003\"\237\002\n\025RegionEventDescriptor\0224\n\nevent_" +
-      "type\030\001 \002(\0162 .RegionEventDescriptor.Event" +
-      "Type\022\022\n\ntable_name\030\002 \002(\014\022\033\n\023encoded_regi" +
-      "on_name\030\003 \002(\014\022\033\n\023log_sequence_number\030\004 \001" +
-      "(\004\022 \n\006stores\030\005 \003(\0132\020.StoreDescriptor\022\033\n\006" +
-      "server\030\006 \001(\0132\013.ServerName\022\023\n\013region_name",
-      "\030\007 \001(\014\".\n\tEventType\022\017\n\013REGION_OPEN\020\000\022\020\n\014" +
-      "REGION_CLOSE\020\001\"\014\n\nWALTrailer*F\n\tScopeTyp" +
-      "e\022\033\n\027REPLICATION_SCOPE_LOCAL\020\000\022\034\n\030REPLIC" +
-      "ATION_SCOPE_GLOBAL\020\001B?\n*org.apache.hadoo" +
-      "p.hbase.protobuf.generatedB\tWALProtosH\001\210" +
-      "\001\000\240\001\001"
+      "\022\022\n\nstore_file\030\003 \003(\t\022\027\n\017store_file_size\030" +
+      "\004 \001(\004\"\215\001\n\022BulkLoadDescriptor\022\036\n\ntable_na" +
+      "me\030\001 \002(\0132\n.TableName\022\033\n\023encoded_region_n" +
+      "ame\030\002 \002(\014\022 \n\006stores\030\003 \003(\0132\020.StoreDescrip" +
+      "tor\022\030\n\020bulkload_seq_num\030\004 \002(\003\"\237\002\n\025Region" +
+      "EventDescriptor\0224\n\nevent_type\030\001 \002(\0162 .Re" +
+      "gionEventDescriptor.EventType\022\022\n\ntable_n" +
+      "ame\030\002 \002(\014\022\033\n\023encoded_region_name\030\003 \002(\014\022\033" +
+      "\n\023log_sequence_number\030\004 \001(\004\022 \n\006stores\030\005 " +
+      "\003(\0132\020.StoreDescriptor\022\033\n\006server\030\006 \001(\0132\013.",
+      "ServerName\022\023\n\013region_name\030\007 \001(\014\".\n\tEvent" +
+      "Type\022\017\n\013REGION_OPEN\020\000\022\020\n\014REGION_CLOSE\020\001\"" +
+      "\014\n\nWALTrailer*F\n\tScopeType\022\033\n\027REPLICATIO" +
+      "N_SCOPE_LOCAL\020\000\022\034\n\030REPLICATION_SCOPE_GLO" +
+      "BAL\020\001B?\n*org.apache.hadoop.hbase.protobu" +
+      "f.generatedB\tWALProtosH\001\210\001\000\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -11940,7 +12062,7 @@ public final class WALProtos {
           internal_static_StoreDescriptor_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_StoreDescriptor_descriptor,
-              new java.lang.String[] { "FamilyName", "StoreHomeDir", "StoreFile", });
+              new java.lang.String[] { "FamilyName", "StoreHomeDir", "StoreFile", "StoreFileSize", });
           internal_static_BulkLoadDescriptor_descriptor =
             getDescriptor().getMessageTypes().get(6);
           internal_static_BulkLoadDescriptor_fieldAccessorTable = new
