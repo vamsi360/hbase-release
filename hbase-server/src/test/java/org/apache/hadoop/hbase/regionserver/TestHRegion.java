@@ -3766,6 +3766,7 @@ public class TestHRegion {
    */
   @Test
   public void testWritesWhileScanning() throws IOException, InterruptedException {
+    Assume.assumeTrue(!WINDOWS);
     int testCount = 100;
     int numRows = 1;
     int numFamilies = 10;
@@ -3931,6 +3932,7 @@ public class TestHRegion {
    */
   @Test
   public void testWritesWhileGetting() throws Exception {
+    Assume.assumeTrue(!WINDOWS);
     int testCount = 100;
     int numRows = 1;
     int numFamilies = 10;

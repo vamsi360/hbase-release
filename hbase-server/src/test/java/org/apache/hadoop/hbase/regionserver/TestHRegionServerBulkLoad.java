@@ -72,6 +72,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.wal.WALKey;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -97,6 +98,8 @@ public class TestHRegionServerBulkLoad {
   public static int BLOCKSIZE = 64 * 1024;
   public static Algorithm COMPRESSION = Compression.Algorithm.NONE;
 
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
   private final static byte[][] families = new byte[NUM_CFS][];
   static {
     for (int i = 0; i < NUM_CFS; i++) {
@@ -339,6 +342,7 @@ public class TestHRegionServerBulkLoad {
    */
   @Test
   public void testAtomicBulkLoad() throws Exception {
+    Assume.assumeTrue(!WINDOWS);
     TableName TABLE_NAME = TableName.valueOf("atomicBulkLoad");
 
     int millisToRun = 30000;
