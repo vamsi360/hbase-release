@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hbase.backup.impl;
+package org.apache.hadoop.hbase.backup.master;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,10 +34,15 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupClientUtil;
+import org.apache.hadoop.hbase.backup.BackupInfo;
 import org.apache.hadoop.hbase.backup.BackupRestoreFactory;
 import org.apache.hadoop.hbase.backup.BackupType;
-import org.apache.hadoop.hbase.backup.impl.BackupContext.BackupPhase;
-import org.apache.hadoop.hbase.backup.impl.BackupContext.BackupState;
+import org.apache.hadoop.hbase.backup.BackupInfo.BackupPhase;
+import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
+import org.apache.hadoop.hbase.backup.impl.BackupCopyService;
+import org.apache.hadoop.hbase.backup.impl.BackupManager;
+import org.apache.hadoop.hbase.backup.impl.BackupUtil;
+import org.apache.hadoop.hbase.backup.impl.IncrementalBackupManager;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.master.procedure.MasterProcedureEnv;
 import org.apache.hadoop.hbase.master.procedure.TableProcedureInterface;
@@ -60,7 +65,7 @@ public class IncrementalTableBackupProcedure
   HashMap<String, Long> newTimestamps = null;
 
   private BackupManager backupManager;
-  private BackupContext backupContext;
+  private BackupInfo backupContext;
 
   public IncrementalTableBackupProcedure() {
     // Required by the Procedure framework to create the procedure on replay
@@ -74,8 +79,8 @@ public class IncrementalTableBackupProcedure
     this.backupId = backupId;
     this.tableList = tableList;
     this.targetRootDir = targetRootDir;
-    backupContext = backupManager.createBackupContext(backupId, BackupType.INCREMENTAL, tableList,
-          targetRootDir);
+    backupContext = backupManager.createBackupInfo(backupId, BackupType.INCREMENTAL, tableList,
+          targetRootDir, workers, bandwidth);
   }
 
   @Override
@@ -100,7 +105,7 @@ public class IncrementalTableBackupProcedure
    * Do incremental copy.
    * @param backupContext backup context
    */
-  private void incrementalCopy(BackupContext backupContext) throws Exception {
+  private void incrementalCopy(BackupInfo backupContext) throws Exception {
 
     LOG.info("Incremental copy is starting.");
 
@@ -261,9 +266,9 @@ public class IncrementalTableBackupProcedure
     sb.append(")");
   }
 
-  BackupProtos.BackupProcContext toBackupContext() {
+  BackupProtos.BackupProcContext toBackupInfo() {
     BackupProtos.BackupProcContext.Builder ctxBuilder = BackupProtos.BackupProcContext.newBuilder();
-    ctxBuilder.setCtx(backupContext.toBackupContext());
+    ctxBuilder.setCtx(backupContext.toProtosBackupInfo());
     if (newTimestamps != null && !newTimestamps.isEmpty()) {
       BackupProtos.ServerTimestamp.Builder tsBuilder = ServerTimestamp.newBuilder();
       for (Entry<String, Long> entry : newTimestamps.entrySet()) {
@@ -278,7 +283,7 @@ public class IncrementalTableBackupProcedure
   public void serializeStateData(final OutputStream stream) throws IOException {
     super.serializeStateData(stream);
 
-    BackupProtos.BackupProcContext backupProcCtx = toBackupContext();
+    BackupProtos.BackupProcContext backupProcCtx = toBackupInfo();
     backupProcCtx.writeDelimitedTo(stream);
   }
 
@@ -287,7 +292,7 @@ public class IncrementalTableBackupProcedure
     super.deserializeStateData(stream);
 
     BackupProtos.BackupProcContext proto =BackupProtos.BackupProcContext.parseDelimitedFrom(stream);
-    backupContext = BackupContext.fromProto(proto.getCtx());
+    backupContext = BackupInfo.fromProto(proto.getCtx());
     backupId = backupContext.getBackupId();
     targetRootDir = backupContext.getTargetRootDir();
     tableList = backupContext.getTableNames();

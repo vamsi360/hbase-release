@@ -17,6 +17,12 @@
  */
 package org.apache.hadoop.hbase.mapreduce;
 
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -49,12 +55,6 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Map;
-import java.util.TreeMap;
-
 /**
  * A tool to replay WAL files as a M/R job.
  * The WAL can be replayed for a set of tables or all tables,
@@ -70,9 +70,9 @@ import java.util.TreeMap;
 public class WALPlayer extends Configured implements Tool {
   final static Log LOG = LogFactory.getLog(WALPlayer.class);
   final static String NAME = "WALPlayer";
-  final static String BULK_OUTPUT_CONF_KEY = "wal.bulk.output";
-  final static String TABLES_KEY = "wal.input.tables";
-  final static String TABLE_MAP_KEY = "wal.input.tablesmap";
+  public final static String BULK_OUTPUT_CONF_KEY = "wal.bulk.output";
+  public final static String TABLES_KEY = "wal.input.tables";
+  public final static String TABLE_MAP_KEY = "wal.input.tablesmap";
 
   // This relies on Hadoop Configuration to handle warning about deprecated configs and
   // to set the correct non-deprecated configs when an old one shows up.
@@ -132,7 +132,8 @@ public class WALPlayer extends Configured implements Tool {
   protected static class WALMapper
     extends Mapper<WALKey, WALEdit, ImmutableBytesWritable, Mutation> {
     private Map<TableName, TableName> tables = new TreeMap<TableName, TableName>();
-
+    
+    
     @Override
     public void map(WALKey key, WALEdit value, Context context)
     throws IOException {
@@ -145,6 +146,7 @@ public class WALPlayer extends Configured implements Tool {
           Put put = null;
           Delete del = null;
           Cell lastCell = null;
+                    
           for (Cell cell : value.getCells()) {
             // filtering WAL meta entries
             if (WALEdit.isMetaEditFamily(cell.getFamily())) continue;
@@ -198,6 +200,13 @@ public class WALPlayer extends Configured implements Tool {
      */
     protected boolean filter(Context context, final Cell cell) {
       return true;
+    }
+
+    @Override
+    protected void
+        cleanup(Mapper<WALKey, WALEdit, ImmutableBytesWritable, Mutation>.Context context)
+            throws IOException, InterruptedException {
+      super.cleanup(context);
     }
 
     @Override
@@ -259,7 +268,7 @@ public class WALPlayer extends Configured implements Tool {
     Configuration conf = getConf();
     setupTime(conf, HLogInputFormat.START_TIME_KEY);
     setupTime(conf, HLogInputFormat.END_TIME_KEY);
-    Path inputDir = new Path(args[0]);
+    String inputDirs = args[0];
     String[] tables = args[1].split(",");
     String[] tableMap;
     if (args.length > 2) {
@@ -273,9 +282,9 @@ public class WALPlayer extends Configured implements Tool {
     }
     conf.setStrings(TABLES_KEY, tables);
     conf.setStrings(TABLE_MAP_KEY, tableMap);
-    Job job = new Job(conf, NAME + "_" + inputDir);
+    Job job = new Job(conf, NAME + "_" + System.currentTimeMillis());
     job.setJarByClass(WALPlayer.class);
-    FileInputFormat.setInputPaths(job, inputDir);
+    FileInputFormat.setInputPaths(job, inputDirs);
     job.setInputFormatClass(WALInputFormat.class);
     job.setMapOutputKeyClass(ImmutableBytesWritable.class);
     String hfileOutPath = conf.get(BULK_OUTPUT_CONF_KEY);
@@ -295,6 +304,8 @@ public class WALPlayer extends Configured implements Tool {
           RegionLocator regionLocator = conn.getRegionLocator(tableName)) {
         HFileOutputFormat2.configureIncrementalLoad(job, table.getTableDescriptor(), regionLocator);
       }
+      LOG.debug("success configuring load incremental job");
+      
       TableMapReduceUtil.addDependencyJars(job.getConfiguration(),
           com.google.common.base.Preconditions.class);
     } else {
@@ -309,6 +320,7 @@ public class WALPlayer extends Configured implements Tool {
     return job;
   }
 
+ 
   /**
    * Print usage
    * @param errorMsg Error message.  Can be null.

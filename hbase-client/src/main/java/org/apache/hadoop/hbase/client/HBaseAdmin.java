@@ -211,6 +211,7 @@ public class HBaseAdmin implements Admin {
   // want to wait a long time.
   private final int retryLongerMultiplier;
   private final int syncWaitTimeout;
+  private final long backupWaitTimeout;
   private boolean aborted;
   private boolean cleanupConnectionOnClose = false; // close the connection in close()
   private boolean closed = false;
@@ -271,7 +272,8 @@ public class HBaseAdmin implements Admin {
         HConstants.DEFAULT_HBASE_CLIENT_OPERATION_TIMEOUT);
     this.syncWaitTimeout = this.conf.getInt(
       "hbase.client.sync.wait.timeout.msec", 10 * 60000); // 10min
-
+    this.backupWaitTimeout = this.conf.getInt(
+      "hbase.client.backup.wait.timeout.sec", 24 * 3600); // 24 h
     this.rpcCallerFactory = RpcRetryingCallerFactory.instantiate(this.conf);
   }
 
@@ -2631,8 +2633,8 @@ public class HBaseAdmin implements Admin {
   public String backupTables(final BackupRequest userRequest) throws IOException {
     return get(
       backupTablesAsync(userRequest),
-      syncWaitTimeout,
-      TimeUnit.MILLISECONDS);
+      backupWaitTimeout,
+      TimeUnit.SECONDS);
   }
 
   public static class TableBackupFuture extends TableFuture<String> {

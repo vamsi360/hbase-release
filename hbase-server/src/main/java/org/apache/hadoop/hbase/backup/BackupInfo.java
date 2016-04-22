@@ -16,79 +16,45 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hbase.backup.impl;
+package org.apache.hadoop.hbase.backup;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupType;
-import org.apache.hadoop.hbase.backup.HBackupFileSystem;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.BackupProtos;
-import org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupContext.Builder;
+import org.apache.hadoop.hbase.protobuf.generated.BackupProtos.BackupInfo.Builder;
 import org.apache.hadoop.hbase.protobuf.generated.BackupProtos.TableBackupStatus;
+
 
 /**
  * An object to encapsulate the information for each backup request
  */
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
-public class BackupContext {
-
-  public Map<TableName, BackupStatus> getBackupStatusMap() {
-    return backupStatusMap;
-  }
-
-  public void setBackupStatusMap(Map<TableName, BackupStatus> backupStatusMap) {
-    this.backupStatusMap = backupStatusMap;
-  }
-
-  public HashMap<TableName, HashMap<String, Long>> getTableSetTimestampMap() {
-    return tableSetTimestampMap;
-  }
-
-  public void setTableSetTimestampMap(
-      HashMap<TableName, HashMap<String, Long>> tableSetTimestampMap) {
-    this.tableSetTimestampMap = tableSetTimestampMap;
-  }
-
-  public String getHlogTargetDir() {
-    return hlogTargetDir;
-  }
-
-  public void setType(BackupType type) {
-    this.type = type;
-  }
-
-  public void setTargetRootDir(String targetRootDir) {
-    this.targetRootDir = targetRootDir;
-  }
-
-  public void setTotalBytesCopied(long totalBytesCopied) {
-    this.totalBytesCopied = totalBytesCopied;
-  }
-
+public class BackupInfo implements Comparable<BackupInfo> {
+  private static final Log LOG = LogFactory.getLog(BackupInfo.class);
   // backup status flag
   public static enum BackupState {
-    RUNNING, COMPLETE, FAILED, CANCELLED;
+    WAITING, RUNNING, COMPLETE, FAILED, CANCELLED;
   }
-
-  public void setCancelled(boolean cancelled) {
-    this.state = BackupState.CANCELLED;;
-  }
-
-  // backup phase
-  // for overall backup (for table list, some table may go online, while some may go offline)
-  protected static enum BackupPhase {
+  // backup phase    
+  public static enum BackupPhase {
     SNAPSHOTCOPY, INCREMENTAL_COPY, STORE_MANIFEST;
   }
 
@@ -133,19 +99,29 @@ public class BackupContext {
   transient private HashMap<TableName, HashMap<String, Long>> tableSetTimestampMap;
 
   // backup progress in %% (0-100)
-
   private int progress;
-
-  public BackupContext() {
+  
+  // distributed job id
+  private String jobId;
+  
+  // Number of parallel workers. -1 - system defined
+  private int workers = -1;
+ 
+  // Bandwidth per worker in MB per sec. -1 - unlimited
+  private long bandwidth = -1;  
+  
+  public BackupInfo() {
   }
 
-  public BackupContext(String backupId, BackupType type, TableName[] tables, String targetRootDir) {
+  public BackupInfo(String backupId, BackupType type, TableName[] tables, String targetRootDir) {
     backupStatusMap = new HashMap<TableName, BackupStatus>();
 
     this.backupId = backupId;
     this.type = type;
     this.targetRootDir = targetRootDir;
-
+    if(LOG.isDebugEnabled()){
+      LOG.debug("CreateBackupContext: " + tables.length+" "+tables[0] );
+    }
     this.addTables(tables);
 
     if (type == BackupType.INCREMENTAL) {
@@ -156,9 +132,65 @@ public class BackupContext {
     this.endTs = 0;
   }
 
+  public String getJobId() {
+    return jobId;
+  }
+
+  public void setJobId(String jobId) {
+    this.jobId = jobId;
+  }
+
+  public int getWorkers() {
+    return workers;
+  }
+
+  public void setWorkers(int workers) {
+    this.workers = workers;
+  }
+
+  public long getBandwidth() {
+    return bandwidth;
+  }
+
+  public void setBandwidth(long bandwidth) {
+    this.bandwidth = bandwidth;
+  }
+
+  public void setBackupStatusMap(Map<TableName, BackupStatus> backupStatusMap) {
+    this.backupStatusMap = backupStatusMap;
+  }
+
+  public HashMap<TableName, HashMap<String, Long>> getTableSetTimestampMap() {
+    return tableSetTimestampMap;
+  }
+  
+  public void setTableSetTimestampMap(HashMap<TableName, HashMap<String, Long>> tableSetTimestampMap) {
+    this.tableSetTimestampMap = tableSetTimestampMap;
+  }
+
+  public String getHlogTargetDir() {
+    return hlogTargetDir;
+  }
+
+  public void setType(BackupType type) {
+    this.type = type;
+  }
+
+  public void setTargetRootDir(String targetRootDir) {
+    this.targetRootDir = targetRootDir;
+  }
+
+  public void setTotalBytesCopied(long totalBytesCopied) {
+    this.totalBytesCopied = totalBytesCopied;
+  }
+
+  public void setCancelled(boolean cancelled) {
+    this.state = BackupState.CANCELLED;;
+  }
+  
   /**
-   * Set progress string
-   * @param msg progress message
+   * Set progress (0-100%)
+   * @param msg progress value
    */
 
   public void setProgress(int p) {
@@ -288,9 +320,8 @@ public class BackupContext {
     return incrBackupFileList;
   }
 
-  public List<String> setIncrBackupFileList(List<String> incrBackupFileList) {
+  public void setIncrBackupFileList(List<String> incrBackupFileList) {
     this.incrBackupFileList = incrBackupFileList;
-    return this.incrBackupFileList;
   }
 
   /**
@@ -319,35 +350,35 @@ public class BackupContext {
     return null;
   }
 
-  BackupProtos.BackupContext toBackupContext() {
-    BackupProtos.BackupContext.Builder builder =
-        BackupProtos.BackupContext.newBuilder();
+  public BackupProtos.BackupInfo toProtosBackupInfo() {
+    BackupProtos.BackupInfo.Builder builder = BackupProtos.BackupInfo.newBuilder();
     builder.setBackupId(getBackupId());
     setBackupStatusMap(builder);
     builder.setEndTs(getEndTs());
-    if(getFailedMsg() != null){
+    if (getFailedMsg() != null) {
       builder.setFailedMessage(getFailedMsg());
     }
-    if(getState() != null){
-      builder.setState(BackupProtos.BackupContext.BackupState.valueOf(getState().name()));
+    if (getState() != null) {
+      builder.setState(BackupProtos.BackupInfo.BackupState.valueOf(getState().name()));
     }
-    if(getPhase() != null){
-      builder.setPhase(BackupProtos.BackupContext.BackupPhase.valueOf(getPhase().name()));
-    }
-    if(getHLogTargetDir() != null){
-      builder.setHlogTargetDir(getHLogTargetDir());
+    if (getPhase() != null) {
+      builder.setPhase(BackupProtos.BackupInfo.BackupPhase.valueOf(getPhase().name()));
     }
 
     builder.setProgress(getProgress());
     builder.setStartTs(getStartTs());
     builder.setTargetRootDir(getTargetRootDir());
-    builder.setTotalBytesCopied(getTotalBytesCopied());
     builder.setType(BackupProtos.BackupType.valueOf(getType().name()));
+    builder.setWorkersNumber(workers);
+    builder.setBandwidth(bandwidth);
+    if (jobId != null) {
+      builder.setJobId(jobId);
+    }
     return builder.build();
   }
 
   public byte[] toByteArray() throws IOException {
-    return toBackupContext().toByteArray();
+    return toProtosBackupInfo().toByteArray();
   }
 
   private void setBackupStatusMap(Builder builder) {
@@ -356,38 +387,43 @@ public class BackupContext {
     }
   }
 
-  public static BackupContext fromByteArray(byte[] data) throws IOException {
-    return fromProto(BackupProtos.BackupContext.parseFrom(data));
+  public static BackupInfo fromByteArray(byte[] data) throws IOException {
+    return fromProto(BackupProtos.BackupInfo.parseFrom(data));
   }
   
-  public static BackupContext fromStream(final InputStream stream) throws IOException {
-    return fromProto(BackupProtos.BackupContext.parseDelimitedFrom(stream));
+  public static BackupInfo fromStream(final InputStream stream) throws IOException {
+    return fromProto(BackupProtos.BackupInfo.parseDelimitedFrom(stream));
   }
 
-  static BackupContext fromProto(BackupProtos.BackupContext proto) {
-    BackupContext context = new BackupContext();
+  public static BackupInfo fromProto(BackupProtos.BackupInfo proto) {
+    BackupInfo context = new BackupInfo();
     context.setBackupId(proto.getBackupId());
     context.setBackupStatusMap(toMap(proto.getTableBackupStatusList()));
     context.setEndTs(proto.getEndTs());
-    if(proto.hasFailedMessage()) {
+    if (proto.hasFailedMessage()) {
       context.setFailedMsg(proto.getFailedMessage());
     }
-    if(proto.hasState()) {
-      context.setState(BackupContext.BackupState.valueOf(proto.getState().name()));
+    if (proto.hasState()) {
+      context.setState(BackupInfo.BackupState.valueOf(proto.getState().name()));
     }
-    if(proto.hasHlogTargetDir()) {
-      context.setHlogTargetDir(proto.getHlogTargetDir());
-    }
-    if(proto.hasPhase()) {
+
+    context.setHlogTargetDir(HBackupFileSystem.getLogBackupDir(proto.getTargetRootDir(),
+      proto.getBackupId()));
+
+    if (proto.hasPhase()) {
       context.setPhase(BackupPhase.valueOf(proto.getPhase().name()));
     }
-    if(proto.hasProgress()) {
+    if (proto.hasProgress()) {
       context.setProgress(proto.getProgress());
     }
     context.setStartTs(proto.getStartTs());
     context.setTargetRootDir(proto.getTargetRootDir());
-    context.setTotalBytesCopied(proto.getTotalBytesCopied());
     context.setType(BackupType.valueOf(proto.getType().name()));
+    context.setWorkers(proto.getWorkersNumber());
+    context.setBandwidth(proto.getBandwidth());
+    if (proto.hasJobId()) {
+      context.setJobId(proto.getJobId());
+    }
     return context;
   }
 
@@ -399,4 +435,49 @@ public class BackupContext {
     return map;
   }
 
+  public String getShortDescription() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("ID             : " + backupId).append("\n");
+    sb.append("Tables         : " + getTableListAsString()).append("\n");
+    sb.append("State          : " + getState()).append("\n");
+    Date date = null;
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(getStartTs());
+    date = cal.getTime();
+    sb.append("Start time     : " + date).append("\n");
+    if (state == BackupState.FAILED) {
+      sb.append("Failed message : " + getFailedMsg()).append("\n");
+    } else if (state == BackupState.RUNNING) {
+      sb.append("Phase          : " + getPhase()).append("\n");
+    } else if (state == BackupState.COMPLETE) {
+      cal = Calendar.getInstance();
+      cal.setTimeInMillis(getEndTs());
+      date = cal.getTime();
+      sb.append("End time       : " + date).append("\n");
+    }
+    sb.append("Progress       : " + getProgress()).append("\n");
+    return sb.toString();
+  }
+
+  public String getStatusAndProgressAsString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("id: ").append(getBackupId()).append(" state: ").append(getState())
+        .append(" progress: ").append(getProgress());
+    return sb.toString();
+  }
+  
+  public String getTableListAsString() {
+    return StringUtils.join(backupStatusMap.keySet(), ";");
+  }
+
+  @Override
+  public int compareTo(BackupInfo o) {
+      Long thisTS =
+          new Long(this.getBackupId().substring(this.getBackupId().lastIndexOf("_") + 1));
+      Long otherTS =
+          new Long(o.getBackupId().substring(o.getBackupId().lastIndexOf("_") + 1));
+      return thisTS.compareTo(otherTS);
+  }
+   
+  
 }

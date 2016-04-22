@@ -16,12 +16,11 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hbase.backup.impl;
+package org.apache.hadoop.hbase.backup;
 
 import java.io.Serializable;
 
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.HBackupFileSystem;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -30,7 +29,6 @@ import org.apache.hadoop.hbase.protobuf.generated.BackupProtos;
 /**
  * Backup status and related information encapsulated for a table.
  * At this moment only TargetDir and SnapshotName is encapsulated here.
- * future Jira will be implemented for progress, bytesCopies, phase, etc.
  */
 
 @InterfaceAudience.Private
