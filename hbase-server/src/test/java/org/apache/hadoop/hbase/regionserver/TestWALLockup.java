@@ -50,6 +50,7 @@ import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.wal.WALKey;
 import org.apache.hadoop.hbase.wal.WALProvider.Writer;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -75,6 +76,8 @@ public class TestWALLockup {
   private static Configuration CONF ;
   private String dir;
 
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
   // Test names
   protected TableName tableName;
 
@@ -108,6 +111,7 @@ public class TestWALLockup {
    */
   @Test (timeout=30000)
   public void testLockupWhenSyncInMiddleOfZigZagSetup() throws IOException {
+    Assume.assumeTrue(!WINDOWS);
     // A WAL that we can have throw exceptions when a flag is set.
     class DodgyFSLog extends FSHLog {
       // Set this when want the WAL to start throwing exceptions.
