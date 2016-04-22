@@ -48,6 +48,7 @@ import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.wal.WALProvider.Writer;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -76,6 +77,8 @@ public class TestFailedAppendAndSync {
 
   // Test names
   protected TableName tableName;
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   @Before
   public void setup() throws IOException {
@@ -106,6 +109,7 @@ public class TestFailedAppendAndSync {
    */
   @Test (timeout=300000)
   public void testLockupAroundBadAssignSync() throws IOException {
+    Assume.assumeTrue(!WINDOWS);
     final AtomicLong rolls = new AtomicLong(0);
     // Dodgy WAL. Will throw exceptions when flags set.
     class DodgyFSLog extends FSHLog {
