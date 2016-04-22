@@ -51,6 +51,7 @@ import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.Threads;
@@ -117,8 +118,13 @@ public class SnapshotManifest {
    */
   public static SnapshotManifest open(final Configuration conf, final FileSystem fs,
       final Path workingDir, final SnapshotDescription desc) throws IOException {
+    return open(conf, fs, workingDir, desc, -1);
+  }
+
+  public static SnapshotManifest open(final Configuration conf, final FileSystem fs,
+      final Path workingDir, final SnapshotDescription desc, int waitDuration) throws IOException {
     SnapshotManifest manifest = new SnapshotManifest(conf, fs, workingDir, desc, null);
-    manifest.load();
+    manifest.load(waitDuration);
     return manifest;
   }
 
@@ -258,7 +264,7 @@ public class SnapshotManifest {
    * in-progress snapshot. Since we support rolling-upgrades, we loook for v1 and v2
    * regions format.
    */
-  private void load() throws IOException {
+  private void load(int waitDuration) throws IOException {
     switch (getSnapshotFormat(desc)) {
       case SnapshotManifestV1.DESCRIPTOR_VERSION: {
         this.htd = FSTableDescriptors.getTableDescriptorFromFs(fs, workingDir);
@@ -272,7 +278,7 @@ public class SnapshotManifest {
         break;
       }
       case SnapshotManifestV2.DESCRIPTOR_VERSION: {
-        SnapshotDataManifest dataManifest = readDataManifest();
+        SnapshotDataManifest dataManifest = readDataManifest(waitDuration);
         if (dataManifest != null) {
           htd = HTableDescriptor.convert(dataManifest.getTableSchema());
           regionManifests = dataManifest.getRegionManifestsList();
@@ -431,10 +437,20 @@ public class SnapshotManifest {
   /*
    * Read the SnapshotDataManifest file
    */
-  private SnapshotDataManifest readDataManifest() throws IOException {
+  private SnapshotDataManifest readDataManifest(int waitDuration) throws IOException {
     FSDataInputStream in = null;
     try {
-      in = fs.open(new Path(workingDir, DATA_MANIFEST_NAME));
+      Path manifestFile = new Path(workingDir, DATA_MANIFEST_NAME);
+      if (waitDuration > 0) {
+        long start = EnvironmentEdgeManager.currentTime();
+        while (EnvironmentEdgeManager.currentTime() - start < waitDuration &&
+            fs.getFileStatus(manifestFile).getLen() <= 0) {
+          Threads.sleep(10);
+        }
+        LOG.debug("Waited " + (EnvironmentEdgeManager.currentTime() - start) + " milliseconds for "
+            + manifestFile);
+      }
+      in = fs.open(manifestFile);
       return SnapshotDataManifest.parseFrom(in);
     } catch (FileNotFoundException e) {
       return null;

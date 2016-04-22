@@ -26,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
@@ -105,8 +106,10 @@ public final class MasterSnapshotVerifier {
    */
   public void verifySnapshot(Path snapshotDir, Set<String> snapshotServers)
       throws CorruptedSnapshotException, IOException {
+    Configuration conf = services.getConfiguration();
+    int waitDuration = conf.getInt("hbase.snapshot.manifest.wait.duration.millis", -1);
     SnapshotManifest manifest = SnapshotManifest.open(services.getConfiguration(), fs,
-                                                      snapshotDir, snapshot);
+                                                      snapshotDir, snapshot, waitDuration);
     // verify snapshot info matches
     verifySnapshotDescription(snapshotDir);
 
