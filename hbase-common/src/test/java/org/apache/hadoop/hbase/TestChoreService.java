@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.TestChoreService.ScheduledChoreSamples.SampleStop
 import org.apache.hadoop.hbase.TestChoreService.ScheduledChoreSamples.SleepingChore;
 import org.apache.hadoop.hbase.TestChoreService.ScheduledChoreSamples.SlowChore;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -40,6 +41,8 @@ import org.junit.experimental.categories.Category;
 public class TestChoreService {
   private final Log LOG = LogFactory.getLog(this.getClass());
 
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
   /**
    * A few ScheduledChore samples that are useful for testing with ChoreService
    */
@@ -718,6 +721,7 @@ public class TestChoreService {
 
   @Test (timeout=20000)
   public void testStopperForScheduledChores() throws InterruptedException {
+    Assume.assumeTrue(!WINDOWS);
     ChoreService service = ChoreService.getInstance("testStopperForScheduledChores");
     Stoppable stopperForGroup1 = new SampleStopper();
     Stoppable stopperForGroup2 = new SampleStopper();

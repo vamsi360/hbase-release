@@ -75,6 +75,7 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -101,6 +102,8 @@ public class TestSplitLogManager {
   private RecoveryMode mode;
 
   private static HBaseTestingUtility TEST_UTIL;
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   class DummyServer implements Server {
     private ZooKeeperWatcher zkw;
@@ -475,6 +478,7 @@ public class TestSplitLogManager {
 
   @Test (timeout=180000)
   public void testUnassignedTimeout() throws Exception {
+    Assume.assumeTrue(!WINDOWS);
     LOG.info("TestUnassignedTimeout - iff all tasks are unassigned then" +
         " resubmit");
 
