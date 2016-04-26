@@ -116,3 +116,4 @@ HBASE-15406 Split / merge switch left disabled after early termination of hbck (
 HBASE-15679 Assertion on wrong variable in TestReplicationThrottler#testThrottling
 HBASE-15669 HFile size is not considered correctly in a replication request (Ashish)
 HBASE-14252 RegionServers fail to start when setting hbase.ipc.server.callqueue.scan.ratio to 0
+HBASE-15674 HRegionLocator#getAllRegionLocations should put the results in cache (Heng Chen)
