@@ -118,3 +118,4 @@ HBASE-15669 HFile size is not considered correctly in a replication request (Ash
 HBASE-14252 RegionServers fail to start when setting hbase.ipc.server.callqueue.scan.ratio to 0
 HBASE-15674 HRegionLocator#getAllRegionLocations should put the results in cache (Heng Chen)
 HBASE-15719 TestMasterCoprocessorExceptionWithAbort#testExceptionFromCoprocessorWhenCreatingTable fails due to premature master abortion
+HBASE-15707 ImportTSV bulk output does not support tags with hfile.format.version=3 (huaxiang sun)
