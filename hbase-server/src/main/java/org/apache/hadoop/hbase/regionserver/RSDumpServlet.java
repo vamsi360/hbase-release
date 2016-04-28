@@ -37,14 +37,12 @@ import org.apache.hadoop.hbase.util.Threads;
 @InterfaceAudience.Private
 public class RSDumpServlet extends StateDumpServlet {
   private static final long serialVersionUID = 1L;
-  private static final String LINE =
-    "===========================================================";
+  private static final String LINE = "===========================================================";
 
   @Override
-  public void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    HRegionServer hrs = (HRegionServer)getServletContext().getAttribute(
-        HRegionServer.REGIONSERVER);
+  public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    HRegionServer hrs =
+        (HRegionServer) getServletContext().getAttribute(HRegionServer.REGIONSERVER);
     assert hrs != null : "No RS in context!";
 
     response.setContentType("text/plain");
@@ -58,8 +56,7 @@ public class RSDumpServlet extends StateDumpServlet {
     OutputStream os = response.getOutputStream();
     PrintWriter out = new PrintWriter(os);
 
-    out.println("RegionServer status for " + hrs.getServerName()
-        + " as of " + new Date());
+    out.println("RegionServer status for " + hrs.getServerName() + " as of " + new Date());
 
     out.println("\n\nVersion Info:");
     out.println(LINE);
@@ -68,6 +65,10 @@ public class RSDumpServlet extends StateDumpServlet {
     out.println("\n\nTasks:");
     out.println(LINE);
     TaskMonitor.get().dumpAsText(out);
+    
+    out.println("\n\nRowLocks:");
+    out.println(LINE);
+    dumpRowLock(hrs, out);
 
     out.println("\n\nExecutors:");
     out.println(LINE);
@@ -93,26 +94,39 @@ public class RSDumpServlet extends StateDumpServlet {
 
     out.println("\n\nRS Queue:");
     out.println(LINE);
-    if(isShowQueueDump(conf)) {
+    if (isShowQueueDump(conf)) {
       dumpQueue(hrs, out);
     }
 
     out.flush();
   }
 
-  public static void dumpQueue(HRegionServer hrs, PrintWriter out)
-      throws IOException {
+  public static void dumpRowLock(HRegionServer hrs, PrintWriter out) {
+    StringBuilder sb = new StringBuilder();
+    for (Region region : hrs.getOnlineRegionsLocalContext()) {
+      HRegion hRegion = (HRegion) region;
+      if (hRegion.getLockedRows().size() > 0) {
+        for (HRegion.RowLockContext rowLockContext : hRegion.getLockedRows().values()) {
+          sb.setLength(0);
+          sb.append(hRegion.getTableDesc().getTableName()).append(",")
+              .append(hRegion.getRegionInfo().getEncodedName()).append(",");
+          sb.append(rowLockContext.toString());
+          out.println(sb.toString());
+        }
+      }
+    }
+  }
+
+  public static void dumpQueue(HRegionServer hrs, PrintWriter out) throws IOException {
     if (hrs.compactSplitThread != null) {
       // 1. Print out Compaction/Split Queue
-      out.println("Compaction/Split Queue summary: "
-          + hrs.compactSplitThread.toString() );
+      out.println("Compaction/Split Queue summary: " + hrs.compactSplitThread.toString());
       out.println(hrs.compactSplitThread.dumpQueue());
     }
 
     if (hrs.cacheFlusher != null) {
       // 2. Print out flush Queue
-      out.println("\nFlush Queue summary: "
-          + hrs.cacheFlusher.toString());
+      out.println("\nFlush Queue summary: " + hrs.cacheFlusher.toString());
       out.println(hrs.cacheFlusher.dumpQueue());
     }
   }
