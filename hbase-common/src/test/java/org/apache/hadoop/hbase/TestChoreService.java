@@ -346,6 +346,7 @@ public class TestChoreService {
 
   @Test (timeout=20000)
   public void testFrequencyOfChores() throws InterruptedException {
+    Assume.assumeTrue(!WINDOWS);
     final int period = 100;
     // Small delta that acts as time buffer (allowing chores to complete if running slowly)
     final int delta = 5;

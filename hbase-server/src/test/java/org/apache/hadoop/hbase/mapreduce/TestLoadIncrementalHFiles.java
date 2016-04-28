@@ -53,6 +53,7 @@ import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.HFileTestUtil;
 import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -69,6 +70,8 @@ public class TestLoadIncrementalHFiles {
   @Rule
   public TestName tn = new TestName();
 
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
   private static final byte[] QUALIFIER = Bytes.toBytes("myqual");
   private static final byte[] FAMILY = Bytes.toBytes("myfam");
   private static final String NAMESPACE = "bulkNS";
@@ -112,6 +115,7 @@ public class TestLoadIncrementalHFiles {
    */
   @Test(timeout = 60000)
   public void testSimpleLoad() throws Exception {
+    Assume.assumeTrue(!WINDOWS);
     runTest("testSimpleLoad", BloomType.NONE,
         new byte[][][] {
           new byte[][]{ Bytes.toBytes("aaaa"), Bytes.toBytes("cccc") },
