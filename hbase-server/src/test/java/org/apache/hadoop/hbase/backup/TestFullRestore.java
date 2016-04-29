@@ -69,7 +69,7 @@ public class TestFullRestore extends TestBackupBase {
     LOG.info("backup complete");
     assertTrue(checkSucceeded(backupId));
     //restore <backup_root_path> <backup_id> <tables> [tableMapping]
-    String[] args = new String[]{"restore",  BACKUP_ROOT_DIR, backupId, 
+    String[] args = new String[]{BACKUP_ROOT_DIR, backupId, 
         table1.getNameAsString(), table1_restore.getNameAsString() }; 
     // Run backup
     int ret = ToolRunner.run(conf1, new RestoreDriver(), args);
@@ -121,7 +121,7 @@ public class TestFullRestore extends TestBackupBase {
     
     
     //restore <backup_root_path> <backup_id> <tables> [tableMapping]
-    String[] args = new String[]{"restore",  BACKUP_ROOT_DIR, backupId, 
+    String[] args = new String[]{BACKUP_ROOT_DIR, backupId, 
         StringUtils.join(restore_tableset, ","), 
         StringUtils.join(tablemap, ",") }; 
     // Run backup
@@ -171,7 +171,7 @@ public class TestFullRestore extends TestBackupBase {
     LOG.info("backup complete");
     TableName[] tableset = new TableName[] { table1 };
     //restore <backup_root_path> <backup_id> <tables> [tableMapping]
-    String[] args = new String[]{"restore",  BACKUP_ROOT_DIR, backupId, 
+    String[] args = new String[]{BACKUP_ROOT_DIR, backupId, 
         StringUtils.join(tableset, ","), "-overwrite" }; 
     // Run restore
     int ret = ToolRunner.run(conf1, new RestoreDriver(), args);
@@ -215,7 +215,7 @@ public class TestFullRestore extends TestBackupBase {
 
     TableName[] restore_tableset = new TableName[] { table2, table3 };
     //restore <backup_root_path> <backup_id> <tables> [tableMapping]
-    String[] args = new String[]{"restore",  BACKUP_ROOT_DIR, backupId, 
+    String[] args = new String[]{BACKUP_ROOT_DIR, backupId, 
         StringUtils.join(restore_tableset, ","), "-overwrite" }; 
     // Run backup
     int ret = ToolRunner.run(conf1, new RestoreDriver(), args);
@@ -265,7 +265,7 @@ public class TestFullRestore extends TestBackupBase {
 
     TableName[] tableset = new TableName[] { TableName.valueOf("faketable") };
     TableName[] tablemap = new TableName[] { table1_restore };
-    String[] args = new String[]{"restore",  BACKUP_ROOT_DIR, backupId, 
+    String[] args = new String[]{BACKUP_ROOT_DIR, backupId, 
         StringUtils.join(tableset, ","), 
         StringUtils.join(tablemap, ",") }; 
     // Run restore
@@ -310,7 +310,7 @@ public class TestFullRestore extends TestBackupBase {
     TableName[] restore_tableset
       = new TableName[] { TableName.valueOf("faketable1"), TableName.valueOf("faketable2") };
     TableName[] tablemap = new TableName[] { table2_restore, table3_restore };
-    String[] args = new String[]{"restore",  BACKUP_ROOT_DIR, backupId, 
+    String[] args = new String[]{BACKUP_ROOT_DIR, backupId, 
         StringUtils.join(restore_tableset, ","), 
         StringUtils.join(tablemap, ",") }; 
     // Run restore

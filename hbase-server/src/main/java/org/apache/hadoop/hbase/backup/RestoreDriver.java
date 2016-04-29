@@ -112,16 +112,16 @@ public class RestoreDriver extends AbstractHBaseTool {
 
     // parse main restore command options
     String[] remainArgs = cmd.getArgs();
-    if (remainArgs.length < 4) {
+    if (remainArgs.length < 3) {
       System.out.println(USAGE);
       return -1;
     }
 
-    String backupRootDir = remainArgs[1];
-    String backupId = remainArgs[2];
-    String tables = remainArgs[3];
+    String backupRootDir = remainArgs[0];
+    String backupId = remainArgs[1];
+    String tables = remainArgs[2];
     
-    String tableMapping = (remainArgs.length > 4) ? remainArgs[4] : null;
+    String tableMapping = (remainArgs.length > 3) ? remainArgs[3] : null;
 
     TableName[] sTableArray = BackupUtil.parseTableNames(tables);
     TableName[] tTableArray = BackupUtil.parseTableNames(tableMapping);
