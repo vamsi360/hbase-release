@@ -550,6 +550,7 @@ public class FullTableBackupProcedure
               backupManager.recordWALFiles(logFiles);
             }
           } catch (BackupException e) {
+            setFailure("Failure in full-backup: pre-snapshot phase", e);
             // fail the overall backup and return
             failBackup(env, backupInfo, backupManager, e, "Unexpected BackupException : ",
               BackupType.FULL, conf);
@@ -592,6 +593,7 @@ public class FullTableBackupProcedure
           try {
             this.snapshotCopy(backupInfo);
           } catch (Exception e) {
+            setFailure("Failure in full-backup: snapshot copy phase" + backupId, e);
             // fail the overall backup and return
             failBackup(env, backupInfo, backupManager, e, "Unexpected BackupException : ",
               BackupType.FULL, conf);
