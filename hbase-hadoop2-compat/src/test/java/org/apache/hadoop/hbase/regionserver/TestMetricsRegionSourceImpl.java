@@ -156,5 +156,10 @@ public class TestMetricsRegionSourceImpl {
     public int getReplicaId() {
       return 0;
     }
+
+    @Override
+    public long getTotalRequestCount() {
+      return 0;
+    }
   }
 }

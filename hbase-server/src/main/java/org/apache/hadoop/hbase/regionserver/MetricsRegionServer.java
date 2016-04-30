@@ -35,21 +35,24 @@ import org.apache.hadoop.hbase.CompatibilitySingletonFactory;
 public class MetricsRegionServer {
   private final MetricsRegionServerSource serverSource;
   private final MetricsRegionServerWrapper regionServerWrapper;
+  private final MetricsTable metricsTable;
 
   private final MetricsUserAggregate userAggregate;
 
-  public MetricsRegionServer(Configuration conf, MetricsRegionServerWrapper regionServerWrapper) {
+  public MetricsRegionServer(Configuration conf, MetricsRegionServerWrapper regionServerWrapper,
+                             MetricsTable metricsTable) {
     this(conf, regionServerWrapper,
         CompatibilitySingletonFactory.getInstance(MetricsRegionServerSourceFactory.class)
-            .createServer(regionServerWrapper));
+            .createServer(regionServerWrapper), metricsTable);
 
   }
 
   MetricsRegionServer(Configuration conf, MetricsRegionServerWrapper regionServerWrapper,
-                      MetricsRegionServerSource serverSource) {
+                      MetricsRegionServerSource serverSource, MetricsTable metricsTable) {
     this.regionServerWrapper = regionServerWrapper;
     this.serverSource = serverSource;
     this.userAggregate = new MetricsUserAggregate(conf);
+    this.metricsTable = metricsTable;
   }
 
   // for unit-test usage
@@ -132,18 +135,32 @@ public class MetricsRegionServer {
     serverSource.incrSplitSuccess();
   }
 
-  public void updateFlush(long t, long memstoreSize, long fileSize) {
+  public void updateFlush(String table, long t, long memstoreSize, long fileSize) {
     serverSource.updateFlushTime(t);
     serverSource.updateFlushMemstoreSize(memstoreSize);
     serverSource.updateFlushOutputSize(fileSize);
+
+    if (table != null) {
+      metricsTable.updateFlushTime(table, memstoreSize);
+      metricsTable.updateFlushMemstoreSize(table, memstoreSize);
+      metricsTable.updateFlushOutputSize(table, fileSize);
+    }
   }
 
-  public void updateCompaction(boolean isMajor, long t, int inputFileCount, int outputFileCount,
-      long inputBytes, long outputBytes) {
+  public void updateCompaction(String table, boolean isMajor, long t, int inputFileCount,
+      int outputFileCount, long inputBytes, long outputBytes) {
     serverSource.updateCompactionTime(isMajor, t);
     serverSource.updateCompactionInputFileCount(isMajor, inputFileCount);
     serverSource.updateCompactionOutputFileCount(isMajor, outputFileCount);
     serverSource.updateCompactionInputSize(isMajor, inputBytes);
     serverSource.updateCompactionOutputSize(isMajor, outputBytes);
+
+    if (table != null) {
+      metricsTable.updateCompactionTime(table, isMajor, t);
+      metricsTable.updateCompactionInputFileCount(table, isMajor, inputFileCount);
+      metricsTable.updateCompactionOutputFileCount(table, isMajor, outputFileCount);
+      metricsTable.updateCompactionInputSize(table, isMajor, inputBytes);
+      metricsTable.updateCompactionOutputSize(table, isMajor, outputBytes);
+    }
   }
 }

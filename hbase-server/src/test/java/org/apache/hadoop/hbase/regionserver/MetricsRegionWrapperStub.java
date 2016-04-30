@@ -127,4 +127,9 @@ public class MetricsRegionWrapperStub implements MetricsRegionWrapper {
   public int getReplicaId() {
     return replicaid;
   }
+
+  @Override
+  public long getTotalRequestCount() {
+    return 0;
+  }
 }

@@ -1371,9 +1371,9 @@ public class HRegionServer extends HasThread implements
       this.cacheConfig = new CacheConfig(conf);
       this.walFactory = setupWALAndReplication();
       // Init in here rather than in constructor after thread name has been set
-      this.metricsRegionServer = new MetricsRegionServer(getConfiguration(),
-        new MetricsRegionServerWrapperImpl(this));
       this.metricsTable = new MetricsTable(new MetricsTableWrapperAggregateImpl(this));
+      this.metricsRegionServer = new MetricsRegionServer(getConfiguration(),
+        new MetricsRegionServerWrapperImpl(this), metricsTable);
 
       startServiceThreads();
       startHeapMemoryManager();

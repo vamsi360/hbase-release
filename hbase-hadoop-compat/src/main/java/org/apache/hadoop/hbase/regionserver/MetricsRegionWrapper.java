@@ -94,6 +94,11 @@ public interface MetricsRegionWrapper {
    */
   long getWriteRequestCount();
 
+  /**
+   * Get the total number of requests that have been issued against this region.
+   */
+  long getTotalRequestCount();
+
   long getNumFilesCompacted();
 
   long getNumBytesCompacted();

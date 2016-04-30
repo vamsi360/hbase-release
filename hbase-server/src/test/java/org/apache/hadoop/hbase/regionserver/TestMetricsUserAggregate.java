@@ -49,7 +49,7 @@ public class TestMetricsUserAggregate {
   @Before
   public void setUp() {
     wrapper = new MetricsRegionServerWrapperStub();
-    rsm = new MetricsRegionServer(HBaseConfiguration.create(), wrapper);
+    rsm = new MetricsRegionServer(HBaseConfiguration.create(), wrapper, null);
     userAgg = rsm.getMetricsUserAggregate();
   }
 
