@@ -902,6 +902,7 @@
                     <includes>
                       <include>ColumnAggregationProtocol.proto</include>
                       <include>IncrementCounterProcessor.proto</include>
+                      <include>DummyRegionServerEndpoint.proto</include>
                       <include>PingProtocol.proto</include>
                       <include>TestProcedure.proto</include>
                       <include>test.proto</include>

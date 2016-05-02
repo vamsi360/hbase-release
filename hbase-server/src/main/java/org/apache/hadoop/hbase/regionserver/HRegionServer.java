@@ -102,6 +102,7 @@ import org.apache.hadoop.hbase.fs.HFileSystem;
 import org.apache.hadoop.hbase.http.HttpServer;
 import org.apache.hadoop.hbase.http.InfoServer;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
+import org.apache.hadoop.hbase.ipc.CoprocessorRpcUtils;
 import org.apache.hadoop.hbase.ipc.RpcClient;
 import org.apache.hadoop.hbase.ipc.RpcClientFactory;
 import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
@@ -703,15 +704,16 @@ public class HRegionServer extends HasThread implements
      * No stacking of instances is allowed for a single service name
      */
     Descriptors.ServiceDescriptor serviceDesc = instance.getDescriptorForType();
-    if (coprocessorServiceHandlers.containsKey(serviceDesc.getFullName())) {
-      LOG.error("Coprocessor service " + serviceDesc.getFullName()
+    String serviceName = CoprocessorRpcUtils.getServiceName(serviceDesc);
+    if (coprocessorServiceHandlers.containsKey(serviceName)) {
+      LOG.error("Coprocessor service " + serviceName
           + " already registered, rejecting request from " + instance);
       return false;
     }
 
-    coprocessorServiceHandlers.put(serviceDesc.getFullName(), instance);
+    coprocessorServiceHandlers.put(serviceName, instance);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Registered regionserver coprocessor service: service="+serviceDesc.getFullName());
+      LOG.debug("Registered regionserver coprocessor service: service=" + serviceName);
     }
     return true;
   }

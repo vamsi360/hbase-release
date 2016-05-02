@@ -12,7 +12,7 @@ public final class DummyRegionServerEndpointProtos {
       extends com.google.protobuf.MessageOrBuilder {
   }
   /**
-   * Protobuf type {@code DummyRequest}
+   * Protobuf type {@code hbase.test.pb.DummyRequest}
    */
   public static final class DummyRequest extends
       com.google.protobuf.GeneratedMessage
@@ -75,12 +75,12 @@ public final class DummyRegionServerEndpointProtos {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_DummyRequest_descriptor;
+      return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_hbase_test_pb_DummyRequest_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_DummyRequest_fieldAccessorTable
+      return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_hbase_test_pb_DummyRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyRequest.class, org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyRequest.Builder.class);
     }
@@ -231,19 +231,19 @@ public final class DummyRegionServerEndpointProtos {
       return builder;
     }
     /**
-     * Protobuf type {@code DummyRequest}
+     * Protobuf type {@code hbase.test.pb.DummyRequest}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyRequestOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_DummyRequest_descriptor;
+        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_hbase_test_pb_DummyRequest_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_DummyRequest_fieldAccessorTable
+        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_hbase_test_pb_DummyRequest_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyRequest.class, org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyRequest.Builder.class);
       }
@@ -277,7 +277,7 @@ public final class DummyRegionServerEndpointProtos {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_DummyRequest_descriptor;
+        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_hbase_test_pb_DummyRequest_descriptor;
       }
 
       public org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyRequest getDefaultInstanceForType() {
@@ -335,7 +335,7 @@ public final class DummyRegionServerEndpointProtos {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:DummyRequest)
+      // @@protoc_insertion_point(builder_scope:hbase.test.pb.DummyRequest)
     }
 
     static {
@@ -343,7 +343,7 @@ public final class DummyRegionServerEndpointProtos {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:DummyRequest)
+    // @@protoc_insertion_point(class_scope:hbase.test.pb.DummyRequest)
   }
 
   public interface DummyResponseOrBuilder
@@ -365,7 +365,7 @@ public final class DummyRegionServerEndpointProtos {
         getValueBytes();
   }
   /**
-   * Protobuf type {@code DummyResponse}
+   * Protobuf type {@code hbase.test.pb.DummyResponse}
    */
   public static final class DummyResponse extends
       com.google.protobuf.GeneratedMessage
@@ -434,12 +434,12 @@ public final class DummyRegionServerEndpointProtos {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_DummyResponse_descriptor;
+      return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_hbase_test_pb_DummyResponse_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_DummyResponse_fieldAccessorTable
+      return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_hbase_test_pb_DummyResponse_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyResponse.class, org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyResponse.Builder.class);
     }
@@ -655,19 +655,19 @@ public final class DummyRegionServerEndpointProtos {
       return builder;
     }
     /**
-     * Protobuf type {@code DummyResponse}
+     * Protobuf type {@code hbase.test.pb.DummyResponse}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyResponseOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_DummyResponse_descriptor;
+        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_hbase_test_pb_DummyResponse_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_DummyResponse_fieldAccessorTable
+        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_hbase_test_pb_DummyResponse_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyResponse.class, org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyResponse.Builder.class);
       }
@@ -703,7 +703,7 @@ public final class DummyRegionServerEndpointProtos {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_DummyResponse_descriptor;
+        return org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.internal_static_hbase_test_pb_DummyResponse_descriptor;
       }
 
       public org.apache.hadoop.hbase.coprocessor.protobuf.generated.DummyRegionServerEndpointProtos.DummyResponse getDefaultInstanceForType() {
@@ -852,7 +852,7 @@ public final class DummyRegionServerEndpointProtos {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:DummyResponse)
+      // @@protoc_insertion_point(builder_scope:hbase.test.pb.DummyResponse)
     }
 
     static {
@@ -860,11 +860,11 @@ public final class DummyRegionServerEndpointProtos {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:DummyResponse)
+    // @@protoc_insertion_point(class_scope:hbase.test.pb.DummyResponse)
   }
 
   /**
-   * Protobuf service {@code DummyService}
+   * Protobuf service {@code hbase.test.pb.DummyService}
    */
   public static abstract class DummyService
       implements com.google.protobuf.Service {
@@ -872,7 +872,7 @@ public final class DummyRegionServerEndpointProtos {
 
     public interface Interface {
       /**
-       * <code>rpc dummyCall(.DummyRequest) returns (.DummyResponse);</code>
+       * <code>rpc dummyCall(.hbase.test.pb.DummyRequest) returns (.hbase.test.pb.DummyResponse);</code>
        */
       public abstract void dummyCall(
           com.google.protobuf.RpcController controller,
@@ -957,7 +957,7 @@ public final class DummyRegionServerEndpointProtos {
     }
 
     /**
-     * <code>rpc dummyCall(.DummyRequest) returns (.DummyResponse);</code>
+     * <code>rpc dummyCall(.hbase.test.pb.DummyRequest) returns (.hbase.test.pb.DummyResponse);</code>
      */
     public abstract void dummyCall(
         com.google.protobuf.RpcController controller,
@@ -1092,19 +1092,19 @@ public final class DummyRegionServerEndpointProtos {
 
     }
 
-    // @@protoc_insertion_point(class_scope:DummyService)
+    // @@protoc_insertion_point(class_scope:hbase.test.pb.DummyService)
   }
 
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_DummyRequest_descriptor;
+    internal_static_hbase_test_pb_DummyRequest_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_DummyRequest_fieldAccessorTable;
+      internal_static_hbase_test_pb_DummyRequest_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_DummyResponse_descriptor;
+    internal_static_hbase_test_pb_DummyResponse_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_DummyResponse_fieldAccessorTable;
+      internal_static_hbase_test_pb_DummyResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -1114,29 +1114,31 @@ public final class DummyRegionServerEndpointProtos {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\037DummyRegionServerEndpoint.proto\"\016\n\014Dum" +
-      "myRequest\"\036\n\rDummyResponse\022\r\n\005value\030\001 \002(" +
-      "\t2:\n\014DummyService\022*\n\tdummyCall\022\r.DummyRe" +
-      "quest\032\016.DummyResponseB_\n6org.apache.hado" +
-      "op.hbase.coprocessor.protobuf.generatedB" +
-      "\037DummyRegionServerEndpointProtos\210\001\001\240\001\001"
+      "\n\037DummyRegionServerEndpoint.proto\022\rhbase" +
+      ".test.pb\"\016\n\014DummyRequest\"\036\n\rDummyRespons" +
+      "e\022\r\n\005value\030\001 \002(\t2V\n\014DummyService\022F\n\tdumm" +
+      "yCall\022\033.hbase.test.pb.DummyRequest\032\034.hba" +
+      "se.test.pb.DummyResponseB_\n6org.apache.h" +
+      "adoop.hbase.coprocessor.protobuf.generat" +
+      "edB\037DummyRegionServerEndpointProtos\210\001\001\240\001" +
+      "\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
         public com.google.protobuf.ExtensionRegistry assignDescriptors(
             com.google.protobuf.Descriptors.FileDescriptor root) {
           descriptor = root;
-          internal_static_DummyRequest_descriptor =
+          internal_static_hbase_test_pb_DummyRequest_descriptor =
             getDescriptor().getMessageTypes().get(0);
-          internal_static_DummyRequest_fieldAccessorTable = new
+          internal_static_hbase_test_pb_DummyRequest_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_DummyRequest_descriptor,
+              internal_static_hbase_test_pb_DummyRequest_descriptor,
               new java.lang.String[] { });
-          internal_static_DummyResponse_descriptor =
+          internal_static_hbase_test_pb_DummyResponse_descriptor =
             getDescriptor().getMessageTypes().get(1);
-          internal_static_DummyResponse_fieldAccessorTable = new
+          internal_static_hbase_test_pb_DummyResponse_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_DummyResponse_descriptor,
+              internal_static_hbase_test_pb_DummyResponse_descriptor,
               new java.lang.String[] { "Value", });
           return null;
         }
