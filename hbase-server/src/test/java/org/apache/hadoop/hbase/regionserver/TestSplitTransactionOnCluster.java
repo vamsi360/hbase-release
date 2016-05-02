@@ -107,6 +107,7 @@ import org.apache.zookeeper.data.Stat;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -135,6 +136,9 @@ public class TestSplitTransactionOnCluster {
 
   static final HBaseTestingUtility TESTING_UTIL =
     new HBaseTestingUtility();
+
+  /** Set to true on Windows platforms */
+  private static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
 
   static void setupOnce() throws Exception {
     TESTING_UTIL.getConfiguration().setInt("hbase.balancer.period", 60000);
@@ -924,6 +928,7 @@ public class TestSplitTransactionOnCluster {
 
   @Test(timeout = 60000)
   public void testTableExistsIfTheSpecifiedTableRegionIsSplitParent() throws Exception {
+    Assume.assumeTrue(!WINDOWS);
     ZooKeeperWatcher zkw = HBaseTestingUtility.getZooKeeperWatcher(TESTING_UTIL);
     final TableName tableName =
         TableName.valueOf("testTableExistsIfTheSpecifiedTableRegionIsSplitParent");
