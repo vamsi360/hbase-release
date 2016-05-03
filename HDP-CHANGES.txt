@@ -121,3 +121,4 @@ HBASE-15719 TestMasterCoprocessorExceptionWithAbort#testExceptionFromCoprocessor
 HBASE-15707 ImportTSV bulk output does not support tags with hfile.format.version=3 (huaxiang sun)
 HBASE-15676 FuzzyRowFilter fails and matches all the rows in the table if the mask consists of all 0s (Matt Warhaftig)
 HBASE-13590 TestEnableTableHandler.testEnableTableWithNoRegionServers is flakey
+HBASE-15752 ClassNotFoundException is encountered when custom WAL codec is not found in WALPlayer job
