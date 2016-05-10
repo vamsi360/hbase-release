@@ -122,7 +122,6 @@ HBASE-15707 ImportTSV bulk output does not support tags with hfile.format.versio
 HBASE-15676 FuzzyRowFilter fails and matches all the rows in the table if the mask consists of all 0s (Matt Warhaftig)
 HBASE-13590 TestEnableTableHandler.testEnableTableWithNoRegionServers is flakey
 HBASE-15752 ClassNotFoundException is encountered when custom WAL codec is not found in WALPlayer job
-HBASE-15742 Reduce allocation of objects in metrics (Phil Yang)
 HBASE-14667 HBaseFsck constructors have diverged (Matteo)
 HBASE-15292 Refined ZooKeeperWatcher to prevent ZooKeeper's callback while construction (Hiroshi Ikeda)
 HBASE-15767 upgrade httpclient to 4.3.6
