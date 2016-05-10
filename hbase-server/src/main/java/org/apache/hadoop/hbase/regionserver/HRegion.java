@@ -197,8 +197,6 @@ import com.google.protobuf.RpcController;
 import com.google.protobuf.Service;
 import com.google.protobuf.TextFormat;
 
-import sun.util.logging.resources.logging;
-
 @InterfaceAudience.Private
 public class HRegion implements HeapSize, PropagatingConfigurationObserver, Region {
   public static final Log LOG = LogFactory.getLog(HRegion.class);
@@ -5200,7 +5198,6 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
             }
             throw new IOException("Timed out waiting for lock for row: " + rowKey);
           }
-          rowLockContext.setThreadName(Thread.currentThread().getName());
           if (traceScope != null) traceScope.close();
           traceScope = null;
         } catch (InterruptedException ie) {
@@ -8089,18 +8086,13 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
   private void setSequenceId(long value) {
     this.sequenceId.set(value);
   }
-  
-  public ConcurrentHashMap<HashedBytes, RowLockContext> getLockedRows() {
-    return lockedRows;
-  }
 
   @VisibleForTesting class RowLockContext {
     private final HashedBytes row;
     private final CountDownLatch latch = new CountDownLatch(1);
     private final Thread thread;
     private int lockCount = 0;
-    private String threadName;
-    
+
     RowLockContext(HashedBytes row) {
       this.row = row;
       this.thread = Thread.currentThread();
@@ -8132,20 +8124,6 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
         }
         latch.countDown();
       }
-    }
-    
-    public void setThreadName(String threadName) {
-      this.threadName = threadName;
-    }
-    
-
-    @Override
-    public String toString() {
-      return "RowLockContext{" +
-          "row=" + row +
-          ", count=" + lockCount +
-          ", threadName=" + threadName +
-          '}';
     }
   }
 
