@@ -37,11 +37,13 @@ import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.master.RegionPlan;
 import org.apache.hadoop.hbase.master.procedure.MasterProcedureEnv;
 import org.apache.hadoop.hbase.procedure2.ProcedureExecutor;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.Quotas;
+import org.apache.hadoop.hbase.util.Pair;
 
 import java.io.IOException;
 import java.util.List;
@@ -350,6 +352,18 @@ public abstract class BaseMasterAndRegionObserver extends BaseRegionObserver
   @Override
   public void postRegionOffline(ObserverContext<MasterCoprocessorEnvironment> ctx,
     HRegionInfo regionInfo) throws IOException {
+  }
+
+  @Override
+  public void preBackupTables(final ObserverContext<MasterCoprocessorEnvironment> ctx,
+      final BackupType type, final List<TableName> tablesList, final String targetRootDir,
+      final int workers, final long bandwidth) throws IOException {
+  }
+
+  @Override
+  public void postBackupTables(final ObserverContext<MasterCoprocessorEnvironment> ctx,
+      final BackupType type, final List<TableName> tablesList, final Pair<Long, String> pair)
+          throws IOException {
   }
 
   @Override
