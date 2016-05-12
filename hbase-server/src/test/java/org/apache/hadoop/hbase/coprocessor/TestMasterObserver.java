@@ -45,7 +45,6 @@ import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.master.AssignmentManager;
@@ -64,7 +63,6 @@ import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.Quotas;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.Threads;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -322,18 +320,6 @@ public class TestMasterObserver {
 
     public boolean preTruncateTableCalledOnly() {
       return preTruncateTableCalled && !postTruncateTableCalled;
-    }
-
-    @Override
-    public void preBackupTables(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-        final BackupType type, final List<TableName> tablesList,
-        final String targetRootDir, final int workers, final long bandwidth) throws IOException {
-    }
-
-    @Override
-    public void postBackupTables(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-        final BackupType type, final List<TableName> tablesList, final Pair<Long, String> pair)
-            throws IOException {
     }
 
     @Override

@@ -105,7 +105,8 @@ public class HBackupFileSystem {
             + BackupManifest.MANIFEST_FILE_NAME);
       if (!fs.exists(manifestPath)) {
         String errorMsg =
-            "Could not find backup manifest for " + backupId + " in " + backupRootPath.toString();
+            "Could not find backup manifest " + BackupManifest.MANIFEST_FILE_NAME + " for " +
+                backupId + " for " + tableName + " in " + backupRootPath.toString();
         throw new IOException(errorMsg);
       }
     }

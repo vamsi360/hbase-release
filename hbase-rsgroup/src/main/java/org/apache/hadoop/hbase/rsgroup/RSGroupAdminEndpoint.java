@@ -43,7 +43,6 @@ import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.constraint.ConstraintException;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorService;
 import org.apache.hadoop.hbase.coprocessor.MasterCoprocessorEnvironment;
@@ -78,7 +77,6 @@ import org.apache.hadoop.hbase.protobuf.generated.RSGroupAdminProtos.MoveTablesR
 import org.apache.hadoop.hbase.protobuf.generated.RSGroupAdminProtos.RSGroupAdminService;
 import org.apache.hadoop.hbase.protobuf.generated.RSGroupAdminProtos.RemoveRSGroupRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RSGroupAdminProtos.RemoveRSGroupResponse;
-import org.apache.hadoop.hbase.util.Pair;
 
 
 public class RSGroupAdminEndpoint extends RSGroupAdminService
@@ -549,18 +547,6 @@ public class RSGroupAdminEndpoint extends RSGroupAdminService
   public void postRegionOffline(ObserverContext<MasterCoprocessorEnvironment> ctx, HRegionInfo
       regionInfo) throws IOException {
 
-  }
-
-  @Override
-  public void preBackupTables(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final BackupType type, final List<TableName> tablesList, final String targetRootDir,
-      final int workers, final long bandwidth) throws IOException {
-  }
-
-  @Override
-  public void postBackupTables(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final BackupType type, final List<TableName> tablesList, final Pair<Long, String> pair)
-          throws IOException {
   }
 
   @Override
