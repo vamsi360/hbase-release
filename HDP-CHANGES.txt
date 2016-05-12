@@ -125,4 +125,3 @@ HBASE-15752 ClassNotFoundException is encountered when custom WAL codec is not f
 HBASE-14667 HBaseFsck constructors have diverged (Matteo)
 HBASE-15292 Refined ZooKeeperWatcher to prevent ZooKeeper's callback while construction (Hiroshi Ikeda)
 HBASE-15767 upgrade httpclient to 4.3.6
-HBASE-15590 Add ACL for requesting table backup
