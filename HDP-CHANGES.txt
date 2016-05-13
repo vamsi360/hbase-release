@@ -126,3 +126,4 @@ HBASE-14667 HBaseFsck constructors have diverged (Matteo)
 HBASE-15292 Refined ZooKeeperWatcher to prevent ZooKeeper's callback while construction (Hiroshi Ikeda)
 HBASE-15767 upgrade httpclient to 4.3.6
 HBASE-15817 Backup history should mention the type (full or incremental) of the backup
+HBASE-15808 Reduce potential bulk load intermediate space usage and waste (Jerry He)
