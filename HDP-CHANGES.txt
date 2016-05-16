@@ -3,6 +3,8 @@ HDP-2.6 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.2
 
+HBASE-13318 RpcServer.getListenerAddress should handle when the accept channel is closed (Andrew Purtell)
+HBASE-14535 Integration test for rpc connection concurrency / deadlock testing (Enis Soztutar)
 HBASE-15636 hard coded wait time out value in HBaseTestingUtility#waitUntilAllRegionsAssigned might cause test failure (Stephen Yuan Jiang)
 HBASE-14407 NotServingRegion: hbase region closed forever (Shuaifeng Zhou)
 HBASE-14307 Incorrect use of positional read api in HFileBlock (Chris Nauroth)
