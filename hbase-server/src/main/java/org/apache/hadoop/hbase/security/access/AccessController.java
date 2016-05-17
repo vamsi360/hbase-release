@@ -1317,7 +1317,9 @@ public class AccessController extends BaseMasterAndRegionObserver
   public void preRestoreSnapshot(final ObserverContext<MasterCoprocessorEnvironment> ctx,
       final SnapshotDescription snapshot, final HTableDescriptor hTableDescriptor)
       throws IOException {
-    if (SnapshotDescriptionUtils.isSnapshotOwner(snapshot, getActiveUser())) {
+    User usr = getActiveUser();
+    LOG.info("Checking permission for " + usr + " on " + snapshot);
+    if (SnapshotDescriptionUtils.isSnapshotOwner(snapshot, usr)) {
       requirePermission("restoreSnapshot", hTableDescriptor.getTableName(), null, null,
         Permission.Action.ADMIN);
     } else {
