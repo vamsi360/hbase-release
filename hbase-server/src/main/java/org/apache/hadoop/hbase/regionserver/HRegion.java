@@ -1078,6 +1078,15 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
    * @return the size of memstore in this region
    */
   public long addAndGetGlobalMemstoreSize(long memStoreSize) {
+    // Take the current value just in case it happens to change
+    long memstoreSizeSnapshot = this.memstoreSize.get();
+    // This is extremely bad if we make memstoreSize negative. Log as much info on the offending
+    // caller as possible. (memStoreSize might be a negative value already -- freeing memory)
+    if (memstoreSizeSnapshot + memStoreSize < 0) {
+      LOG.error("Asked to modify this region's (" + this.toString()
+          + ") memstoreSize to a negative value which is incorrect. Current memstoreSize="
+          + memstoreSizeSnapshot + ", delta=" + memStoreSize, new Exception());
+    }
     if (this.rsAccounting != null) {
       rsAccounting.addAndGetGlobalMemstoreSize(memStoreSize);
     }
@@ -1412,7 +1421,9 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
       // Don't flush the cache if we are aborting
       if (!abort && canFlush) {
         int flushCount = 0;
-        while (this.memstoreSize.get() > 0) {
+        // memstoreSize should never be negative, but, just in case it is, force a flush so that
+        // we don't abort the RS on the below sanity check on each store's flushableSize.
+        while (this.memstoreSize.get() > 0 || this.memstoreSize.get() < 0) {
           try {
             if (flushCount++ > 0) {
               int actualFlushes = flushCount - 1;
@@ -1427,6 +1438,14 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
                 " (carrying snapshot?) " + this);
             }
             internalFlushcache(status);
+
+            if (this.memstoreSize.get() < 0) {
+              // If we successfully flushed, reset the memstore back to zero in case later parts
+              // of closing this region are making further checks.
+              long oldMemstoreSize = this.memstoreSize.getAndSet(0);
+              LOG.info("Setting memstoreSize to zero after a successful flush, memstoreSize was "
+                  + oldMemstoreSize);
+            }
           } catch (IOException ioe) {
             status.setStatus("Failed flush " + this + ", putting online again");
             synchronized (writestate) {
@@ -2090,7 +2109,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
       MultiVersionConsistencyControl.WriteEntry writeEntry = null;
       this.updatesLock.writeLock().lock();
       try {
-        if (this.memstoreSize.get() <= 0) {
+        if (this.memstoreSize.get() == 0) {
           // Presume that if there are still no edits in the memstore, then there are no edits for
           // this region out in the WAL subsystem so no need to do any trickery clearing out
           // edits in the WAL system. Up the sequence number so the resulting flush id is for
@@ -2113,6 +2132,11 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
                 "Nothing to flush", false),
               myseqid);
           }
+        } else if (this.memstoreSize.get() < 0) {
+          // If memstore is ever negative, that's extremely bad, but force a flush just in case
+          // there is lingering data in the memstore (we can't trust memstoreSize).
+          LOG.error("Forcing a flush for " + this.toString() + " because of a negative memstore"
+              + " size of " + this.memstoreSize.get());
         }
       } finally {
         this.updatesLock.writeLock().unlock();
