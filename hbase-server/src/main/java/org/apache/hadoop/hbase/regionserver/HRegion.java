@@ -2816,8 +2816,8 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
           }
           initialized = true;
         }
-        long addedSize = doMiniBatchMutation(batchOp);
-        long newSize = this.addAndGetGlobalMemstoreSize(addedSize);
+        doMiniBatchMutation(batchOp);
+        long newSize = this.getMemstoreSize();
         if (isFlushSize(newSize)) {
           requestFlush();
         }
@@ -2899,6 +2899,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     int noOfPuts = 0, noOfDeletes = 0;
     WALKey walKey = null;
     long mvccNum = 0;
+    long addedSize = 0;
     try {
       // ------------------------------------
       // STEP 1. Try to acquire as many locks as we can, and ensure
@@ -3053,7 +3054,6 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
       // visible to scanners till we update the MVCC. The MVCC is
       // moved only when the sync is complete.
       // ----------------------------------
-      long addedSize = 0;
       for (int i = firstIndex; i < lastIndexExclusive; i++) {
         if (batchOp.retCodeDetails[i].getOperationStatusCode()
             != OperationStatusCode.NOT_RUN) {
@@ -3215,8 +3215,11 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
       if (doRollBackMemstore) {
         rollbackMemstore(memstoreCells);
         if (writeEntry != null) mvcc.cancelMemstoreInsert(writeEntry);
-      } else if (writeEntry != null) {
-        mvcc.completeMemstoreInsertWithSeqNum(writeEntry, walKey);
+      } else {
+        if (writeEntry != null) {
+          mvcc.completeMemstoreInsertWithSeqNum(writeEntry, walKey);
+        }
+        this.addAndGetGlobalMemstoreSize(addedSize);
       }
 
       if (locked) {
