@@ -559,22 +559,7 @@ public class CompactSplitThread implements CompactionRequestor, PropagatingConfi
           || (region.getTableDesc() != null && !region.getTableDesc().isCompactionEnabled())) {
         return;
       }
-      if (this.user == null) doCompaction();
-      else {
-        try {
-          user.getUGI().doAs(new PrivilegedExceptionAction<Void>() {
-            @Override
-            public Void run() throws Exception {
-              doCompaction();
-              return null;
-            }
-          });
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-        } catch (IOException ioe) {
-          LOG.error("Encountered exception while compacting", ioe);
-        }
-      }
+      doCompaction();
     }
 
     private String formatStackTrace(Exception ex) {
