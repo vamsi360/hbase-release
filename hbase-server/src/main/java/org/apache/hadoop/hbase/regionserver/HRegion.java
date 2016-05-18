@@ -197,8 +197,6 @@ import com.google.protobuf.RpcController;
 import com.google.protobuf.Service;
 import com.google.protobuf.TextFormat;
 
-import sun.util.logging.resources.logging;
-
 @InterfaceAudience.Private
 public class HRegion implements HeapSize, PropagatingConfigurationObserver, Region {
   public static final Log LOG = LogFactory.getLog(HRegion.class);
