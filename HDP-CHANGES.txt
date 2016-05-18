@@ -3,6 +3,8 @@ HDP-2.6 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.2
 
+HBASE-15125 HBaseFsck's adoptHdfsOrphan function creates region with wrong end key boundary (chenrongwei)
+HBASE-15850 Localize the configuration change in testCheckTableLocks to reduce flakiness of TestHBaseFsck test suite (Stephen Yuan Jiang)
 HBASE-13318 RpcServer.getListenerAddress should handle when the accept channel is closed (Andrew Purtell)
 HBASE-14535 Integration test for rpc connection concurrency / deadlock testing (Enis Soztutar)
 HBASE-15636 hard coded wait time out value in HBaseTestingUtility#waitUntilAllRegionsAssigned might cause test failure (Stephen Yuan Jiang)
