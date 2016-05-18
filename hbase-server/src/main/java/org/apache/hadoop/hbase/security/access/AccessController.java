@@ -1318,7 +1318,8 @@ public class AccessController extends BaseMasterAndRegionObserver
       final SnapshotDescription snapshot, final HTableDescriptor hTableDescriptor)
       throws IOException {
     User usr = getActiveUser();
-    LOG.info("Checking permission for " + usr + " on " + snapshot);
+    LOG.info("Checking permission for " + usr + "(" + usr.getShortName() + ") on " +
+        snapshot.getOwner());
     if (SnapshotDescriptionUtils.isSnapshotOwner(snapshot, usr)) {
       requirePermission("restoreSnapshot", hTableDescriptor.getTableName(), null, null,
         Permission.Action.ADMIN);
