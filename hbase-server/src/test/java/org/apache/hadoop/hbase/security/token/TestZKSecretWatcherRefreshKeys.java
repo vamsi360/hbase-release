@@ -24,7 +24,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.testclassification.SecurityTests;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.util.Writables;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
@@ -38,7 +37,7 @@ import org.junit.experimental.categories.Category;
 /**
  * Test the refreshKeys in ZKSecretWatcher
  */
-@Category({ SecurityTests.class, SmallTests.class })
+@Category({ SmallTests.class })
 public class TestZKSecretWatcherRefreshKeys {
   private static final Log LOG = LogFactory.getLog(TestZKSecretWatcherRefreshKeys.class);
   private static HBaseTestingUtility TEST_UTIL;
