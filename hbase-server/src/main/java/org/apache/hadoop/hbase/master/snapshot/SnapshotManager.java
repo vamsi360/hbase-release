@@ -724,8 +724,8 @@ public class SnapshotManager extends MasterProcedureManager implements Stoppable
 
       // call coproc pre hook
       if (cpHost != null) {
-        LOG.info("snapshot owner " + reqSnapshot.getOwner() + " for " + reqSnapshot.getName());
-        cpHost.preRestoreSnapshot(reqSnapshot, snapshotTableDesc);
+        LOG.debug("snapshot owner " + snapshot.getOwner() + " for " + snapshot.getName());
+        cpHost.preRestoreSnapshot(snapshot, snapshotTableDesc);
       }
       try {
         // Table already exist. Check and update the region quota for this table namespace
