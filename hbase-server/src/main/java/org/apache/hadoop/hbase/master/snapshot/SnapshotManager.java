@@ -740,12 +740,12 @@ public class SnapshotManager extends MasterProcedureManager implements Stoppable
       LOG.info("Restore snapshot=" + snapshot.getName() + " as table=" + tableName);
 
       if (cpHost != null) {
-        cpHost.postRestoreSnapshot(reqSnapshot, snapshotTableDesc);
+        cpHost.postRestoreSnapshot(snapshot, snapshotTableDesc);
       }
     } else {
       HTableDescriptor htd = RestoreSnapshotHelper.cloneTableSchema(snapshotTableDesc, tableName);
       if (cpHost != null) {
-        cpHost.preCloneSnapshot(reqSnapshot, htd);
+        cpHost.preCloneSnapshot(snapshot, htd);
       }
       try {
         checkAndUpdateNamespaceQuota(manifest, tableName);
@@ -759,7 +759,7 @@ public class SnapshotManager extends MasterProcedureManager implements Stoppable
       LOG.info("Clone snapshot=" + snapshot.getName() + " as table=" + tableName);
 
       if (cpHost != null) {
-        cpHost.postCloneSnapshot(reqSnapshot, htd);
+        cpHost.postCloneSnapshot(snapshot, htd);
       }
     }
   }
