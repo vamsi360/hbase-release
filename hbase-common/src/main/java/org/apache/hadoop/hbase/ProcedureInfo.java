@@ -47,6 +47,7 @@ public class ProcedureInfo {
 
   private long clientAckTime = -1;
 
+  @InterfaceAudience.Private
   public ProcedureInfo(
       final long procId,
       final String procName,
@@ -212,7 +213,7 @@ public class ProcedureInfo {
       procProto.getOwner(),
       procProto.getState(),
       procProto.hasParentId() ? procProto.getParentId() : -1,
-          procProto.getState() == ProcedureState.ROLLEDBACK ? procProto.getException() : null,
+      procProto.hasException() ? procProto.getException() : null,
       procProto.getLastUpdate(),
       procProto.getStartTime(),
       procProto.getState() == ProcedureState.FINISHED ? procProto.getResult().toByteArray() : null);
