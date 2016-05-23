@@ -135,4 +135,5 @@ HBASE-15808 Reduce potential bulk load intermediate space usage and waste (Jerry
 HBASE-15842 SnapshotInfo should display ownership information
 HBASE-15858 Some region server group shell commands don't work
 HBASE-15880 RpcClientImpl#tracedWriteRequest incorrectly closes HTrace span (Mikhail)
+HBASE-14906 Improvements on FlushLargeStoresPolicy (Yu Li)
 HBASE-15873 ACL for snapshot restore / clone is not enforced
