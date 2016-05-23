@@ -8228,4 +8228,8 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
   public RegionSplitPolicy getSplitPolicy() {
     return this.splitPolicy;
   }
+
+  public long getMemstoreFlushSize() {
+    return this.memstoreFlushSize;
+  }
 }
