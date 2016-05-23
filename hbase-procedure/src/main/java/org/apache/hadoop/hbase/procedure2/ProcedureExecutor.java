@@ -746,13 +746,15 @@ public class ProcedureExecutor<TEnvironment> {
         break;
       }
 
-      if (proc.getProcId() == rootProcId && proc.isSuccess()) {
-        // Finalize the procedure state
+      if (proc.isSuccess()) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Procedure completed in " +
               StringUtils.humanTimeDiff(proc.elapsedTime()) + ": " + proc);
         }
-        procedureFinished(proc);
+        // Finalize the procedure state
+        if (proc.getProcId() == rootProcId) {
+          procedureFinished(proc);
+        }
         break;
       }
     } while (procStack.isFailed());
