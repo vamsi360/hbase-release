@@ -301,38 +301,59 @@ public class MetricsTableSourceImpl implements MetricsTableSource {
 
   @Override
   public void incrSplitRequest() {
+    if (splitRequest == null) {
+      return;
+    }
     splitRequest.incr();
   }
 
   @Override
   public void incrSplitSuccess() {
+    if (splitSuccess == null) {
+      return;
+    }
     splitSuccess.incr();
   }
 
   @Override
   public void updateSplitTime(long t) {
+    if (splitTimeHisto == null) {
+      return;
+    }
     splitTimeHisto.add(t);
   }
 
   @Override
   public void updateFlushTime(long t) {
+    if (flushTimeHisto == null) {
+      return;
+    }
     flushTimeHisto.add(t);
   }
 
   @Override
   public void updateFlushMemstoreSize(long bytes) {
+    if (flushMemstoreSizeHisto == null || flushedMemstoreBytes == null) {
+      return;
+    }
     flushMemstoreSizeHisto.add(bytes);
     flushedMemstoreBytes.incr(bytes);
   }
 
   @Override
   public void updateFlushOutputSize(long bytes) {
+    if (flushOutputSizeHisto == null || flushedOutputBytes == null) {
+      return;
+    }
     flushOutputSizeHisto.add(bytes);
     flushedOutputBytes.incr(bytes);
   }
 
   @Override
   public void updateCompactionTime(boolean isMajor, long t) {
+    if (compactionTimeHisto == null || majorCompactionTimeHisto == null) {
+      return;
+    }
     compactionTimeHisto.add(t);
     if (isMajor) {
       majorCompactionTimeHisto.add(t);
@@ -341,6 +362,9 @@ public class MetricsTableSourceImpl implements MetricsTableSource {
 
   @Override
   public void updateCompactionInputFileCount(boolean isMajor, long c) {
+    if (compactionInputFileCountHisto == null || majorCompactionInputFileCountHisto == null) {
+      return;
+    }
     compactionInputFileCountHisto.add(c);
     if (isMajor) {
       majorCompactionInputFileCountHisto.add(c);
@@ -349,6 +373,10 @@ public class MetricsTableSourceImpl implements MetricsTableSource {
 
   @Override
   public void updateCompactionInputSize(boolean isMajor, long bytes) {
+    if (compactionInputSizeHisto == null || compactedInputBytes == null ||
+        majorCompactionInputSizeHisto == null || majorCompactedInputBytes == null) {
+      return;
+    }
     compactionInputSizeHisto.add(bytes);
     compactedInputBytes.incr(bytes);
     if (isMajor) {
@@ -359,6 +387,9 @@ public class MetricsTableSourceImpl implements MetricsTableSource {
 
   @Override
   public void updateCompactionOutputFileCount(boolean isMajor, long c) {
+    if (compactionOutputFileCountHisto == null || majorCompactionOutputFileCountHisto == null) {
+      return;
+    }
     compactionOutputFileCountHisto.add(c);
     if (isMajor) {
       majorCompactionOutputFileCountHisto.add(c);
@@ -367,6 +398,10 @@ public class MetricsTableSourceImpl implements MetricsTableSource {
 
   @Override
   public void updateCompactionOutputSize(boolean isMajor, long bytes) {
+    if (compactionOutputSizeHisto == null || compactedOutputBytes == null
+        || majorCompactionOutputSizeHisto == null || majorCompactedOutputBytes == null) {
+      return;
+    }
     compactionOutputSizeHisto.add(bytes);
     compactedOutputBytes.incr(bytes);
     if (isMajor) {
