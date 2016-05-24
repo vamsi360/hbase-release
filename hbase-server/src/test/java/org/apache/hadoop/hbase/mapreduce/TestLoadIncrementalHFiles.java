@@ -113,7 +113,7 @@ public class TestLoadIncrementalHFiles {
    * Test case that creates some regions and loads
    * HFiles that fit snugly inside those regions
    */
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testSimpleLoad() throws Exception {
     Assume.assumeTrue(!WINDOWS);
     runTest("testSimpleLoad", BloomType.NONE,
@@ -127,7 +127,7 @@ public class TestLoadIncrementalHFiles {
    * Test case that creates some regions and loads
    * HFiles that cross the boundaries of those regions
    */
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testRegionCrossingLoad() throws Exception {
     runTest("testRegionCrossingLoad", BloomType.NONE,
         new byte[][][] {
@@ -151,7 +151,7 @@ public class TestLoadIncrementalHFiles {
   /**
    * Test loading into a column family that has a ROWCOL bloom filter.
    */
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testRegionCrossingRowColBloom() throws Exception {
     runTest("testRegionCrossingLoadRowColBloom", BloomType.ROWCOL,
         new byte[][][] {
@@ -164,7 +164,7 @@ public class TestLoadIncrementalHFiles {
    * Test case that creates some regions and loads HFiles that have
    * different region boundaries than the table pre-split.
    */
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testSimpleHFileSplit() throws Exception {
     runTest("testHFileSplit", BloomType.NONE,
         new byte[][] {
@@ -191,7 +191,7 @@ public class TestLoadIncrementalHFiles {
    * Test case that creates some regions and loads HFiles that cross the boundaries
    * have a ROW bloom filter and a different region boundaries than the table pre-split.
    */
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testRegionCrossingHFileSplitRowBloom() throws Exception {
     testRegionCrossingHFileSplit(BloomType.ROW);
   }
@@ -200,7 +200,7 @@ public class TestLoadIncrementalHFiles {
    * Test case that creates some regions and loads HFiles that cross the boundaries
    * have a ROWCOL bloom filter and a different region boundaries than the table pre-split.
    */
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testRegionCrossingHFileSplitRowColBloom() throws Exception {
     testRegionCrossingHFileSplit(BloomType.ROWCOL);
   }
@@ -382,12 +382,12 @@ public class TestLoadIncrementalHFiles {
     }
   }
 
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testNonHfileFolderWithUnmatchedFamilyName() throws Exception {
     testNonHfileFolder("testNonHfileFolderWithUnmatchedFamilyName", true);
   }
 
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testNonHfileFolder() throws Exception {
     testNonHfileFolder("testNonHfileFolder", false);
   }
@@ -452,7 +452,7 @@ public class TestLoadIncrementalHFiles {
     }
   }
 
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testSplitStoreFile() throws IOException {
     Path dir = util.getDataTestDirOnTestFS("testSplitHFile");
     FileSystem fs = util.getTestFileSystem();
@@ -499,7 +499,7 @@ public class TestLoadIncrementalHFiles {
     map.put(last, value-1);
   }
 
-  @Test
+  @Test(timeout = 120000)
   public void testInferBoundaries() {
     TreeMap<byte[], Integer> map = new TreeMap<byte[], Integer>(Bytes.BYTES_COMPARATOR);
 
@@ -590,7 +590,7 @@ public class TestLoadIncrementalHFiles {
     loader.run(args);
   }
 
-  @Test(timeout = 60000)
+  @Test(timeout = 120000)
   public void testTableWithCFNameStartWithUnderScore() throws Exception {
     Path dir = util.getDataTestDirOnTestFS("cfNameStartWithUnderScore");
     FileSystem fs = util.getTestFileSystem();
