@@ -52,6 +52,7 @@ import org.apache.hadoop.hbase.master.RegionPlan;
 import org.apache.hadoop.hbase.master.balancer.BaseLoadBalancer.Cluster.Action.Type;
 import org.apache.hadoop.util.StringUtils;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
@@ -750,6 +751,16 @@ public abstract class BaseLoadBalancer implements LoadBalancer {
         return Integer.valueOf(getNumRegions(integer)).compareTo(getNumRegions(integer2));
       }
     };
+
+    @VisibleForTesting
+    protected void setNumRegions(int numRegions) {
+      this.numRegions = numRegions;
+    }
+
+    @VisibleForTesting
+    protected void setNumMovedRegions(int numMovedRegions) {
+      this.numMovedRegions = numMovedRegions;
+    }
 
     @edu.umd.cs.findbugs.annotations.SuppressWarnings(value="SBSC_USE_STRINGBUFFER_CONCATENATION",
         justification="Not important but should be fixed")
