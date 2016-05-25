@@ -48,6 +48,7 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos;
 import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.RegionStoreSequenceIds;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos;
+import org.apache.hadoop.hbase.replication.ReplicationStateZKBase;
 import org.apache.hadoop.hbase.util.ByteStringer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Threads;
@@ -1784,6 +1785,27 @@ public class ZKUtil {
       } else if (child.equals(zkw.getConfiguration().
           get("zookeeper.znode.replication.rs", "rs"))) {
         appendRSZnodes(zkw, znode, sb);
+      } else if (child.equals(zkw.getConfiguration().get(
+        ReplicationStateZKBase.ZOOKEEPER_ZNODE_REPLICATION_HFILE_REFS_KEY,
+        ReplicationStateZKBase.ZOOKEEPER_ZNODE_REPLICATION_HFILE_REFS_DEFAULT))) {
+        appendHFileRefsZnodes(zkw, znode, sb);
+      }
+    }
+  }
+
+  private static void appendHFileRefsZnodes(ZooKeeperWatcher zkw, String hfileRefsZnode,
+      StringBuilder sb) throws KeeperException {
+    sb.append("\n").append(hfileRefsZnode).append(": ");
+    for (String peerIdZnode : ZKUtil.listChildrenNoWatch(zkw, hfileRefsZnode)) {
+      String znodeToProcess = ZKUtil.joinZNode(hfileRefsZnode, peerIdZnode);
+      sb.append("\n").append(znodeToProcess).append(": ");
+      List<String> peerHFileRefsZnodes = ZKUtil.listChildrenNoWatch(zkw, znodeToProcess);
+      int size = peerHFileRefsZnodes.size();
+      for (int i = 0; i < size; i++) {
+        sb.append(peerHFileRefsZnodes.get(i));
+        if (i != size - 1) {
+          sb.append(", ");
+        }
       }
     }
   }
