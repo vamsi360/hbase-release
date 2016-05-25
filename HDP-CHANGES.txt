@@ -78,3 +78,6 @@ HBASE-14883 TestSplitTransactionOnCluster#testFailedSplit flakey
 HBASE-14812 Fix ResultBoundedCompletionService deadlock (Elliott Clark)
 HBASE-15621 Suppress Hbase SnapshotHFile cleaner error messages when a snaphot is going on (Huaxiang)
 HBASE-13153 Bulk Loaded HFile Replication (Ashish Singhi)
+HBASE-15669 HFile size is not considered correctly in a replication request (Ashish)
+HBASE-15578 Handle HBASE-15234 for ReplicationHFileCleaner (Ashish)
+HBASE-15425 Failing to write bulk load event marker in the WAL is ignored (Ashish Singhi)
