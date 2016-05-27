@@ -140,6 +140,15 @@ module Hbase
       end
     end
 
+    def locate_region(table_name, row_key)
+      locator = @connection.getRegionLocator(TableName.valueOf(table_name))
+      begin
+        return locator.getRegionLocation(Bytes.toBytesBinary(row_key))
+      ensure
+        locator.close()
+      end
+    end
+
     #----------------------------------------------------------------------------------------------
     # Requests a cluster balance
     # Returns true if balancer ran
@@ -477,10 +486,13 @@ module Hbase
     def truncate_preserve(table_name, conf = @conf)
       h_table = @connection.getTable(TableName.valueOf(table_name))
       locator = @connection.getRegionLocator(TableName.valueOf(table_name))
-      splits = locator.getAllRegionLocations().
-          map{|i| Bytes.toString(i.getRegionInfo().getStartKey)}.
-          delete_if{|k| k == ""}.to_java :String
-      locator.close()
+      begin
+        splits = locator.getAllRegionLocations().
+            map{|i| Bytes.toString(i.getRegionInfo().getStartKey)}.
+            delete_if{|k| k == ""}.to_java :String
+      ensure
+        locator.close()
+      end
 
       table_description = @admin.getTableDescriptor(TableName.valueOf(table_name))
       yield 'Disabling table...' if block_given?
@@ -723,7 +735,7 @@ module Hbase
         end
       elsif format == "replication"
         #check whether replication is enabled or not
-        if (!@admin.getConfiguration().getBoolean(org.apache.hadoop.hbase.HConstants::REPLICATION_ENABLE_KEY, 
+        if (!@admin.getConfiguration().getBoolean(org.apache.hadoop.hbase.HConstants::REPLICATION_ENABLE_KEY,
           org.apache.hadoop.hbase.HConstants::REPLICATION_ENABLE_DEFAULT))
           puts("Please enable replication first.")
         else
@@ -735,7 +747,7 @@ module Hbase
             rSourceString = "       SOURCE:"
             rLoadSink = sl.getReplicationLoadSink()
             rSinkString << " AgeOfLastAppliedOp=" + rLoadSink.getAgeOfLastAppliedOp().to_s
-            rSinkString << ", TimeStampsOfLastAppliedOp=" + 
+            rSinkString << ", TimeStampsOfLastAppliedOp=" +
 			    (java.util.Date.new(rLoadSink.getTimeStampsOfLastAppliedOp())).toString()
             rLoadSourceList = sl.getReplicationLoadSourceList()
             index = 0
@@ -744,7 +756,7 @@ module Hbase
               rSourceString << " PeerID=" + rLoadSource.getPeerID()
               rSourceString << ", AgeOfLastShippedOp=" + rLoadSource.getAgeOfLastShippedOp().to_s
               rSourceString << ", SizeOfLogQueue=" + rLoadSource.getSizeOfLogQueue().to_s
-              rSourceString << ", TimeStampsOfLastShippedOp=" + 
+              rSourceString << ", TimeStampsOfLastShippedOp=" +
 			      (java.util.Date.new(rLoadSource.getTimeStampOfLastShippedOp())).toString()
               rSourceString << ", Replication Lag=" + rLoadSource.getReplicationLag().to_s
               index = index + 1
