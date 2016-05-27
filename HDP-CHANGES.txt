@@ -82,3 +82,5 @@ HBASE-15669 HFile size is not considered correctly in a replication request (Ash
 HBASE-15578 Handle HBASE-15234 for ReplicationHFileCleaner (Ashish)
 HBASE-15425 Failing to write bulk load event marker in the WAL is ignored (Ashish Singhi)
 HBASE-14535 Integration test for rpc connection concurrency / deadlock testing (Enis Soztutar)
+HBASE-14598 ByteBufferOutputStream grows its HeapByteBuffer beyond JVM limitations (Ian Friedman)
+HBASE-15100 Master WALProcs still never clean up (Matteo Bertozzi)
