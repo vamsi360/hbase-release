@@ -84,3 +84,4 @@ HBASE-15425 Failing to write bulk load event marker in the WAL is ignored (Ashis
 HBASE-14535 Integration test for rpc connection concurrency / deadlock testing (Enis Soztutar)
 HBASE-14598 ByteBufferOutputStream grows its HeapByteBuffer beyond JVM limitations (Ian Friedman)
 HBASE-15100 Master WALProcs still never clean up (Matteo Bertozzi)
+HBASE-14655 Narrow the scope of doAs() calls to region observer notifications for compaction
