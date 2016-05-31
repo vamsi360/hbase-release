@@ -104,8 +104,8 @@ public class DefaultMobStoreCompactor extends DefaultCompactor {
 
   @Override
   public List<Path> compact(CompactionRequest request,
-    CompactionThroughputController throughputController) throws IOException {
-    return compact(request, scannerFactory, writerFactory, throughputController);
+    CompactionThroughputController throughputController, User user) throws IOException {
+    return compact(request, scannerFactory, writerFactory, throughputController, user);
   }
 
   // TODO refactor to take advantage of the throughput controller.

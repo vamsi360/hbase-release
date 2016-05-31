@@ -21,6 +21,7 @@ import com.google.common.io.Closeables;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,6 +53,7 @@ import org.apache.hadoop.hbase.regionserver.StoreFileScanner;
 import org.apache.hadoop.hbase.regionserver.StoreScanner;
 import org.apache.hadoop.hbase.regionserver.TimeRangeTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.Compactor.CellSink;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Writables;
 import org.apache.hadoop.util.StringUtils;
@@ -261,7 +263,7 @@ public abstract class Compactor<T extends CellSink> {
 
   protected List<Path> compact(final CompactionRequest request,
       InternalScannerFactory scannerFactory, CellSinkFactory<T> sinkFactory,
-      CompactionThroughputController throughputController) throws IOException {
+      CompactionThroughputController throughputController, User user) throws IOException {
     FileDetails fd = getFileDetails(request.getFiles(), request.isAllFiles());
     this.progress = new CompactionProgress(fd.maxKeyCount);
 
@@ -290,11 +292,11 @@ public abstract class Compactor<T extends CellSink> {
     try {
       /* Include deletes, unless we are doing a major compaction */
       ScanType scanType = scannerFactory.getScanType(request);
-      scanner = preCreateCoprocScanner(request, scanType, fd.earliestPutTs, scanners);
+      scanner = preCreateCoprocScanner(request, scanType, fd.earliestPutTs, scanners, user);
       if (scanner == null) {
         scanner = scannerFactory.createScanner(scanners, scanType, fd, smallestReadPoint);
       }
-      scanner = postCreateCoprocScanner(request, scanType, scanner);
+      scanner = postCreateCoprocScanner(request, scanType, scanner, user);
       if (scanner == null) {
         // NULL scanner returned from coprocessor hooks means skip normal processing.
         return new ArrayList<Path>();
@@ -345,9 +347,31 @@ public abstract class Compactor<T extends CellSink> {
    */
   protected InternalScanner preCreateCoprocScanner(final CompactionRequest request,
       ScanType scanType, long earliestPutTs,  List<StoreFileScanner> scanners) throws IOException {
+    return preCreateCoprocScanner(request, scanType, earliestPutTs, scanners, null);
+  }
+
+  protected InternalScanner preCreateCoprocScanner(final CompactionRequest request,
+      final ScanType scanType, final long earliestPutTs, final List<StoreFileScanner> scanners,
+      User user) throws IOException {
     if (store.getCoprocessorHost() == null) return null;
-    return store.getCoprocessorHost()
-        .preCompactScannerOpen(store, scanners, scanType, earliestPutTs, request);
+    if (user == null) {
+      return store.getCoprocessorHost().preCompactScannerOpen(store, scanners, scanType,
+        earliestPutTs, request);
+    } else {
+      try {
+        return user.getUGI().doAs(new PrivilegedExceptionAction<InternalScanner>() {
+          @Override
+          public InternalScanner run() throws Exception {
+            return store.getCoprocessorHost().preCompactScannerOpen(store, scanners,
+              scanType, earliestPutTs, request);
+          }
+        });
+      } catch (InterruptedException ie) {
+        InterruptedIOException iioe = new InterruptedIOException();
+        iioe.initCause(ie);
+        throw iioe;
+      }
+    }
   }
 
   /**
@@ -358,11 +382,26 @@ public abstract class Compactor<T extends CellSink> {
    * @return Scanner scanner to use (usually the default); null if compaction should not proceed.
    */
    protected InternalScanner postCreateCoprocScanner(final CompactionRequest request,
-      ScanType scanType, InternalScanner scanner) throws IOException {
+       final ScanType scanType, final InternalScanner scanner, User user) throws IOException {
     if (store.getCoprocessorHost() == null) {
       return scanner;
     }
-    return store.getCoprocessorHost().preCompact(store, scanner, scanType, request);
+    if (user == null) {
+      return store.getCoprocessorHost().preCompact(store, scanner, scanType, request);
+    } else {
+      try {
+        return user.getUGI().doAs(new PrivilegedExceptionAction<InternalScanner>() {
+          @Override
+          public InternalScanner run() throws Exception {
+            return store.getCoprocessorHost().preCompact(store, scanner, scanType, request);
+          }
+        });
+      } catch (InterruptedException ie) {
+        InterruptedIOException iioe = new InterruptedIOException();
+        iioe.initCause(ie);
+        throw iioe;
+      }
+    }
   }
 
   /**

@@ -137,7 +137,7 @@ public class TestStripeCompactor {
     StoreFileWritersCapture writers = new StoreFileWritersCapture();
     StripeCompactor sc = createCompactor(writers, input);
     List<Path> paths = sc.compact(createDummyRequest(), Arrays.asList(boundaries), majorFrom,
-      majorTo, NoLimitCompactionThroughputController.INSTANCE);
+      majorTo, NoLimitCompactionThroughputController.INSTANCE, null);
     writers.verifyKvs(output, allFiles, true);
     if (allFiles) {
       assertEquals(output.length, paths.size());
@@ -173,7 +173,7 @@ public class TestStripeCompactor {
     StoreFileWritersCapture writers = new StoreFileWritersCapture();
     StripeCompactor sc = createCompactor(writers, input);
     List<Path> paths = sc.compact(createDummyRequest(), targetCount, targetSize, left, right, null,
-      null, NoLimitCompactionThroughputController.INSTANCE);
+      null, NoLimitCompactionThroughputController.INSTANCE, null);
     assertEquals(output.length, paths.size());
     writers.verifyKvs(output, true, true);
     List<byte[]> boundaries = new ArrayList<byte[]>();

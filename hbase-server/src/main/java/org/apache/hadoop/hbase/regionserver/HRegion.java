@@ -158,6 +158,7 @@ import org.apache.hadoop.hbase.regionserver.wal.WALActionsListener;
 import org.apache.hadoop.hbase.regionserver.wal.ReplayHLogKey;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.regionserver.wal.WALUtil;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.SnapshotManifest;
 import org.apache.hadoop.hbase.util.ByteStringer;
@@ -1729,7 +1730,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
         if (controller == null) {
           controller = NoLimitCompactionThroughputController.INSTANCE;
         }
-        compact(compaction, s, controller);
+        compact(compaction, s, controller, null);
       }
     }
   }
@@ -1744,7 +1745,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     for (Store s : getStores()) {
       CompactionContext compaction = s.requestCompaction();
       if (compaction != null) {
-        compact(compaction, s, NoLimitCompactionThroughputController.INSTANCE);
+        compact(compaction, s, NoLimitCompactionThroughputController.INSTANCE, null);
       }
     }
   }
@@ -1761,7 +1762,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     Store s = getStore(family);
     CompactionContext compaction = s.requestCompaction();
     if (compaction != null) {
-      compact(compaction, s, throughputController);
+      compact(compaction, s, throughputController, null);
     }
   }
 
@@ -1777,10 +1778,16 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
    * server does them sequentially and not in parallel.
    *
    * @param compaction Compaction details, obtained by requestCompaction()
+   * @param throughputController
    * @return whether the compaction completed
    */
   public boolean compact(CompactionContext compaction, Store store,
       CompactionThroughputController throughputController) throws IOException {
+    return compact(compaction, store, throughputController, null);
+  }
+
+  public boolean compact(CompactionContext compaction, Store store,
+      CompactionThroughputController throughputController, User user) throws IOException {
     assert compaction != null && compaction.hasSelection();
     assert !compaction.getRequest().getFiles().isEmpty();
     if (this.closing.get() || this.closed.get()) {
@@ -1901,7 +1908,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
           // We no longer need to cancel the request on the way out of this
           // method because Store#compact will clean up unconditionally
           requestNeedsCancellation = false;
-          store.compact(compaction, throughputController);
+          store.compact(compaction, throughputController, user);
         } catch (InterruptedIOException iioe) {
           String msg = "compaction interrupted";
           LOG.info(msg, iioe);

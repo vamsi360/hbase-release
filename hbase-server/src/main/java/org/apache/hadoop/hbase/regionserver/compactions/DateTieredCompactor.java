@@ -69,7 +69,7 @@ public class DateTieredCompactor extends AbstractMultiOutputCompactor<DateTiered
           initMultiWriter(writer, scanner, fd, shouldDropBehind);
           return writer;
         }
-      }, throughputController);
+      }, throughputController, user);
   }
 
   @Override

@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.regionserver.StoreFileScanner;
 import org.apache.hadoop.hbase.regionserver.StoreScanner;
 import org.apache.hadoop.hbase.regionserver.StripeMultiFileWriter;
 import org.apache.hadoop.hbase.regionserver.StoreFile.Writer;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -82,7 +83,7 @@ public class StripeCompactor extends AbstractMultiOutputCompactor<StripeMultiFil
 
   public List<Path> compact(CompactionRequest request, final List<byte[]> targetBoundaries,
       final byte[] majorRangeFromRow, final byte[] majorRangeToRow,
-      CompactionThroughputController throughputController) throws IOException {
+      CompactionThroughputController throughputController, User user) throws IOException {
     if (LOG.isDebugEnabled()) {
       StringBuilder sb = new StringBuilder();
       sb.append("Executing compaction with " + targetBoundaries.size() + " boundaries:");
@@ -102,12 +103,12 @@ public class StripeCompactor extends AbstractMultiOutputCompactor<StripeMultiFil
           initMultiWriter(writer, scanner, fd, shouldDropBehind);
           return writer;
         }
-      }, throughputController);
+      }, throughputController, user);
   }
 
   public List<Path> compact(CompactionRequest request, final int targetCount, final long targetSize,
     final byte[] left, final byte[] right, byte[] majorRangeFromRow, byte[] majorRangeToRow,
-      CompactionThroughputController throughputController) throws IOException {
+      CompactionThroughputController throughputController, User user) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "Executing compaction with " + targetSize + " target file size, no more than " + targetCount
@@ -124,7 +125,7 @@ public class StripeCompactor extends AbstractMultiOutputCompactor<StripeMultiFil
           initMultiWriter(writer, scanner, fd, shouldDropBehind);
           return writer;
         }
-      }, throughputController);
+      }, throughputController, user);
   }
 
   @Override
