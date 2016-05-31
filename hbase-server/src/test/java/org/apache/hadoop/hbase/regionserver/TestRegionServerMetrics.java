@@ -310,7 +310,7 @@ public class TestRegionServerMetrics {
 
     metricsRegionServer.getRegionServerWrapper().forceRecompute();
     assertTrue(metricsHelper.getGaugeLong("maxStoreFileAge", serverSource) > 0);
-    assertTrue(metricsHelper.getGaugeLong("minStoreFileAge", serverSource) > 0);
+    assertTrue(metricsHelper.getGaugeLong("minStoreFileAge", serverSource) >= 0);
     assertTrue(metricsHelper.getGaugeLong("avgStoreFileAge", serverSource) > 0);
 
     t.close();
@@ -557,7 +557,7 @@ public class TestRegionServerMetrics {
       admin.deleteTable(tableName);
     }
   }
- 
+
   @Test
   @Ignore
   public void testRangeCountMetrics() throws Exception {
