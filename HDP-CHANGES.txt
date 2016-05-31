@@ -139,3 +139,4 @@ HBASE-15880 RpcClientImpl#tracedWriteRequest incorrectly closes HTrace span (Mik
 HBASE-14906 Improvements on FlushLargeStoresPolicy (Yu Li)
 HBASE-15873 ACL for snapshot restore / clone is not enforced
 HBASE-14655 Narrow the scope of doAs() calls to region observer notifications for compaction
+HBASE-15884 NPE in StoreFileScanner#skipKVsNewerThanReadpoint during reverse scan (Sergey Soldatov)
