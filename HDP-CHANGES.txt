@@ -141,3 +141,6 @@ HBASE-15873 ACL for snapshot restore / clone is not enforced
 HBASE-14655 Narrow the scope of doAs() calls to region observer notifications for compaction
 HBASE-15884 NPE in StoreFileScanner#skipKVsNewerThanReadpoint during reverse scan (Sergey Soldatov)
 HBASE-15904 Use comma as separator for list of tables in BackupInfo
+HBASE-14123 HBase Backup/Restore Phase 2
+HBASE-14140 HBase Backup Admin API
+HBASE-15861 Add support for table sets in restore operation 
