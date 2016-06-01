@@ -144,3 +144,4 @@ HBASE-15904 Use comma as separator for list of tables in BackupInfo
 HBASE-14123 HBase Backup/Restore Phase 2
 HBASE-14140 HBase Backup Admin API
 HBASE-15861 Add support for table sets in restore operation 
+HBASE-15928 hbase backup delete command does not remove backup root dir from hdfs
