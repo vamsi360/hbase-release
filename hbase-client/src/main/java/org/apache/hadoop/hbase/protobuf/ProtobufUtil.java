@@ -28,6 +28,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 import com.google.protobuf.RpcChannel;
+import com.google.protobuf.RpcController;
 import com.google.protobuf.Service;
 import com.google.protobuf.ServiceException;
 import com.google.protobuf.TextFormat;
@@ -1616,21 +1617,22 @@ public final class ProtobufUtil {
     }
   }
 
-  public static CoprocessorServiceResponse execService(final ClientService.BlockingInterface client,
-      final CoprocessorServiceCall call, final byte[] regionName) throws IOException {
+  public static CoprocessorServiceResponse execService(final RpcController controller,
+      final ClientService.BlockingInterface client, final CoprocessorServiceCall call,
+      final byte[] regionName) throws IOException {
     CoprocessorServiceRequest request = CoprocessorServiceRequest.newBuilder()
         .setCall(call).setRegion(
             RequestConverter.buildRegionSpecifier(REGION_NAME, regionName)).build();
     try {
       CoprocessorServiceResponse response =
-          client.execService(null, request);
+          client.execService(controller, request);
       return response;
     } catch (ServiceException se) {
       throw getRemoteException(se);
     }
   }
 
-  public static CoprocessorServiceResponse execService(
+  public static CoprocessorServiceResponse execService(final RpcController controller,
     final MasterService.BlockingInterface client, final CoprocessorServiceCall call)
   throws IOException {
     CoprocessorServiceRequest request = CoprocessorServiceRequest.newBuilder()
@@ -1638,7 +1640,7 @@ public final class ProtobufUtil {
             RequestConverter.buildRegionSpecifier(REGION_NAME, HConstants.EMPTY_BYTE_ARRAY)).build();
     try {
       CoprocessorServiceResponse response =
-          client.execMasterService(null, request);
+          client.execMasterService(controller, request);
       return response;
     } catch (ServiceException se) {
       throw getRemoteException(se);
@@ -1653,7 +1655,8 @@ public final class ProtobufUtil {
    * @throws IOException
    */
   public static CoprocessorServiceResponse execRegionServerService(
-      final ClientService.BlockingInterface client, final CoprocessorServiceCall call)
+      final RpcController controller, final ClientService.BlockingInterface client,
+      final CoprocessorServiceCall call)
       throws IOException {
     CoprocessorServiceRequest request =
         CoprocessorServiceRequest
@@ -1663,7 +1666,7 @@ public final class ProtobufUtil {
               RequestConverter.buildRegionSpecifier(REGION_NAME, HConstants.EMPTY_BYTE_ARRAY))
             .build();
     try {
-      CoprocessorServiceResponse response = client.execRegionServerService(null, request);
+      CoprocessorServiceResponse response = client.execRegionServerService(controller, request);
       return response;
     } catch (ServiceException se) {
       throw getRemoteException(se);
@@ -1689,13 +1692,13 @@ public final class ProtobufUtil {
    * @return the retrieved region info
    * @throws IOException
    */
-  public static HRegionInfo getRegionInfo(final AdminService.BlockingInterface admin,
-      final byte[] regionName) throws IOException {
+  public static HRegionInfo getRegionInfo(final RpcController controller,
+      final AdminService.BlockingInterface admin, final byte[] regionName) throws IOException {
     try {
       GetRegionInfoRequest request =
         RequestConverter.buildGetRegionInfoRequest(regionName);
       GetRegionInfoResponse response =
-        admin.getRegionInfo(null, request);
+        admin.getRegionInfo(controller, request);
       return HRegionInfo.convert(response.getRegionInfo());
     } catch (ServiceException se) {
       throw getRemoteException(se);
@@ -1711,12 +1714,13 @@ public final class ProtobufUtil {
    * @param transitionInZK
    * @throws IOException
    */
-  public static void closeRegion(final AdminService.BlockingInterface admin,
-      final ServerName server, final byte[] regionName, final boolean transitionInZK) throws IOException {
+  public static void closeRegion(final RpcController controller, 
+      final AdminService.BlockingInterface admin, final ServerName server, final byte[] regionName,
+      final boolean transitionInZK) throws IOException {
     CloseRegionRequest closeRegionRequest =
       RequestConverter.buildCloseRegionRequest(server, regionName, transitionInZK);
     try {
-      admin.closeRegion(null, closeRegionRequest);
+      admin.closeRegion(controller, closeRegionRequest);
     } catch (ServiceException se) {
       throw getRemoteException(se);
     }
@@ -1732,7 +1736,8 @@ public final class ProtobufUtil {
    * @return true if the region is closed
    * @throws IOException
    */
-  public static boolean closeRegion(final AdminService.BlockingInterface admin,
+  public static boolean closeRegion(final RpcController controller,
+      final AdminService.BlockingInterface admin,
       final ServerName server,
       final byte[] regionName,
       final int versionOfClosingNode, final ServerName destinationServer,
@@ -1741,7 +1746,7 @@ public final class ProtobufUtil {
       RequestConverter.buildCloseRegionRequest(server,
         regionName, versionOfClosingNode, destinationServer, transitionInZK);
     try {
-      CloseRegionResponse response = admin.closeRegion(null, closeRegionRequest);
+      CloseRegionResponse response = admin.closeRegion(controller, closeRegionRequest);
       return ResponseConverter.isClosed(response);
     } catch (ServiceException se) {
       throw getRemoteException(se);
@@ -1756,14 +1761,14 @@ public final class ProtobufUtil {
    * @param regionInfo
    *
    */
-  public static void warmupRegion(final AdminService.BlockingInterface admin,
-      final HRegionInfo regionInfo) throws IOException  {
+  public static void warmupRegion(final RpcController controller,
+      final AdminService.BlockingInterface admin, final HRegionInfo regionInfo) throws IOException {
 
     try {
       WarmupRegionRequest warmupRegionRequest =
            RequestConverter.buildWarmupRegionRequest(regionInfo);
 
-      admin.warmupRegion(null, warmupRegionRequest);
+      admin.warmupRegion(controller, warmupRegionRequest);
     } catch (ServiceException e) {
       throw getRemoteException(e);
     }
@@ -1775,17 +1780,17 @@ public final class ProtobufUtil {
    * @param region
    * @throws IOException
    */
-  public static void openRegion(final AdminService.BlockingInterface admin,
-      ServerName server, final HRegionInfo region) throws IOException {
+  public static void openRegion(final RpcController controller,
+      final AdminService.BlockingInterface admin, ServerName server, final HRegionInfo region)
+          throws IOException {
     OpenRegionRequest request =
       RequestConverter.buildOpenRegionRequest(server, region, -1, null, null);
     try {
-      admin.openRegion(null, request);
+      admin.openRegion(controller, request);
     } catch (ServiceException se) {
       throw ProtobufUtil.getRemoteException(se);
     }
   }
-
 
   /**
    * A helper to get the all the online regions on a region
@@ -1796,11 +1801,22 @@ public final class ProtobufUtil {
    * @throws IOException
    */
   public static List<HRegionInfo> getOnlineRegions(final AdminService.BlockingInterface admin)
+      throws IOException {
+    return getOnlineRegions(null, admin);
+  }
+
+  /**
+   * A helper to get the all the online regions on a region
+   * server using admin protocol.
+   * @return a list of online region info
+   */
+  public static List<HRegionInfo> getOnlineRegions(final RpcController controller,
+      final AdminService.BlockingInterface admin)
   throws IOException {
     GetOnlineRegionRequest request = RequestConverter.buildGetOnlineRegionRequest();
     GetOnlineRegionResponse response = null;
     try {
-      response = admin.getOnlineRegion(null, request);
+      response = admin.getOnlineRegion(controller, request);
     } catch (ServiceException se) {
       throw getRemoteException(se);
     }
@@ -1824,16 +1840,14 @@ public final class ProtobufUtil {
 
   /**
    * A helper to get the info of a region server using admin protocol.
-   *
-   * @param admin
    * @return the server name
-   * @throws IOException
    */
-  public static ServerInfo getServerInfo(final AdminService.BlockingInterface admin)
+  public static ServerInfo getServerInfo(final RpcController controller,
+      final AdminService.BlockingInterface admin)
   throws IOException {
     GetServerInfoRequest request = RequestConverter.buildGetServerInfoRequest();
     try {
-      GetServerInfoResponse response = admin.getServerInfo(null, request);
+      GetServerInfoResponse response = admin.getServerInfo(controller, request);
       return response.getServerInfo();
     } catch (ServiceException se) {
       throw getRemoteException(se);
@@ -1844,19 +1858,27 @@ public final class ProtobufUtil {
    * A helper to get the list of files of a column family
    * on a given region using admin protocol.
    *
-   * @param admin
-   * @param regionName
-   * @param family
    * @return the list of store files
-   * @throws IOException
    */
   public static List<String> getStoreFiles(final AdminService.BlockingInterface admin,
       final byte[] regionName, final byte[] family)
   throws IOException {
+    return getStoreFiles(null, admin, regionName, family);
+  }
+
+  /**
+   * A helper to get the list of files of a column family
+   * on a given region using admin protocol.
+   *
+   * @return the list of store files
+   */
+  public static List<String> getStoreFiles(final RpcController controller,
+      final AdminService.BlockingInterface admin, final byte[] regionName, final byte[] family)
+  throws IOException {
     GetStoreFileRequest request =
       RequestConverter.buildGetStoreFileRequest(regionName, family);
     try {
-      GetStoreFileResponse response = admin.getStoreFile(null, request);
+      GetStoreFileResponse response = admin.getStoreFile(controller, request);
       return response.getStoreFileList();
     } catch (ServiceException se) {
       throw ProtobufUtil.getRemoteException(se);
@@ -1871,12 +1893,13 @@ public final class ProtobufUtil {
    * @param splitPoint
    * @throws IOException
    */
-  public static void split(final AdminService.BlockingInterface admin,
-      final HRegionInfo hri, byte[] splitPoint) throws IOException {
+  public static void split(final RpcController controller,
+      final AdminService.BlockingInterface admin, final HRegionInfo hri, byte[] splitPoint)
+          throws IOException {
     SplitRegionRequest request =
       RequestConverter.buildSplitRegionRequest(hri.getRegionName(), splitPoint);
     try {
-      admin.splitRegion(null, request);
+      admin.splitRegion(controller, request);
     } catch (ServiceException se) {
       throw ProtobufUtil.getRemoteException(se);
     }
@@ -1892,13 +1915,14 @@ public final class ProtobufUtil {
    *          two adjacent regions
    * @throws IOException
    */
-  public static void mergeRegions(final AdminService.BlockingInterface admin,
+  public static void mergeRegions(final RpcController controller,
+      final AdminService.BlockingInterface admin,
       final HRegionInfo region_a, final HRegionInfo region_b,
       final boolean forcible) throws IOException {
     MergeRegionsRequest request = RequestConverter.buildMergeRegionsRequest(
         region_a.getRegionName(), region_b.getRegionName(),forcible);
     try {
-      admin.mergeRegions(null, request);
+      admin.mergeRegions(controller, request);
     } catch (ServiceException se) {
       throw ProtobufUtil.getRemoteException(se);
     }
@@ -2171,8 +2195,9 @@ public final class ProtobufUtil {
    * @param actions the permissions to be granted
    * @throws ServiceException
    */
-  public static void grant(AccessControlService.BlockingInterface protocol,
-      String userShortName, Permission.Action... actions) throws ServiceException {
+  public static void grant(RpcController controller,
+      AccessControlService.BlockingInterface protocol, String userShortName,
+      Permission.Action... actions) throws ServiceException {
     List<AccessControlProtos.Permission.Action> permActions =
         Lists.newArrayListWithCapacity(actions.length);
     for (Permission.Action a : actions) {
@@ -2181,7 +2206,7 @@ public final class ProtobufUtil {
     AccessControlProtos.GrantRequest request = RequestConverter.
       buildGrantRequest(userShortName, permActions.toArray(
         new AccessControlProtos.Permission.Action[actions.length]));
-    protocol.grant(null, request);
+    protocol.grant(controller, request);
   }
 
   /**
@@ -2198,9 +2223,9 @@ public final class ProtobufUtil {
    * @param actions the permissions to be granted
    * @throws ServiceException
    */
-  public static void grant(AccessControlService.BlockingInterface protocol,
-      String userShortName, TableName tableName, byte[] f, byte[] q,
-      Permission.Action... actions) throws ServiceException {
+  public static void grant(RpcController controller,
+      AccessControlService.BlockingInterface protocol, String userShortName, TableName tableName,
+      byte[] f, byte[] q, Permission.Action... actions) throws ServiceException {
     List<AccessControlProtos.Permission.Action> permActions =
         Lists.newArrayListWithCapacity(actions.length);
     for (Permission.Action a : actions) {
@@ -2209,7 +2234,7 @@ public final class ProtobufUtil {
     AccessControlProtos.GrantRequest request = RequestConverter.
       buildGrantRequest(userShortName, tableName, f, q, permActions.toArray(
         new AccessControlProtos.Permission.Action[actions.length]));
-    protocol.grant(null, request);
+    protocol.grant(controller, request);
   }
 
   /**
@@ -2222,8 +2247,8 @@ public final class ProtobufUtil {
    * @param actions the permissions to be granted
    * @throws ServiceException
    */
-  public static void grant(AccessControlService.BlockingInterface protocol,
-      String userShortName, String namespace,
+  public static void grant(RpcController controller,
+      AccessControlService.BlockingInterface protocol, String userShortName, String namespace,
       Permission.Action... actions) throws ServiceException {
     List<AccessControlProtos.Permission.Action> permActions =
         Lists.newArrayListWithCapacity(actions.length);
@@ -2233,7 +2258,7 @@ public final class ProtobufUtil {
     AccessControlProtos.GrantRequest request = RequestConverter.
       buildGrantRequest(userShortName, namespace, permActions.toArray(
         new AccessControlProtos.Permission.Action[actions.length]));
-    protocol.grant(null, request);
+    protocol.grant(controller, request);
   }
 
   /**
@@ -2246,8 +2271,9 @@ public final class ProtobufUtil {
    * @param actions the permissions to be revoked
    * @throws ServiceException
    */
-  public static void revoke(AccessControlService.BlockingInterface protocol,
-      String userShortName, Permission.Action... actions) throws ServiceException {
+  public static void revoke(RpcController controller,
+      AccessControlService.BlockingInterface protocol, String userShortName,
+      Permission.Action... actions) throws ServiceException {
     List<AccessControlProtos.Permission.Action> permActions =
         Lists.newArrayListWithCapacity(actions.length);
     for (Permission.Action a : actions) {
@@ -2256,7 +2282,7 @@ public final class ProtobufUtil {
     AccessControlProtos.RevokeRequest request = RequestConverter.
       buildRevokeRequest(userShortName, permActions.toArray(
         new AccessControlProtos.Permission.Action[actions.length]));
-    protocol.revoke(null, request);
+    protocol.revoke(controller, request);
   }
 
   /**
@@ -2273,9 +2299,9 @@ public final class ProtobufUtil {
    * @param actions the permissions to be revoked
    * @throws ServiceException
    */
-  public static void revoke(AccessControlService.BlockingInterface protocol,
-      String userShortName, TableName tableName, byte[] f, byte[] q,
-      Permission.Action... actions) throws ServiceException {
+  public static void revoke(RpcController controller,
+      AccessControlService.BlockingInterface protocol, String userShortName, TableName tableName,
+      byte[] f, byte[] q, Permission.Action... actions) throws ServiceException {
     List<AccessControlProtos.Permission.Action> permActions =
         Lists.newArrayListWithCapacity(actions.length);
     for (Permission.Action a : actions) {
@@ -2284,7 +2310,7 @@ public final class ProtobufUtil {
     AccessControlProtos.RevokeRequest request = RequestConverter.
       buildRevokeRequest(userShortName, tableName, f, q, permActions.toArray(
         new AccessControlProtos.Permission.Action[actions.length]));
-    protocol.revoke(null, request);
+    protocol.revoke(controller, request);
   }
 
   /**
@@ -2298,8 +2324,8 @@ public final class ProtobufUtil {
    * @param actions the permissions to be revoked
    * @throws ServiceException
    */
-  public static void revoke(AccessControlService.BlockingInterface protocol,
-      String userShortName, String namespace,
+  public static void revoke(RpcController controller,
+      AccessControlService.BlockingInterface protocol, String userShortName, String namespace,
       Permission.Action... actions) throws ServiceException {
     List<AccessControlProtos.Permission.Action> permActions =
         Lists.newArrayListWithCapacity(actions.length);
@@ -2309,7 +2335,7 @@ public final class ProtobufUtil {
     AccessControlProtos.RevokeRequest request = RequestConverter.
       buildRevokeRequest(userShortName, namespace, permActions.toArray(
         new AccessControlProtos.Permission.Action[actions.length]));
-    protocol.revoke(null, request);
+    protocol.revoke(controller, request);
   }
 
   /**
@@ -2320,14 +2346,14 @@ public final class ProtobufUtil {
    * @param protocol the AccessControlService protocol proxy
    * @throws ServiceException
    */
-  public static List<UserPermission> getUserPermissions(
+  public static List<UserPermission> getUserPermissions(RpcController controller,
       AccessControlService.BlockingInterface protocol) throws ServiceException {
     AccessControlProtos.GetUserPermissionsRequest.Builder builder =
       AccessControlProtos.GetUserPermissionsRequest.newBuilder();
     builder.setType(AccessControlProtos.Permission.Type.Global);
     AccessControlProtos.GetUserPermissionsRequest request = builder.build();
     AccessControlProtos.GetUserPermissionsResponse response =
-      protocol.getUserPermissions(null, request);
+      protocol.getUserPermissions(controller, request);
     List<UserPermission> perms = new ArrayList<UserPermission>(response.getUserPermissionCount());
     for (AccessControlProtos.UserPermission perm: response.getUserPermissionList()) {
       perms.add(ProtobufUtil.toUserPermission(perm));
@@ -2344,7 +2370,7 @@ public final class ProtobufUtil {
    * @param t optional table name
    * @throws ServiceException
    */
-  public static List<UserPermission> getUserPermissions(
+  public static List<UserPermission> getUserPermissions(RpcController controller,
       AccessControlService.BlockingInterface protocol,
       TableName t) throws ServiceException {
     AccessControlProtos.GetUserPermissionsRequest.Builder builder =
@@ -2355,7 +2381,7 @@ public final class ProtobufUtil {
     builder.setType(AccessControlProtos.Permission.Type.Table);
     AccessControlProtos.GetUserPermissionsRequest request = builder.build();
     AccessControlProtos.GetUserPermissionsResponse response =
-      protocol.getUserPermissions(null, request);
+      protocol.getUserPermissions(controller, request);
     List<UserPermission> perms = new ArrayList<UserPermission>(response.getUserPermissionCount());
     for (AccessControlProtos.UserPermission perm: response.getUserPermissionList()) {
       perms.add(ProtobufUtil.toUserPermission(perm));
@@ -2372,7 +2398,7 @@ public final class ProtobufUtil {
    * @param namespace name of the namespace
    * @throws ServiceException
    */
-  public static List<UserPermission> getUserPermissions(
+  public static List<UserPermission> getUserPermissions(RpcController controller,
       AccessControlService.BlockingInterface protocol,
       byte[] namespace) throws ServiceException {
     AccessControlProtos.GetUserPermissionsRequest.Builder builder =
@@ -2383,7 +2409,7 @@ public final class ProtobufUtil {
     builder.setType(AccessControlProtos.Permission.Type.Namespace);
     AccessControlProtos.GetUserPermissionsRequest request = builder.build();
     AccessControlProtos.GetUserPermissionsResponse response =
-      protocol.getUserPermissions(null, request);
+      protocol.getUserPermissions(controller, request);
     List<UserPermission> perms = new ArrayList<UserPermission>(response.getUserPermissionCount());
     for (AccessControlProtos.UserPermission perm: response.getUserPermissionList()) {
       perms.add(ProtobufUtil.toUserPermission(perm));
