@@ -272,6 +272,7 @@ JRuby's licence.
 #if(${dep.artifactId.equals("jruby-complete")})
 #set($jruby=true)
 #end
+#if(${dep.licenses.size} > 0)
 #if( !(${dep.licenses[0].name.contains("BSD")} || ${dep.licenses[0].name.contains("MIT")}) )
 #if( !(${dep.licenses[0].name.equals("Public Domain")}) )
 #if( !(${dep.licenses[0].name.contains("Apache Software License, Version 2.0")}) )
@@ -288,6 +289,7 @@ JRuby's licence.
 #end
 #if(${dep.licenses[0].name.equalsIgnoreCase("Mozilla Public License Version 1.1")})
 #set($aggregated = $mpl_1_1.add($dep))
+#end
 #end
 #if(!${aggregated})
 --
