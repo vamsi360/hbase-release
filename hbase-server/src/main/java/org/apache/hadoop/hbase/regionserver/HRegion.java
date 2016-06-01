@@ -7416,7 +7416,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     }
     // Request a cache flush.  Do it outside update lock.
     if (isFlushSize(this.addAndGetGlobalMemstoreSize(accumulatedResultSize))) requestFlush();
-    return Result.create(allKVs);
+    return increment.isReturnResults() ? Result.create(allKVs) : null;
   }
 
   /**
