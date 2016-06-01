@@ -190,16 +190,20 @@ MetricsHBaseServerWrapper mServerWrap;
 </%args>
 <table class="table table-striped">
 <tr>
-    <th>Compaction Queue Size</th>
-    <th>Flush Queue Size</th>
-    <th>Call Queue Size (bytes)</th>
-
+    	<th>Compaction Queue Size</th>
+	    <th>Flush Queue Size</th>
+	    <th>Total Call Queue Size (bytes)</th>
+	    <th>Priority Call Queue Size</th>
+	    <th>General Call Queue Size</th>
+	    <th>Replication Call Queue Size</th>
 </tr>
 <tr>
     <td><% mWrap.getCompactionQueueSize() %></td>
     <td><% mWrap.getFlushQueueSize() %></td>
-    <td><% StringUtils.TraditionalBinaryPrefix.long2String(mServerWrap.getTotalQueueSize(),
-      "", 1) %></td>
+    <td><% StringUtils.TraditionalBinaryPrefix.long2String(mServerWrap.getTotalQueueSize(), "B", 1) %></td>
+    <td><% mServerWrap.getPriorityQueueLength() %></td>
+    <td><% mServerWrap.getGeneralQueueLength() %></td>
+    <td><% mServerWrap.getReplicationQueueLength() %></td>
 </tr>
 </table>
 </%def>
