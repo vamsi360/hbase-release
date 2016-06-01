@@ -48,7 +48,7 @@
   </property>
   <property>
     <name>hbase.regionserver.handler.count</name>
-    <value>5</value>
+    <value>6</value>
   </property>
   <property>
     <name>hbase.master.info.port</name>
