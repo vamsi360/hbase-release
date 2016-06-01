@@ -33,9 +33,10 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.BackupClientUtil;
 import org.apache.hadoop.hbase.backup.BackupInfo;
 import org.apache.hadoop.hbase.backup.master.LogRollMasterProcedureManager;
+import org.apache.hadoop.hbase.backup.util.BackupClientUtil;
+import org.apache.hadoop.hbase.backup.util.BackupServerUtil;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.client.Admin;
@@ -86,7 +87,7 @@ public class IncrementalBackupManager {
     HashMap<TableName, HashMap<String, Long>> previousTimestampMap =
         backupManager.readLogTimestampMap();
 
-    previousTimestampMins = BackupUtil.getRSLogTimestampMins(previousTimestampMap);    
+    previousTimestampMins = BackupServerUtil.getRSLogTimestampMins(previousTimestampMap);    
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("StartCode " + savedStartCode + "for backupID " + backupContext.getBackupId());
@@ -170,7 +171,8 @@ public class IncrementalBackupManager {
         continue;
       }
       String walFileName = item.getWalFile();      
-      String server = BackupUtil.parseHostNameFromLogFile(new Path(walFileName));
+      String server = BackupServerUtil.parseHostNameFromLogFile(new Path(walFileName));
+      if(server == null) continue;
       Long tss = getTimestamp(walFileName);
       Long oldTss = olderTimestamps.get(server);
       Long newTss = newestTimestamps.get(server);
@@ -189,7 +191,7 @@ public class IncrementalBackupManager {
   }
 
   private Long getTimestamp(String walFileName) {
-    int index = walFileName.lastIndexOf(BackupUtil.LOGNAME_SEPARATOR);
+    int index = walFileName.lastIndexOf(BackupServerUtil.LOGNAME_SEPARATOR);
     return Long.parseLong(walFileName.substring(index+1));
   }
 
@@ -237,8 +239,11 @@ public class IncrementalBackupManager {
     rss = fs.listStatus(logDir);
     for (FileStatus rs : rss) {
       p = rs.getPath();
-      host = BackupUtil.parseHostNameFromLogFile(p);
-      if (host == null) continue;
+      host = BackupServerUtil.parseHostNameFromLogFile(p);
+      if (host == null) {
+        LOG.warn("Skipping "+p+" not a valid log file");
+        continue;
+      }
       FileStatus[] logs;
       oldTimeStamp = olderTimestamps.get(host);
       // It is possible that there is no old timestamp in hbase:backup for this host if
@@ -336,8 +341,8 @@ public class IncrementalBackupManager {
       try {
         timestamp = BackupClientUtil.getCreationTime(path);
         return timestamp > Long.valueOf(lastBackupTS);
-      } catch (IOException e) {
-        LOG.warn("Cannot read timestamp of log file " + path);
+      } catch (Exception e) {
+        LOG.warn("Cannot read timestamp of log file " + path+", skip it");
         return false;
       }
     }

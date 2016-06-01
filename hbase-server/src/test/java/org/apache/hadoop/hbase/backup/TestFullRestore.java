@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.BackupAdmin;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.util.ToolRunner;
@@ -50,8 +51,8 @@ public class TestFullRestore extends TestBackupBase {
 
     TableName[] tableset = new TableName[] { table1 };
     TableName[] tablemap = new TableName[] { table1_restore };
-    RestoreClient client = getRestoreClient();
-    client.restore(BACKUP_ROOT_DIR, backupId, false, false, tableset, tablemap, false);
+    BackupAdmin client = getBackupAdmin();
+    client.restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, false, false, tableset, tablemap, false));
     HBaseAdmin hba = TEST_UTIL.getHBaseAdmin();
     assertTrue(hba.tableExists(table1_restore));
     TEST_UTIL.deleteTable(table1_restore);
@@ -94,9 +95,9 @@ public class TestFullRestore extends TestBackupBase {
 
     TableName[] restore_tableset = new TableName[] { table2, table3 };
     TableName[] tablemap = new TableName[] { table2_restore, table3_restore };
-    RestoreClient client = getRestoreClient();
-    client.restore(BACKUP_ROOT_DIR, backupId, false, false,
-      restore_tableset, tablemap, false);
+    BackupAdmin client = getBackupAdmin();
+    client.restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, false, false,
+      restore_tableset, tablemap, false));
     HBaseAdmin hba = TEST_UTIL.getHBaseAdmin();
     assertTrue(hba.tableExists(table2_restore));
     assertTrue(hba.tableExists(table3_restore));
@@ -152,9 +153,9 @@ public class TestFullRestore extends TestBackupBase {
     LOG.info("backup complete");
 
     TableName[] tableset = new TableName[] { table1 };
-    RestoreClient client = getRestoreClient();
-    client.restore(BACKUP_ROOT_DIR, backupId, false, false, tableset, null,
-      true);
+    BackupAdmin client = getBackupAdmin();
+    client.restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, false, false, tableset, null,
+      true));
   }
 
   /**
@@ -196,9 +197,9 @@ public class TestFullRestore extends TestBackupBase {
     assertTrue(checkSucceeded(backupId));    
 
     TableName[] restore_tableset = new TableName[] { table2, table3 };
-    RestoreClient client = getRestoreClient();
-    client.restore(BACKUP_ROOT_DIR, backupId, false,
-      false, restore_tableset, null, true);
+    BackupAdmin client = getBackupAdmin();
+    client.restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, false,
+      false, restore_tableset, null, true));
   }
 
   /**
@@ -243,9 +244,9 @@ public class TestFullRestore extends TestBackupBase {
 
     TableName[] tableset = new TableName[] { TableName.valueOf("faketable") };
     TableName[] tablemap = new TableName[] { table1_restore };
-    RestoreClient client = getRestoreClient();
-    client.restore(BACKUP_ROOT_DIR, backupId, false, false, tableset, tablemap,
-      false);
+    BackupAdmin client = getBackupAdmin();
+    client.restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, false, false, tableset, tablemap,
+      false));
   }
 
   
@@ -289,9 +290,9 @@ public class TestFullRestore extends TestBackupBase {
     TableName[] restore_tableset
       = new TableName[] { TableName.valueOf("faketable1"), TableName.valueOf("faketable2") };
     TableName[] tablemap = new TableName[] { table2_restore, table3_restore };
-    RestoreClient client = getRestoreClient();
-    client.restore(BACKUP_ROOT_DIR, backupId, false,
-      false, restore_tableset, tablemap, false);
+    BackupAdmin client = getBackupAdmin();
+    client.restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, false,
+      false, restore_tableset, tablemap, false));
   }
   
   /**

@@ -54,7 +54,7 @@ public class TestOfflineMetaRebuildOverlap extends OfflineMetaRebuildTestCore {
     wipeOutMeta();
 
     // is meta really messed up?
-    assertEquals(1, scanMeta());
+    assertEquals(2, scanMeta());
     assertErrors(doFsck(conf, false),
         new ERROR_CODE[] {
             ERROR_CODE.NOT_IN_META_OR_DEPLOYED,
@@ -95,7 +95,7 @@ public class TestOfflineMetaRebuildOverlap extends OfflineMetaRebuildTestCore {
     }
 
     // Meta still messed up.
-    assertEquals(1, scanMeta());
+    assertEquals(2, scanMeta());
     HTableDescriptor[] htbls = getTables(TEST_UTIL.getConfiguration());
     LOG.info("Tables present after restart: " + Arrays.toString(htbls));
 

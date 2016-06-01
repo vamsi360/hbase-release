@@ -25,7 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.impl.BackupUtil;
+import org.apache.hadoop.hbase.backup.util.BackupServerUtil;
 import org.apache.hadoop.hbase.util.AbstractHBaseTool;
 import org.apache.hadoop.hbase.util.LogUtils;
 import org.apache.hadoop.util.ToolRunner;
@@ -123,8 +123,8 @@ public class RestoreDriver extends AbstractHBaseTool {
     
     String tableMapping = (remainArgs.length > 3) ? remainArgs[3] : null;
 
-    TableName[] sTableArray = BackupUtil.parseTableNames(tables);
-    TableName[] tTableArray = BackupUtil.parseTableNames(tableMapping);
+    TableName[] sTableArray = BackupServerUtil.parseTableNames(tables);
+    TableName[] tTableArray = BackupServerUtil.parseTableNames(tableMapping);
 
     if (sTableArray != null && tTableArray != null && (sTableArray.length != tTableArray.length)) {
       System.out.println("ERROR: table mapping mismatch: " + tables + " : " + tableMapping);
@@ -133,7 +133,7 @@ public class RestoreDriver extends AbstractHBaseTool {
     }
 
     
-    RestoreClient client = BackupRestoreFactory.getRestoreClient(getConf());
+    RestoreClient client = BackupRestoreClientFactory.getRestoreClient(getConf());
     try{
       client.restore(backupRootDir, backupId, check, autoRestore, sTableArray,
         tTableArray, isOverwrite);

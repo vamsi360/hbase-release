@@ -77,6 +77,7 @@ public class TestMasterOperationsForRegionReplicas {
     while(ADMIN.getClusterStatus().getServers().size() < numSlaves) {
       Thread.sleep(100);
     }
+    TEST_UTIL.waitUntilAllSystemRegionsAssigned();
   }
 
   @AfterClass
@@ -308,7 +309,7 @@ public class TestMasterOperationsForRegionReplicas {
       connection);
     snapshot.initialize();
     Map<HRegionInfo, ServerName> regionToServerMap = snapshot.getRegionToRegionServerMap();
-    assert(regionToServerMap.size() == numRegions * numReplica + 1); //'1' for the namespace
+    assert(regionToServerMap.size() == numRegions * numReplica + 2); //'2' for the ns, backup
     Map<ServerName, List<HRegionInfo>> serverToRegionMap = snapshot.getRegionServerToRegionMap();
     for (Map.Entry<ServerName, List<HRegionInfo>> entry : serverToRegionMap.entrySet()) {
       if (entry.getKey().equals(util.getHBaseCluster().getMaster().getServerName())) {
@@ -335,14 +336,16 @@ public class TestMasterOperationsForRegionReplicas {
       connection);
     snapshot.initialize();
     Map<HRegionInfo, ServerName>  regionToServerMap = snapshot.getRegionToRegionServerMap();
-    assertEquals(regionToServerMap.size(), numRegions * numReplica + 1); //'1' for the namespace
+    assertEquals(regionToServerMap.size(), numRegions * numReplica + 2); //'2' for the namespace
+    //, backup
     Map<ServerName, List<HRegionInfo>> serverToRegionMap = snapshot.getRegionServerToRegionMap();
     assertEquals(serverToRegionMap.keySet().size(), 1); // master by default not used
     for (Map.Entry<ServerName, List<HRegionInfo>> entry : serverToRegionMap.entrySet()) {
       if (entry.getKey().equals(TEST_UTIL.getHBaseCluster().getMaster().getServerName())) {
         continue;
       }
-      assertEquals(entry.getValue().size(), numRegions * numReplica + 1); //'1' for the namespace
+      assertEquals(entry.getValue().size(), numRegions * numReplica + 2); //'2' for the namespace,
+      // backup
     }
   }
 }

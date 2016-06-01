@@ -64,7 +64,7 @@ import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.backup.BackupRequest;
-import org.apache.hadoop.hbase.backup.BackupClientUtil;
+import org.apache.hadoop.hbase.backup.util.BackupClientUtil;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.client.ConnectionManager.HConnectionImplementation;
@@ -2584,8 +2584,8 @@ public class HBaseAdmin implements Admin {
     ProtobufUtil.split(admin, hri, splitPoint);
   }
 
-  @Override
-  public Future<String> backupTablesAsync(final BackupRequest userRequest) throws IOException {
+  
+  Future<String> backupTablesAsync(final BackupRequest userRequest) throws IOException {
     BackupClientUtil.checkTargetDir(userRequest.getTargetRootDir(), conf);
     if (userRequest.getTableList() != null) {
       for (TableName table : userRequest.getTableList()) {
@@ -2594,7 +2594,6 @@ public class HBaseAdmin implements Admin {
         }
       }
     }
-
     BackupTablesResponse response = executeCallable(
       new MasterCallable<BackupTablesResponse>(getConnection()) {
         @Override
@@ -2604,7 +2603,7 @@ public class HBaseAdmin implements Admin {
             userRequest.getWorkers(), userRequest.getBandwidth());
           return master.backupTables(null, request);
         }
-      });
+      }, backupWaitTimeout);
     return new TableBackupFuture(this, TableName.BACKUP_TABLE_NAME, response);
   }
 
@@ -2629,7 +2628,7 @@ public class HBaseAdmin implements Admin {
     }
   }
 
-  @Override
+  
   public String backupTables(final BackupRequest userRequest) throws IOException {
     return get(
       backupTablesAsync(userRequest),
@@ -4204,6 +4203,14 @@ public class HBaseAdmin implements Admin {
     }
   }
 
+  private <V> V executeCallable(MasterCallable<V> callable, long timeout) throws IOException {
+    RpcRetryingCaller<V> caller = rpcCallerFactory.newCaller();
+    try {
+      return caller.callWithRetries(callable, (int) timeout);
+    } finally {
+      callable.close();
+    }
+  }
   /**
    * Creates and returns a {@link com.google.protobuf.RpcChannel} instance
    * connected to the active master.
@@ -4885,5 +4892,10 @@ public class HBaseAdmin implements Admin {
         return null;
       }
     });
+  }
+  
+  @Override
+  public BackupAdmin getBackupAdmin() throws IOException {
+    return new HBaseBackupAdmin(this);
   }
 }
