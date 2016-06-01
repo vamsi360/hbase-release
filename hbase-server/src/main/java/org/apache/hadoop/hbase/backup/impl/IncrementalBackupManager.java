@@ -285,6 +285,10 @@ public class IncrementalBackupManager {
         continue;
       }
       host = BackupClientUtil.parseHostFromOldLog(p);
+      if(host == null){
+        LOG.debug("Skip file: " + currentLogFile);
+        continue;
+      }
       currentLogTS = BackupClientUtil.getCreationTime(p);
       oldTimeStamp = olderTimestamps.get(host);
       /*
