@@ -51,6 +51,7 @@ import org.apache.hadoop.hbase.wal.WALKey;
 import org.apache.hadoop.hbase.wal.WALProvider.Writer;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -106,7 +107,7 @@ public class TestWALLockup {
    * <p>First I need to set up some mocks for Server and RegionServerServices. I also need to
    * set up a dodgy WAL that will throw an exception when we go to append to it.
    */
-  @Test (timeout=30000)
+  @Ignore @Test (timeout=30000)
   public void testLockupWhenSyncInMiddleOfZigZagSetup() throws IOException {
     // A WAL that we can have throw exceptions when a flag is set.
     class DodgyFSLog extends FSHLog {
