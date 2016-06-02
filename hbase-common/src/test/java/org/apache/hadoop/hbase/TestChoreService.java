@@ -373,7 +373,7 @@ public class TestChoreService {
     final int period = 100;
     final int delta = 5;
     ChoreService service = ChoreService.getInstance("testForceTrigger");
-    CountingChore chore = new CountingChore("countingChore", period);
+    final CountingChore chore = new CountingChore("countingChore", period);
     try {
       service.scheduleChore(chore);
       Thread.sleep(10 * period + delta);
@@ -393,11 +393,12 @@ public class TestChoreService {
       chore.triggerNow();
       Thread.sleep(delta);
 
-      assertTrue(chore.getCountOfChoreCalls() == 16);
+      assertTrue("" + chore.getCountOfChoreCalls(), chore.getCountOfChoreCalls() == 16);
 
       Thread.sleep(10 * period + delta);
 
-      assertTrue(chore.getCountOfChoreCalls() == 26);
+      // Be loosey-goosey. It used to be '26' but it was a big flakey relying on timing.
+      assertTrue("" + chore.getCountOfChoreCalls(), chore.getCountOfChoreCalls() > 16);
     } finally {
       shutdownService(service);
     }
