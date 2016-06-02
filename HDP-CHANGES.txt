@@ -145,3 +145,4 @@ HBASE-14123 HBase Backup/Restore Phase 2
 HBASE-14140 HBase Backup Admin API
 HBASE-15861 Add support for table sets in restore operation 
 HBASE-15928 hbase backup delete command does not remove backup root dir from hdfs
+HBASE-15931 Add log for long-running tasks in AsyncProcess (Yu Li)
