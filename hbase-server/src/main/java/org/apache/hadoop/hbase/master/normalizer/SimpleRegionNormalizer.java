@@ -118,7 +118,9 @@ public class SimpleRegionNormalizer implements RegionNormalizer {
     for (int i = 0; i < tableRegions.size(); i++) {
       HRegionInfo hri = tableRegions.get(i);
       long regionSize = getRegionSize(hri);
-      totalSizeMb += regionSize;
+      if (regionSize > 0) {
+        totalSizeMb += regionSize;
+      }
     }
 
     double avgRegionSize = totalSizeMb / (double) tableRegions.size();
@@ -142,7 +144,7 @@ public class SimpleRegionNormalizer implements RegionNormalizer {
         }
         HRegionInfo hri2 = tableRegions.get(candidateIdx+1);
         long regionSize2 = getRegionSize(hri2);
-        if (regionSize + regionSize2 < avgRegionSize) {
+        if (regionSize > 0 && regionSize2 > 0 && regionSize + regionSize2 < avgRegionSize) {
           LOG.info("Table " + table + ", small region size: " + regionSize
             + " plus its neighbor size: " + regionSize2
             + ", less than the avg size " + avgRegionSize + ", merging them");
@@ -165,6 +167,10 @@ public class SimpleRegionNormalizer implements RegionNormalizer {
       getRegionServerOfRegion(hri);
     RegionLoad regionLoad = masterServices.getServerManager().getLoad(sn).
       getRegionsLoad().get(hri.getRegionName());
+    if (regionLoad == null) {
+      LOG.debug(hri.getRegionNameAsString() + " was not found in RegionsLoad");
+      return -1;
+    }
     return regionLoad.getStorefileSizeMB();
   }
 }
