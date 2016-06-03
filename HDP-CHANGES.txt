@@ -148,3 +148,4 @@ HBASE-15928 hbase backup delete command does not remove backup root dir from hdf
 HBASE-15931 Add log for long-running tasks in AsyncProcess (Yu Li)
 HBASE-15933 NullPointerException may be thrown from SimpleRegionNormalizer#getRegionSize()
 HBASE-15019 Replication stuck when HDFS is restarted (Matteo)
+HBASE-12769 Replication fails to delete all corresponding zk nodes when peer is removed (Jianwei)
