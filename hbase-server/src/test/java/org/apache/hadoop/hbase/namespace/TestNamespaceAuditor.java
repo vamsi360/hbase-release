@@ -70,6 +70,8 @@ import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.regionserver.RegionServerCoprocessorHost;
+import org.apache.hadoop.hbase.regionserver.Store;
+import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -78,6 +80,7 @@ import org.apache.zookeeper.KeeperException;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -456,12 +459,14 @@ public class TestNamespaceAuditor {
     assertEquals(1, stateInfo.getTables().size());
     assertEquals(1, stateInfo.getRegionCount());
     restartMaster();
-    ADMIN.split(tableOne, Bytes.toBytes("500"));
+
     HRegion actualRegion = UTIL.getHBaseCluster().getRegions(tableOne).get(0);
     CustomObserver observer =
         (CustomObserver) actualRegion.getCoprocessorHost().findCoprocessor(
           CustomObserver.class.getName());
     assertNotNull(observer);
+
+    ADMIN.split(tableOne, Bytes.toBytes("500"));
     observer.postSplit.await();
     assertEquals(2, ADMIN.getTableRegions(tableOne).size());
     actualRegion = UTIL.getHBaseCluster().getRegions(tableOne).get(0);
@@ -469,6 +474,11 @@ public class TestNamespaceAuditor {
         (CustomObserver) actualRegion.getCoprocessorHost().findCoprocessor(
           CustomObserver.class.getName());
     assertNotNull(observer);
+
+    //Before we go on split, we should remove all reference store files.
+    ADMIN.compact(tableOne);
+    observer.postCompact.await();
+
     ADMIN.split(
       tableOne,
       getSplitKey(actualRegion.getRegionInfo().getStartKey(), actualRegion.getRegionInfo()
@@ -553,6 +563,7 @@ public class TestNamespaceAuditor {
   public static class CustomObserver extends BaseRegionObserver {
     volatile CountDownLatch postSplit;
     volatile CountDownLatch preSplitBeforePONR;
+    volatile CountDownLatch postCompact;
 
     @Override
     public void postCompleteSplit(ObserverContext<RegionCoprocessorEnvironment> ctx)
@@ -561,15 +572,23 @@ public class TestNamespaceAuditor {
     }
 
     @Override
+    public void postCompact(ObserverContext<RegionCoprocessorEnvironment> e,
+                            Store store, StoreFile resultFile) throws IOException {
+      postCompact.countDown();
+    }
+
+    @Override
     public void preSplitBeforePONR(ObserverContext<RegionCoprocessorEnvironment> ctx,
         byte[] splitKey, List<Mutation> metaEntries) throws IOException {
       preSplitBeforePONR.countDown();
     }
 
+
     @Override
     public void start(CoprocessorEnvironment e) throws IOException {
       postSplit = new CountDownLatch(1);
       preSplitBeforePONR = new CountDownLatch(1);
+      postCompact = new CountDownLatch(1);
     }
   }
 
