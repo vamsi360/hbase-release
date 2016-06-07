@@ -150,3 +150,4 @@ HBASE-15933 NullPointerException may be thrown from SimpleRegionNormalizer#getRe
 HBASE-15019 Replication stuck when HDFS is restarted (Matteo)
 HBASE-12769 Replication fails to delete all corresponding zk nodes when peer is removed (Jianwei)
 HBASE-15888 Extend HBASE-12769 for bulk load data replication (Ashish)
+HBASE-15972 hbase backup set command should not accept non-existing table
