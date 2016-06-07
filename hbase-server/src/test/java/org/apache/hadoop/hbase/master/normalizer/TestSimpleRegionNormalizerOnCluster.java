@@ -61,7 +61,6 @@ public class TestSimpleRegionNormalizerOnCluster {
   public static void beforeAllTests() throws Exception {
     // we will retry operations when PleaseHoldException is thrown
     TEST_UTIL.getConfiguration().setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 3);
-    TEST_UTIL.getConfiguration().setBoolean(HConstants.HBASE_NORMALIZER_ENABLED, true);
 
     // Start a cluster of two regionservers.
     TEST_UTIL.startMiniCluster(1);
@@ -126,13 +125,19 @@ public class TestSimpleRegionNormalizerOnCluster {
     Thread.sleep(5000); // to let region load to update
     m.normalizeRegions();
 
-    while (MetaTableAccessor.getRegionCount(TEST_UTIL.getConnection(), TABLENAME) < 6) {
-      LOG.info("Waiting for normalization split to complete");
-      Thread.sleep(100);
+    while (true) {
+      List<HRegion> regions = TEST_UTIL.getHBaseCluster().getRegions(TABLENAME);
+      int cnt = 0;
+      for (HRegion region : regions) {
+        String regionName = region.getRegionInfo().getRegionNameAsString();
+        if (regionName.startsWith("testRegionNormalizationSplitOnCluster,zzzzz")) {
+          cnt++;
+        }
+      }
+      if (cnt >= 2) {
+        break;
+      }
     }
-
-    assertEquals(6, MetaTableAccessor.getRegionCount(TEST_UTIL.getConnection(), TABLENAME));
-
     admin.disableTable(TABLENAME);
     admin.deleteTable(TABLENAME);
   }
