@@ -83,16 +83,14 @@ public class ReplicationPeersZKImpl extends ReplicationStateZKBase implements Re
   // Map of peer clusters keyed by their id
   private Map<String, ReplicationPeerZKImpl> peerClusters;
   private final String tableCFsNodeName;
-  private final ReplicationQueuesClient queuesClient;
 
   private static final Log LOG = LogFactory.getLog(ReplicationPeersZKImpl.class);
 
   public ReplicationPeersZKImpl(final ZooKeeperWatcher zk, final Configuration conf,
-      final ReplicationQueuesClient queuesClient, Abortable abortable) {
+      Abortable abortable) {
     super(zk, conf, abortable);
     this.tableCFsNodeName = conf.get("zookeeper.znode.replication.peers.tableCFs", "tableCFs");
     this.peerClusters = new ConcurrentHashMap<String, ReplicationPeerZKImpl>();
-    this.queuesClient = queuesClient;
   }
 
   @Override
@@ -120,8 +118,6 @@ public class ReplicationPeersZKImpl extends ReplicationStateZKBase implements Re
         throw new IllegalArgumentException("Found invalid peer name:" + id);
       }
 
-      checkQueuesDeleted(id);
-      
       ZKUtil.createWithParents(this.zookeeper, this.peersZNode);
       
       // If only bulk load hfile replication is enabled then add peerId node to hfile-refs node
@@ -587,22 +583,5 @@ public class ReplicationPeersZKImpl extends ReplicationStateZKBase implements Re
     return ProtobufUtil.prependPBMagic(bytes);
   }
 
-  private void checkQueuesDeleted(String peerId) throws ReplicationException {
-    if (queuesClient == null) return;
-    try {
-      List<String> replicators = queuesClient.getListOfReplicators();
-      for (String replicator : replicators) {
-        List<String> queueIds = queuesClient.getAllQueues(replicator);
-        for (String queueId : queueIds) {
-          ReplicationQueueInfo queueInfo = new ReplicationQueueInfo(queueId);
-          if (queueInfo.getPeerId().equals(peerId)) {
-            throw new ReplicationException("undeleted queue for peerId: " + peerId
-                + ", replicator: " + replicator + ", queueId: " + queueId);
-          }
-        }
-      }
-    } catch (KeeperException e) {
-      throw new ReplicationException("Could not check queues deleted with id=" + peerId, e);
-    }
-  }
+
 }
