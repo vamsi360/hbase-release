@@ -100,6 +100,7 @@ import org.apache.hadoop.hbase.master.handler.TableAddFamilyHandler;
 import org.apache.hadoop.hbase.master.handler.TableDeleteFamilyHandler;
 import org.apache.hadoop.hbase.master.handler.TableModifyFamilyHandler;
 import org.apache.hadoop.hbase.master.handler.TruncateTableHandler;
+import org.apache.hadoop.hbase.master.normalizer.NormalizationPlan;
 import org.apache.hadoop.hbase.master.normalizer.RegionNormalizer;
 import org.apache.hadoop.hbase.master.normalizer.RegionNormalizerChore;
 import org.apache.hadoop.hbase.master.normalizer.RegionNormalizerFactory;
@@ -1396,14 +1397,19 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
 
       Collections.shuffle(allEnabledTables);
 
-      for(TableName table : allEnabledTables) {
+      for (TableName table : allEnabledTables) {
         if (table.isSystemTable() || (getTableDescriptors().get(table) != null &&
-          !getTableDescriptors().get(table).isNormalizationEnabled())) {
+            !getTableDescriptors().get(table).isNormalizationEnabled())) {
           LOG.debug("Skipping normalization for table: " + table + ", as it's either system"
-            + " table or doesn't have auto normalization turned on");
+              + " table or doesn't have auto normalization turned on");
           continue;
         }
-        this.normalizer.computePlanForTable(table).execute(clusterConnection.getAdmin());
+        List<NormalizationPlan> plans = this.normalizer.computePlanForTable(table);
+        if (plans != null) {
+          for (NormalizationPlan plan : plans) {
+            plan.execute(clusterConnection.getAdmin());
+          }
+        }
       }
     }
     // If Region did not generate any plans, it means the cluster is already balanced.
