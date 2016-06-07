@@ -148,8 +148,6 @@ HBASE-15928 hbase backup delete command does not remove backup root dir from hdf
 HBASE-15931 Add log for long-running tasks in AsyncProcess (Yu Li)
 HBASE-15933 NullPointerException may be thrown from SimpleRegionNormalizer#getRegionSize()
 HBASE-15019 Replication stuck when HDFS is restarted (Matteo)
-HBASE-12769 Replication fails to delete all corresponding zk nodes when peer is removed (Jianwei)
-HBASE-15888 Extend HBASE-12769 for bulk load data replication (Ashish)
 HBASE-15972 hbase backup set command should not accept non-existing table
 HBASE-15899 HBase incremental restore should handle namespaces properly
 HBASE-15953 HBase backup set list command does not list any existing sets
