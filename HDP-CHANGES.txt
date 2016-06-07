@@ -106,3 +106,5 @@ HBASE-14606 TestSecureLoadIncrementalHFiles tests timed out in trunk build on ap
 HBASE-15066 Small improvements to Canary tool
 HBASE-14604 Improve MoveCostFunction in StochasticLoadBalancer (Guanghao Zhang)
 HBASE-15811 Batch Get after batch Put does not fetch all Cells We were not waiting on all executors in a batch to complete. The test for no-more-executors was damaged by the 0.99/0.98.4 fix "HBASE-11403 Fix race conditions around Object#notify"
+HBASE-15295 - MutateTableAccess.multiMutate() does not get high priority causing a deadlock (Enis)
+HBASE-15613 TestNamespaceCommand times out (Enis)
