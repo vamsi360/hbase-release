@@ -17,14 +17,8 @@
  *
  */
 
-#ifndef CORE_CONNECTION_ATTR_H_
-#define CORE_CONNECTION_ATTR_H_
+#pragma once
 
 #include "core/hbase_macros.h"
-#include "core/hbase_types.h"
 
-class ConnectionAttr {
-};
-
-#endif  // CORE_CONNECTION_ATTR_H_
-
+class ConnectionAttr {};

@@ -17,4 +17,4 @@
  *
  */
 
-#include "core/scanner.h"
+#include "scanner.h"

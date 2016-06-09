@@ -17,13 +17,47 @@
  *
  */
 
-#ifndef CORE_PUT_H_
-#define CORE_PUT_H_
+#pragma once
 
-#include "core/mutation.h"
+#include <cstring>
 
-class Put: public Mutation {
+#include <iostream>
+#include <map>
+#include <string>
+#include <vector>
+
+#include "bytes.h"
+#include "cell.h"
+#include "consistency.h"
+#include "hconstants.h"
+#include "mutation.h"
+#include "query.h"
+#include "return_codes.h"
+
+class Put : public Mutation {
  public:
-  ~Put();
+  virtual ~Put();
+  Put(const BYTE_ARRAY &row);
+  Put(const BYTE_ARRAY &row, const long &timestamp);
+  Put(const BYTE_ARRAY &row, const int &row_offset, const int &row_length);
+  Put(const BYTE_ARRAY &row, const int &row_offset, const int &row_length,
+      const long &ts);
+  Put(const Put &cPut);
+  Put& operator=(const Put &cPut);
+
+  Put& Add(const KeyValue &key_value);
+  Put& AddColumn(const BYTE_ARRAY &family, const BYTE_ARRAY &qualifier,
+              const BYTE_ARRAY &value);
+  Put& AddColumn(const BYTE_ARRAY &family, const BYTE_ARRAY &qualifier,
+                const long &ts, const BYTE_ARRAY &value);
+
+  int GetAcl(BYTE_ARRAY &attr_value);
+  Put& SetAcl(const std::string &user, Permission perms);
+  Put& SetAcl(const std::map<std::string, Permission> &perms);
+
+  const long GetTtl(BYTE_ARRAY &attr_value);
+  Put& SetTtl(const long &ttl);
+
+ int Get(const BYTE_ARRAY &family, const BYTE_ARRAY &qualifier,
+       std::vector<Cell> &cellList);
 };
-#endif  // CORE_PUT_H_

@@ -17,8 +17,7 @@
  *
  */
 
-#ifndef CORE_HBASE_MACROS_H_
-#define CORE_HBASE_MACROS_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,26 +34,23 @@ extern "C" {
  * this library, this compiler flag should not be used.
  */
 #if defined _WIN32 || defined __CYGWIN__
-  #ifdef _LIBHBASE_IMPLEMENTATION_
-      #define API __declspec(dllexport)
-  #else
-    #ifdef _LIBHBASE_TEST_
-      #define HBASE_API
-    #else
-      #define HBASE_API __declspec(dllimport)
-    #endif
-  #endif
+#ifdef _LIBHBASE_IMPLEMENTATION_
+#define API __declspec(dllexport)
 #else
-  #if __GNUC__ >= 4
-    #define HBASE_API __attribute__ ((visibility ("default")))
-  #else
-    #define HBASE_API
-  #endif
+#ifdef _LIBHBASE_TEST_
+#define HBASE_API
+#else
+#define HBASE_API __declspec(dllimport)
+#endif
+#endif
+#else
+#if __GNUC__ >= 4
+#define HBASE_API __attribute__((visibility("default")))
+#else
+#define HBASE_API
+#endif
 #endif
 
 #ifdef __cplusplus
-}  // extern "C"
-#endif  // __cplusplus
-
-#endif  // CORE_HBASE_MACROS_H_
-
+} // extern "C"
+#endif // __cplusplus

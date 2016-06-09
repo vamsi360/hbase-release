@@ -17,32 +17,64 @@
  *
  */
 
-#ifndef CORE_MUTATION_H_
-#define CORE_MUTATION_H_
+#pragma once
 
-#include <stdlib.h>
+#include <iostream>
+#include <string>
 
-#include "core/hbase_types.h"
+#include "bytes.h"
+#include "hconstants.h"
+#include "key_value.h"
+#include "operation_with_attributes.h"
+#include "permission.h"
+#include "return_codes.h"
 
-class Mutation {
-  char * name_space;
-  size_t name_space_length;
+using FAMILY_MAP = std::map<BYTE_ARRAY, std::vector<KeyValue>>;
 
-  char * table;
-  size_t table_length;
-
-  unsigned char * row;
-  size_t row_length;
-
-  hb_durability_type durability;
- public:
-  void set_namespace(char * name_space, size_t name_space_length);
-  void set_table(char * table, size_t table_length);
-  void set_row(unsigned char * row, size_t row_length);
-  void set_durability(hb_durability_type durability);
-
-  virtual ~Mutation();
+enum class DELETE_TYPE {
+  DELETE_ONE_VERSION,
+  DELETE_MULTIPLE_VERSIONS,
+  DELETE_FAMILY,
+  DELETE_FAMILY_VERSION
 };
-#endif  // CORE_MUTATION_H_
 
+class Mutation : public OperationWithAttributes {
 
+ public:
+
+  Mutation();
+  Mutation(const Mutation &cmutation);
+  Mutation& operator=(const Mutation &cmutation);
+  virtual ~Mutation();
+  int GetAcl(BYTE_ARRAY &attr_value);
+  Mutation SetAcl(const std::string &user, Permission perms);
+  Mutation SetAcl(const std::map<std::string, Permission> &perms);
+  const long GetTtl(BYTE_ARRAY &attr_value);
+  Mutation SetTtl(const long &ttl);
+  KeyValue *CreatePutKeyValue(const BYTE_ARRAY &family,
+                              const BYTE_ARRAY &qualifier, const long &ts,
+                              const BYTE_ARRAY &value);
+  const std::string GetRowAsString() const;
+  const FAMILY_MAP &GetFamilyMap() const;
+  void Display();
+  static ReturnCodes CheckRow(const BYTE_ARRAY &row);
+
+ protected:
+
+  BYTE_ARRAY row_;
+  long ts_;
+  HBaseConstants::DURABILITY_TYPE durability_;
+  FAMILY_MAP family_map_;
+
+ private:
+
+  /**
+   * The attribute for storing the list of clusters that have consumed the change.
+   */
+  static const std::string CONSUMED_CLUSTER_IDS;
+
+  /**
+   * The attribute for storing TTL for the result of the mutation.
+   */
+  static const std::string OP_ATTRIBUTE_TTL;
+};

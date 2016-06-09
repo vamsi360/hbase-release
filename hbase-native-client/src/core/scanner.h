@@ -17,9 +17,6 @@
  *
  */
 
-#ifndef CORE_SCANNER_H_
-#define CORE_SCANNER_H_
+#pragma once
 
-class Scanner {
-};
-#endif  // CORE_SCANNER_H_
+class Scanner {};

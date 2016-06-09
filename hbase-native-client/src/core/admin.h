@@ -17,9 +17,57 @@
  *
  */
 
-#ifndef CORE_ADMIN_H_
-#define CORE_ADMIN_H_
+#pragma once
+
+#include "connection.h"
+#include "rpc_client.h"
+#include "table_schema.h"
+
+const int sleep_betwee_statuschk = 400000;
+
+class Connection;
+
+namespace TableState{
+enum CurrentTableState{
+  ENABLED = 0,
+  DISABLED,
+  DISABLING,
+  ENABLING
+};
+
+enum CheckForTableState{
+  ISENABLED = 0,
+  ISDISABLED,
+  ISEXISTS
+};
+
+enum TableOperationStatus {
+  NOT_FOUND = 0,
+  RUNNING,
+  FINISHED
+};
+}
 
 class Admin {
+ public:
+  Admin ();
+  Admin (Connection *conn);
+  virtual ~Admin();
+
+  void CreateTable(TableSchema &table_schema);
+  void EnableTable(const std::string &table_name);
+  void DisableTable(const std::string &table_name);
+  void DeleteTable(const std::string &table_name);
+  bool TableExists(const std::string &table_name);
+  bool IsEnabledTable(const std::string &table_name);
+  bool IsDisabledTable(const std::string &table_name);
+  void CheckTableState(const std::string &table_name);
+  TableState::TableOperationStatus GetProcedureResponse(const int &procedure_id);
+  void ListTables(std::vector<TableSchema> &table_list, const std::string &reg_ex = "", const bool &include_sys_tables = false);
+  std::vector<TableSchema> &ListTables(const std::string &reg_ex = "", const bool &include_sys_tables = false);
+
+
+ private:
+  std::shared_ptr<RpcClient> rpc_client_;
+  Connection *connection_;
 };
-#endif  // CORE_ADMIN_H_

@@ -17,9 +17,7 @@
  *
  */
 
-#ifndef CORE_CLIENT_H_
-#define CORE_CLIENT_H_
+#pragma once
 
-class Client {
-};
-#endif  // CORE_CLIENT_H_
+
+class Client {};
