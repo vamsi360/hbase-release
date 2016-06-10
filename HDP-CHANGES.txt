@@ -151,3 +151,4 @@ HBASE-15019 Replication stuck when HDFS is restarted (Matteo)
 HBASE-15972 hbase backup set command should not accept non-existing table
 HBASE-15899 HBase incremental restore should handle namespaces properly
 HBASE-15953 HBase backup set list command does not list any existing sets
+HBASE-16007 Job's Configuration should be passed to TableMapReduceUtil#addDependencyJars() in WALPlayer
