@@ -34,6 +34,8 @@ import org.apache.hadoop.hbase.procedure2.store.ProcedureStoreTracker;
 import org.apache.hadoop.hbase.protobuf.generated.ProcedureProtos;
 import org.apache.hadoop.hbase.protobuf.generated.ProcedureProtos.ProcedureWALEntry;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+
 /**
  * Helper class that loads the procedures stored in a WAL
  */
@@ -87,7 +89,7 @@ public class ProcedureWALFormatReader {
             throw new CorruptedWALProcedureStoreException("Invalid entry: " + entry);
         }
       }
-    } catch (IOException e) {
+    } catch (InvalidProtocolBufferException e) {
       LOG.error("got an exception while reading the procedure WAL: " + log, e);
       loader.markCorruptedWAL(log, e);
     }

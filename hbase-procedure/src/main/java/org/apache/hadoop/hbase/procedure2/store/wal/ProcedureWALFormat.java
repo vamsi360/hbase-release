@@ -113,7 +113,7 @@ public final class ProcedureWALFormat {
    * |      offset     |-----+
    * +-----------------+
    */
-  public static void writeTrailer(FSDataOutputStream stream, ProcedureStoreTracker tracker)
+  public static long writeTrailer(FSDataOutputStream stream, ProcedureStoreTracker tracker)
       throws IOException {
     long offset = stream.getPos();
 
@@ -128,6 +128,7 @@ public final class ProcedureWALFormat {
     stream.write(TRAILER_VERSION);
     StreamUtils.writeLong(stream, TRAILER_MAGIC);
     StreamUtils.writeLong(stream, offset);
+    return stream.getPos() - offset;
   }
 
   public static ProcedureWALHeader readHeader(InputStream stream)

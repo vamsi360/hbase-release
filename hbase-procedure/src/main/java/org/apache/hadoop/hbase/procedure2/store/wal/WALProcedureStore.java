@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
+import org.apache.commons.collections.buffer.CircularFifoBuffer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -102,6 +103,10 @@ public class WALProcedureStore implements ProcedureStore {
   private final CopyOnWriteArrayList<ProcedureStoreListener> listeners =
     new CopyOnWriteArrayList<ProcedureStoreListener>();
 
+  private static final String STORE_WAL_SYNC_STATS_COUNT =
+      "hbase.procedure.store.wal.sync.stats.count";
+  private static final int DEFAULT_SYNC_STATS_COUNT = 10;
+
   private final LinkedList<ProcedureWALFile> logs = new LinkedList<ProcedureWALFile>();
   private final ProcedureStoreTracker storeTracker = new ProcedureStoreTracker();
   private final AtomicBoolean running = new AtomicBoolean(false);
@@ -139,6 +144,37 @@ public class WALProcedureStore implements ProcedureStore {
   private boolean useHsync;
   private int syncWaitMsec;
 
+  // Variables used for UI display
+  private CircularFifoBuffer syncMetricsBuffer;
+
+  public static class SyncMetrics {
+    private long timestamp;
+    private long syncWaitMs;
+    private long totalSyncedBytes;
+    private int syncedEntries;
+    private float syncedPerSec;
+
+    public long getTimestamp() {
+      return timestamp;
+    }
+
+    public long getSyncWaitMs() {
+      return syncWaitMs;
+    }
+
+    public long getTotalSyncedBytes() {
+      return totalSyncedBytes;
+    }
+
+    public long getSyncedEntries() {
+      return syncedEntries;
+    }
+
+    public float getSyncedPerSec() {
+      return syncedPerSec;
+    }
+  }
+
   public WALProcedureStore(final Configuration conf, final FileSystem fs, final Path logDir,
       final LeaseRecovery leaseRecovery) {
     this.fs = fs;
@@ -171,6 +207,10 @@ public class WALProcedureStore implements ProcedureStore {
     periodicRollMsec = conf.getInt(PERIODIC_ROLL_CONF_KEY, DEFAULT_PERIODIC_ROLL);
     syncWaitMsec = conf.getInt(SYNC_WAIT_MSEC_CONF_KEY, DEFAULT_SYNC_WAIT_MSEC);
     useHsync = conf.getBoolean(USE_HSYNC_CONF_KEY, DEFAULT_USE_HSYNC);
+
+    // WebUI
+    syncMetricsBuffer = new CircularFifoBuffer(
+      conf.getInt(STORE_WAL_SYNC_STATS_COUNT, DEFAULT_SYNC_STATS_COUNT));
 
     // Init sync thread
     syncThread = new Thread("WALProcedureStoreSyncThread") {
@@ -514,6 +554,7 @@ public class WALProcedureStore implements ProcedureStore {
   }
 
   private void syncLoop() throws Throwable {
+    long totalSyncedToStore = 0;
     inSync.set(false);
     lock.lock();
     try {
@@ -538,23 +579,37 @@ public class WALProcedureStore implements ProcedureStore {
               continue;
             }
           }
-
           // Wait SYNC_WAIT_MSEC or the signal of "slots full" before flushing
-          long syncWaitSt = System.currentTimeMillis();
+          final long syncWaitSt = System.currentTimeMillis();
           if (slotIndex != slots.length) {
             slotCond.await(syncWaitMsec, TimeUnit.MILLISECONDS);
           }
-          long syncWaitMs = System.currentTimeMillis() - syncWaitSt;
+
+          final long currentTs = System.currentTimeMillis();
+          final long syncWaitMs = currentTs - syncWaitSt;
+          final float rollSec = getMillisFromLastRoll() / 1000.0f;
+          final float syncedPerSec = totalSyncedToStore / rollSec;
           if (LOG.isTraceEnabled() && (syncWaitMs > 10 || slotIndex < slots.length)) {
-            float rollSec = getMillisFromLastRoll() / 1000.0f;
             LOG.trace(String.format("Sync wait %s, slotIndex=%s , totalSynced=%s (%s/sec)",
                       StringUtils.humanTimeDiff(syncWaitMs), slotIndex,
-                      StringUtils.humanSize(totalSynced.get()),
-                      StringUtils.humanSize(totalSynced.get() / rollSec)));
+                      StringUtils.humanSize(totalSyncedToStore),
+                      StringUtils.humanSize(syncedPerSec)));
           }
 
+          // update webui circular buffers (TODO: get rid of allocations)
+          final SyncMetrics syncMetrics = new SyncMetrics();
+          syncMetrics.timestamp = currentTs;
+          syncMetrics.syncWaitMs = syncWaitMs;
+          syncMetrics.syncedEntries = slotIndex;
+          syncMetrics.totalSyncedBytes = totalSyncedToStore;
+          syncMetrics.syncedPerSec = syncedPerSec;
+          syncMetricsBuffer.add(syncMetrics);
+
+          // sync
           inSync.set(true);
-          totalSynced.addAndGet(syncSlots());
+          long slotSize = syncSlots();
+          logs.getLast().addToSize(slotSize);
+          totalSyncedToStore = totalSynced.addAndGet(slotSize);
           slotIndex = 0;
           inSync.set(false);
         } catch (InterruptedException e) {
@@ -569,6 +624,15 @@ public class WALProcedureStore implements ProcedureStore {
           syncCond.signalAll();
         }
       }
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  public ArrayList<SyncMetrics> getSyncMetrics() {
+    lock.lock();
+    try {
+      return new ArrayList<SyncMetrics>(syncMetricsBuffer);
     } finally {
       lock.unlock();
     }
@@ -668,14 +732,14 @@ public class WALProcedureStore implements ProcedureStore {
     }
   }
 
-  private long getMillisToNextPeriodicRoll() {
+  public long getMillisToNextPeriodicRoll() {
     if (lastRollTs.get() > 0 && periodicRollMsec > 0) {
       return periodicRollMsec - getMillisFromLastRoll();
     }
     return Long.MAX_VALUE;
   }
 
-  private long getMillisFromLastRoll() {
+  public long getMillisFromLastRoll() {
     return (System.currentTimeMillis() - lastRollTs.get());
   }
 
@@ -782,8 +846,9 @@ public class WALProcedureStore implements ProcedureStore {
     stream = newStream;
     flushLogId = logId;
     totalSynced.set(0);
-    lastRollTs.set(System.currentTimeMillis());
-    logs.add(new ProcedureWALFile(fs, newLogFile, header, startPos));
+    long rollTs = System.currentTimeMillis();
+    lastRollTs.set(rollTs);
+    logs.add(new ProcedureWALFile(fs, newLogFile, header, startPos, rollTs));
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Roll new state log: " + logId);
@@ -797,7 +862,8 @@ public class WALProcedureStore implements ProcedureStore {
         try {
           ProcedureWALFile log = logs.getLast();
           log.setProcIds(storeTracker.getUpdatedMinProcId(), storeTracker.getUpdatedMaxProcId());
-          ProcedureWALFormat.writeTrailer(stream, storeTracker);
+          long trailerSize = ProcedureWALFormat.writeTrailer(stream, storeTracker);
+          log.addToSize(trailerSize);
         } catch (IOException e) {
           LOG.warn("Unable to write the trailer: " + e.getMessage());
         }
