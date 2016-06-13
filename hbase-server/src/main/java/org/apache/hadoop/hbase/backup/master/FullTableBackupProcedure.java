@@ -241,10 +241,6 @@ public class FullTableBackupProcedure
     LOG.error(msg + getMessage(e), e);
     // If this is a cancel exception, then we've already cleaned.
 
-    if (backupInfo.getState().equals(BackupState.CANCELLED)) {
-      return;
-    }
-
     // set the failure timestamp of the overall backup
     backupInfo.setEndTs(EnvironmentEdgeManager.currentTime());
 
@@ -288,11 +284,6 @@ public class FullTableBackupProcedure
 
     // set overall backup phase: snapshot_copy
     backupInfo.setPhase(BackupPhase.SNAPSHOTCOPY);
-
-    // avoid action if has been cancelled
-    if (backupInfo.isCancelled()) {
-      return;
-    }
 
     // call ExportSnapshot to copy files based on hbase snapshot for backup
     // ExportSnapshot only support single snapshot export, need loop for multiple tables case
@@ -339,11 +330,6 @@ public class FullTableBackupProcedure
       BackupType type, Configuration conf) throws IOException, BackupException {
     // set the overall backup phase : store manifest
     backupInfo.setPhase(BackupPhase.STORE_MANIFEST);
-
-    // avoid action if has been cancelled
-    if (backupInfo.isCancelled()) {
-      return;
-    }
 
     BackupManifest manifest;
 
@@ -684,6 +670,13 @@ public class FullTableBackupProcedure
     sb.append(getClass().getSimpleName());
     sb.append(" (targetRootDir=");
     sb.append(targetRootDir);
+    sb.append("; backupId=").append(backupId);
+    sb.append("; tables=");
+    int len = tableList.size();
+    for (int i = 0; i < len-1; i++) {
+      sb.append(tableList.get(i)).append(",");
+    }
+    sb.append(tableList.get(len-1));
     sb.append(")");
   }
 
