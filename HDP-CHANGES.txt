@@ -154,3 +154,4 @@ HBASE-15953 HBase backup set list command does not list any existing sets
 HBASE-16007 Job's Configuration should be passed to TableMapReduceUtil#addDependencyJars() in WALPlayer
 HBASE-16006 FileSystem should be obtained from specified path in WALInputFormat#getSplits()
 HBASE-15142 Procedure v2 - Basic WebUI listing the procedures (Matteo)
+HBASE-15144 Procedure v2 - Web UI displaying Store state
