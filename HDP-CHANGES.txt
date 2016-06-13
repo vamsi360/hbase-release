@@ -120,7 +120,6 @@ HBASE-15622 Superusers does not consider the keytab credentials (Matteo)
 HBASE-15325 ResultScanner allowing partial result will miss the rest of the row if the region is moved between two rpc requests (Phil)
 HBASE-15665 Support using different StoreFileComparators for different CompactionPolicies (Duo Zhang)
 HBASE-15430 Failed taking snapshot - Manifest proto-message too large (JunHo Cho)
-HBASE-15406 Split / merge switch left disabled after early termination of hbck (Heng Chen)
 HBASE-15679 Assertion on wrong variable in TestReplicationThrottler#testThrottling
 HBASE-15669 HFile size is not considered correctly in a replication request (Ashish)
 HBASE-14252 RegionServers fail to start when setting hbase.ipc.server.callqueue.scan.ratio to 0
