@@ -29,6 +29,7 @@ HBASE-15221 Reload the cache on re-tried puts in HTableMultiplexer and adds a cl
 HBASE-15232 Handle region location cache mgmt in AsyncProcess for multi()'s
 HBASE-15518 Add per-table metrics
 HBASE-15519 Add per-user metrics
+HBASE-14850 C++ client implementation (TECH PREVIEW. DO NOT DEPLOY IN PROD)
 
 Following are the changes on top of Apache HBase 1.1.1
 
