@@ -157,3 +157,4 @@ HBASE-16006 FileSystem should be obtained from specified path in WALInputFormat#
 HBASE-15142 Procedure v2 - Basic WebUI listing the procedures (Matteo)
 HBASE-15144 Procedure v2 - Web UI displaying Store state
 HBASE-15862 Backup - Delete- Restore does not restore deleted data
+HBASE-15971 Regression: Random Read/WorkloadC slower in 1.x than 0.98 (Stack)
