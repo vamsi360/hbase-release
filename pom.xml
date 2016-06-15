@@ -1218,6 +1218,7 @@
     <jcodings.version>1.0.8</jcodings.version>
     <spy.version>2.11.6</spy.version>
     <bouncycastle.version>1.46</bouncycastle.version>
+    <kerby.version>1.0.0-RC2</kerby.version>
     <!-- Plugin Dependencies -->
     <maven.assembly.version>2.4</maven.assembly.version>
     <maven.antrun.version>1.6</maven.antrun.version>
@@ -1777,6 +1778,16 @@
        <artifactId>bcprov-jdk16</artifactId>
        <version>${bouncycastle.version}</version>
        <scope>test</scope>
+     </dependency>
+     <dependency>
+       <groupId>org.apache.kerby</groupId>
+       <artifactId>kerb-client</artifactId>
+       <version>${kerby.version}</version>
+     </dependency>
+     <dependency>
+       <groupId>org.apache.kerby</groupId>
+       <artifactId>kerb-simplekdc</artifactId>
+       <version>${kerby.version}</version>
      </dependency>
     </dependencies>
   </dependencyManagement>

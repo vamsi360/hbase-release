@@ -74,6 +74,15 @@ public class InfoServer {
         c.get("ssl.server.truststore.password"),
         c.get("ssl.server.truststore.type", "jks"));
     }
+    // Enable SPNEGO authentication
+    if ("kerberos".equalsIgnoreCase(c.get(HttpServer.HTTP_UI_AUTHENTICATION, null))) {
+      builder.setUsernameConfKey(HttpServer.HTTP_SPNEGO_AUTHENTICATION_PRINCIPAL_KEY)
+        .setKeytabConfKey(HttpServer.HTTP_SPNEGO_AUTHENTICATION_KEYTAB_KEY)
+        .setKerberosNameRulesKey(HttpServer.HTTP_SPNEGO_AUTHENTICATION_KRB_NAME_KEY)
+        .setSignatureSecretFileKey(
+            HttpServer.HTTP_AUTHENTICATION_SIGNATURE_SECRET_FILE_KEY)
+        .setSecurityEnabled(true);
+    }
     this.httpServer = builder.build();
   }
 
