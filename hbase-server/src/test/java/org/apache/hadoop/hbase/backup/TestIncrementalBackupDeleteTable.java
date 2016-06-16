@@ -50,11 +50,10 @@ import com.google.common.collect.Lists;
  *  6  Incremental backup t1
  */
 @Category(LargeTests.class)
-public class TestIncrementalBackupDelete extends TestBackupBase {
-  private static final Log LOG = LogFactory.getLog(TestIncrementalBackupDelete.class);
-  //implement all test cases in 1 test since incremental backup/restore has dependencies
+public class TestIncrementalBackupDeleteTable extends TestBackupBase {
+  private static final Log LOG = LogFactory.getLog(TestIncrementalBackupDeleteTable.class);
   @Test
-  public void TestIncBackupRestore() throws Exception {
+  public void TestIncBackupDeleteTable() throws Exception {
     // #1 - create full backup for all tables
     LOG.info("create full backup image for all tables");
 
