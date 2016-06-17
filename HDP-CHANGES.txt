@@ -160,3 +160,4 @@ HBASE-15144 Procedure v2 - Web UI displaying Store state
 HBASE-15862 Backup - Delete- Restore does not restore deleted data
 HBASE-15971 Regression: Random Read/WorkloadC slower in 1.x than 0.98 (Stack)
 HBASE-16045 endtime argument for VerifyReplication was incorrectly specified in usage
+HBASE-16048 Tag InternalScanner with LimitedPrivate(HBaseInterfaceAudience.COPROC)
