@@ -56,13 +56,14 @@ public class TestBackupDeleteRestore extends TestBackupBase {
       table.delete(delete);
       hba.flush(table1);
     }   
-        
+    int numRowsAfterDelete = TEST_UTIL.countRows(table1);
+    assertTrue(numRowsAfterDelete == numRows -1);
+    
     TableName[] tableset = new TableName[] { table1 };
     TableName[] tablemap = null;//new TableName[] { table1_restore };
     BackupAdmin client = getBackupAdmin();
     client.restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, false, true, tableset, tablemap, true));
-    
-    
+        
     int numRowsAfterRestore = TEST_UTIL.countRows(table1);
     assertEquals( numRows, numRowsAfterRestore);    
     hba.close();
