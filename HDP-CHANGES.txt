@@ -163,3 +163,4 @@ HBASE-16045 endtime argument for VerifyReplication was incorrectly specified in 
 HBASE-16048 Tag InternalScanner with LimitedPrivate(HBaseInterfaceAudience.COPROC)
 HBASE-14805 status should show the master in shell (Enis)
 HBASE-16059 Region normalizer fails to trigger merge action where one of the regions is empty
+HBASE-16064 delete backup command shows HDFS permission error when deleting the intended backup
