@@ -165,3 +165,4 @@ HBASE-14805 status should show the master in shell (Enis)
 HBASE-16059 Region normalizer fails to trigger merge action where one of the regions is empty
 HBASE-16064 delete backup command shows HDFS permission error when deleting the intended backup
 HBASE-15465 userPermission returned by getUserPermission() for the selected namespace does not have namespace set (li xiang)
+HBASE-14818 user_permission does not list namespace permissions (li xiang)
