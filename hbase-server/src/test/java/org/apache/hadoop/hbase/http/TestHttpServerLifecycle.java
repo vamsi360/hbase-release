@@ -17,8 +17,10 @@
  */
 package org.apache.hadoop.hbase.http;
 
-import org.apache.hadoop.hbase.testclassification.SmallTests;
+import org.apache.log4j.Logger;
 import org.junit.Test;
+import org.junit.Ignore;
+import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.experimental.categories.Category;
 
 @Category(SmallTests.class)
@@ -44,12 +46,14 @@ public class TestHttpServerLifecycle extends HttpServerFunctionalTest {
    *
    * @throws Throwable on failure
    */
-  @Test public void testCreatedServerIsNotAlive() throws Throwable {
+  @Ignore ("Hangs on occasion; see HBASE-14430") @Test(timeout=60000)
+  public void testCreatedServerIsNotAlive() throws Throwable {
     HttpServer server = createTestServer();
     assertNotLive(server);
   }
 
-  @Test public void testStopUnstartedServer() throws Throwable {
+  @Ignore ("Hangs on occasion; see HBASE-14430") @Test(timeout=60000)
+  public void testStopUnstartedServer() throws Throwable {
     HttpServer server = createTestServer();
     stop(server);
   }
@@ -59,7 +63,7 @@ public class TestHttpServerLifecycle extends HttpServerFunctionalTest {
    *
    * @throws Throwable on failure
    */
-  @Test
+  @Ignore ("Hangs on occasion; see HBASE-14430") @Test(timeout=60000)
   public void testStartedServerIsAlive() throws Throwable {
     HttpServer server = null;
     server = createTestServer();
@@ -85,7 +89,8 @@ public class TestHttpServerLifecycle extends HttpServerFunctionalTest {
    *
    * @throws Throwable on failure
    */
-  @Test public void testStoppedServerIsNotAlive() throws Throwable {
+  @Ignore ("Hangs on occasion; see HBASE-14430") @Test(timeout=60000)
+  public void testStoppedServerIsNotAlive() throws Throwable {
     HttpServer server = createAndStartTestServer();
     assertAlive(server);
     stop(server);
@@ -97,7 +102,8 @@ public class TestHttpServerLifecycle extends HttpServerFunctionalTest {
    *
    * @throws Throwable on failure
    */
-  @Test public void testStoppingTwiceServerIsAllowed() throws Throwable {
+  @Ignore ("Hangs on occasion; see HBASE-14430") @Test(timeout=60000)
+  public void testStoppingTwiceServerIsAllowed() throws Throwable {
     HttpServer server = createAndStartTestServer();
     assertAlive(server);
     stop(server);
@@ -112,7 +118,7 @@ public class TestHttpServerLifecycle extends HttpServerFunctionalTest {
    * @throws Throwable
    *           on failure
    */
-  @Test
+  @Ignore ("Hangs on occasion; see HBASE-14430") @Test(timeout=60000)
   public void testWepAppContextAfterServerStop() throws Throwable {
     HttpServer server = null;
     String key = "test.attribute.key";
