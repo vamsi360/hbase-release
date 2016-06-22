@@ -32,6 +32,44 @@ HBASE-15518 Add per-table metrics
 HBASE-15519 Add per-user metrics
 HBASE-14850 C++ client implementation (TECH PREVIEW. DO NOT DEPLOY IN PROD)
 HBASE-5291 Add Kerberos HTTP SPNEGO authentication support to HBase web consoles
+HBASE-15752 ClassNotFoundException is encountered when custom WAL codec is not found in WALPlayer job
+HBASE-14667 HBaseFsck constructors have diverged (Matteo)
+HBASE-15292 Refined ZooKeeperWatcher to prevent ZooKeeper's callback while construction (Hiroshi Ikeda)
+HBASE-15767 upgrade httpclient to 4.3.6
+HBASE-15817 Backup history should mention the type (full or incremental) of the backup
+HBASE-15808 Reduce potential bulk load intermediate space usage and waste (Jerry He)
+HBASE-15842 SnapshotInfo should display ownership information
+HBASE-15858 Some region server group shell commands don't work
+HBASE-15880 RpcClientImpl#tracedWriteRequest incorrectly closes HTrace span (Mikhail)
+HBASE-14906 Improvements on FlushLargeStoresPolicy (Yu Li)
+HBASE-15873 ACL for snapshot restore / clone is not enforced
+HBASE-14655 Narrow the scope of doAs() calls to region observer notifications for compaction
+HBASE-15884 NPE in StoreFileScanner#skipKVsNewerThanReadpoint during reverse scan (Sergey Soldatov)
+HBASE-15904 Use comma as separator for list of tables in BackupInfo
+HBASE-14123 HBase Backup/Restore Phase 2
+HBASE-14140 HBase Backup Admin API
+HBASE-15861 Add support for table sets in restore operation 
+HBASE-15928 hbase backup delete command does not remove backup root dir from hdfs
+HBASE-15931 Add log for long-running tasks in AsyncProcess (Yu Li)
+HBASE-15933 NullPointerException may be thrown from SimpleRegionNormalizer#getRegionSize()
+HBASE-15019 Replication stuck when HDFS is restarted (Matteo)
+HBASE-15972 hbase backup set command should not accept non-existing table
+HBASE-15899 HBase incremental restore should handle namespaces properly
+HBASE-15953 HBase backup set list command does not list any existing sets
+HBASE-16007 Job's Configuration should be passed to TableMapReduceUtil#addDependencyJars() in WALPlayer
+HBASE-16006 FileSystem should be obtained from specified path in WALInputFormat#getSplits()
+HBASE-15142 Procedure v2 - Basic WebUI listing the procedures (Matteo)
+HBASE-15144 Procedure v2 - Web UI displaying Store state
+HBASE-15862 Backup - Delete- Restore does not restore deleted data
+HBASE-15971 Regression: Random Read/WorkloadC slower in 1.x than 0.98 (Stack)
+HBASE-16045 endtime argument for VerifyReplication was incorrectly specified in usage
+HBASE-16048 Tag InternalScanner with LimitedPrivate(HBaseInterfaceAudience.COPROC)
+HBASE-14805 status should show the master in shell (Enis)
+HBASE-16059 Region normalizer fails to trigger merge action where one of the regions is empty
+HBASE-16064 delete backup command shows HDFS permission error when deleting the intended backup
+HBASE-15465 userPermission returned by getUserPermission() for the selected namespace does not have namespace set (li xiang)
+HBASE-14818 user_permission does not list namespace permissions (li xiang)
+HBASE-16062 Improper error handling in WAL Reader/Writer creation (Vladimir Rodionov)
 
 Following are the changes on top of Apache HBase 1.1.1
 
@@ -129,41 +167,3 @@ HBASE-15719 TestMasterCoprocessorExceptionWithAbort#testExceptionFromCoprocessor
 HBASE-15707 ImportTSV bulk output does not support tags with hfile.format.version=3 (huaxiang sun)
 HBASE-15676 FuzzyRowFilter fails and matches all the rows in the table if the mask consists of all 0s (Matt Warhaftig)
 HBASE-13590 TestEnableTableHandler.testEnableTableWithNoRegionServers is flakey
-HBASE-15752 ClassNotFoundException is encountered when custom WAL codec is not found in WALPlayer job
-HBASE-14667 HBaseFsck constructors have diverged (Matteo)
-HBASE-15292 Refined ZooKeeperWatcher to prevent ZooKeeper's callback while construction (Hiroshi Ikeda)
-HBASE-15767 upgrade httpclient to 4.3.6
-HBASE-15817 Backup history should mention the type (full or incremental) of the backup
-HBASE-15808 Reduce potential bulk load intermediate space usage and waste (Jerry He)
-HBASE-15842 SnapshotInfo should display ownership information
-HBASE-15858 Some region server group shell commands don't work
-HBASE-15880 RpcClientImpl#tracedWriteRequest incorrectly closes HTrace span (Mikhail)
-HBASE-14906 Improvements on FlushLargeStoresPolicy (Yu Li)
-HBASE-15873 ACL for snapshot restore / clone is not enforced
-HBASE-14655 Narrow the scope of doAs() calls to region observer notifications for compaction
-HBASE-15884 NPE in StoreFileScanner#skipKVsNewerThanReadpoint during reverse scan (Sergey Soldatov)
-HBASE-15904 Use comma as separator for list of tables in BackupInfo
-HBASE-14123 HBase Backup/Restore Phase 2
-HBASE-14140 HBase Backup Admin API
-HBASE-15861 Add support for table sets in restore operation 
-HBASE-15928 hbase backup delete command does not remove backup root dir from hdfs
-HBASE-15931 Add log for long-running tasks in AsyncProcess (Yu Li)
-HBASE-15933 NullPointerException may be thrown from SimpleRegionNormalizer#getRegionSize()
-HBASE-15019 Replication stuck when HDFS is restarted (Matteo)
-HBASE-15972 hbase backup set command should not accept non-existing table
-HBASE-15899 HBase incremental restore should handle namespaces properly
-HBASE-15953 HBase backup set list command does not list any existing sets
-HBASE-16007 Job's Configuration should be passed to TableMapReduceUtil#addDependencyJars() in WALPlayer
-HBASE-16006 FileSystem should be obtained from specified path in WALInputFormat#getSplits()
-HBASE-15142 Procedure v2 - Basic WebUI listing the procedures (Matteo)
-HBASE-15144 Procedure v2 - Web UI displaying Store state
-HBASE-15862 Backup - Delete- Restore does not restore deleted data
-HBASE-15971 Regression: Random Read/WorkloadC slower in 1.x than 0.98 (Stack)
-HBASE-16045 endtime argument for VerifyReplication was incorrectly specified in usage
-HBASE-16048 Tag InternalScanner with LimitedPrivate(HBaseInterfaceAudience.COPROC)
-HBASE-14805 status should show the master in shell (Enis)
-HBASE-16059 Region normalizer fails to trigger merge action where one of the regions is empty
-HBASE-16064 delete backup command shows HDFS permission error when deleting the intended backup
-HBASE-15465 userPermission returned by getUserPermission() for the selected namespace does not have namespace set (li xiang)
-HBASE-14818 user_permission does not list namespace permissions (li xiang)
-HBASE-16062 Improper error handling in WAL Reader/Writer creation (Vladimir Rodionov)
