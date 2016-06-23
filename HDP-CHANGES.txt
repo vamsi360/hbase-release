@@ -71,6 +71,7 @@ HBASE-15465 userPermission returned by getUserPermission() for the selected name
 HBASE-14818 user_permission does not list namespace permissions (li xiang)
 HBASE-16062 Improper error handling in WAL Reader/Writer creation (Vladimir Rodionov)
 HBASE-16012 Major compaction can't work due to obsolete scanner read point in RegionServer (Guanghao Zhang)
+HBASE-16088 hbase restore gives a misleading message if the table doesn't exist
 
 Following are the changes on top of Apache HBase 1.1.1
 
