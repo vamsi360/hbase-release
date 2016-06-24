@@ -239,7 +239,7 @@ public class ThriftServer {
     log.info("starting HBase HsHA Thrift server on " + inetSocketAddress.toString());
     THsHaServer.Args serverArgs = new THsHaServer.Args(serverTransport);
     ExecutorService executorService = createExecutor(
-        serverArgs.getWorkerThreads(), metrics);
+        serverArgs.getMinWorkerThreads(), serverArgs.getMaxWorkerThreads(), metrics);
     serverArgs.executorService(executorService);
     serverArgs.processor(processor);
     serverArgs.transportFactory(transportFactory);
@@ -248,13 +248,13 @@ public class ThriftServer {
   }
 
   private static ExecutorService createExecutor(
-      int workerThreads, ThriftMetrics metrics) {
+      int minWorkers, int maxWorkers, ThriftMetrics metrics) {
     CallQueue callQueue = new CallQueue(
         new LinkedBlockingQueue<Call>(), metrics);
     ThreadFactoryBuilder tfb = new ThreadFactoryBuilder();
     tfb.setDaemon(true);
     tfb.setNameFormat("thrift2-worker-%d");
-    return new ThreadPoolExecutor(workerThreads, workerThreads,
+    return new ThreadPoolExecutor(minWorkers, maxWorkers,
             Long.MAX_VALUE, TimeUnit.SECONDS, callQueue, tfb.build());
   }
 
