@@ -62,7 +62,7 @@ public class TestBackupDeleteRestore extends TestBackupBase {
     TableName[] tableset = new TableName[] { table1 };
     TableName[] tablemap = null;//new TableName[] { table1_restore };
     BackupAdmin client = getBackupAdmin();
-    client.restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, false, true, tableset, tablemap, true));
+    client.restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, true, tableset, tablemap, true));
         
     int numRowsAfterRestore = TEST_UTIL.countRows(table1);
     assertEquals( numRows, numRowsAfterRestore);    
