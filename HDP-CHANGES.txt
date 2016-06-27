@@ -75,6 +75,8 @@ HBASE-16088 hbase restore gives a misleading message if the table doesn't exist
 HBASE-14172 Upgrade existing thrift binding using thrift 0.9.3 compiler (Josh Elser)
 HBASE-16037 Backup/Restore: Make automatic mode default one (Vladimir Rodionov)
 HBASE-16065 hbase backup set describe command does not inform if the set does not exist (Vladimir Rodionov)
+HBASE-16052 Improve HBaseFsck Scalability (Ben Lau)
+
 Following are the changes on top of Apache HBase 1.1.1
 
 HBASE-14468 Compaction improvements: FIFO compaction policy (Vladimir Rodionov)
