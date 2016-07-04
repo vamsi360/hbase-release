@@ -77,6 +77,7 @@ HBASE-14172 Upgrade existing thrift binding using thrift 0.9.3 compiler (Josh El
 HBASE-16037 Backup/Restore: Make automatic mode default one (Vladimir Rodionov)
 HBASE-16065 hbase backup set describe command does not inform if the set does not exist (Vladimir Rodionov)
 HBASE-16052 Improve HBaseFsck Scalability (Ben Lau)
+HBASE-16132 Scan does not return all the result when regionserver is busy (binlijin)
 
 Following are the changes on top of Apache HBase 1.1.1
 
