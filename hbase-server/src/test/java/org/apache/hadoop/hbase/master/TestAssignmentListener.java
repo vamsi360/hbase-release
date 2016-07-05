@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -183,7 +184,7 @@ public class TestAssignmentListener {
     }
   }
 
-  @Test(timeout=60000)
+  @Ignore @Test(timeout=60000)
   public void testAssignmentListener() throws IOException, InterruptedException {
     AssignmentManager am = TEST_UTIL.getHBaseCluster().getMaster().getAssignmentManager();
     Admin admin = TEST_UTIL.getHBaseAdmin();
