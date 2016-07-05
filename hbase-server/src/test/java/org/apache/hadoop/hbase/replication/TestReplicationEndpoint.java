@@ -45,6 +45,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -123,7 +124,7 @@ public class TestReplicationEndpoint extends TestReplicationBase {
     admin.removePeer("testCustomReplicationEndpoint");
   }
 
-  @Test (timeout=120000)
+  @Ignore @Test (timeout=120000)
   public void testReplicationEndpointReturnsFalseOnReplicate() throws Exception {
     Assert.assertEquals(0, ReplicationEndpointForTest.replicateCount.get());
     Assert.assertTrue(!ReplicationEndpointReturningFalse.replicated.get());
