@@ -933,10 +933,10 @@ class AsyncProcess {
     private void manageLocationError(Action<Row> action, Exception ex) {
       String msg = "Cannot get replica " + action.getReplicaId()
           + " location for " + action.getAction();
-      LOG.error(msg);
       if (ex == null) {
         ex = new IOException(msg);
       }
+      LOG.error(msg, ex);
       manageError(action.getOriginalIndex(), action.getAction(),
           Retry.NO_LOCATION_PROBLEM, ex, null);
     }
