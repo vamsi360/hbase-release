@@ -879,6 +879,9 @@ class AsyncProcess {
             }
             unknownReplicaActions.add(action);
           } else {
+            if (LOG.isInfoEnabled()) {
+              LOG.info("Failed to find location: " + loc + " for replica: " + action.getReplicaId() + " and action: " + action.getAction());
+            }
             // TODO: relies on primary location always being fetched
             manageLocationError(action, null);
           }
@@ -924,6 +927,9 @@ class AsyncProcess {
         loc = locs.getRegionLocation(replicaId);
       }
       if (loc == null || loc.getServerName() == null) {
+        if (LOG.isInfoEnabled()) {
+          LOG.info("Failed to find location: " + loc + " for replica: " + replicaId + " and action: " + action.getAction());
+        }
         manageLocationError(action, null);
         return null;
       }
@@ -934,7 +940,10 @@ class AsyncProcess {
       String msg = "Cannot get replica " + action.getReplicaId()
           + " location for " + action.getAction();
       if (ex == null) {
+        LOG.error(msg);
         ex = new IOException(msg);
+      } else {
+        LOG.error(msg, ex);
       }
       LOG.error(msg, ex);
       manageError(action.getOriginalIndex(), action.getAction(),
