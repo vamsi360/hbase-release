@@ -203,7 +203,7 @@ public class IntegrationTestBulkLoad extends IntegrationTestBase {
     HTableDescriptor desc = admin.getTableDescriptor(t);
     desc.addCoprocessor(SlowMeCoproScanOperations.class.getName());
     HBaseTestingUtility.modifyTableSync(admin, desc);
-    //sleep for sometime. Hope is that the regions are closed/opened before 
+    //sleep for sometime. Hope is that the regions are closed/opened before
     //the sleep returns. TODO: do this better
     Thread.sleep(30000);
   }
@@ -288,7 +288,7 @@ public class IntegrationTestBulkLoad extends IntegrationTestBase {
         Admin admin = conn.getAdmin();
         Table table = conn.getTable(getTablename());
         RegionLocator regionLocator = conn.getRegionLocator(getTablename())) {
-      
+
       // Configure the partitioner and other things needed for HFileOutputFormat.
       HFileOutputFormat2.configureIncrementalLoad(job, table.getTableDescriptor(), regionLocator);
 
@@ -657,13 +657,15 @@ public class IntegrationTestBulkLoad extends IntegrationTestBase {
     }
 
     private static void logError(String msg, Context context) throws IOException {
-      HBaseTestingUtility util = new HBaseTestingUtility(context.getConfiguration());
       TableName table = getTableName(context.getConfiguration());
 
       LOG.error("Failure in chain verification: " + msg);
-      LOG.error("cluster status:\n" + util.getHBaseClusterInterface().getClusterStatus());
-      LOG.error("table regions:\n"
-          + Joiner.on("\n").join(util.getHBaseAdmin().getTableRegions(table)));
+      try (Connection connection = ConnectionFactory.createConnection(context.getConfiguration());
+          Admin admin = connection.getAdmin()) {
+        LOG.error("cluster status:\n" + admin.getClusterStatus());
+        LOG.error("table regions:\n"
+            + Joiner.on("\n").join(admin.getTableRegions(table)));
+      }
     }
   }
 
