@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.regionserver;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.commons.logging.Log;
@@ -30,6 +31,10 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.executor.ExecutorType;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.client.Admin;
@@ -67,7 +72,29 @@ public class TestRegionOpen {
     ThreadPoolExecutor exec = getRS().getExecutorService()
         .getExecutorThreadPool(ExecutorType.RS_OPEN_PRIORITY_REGION);
 
-    assertEquals(1, exec.getCompletedTaskCount()); // namespace region
+    try (Connection connection = ConnectionFactory.createConnection(HTU.getConfiguration())) {
+      // Make sure the backup and namespace table both exist
+      while (!connection.getAdmin().tableExists(TableName.NAMESPACE_TABLE_NAME)) {
+        Thread.sleep(500);
+      }
+      LOG.debug("Namespace table exists");
+      while (!connection.getAdmin().tableExists(TableName.BACKUP_TABLE_NAME)) {
+        Thread.sleep(500);
+      }
+      LOG.debug("Backup table exists");
+
+      try (Table namespaceTable = connection.getTable(TableName.NAMESPACE_TABLE_NAME);
+          Table backupTable = connection.getTable(TableName.BACKUP_TABLE_NAME)) {
+        // Read both the namespace and backup tables to make sure they're online. Otherwise, we have
+        // a race condition about how many tasks we have executed via the priority handler.
+        countTable(namespaceTable);
+        LOG.debug("Read namespace table");
+        countTable(backupTable);
+        LOG.debug("Read backup table");
+      }
+    }
+
+    assertEquals(2, exec.getCompletedTaskCount()); // hbase:namespace and hbase:backup region
 
     HTableDescriptor htd = new HTableDescriptor(tableName);
     htd.setPriority(HConstants.HIGH_QOS);
@@ -77,6 +104,16 @@ public class TestRegionOpen {
       admin.createTable(htd);
     }
 
-    assertEquals(2, exec.getCompletedTaskCount());
+    assertEquals(3, exec.getCompletedTaskCount());
+  }
+
+  private void countTable(Table t) throws IOException {
+    try (ResultScanner s = t.getScanner(new Scan())) {
+      int count = 0;
+      for (@SuppressWarnings("unused") Result r : s) {
+        count++;
+      }
+      LOG.debug("Saw " + count + " Results from scanner for table " + t.getName());
+    }
   }
 }
