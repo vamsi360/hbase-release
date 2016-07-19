@@ -100,7 +100,9 @@
 
         <%for HRegionInfo r: onlineRegions %>
         <tr>
-            <td><% r.getRegionNameAsString() %></td>
+            <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+                <% r.getRegionNameAsString() %></a>
+            </td>
             <td><% Bytes.toStringBinary(r.getStartKey()) %></td>
             <td><% Bytes.toStringBinary(r.getEndKey()) %></td>
             <td><% r.getReplicaId() %></td>
@@ -126,7 +128,9 @@
         <%java>
             RegionLoad load = regionServer.createRegionLoad(r.getEncodedName());
         </%java>
-            <td><% r.getRegionNameAsString() %></td>
+            <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+                <% r.getRegionNameAsString() %></a>
+            </td>
             <%if load != null %>
             <td><% load.getReadRequestsCount() %></td>
             <td><% load.getWriteRequestsCount() %></td>
@@ -159,7 +163,9 @@
         <%java>
             RegionLoad load = regionServer.createRegionLoad(r.getEncodedName());
         </%java>
-            <td><% r.getRegionNameAsString() %></td>
+            <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+                <% r.getRegionNameAsString() %></a>
+            </td>
             <%if load != null %>
             <td><% load.getStores() %></td>
             <td><% load.getStorefiles() %></td>
@@ -198,7 +204,9 @@
             ((float) load.getCurrentCompactedKVs() / load.getTotalCompactingKVs())) + "%";
             }
         </%java>
-            <td><% r.getRegionNameAsString() %></td>
+            <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+                <% r.getRegionNameAsString() %></a>
+            </td>
             <%if load != null %>
             <td><% load.getTotalCompactingKVs() %></td>
             <td><% load.getCurrentCompactedKVs() %></td>
@@ -225,7 +233,9 @@
         <%java>
             RegionLoad load = regionServer.createRegionLoad(r.getEncodedName());
         </%java>
-            <td><% r.getRegionNameAsString() %></td>
+            <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+                <% r.getRegionNameAsString() %></a>
+            </td>
             <%if load != null %>
             <td><% load.getMemstoreSizeMB() %>m</td>
             </%if>
@@ -259,7 +269,9 @@
                     String coprocessorName = entry.getKey();
                     DescriptiveStatistics ds = entry.getValue();
                 </%java>
-                <td><% r.getRegionNameAsString() %></td>
+                <td><a href="region.jsp?name=<% r.getEncodedName() %>">
+                    <% r.getRegionNameAsString() %></a>
+                </td>
                 <td><% coprocessorName %></td>
                 <td>
                 <table class="table-condensed">

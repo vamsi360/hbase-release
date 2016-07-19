@@ -2215,6 +2215,10 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     return masterActiveTime;
   }
 
+  public WALProcedureStore getWalProcedureStore() {
+    return procedureStore;
+  }
+
   public int getRegionServerInfoPort(final ServerName sn) {
     RegionServerInfo info = this.regionServerTracker.getRegionServerInfo(sn);
     if (info == null || info.getInfoPort() == 0) {
@@ -2397,6 +2401,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     }
     return regionStates.getAverageLoad();
   }
+
 
   @Override
   public boolean registerService(Service instance) {
