@@ -2283,6 +2283,16 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
         scannerName = String.valueOf(scannerId);
         ttl = this.scannerLeaseTimeoutPeriod;
       }
+      if (request.hasRenew() && request.getRenew()) {
+        rsh = scanners.get(scannerName);
+        lease = regionServer.leases.removeLease(scannerName);
+        if (lease != null && rsh != null) {
+          regionServer.leases.addLease(lease);
+          // Increment the nextCallSeq value which is the next expected from client.
+          rsh.incNextCallSeq();
+        }
+        return builder.build();
+      }
 
       quota = getQuotaManager().checkQuota(region, OperationQuota.OperationType.SCAN);
       long maxQuotaResultSize = Math.min(maxScannerResultSize, quota.getReadAvailable());
