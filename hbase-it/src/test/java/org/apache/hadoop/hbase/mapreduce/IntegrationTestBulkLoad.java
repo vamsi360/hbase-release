@@ -71,6 +71,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -212,7 +213,7 @@ public class IntegrationTestBulkLoad extends IntegrationTestBase {
   public void testBulkLoad() throws Exception {
     runLoad();
     installSlowingCoproc();
-    runCheck();
+    runCheckWithRetry();
   }
 
   public void runLoad() throws Exception {
@@ -669,6 +670,19 @@ public class IntegrationTestBulkLoad extends IntegrationTestBase {
     }
   }
 
+  private void runCheckWithRetry() throws IOException, ClassNotFoundException, InterruptedException {
+    try {
+      runCheck();
+    } catch (Throwable t) {
+      LOG.warn("Received " + StringUtils.stringifyException(t));
+      LOG.warn("Running the check MR Job again to see whether an ephemeral problem or not");
+      runCheck();
+      throw t; // we should still fail the test even if second retry succeeds
+    }
+    // everything green
+  }
+
+
   /**
    * After adding data to the table start a mr job to
    * @throws IOException
@@ -762,7 +776,7 @@ public class IntegrationTestBulkLoad extends IntegrationTestBase {
       runLoad();
     } else if (check) {
       installSlowingCoproc();
-      runCheck();
+      runCheckWithRetry();
     } else {
       testBulkLoad();
     }
