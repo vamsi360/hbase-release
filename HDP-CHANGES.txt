@@ -109,15 +109,5 @@ HBASE-14604 Improve MoveCostFunction in StochasticLoadBalancer (Guanghao Zhang)
 HBASE-15811 Batch Get after batch Put does not fetch all Cells We were not waiting on all executors in a batch to complete. The test for no-more-executors was damaged by the 0.99/0.98.4 fix "HBASE-11403 Fix race conditions around Object#notify"
 HBASE-15295 - MutateTableAccess.multiMutate() does not get high priority causing a deadlock (Enis)
 HBASE-15613 TestNamespaceCommand times out (Enis)
-HBASE-14798 NPE reporting server load causes regionserver abort; causes TestAcidGuarantee to fail
-HBASE-15925 provide default values for hadoop compat module related properties that match default hadoop profile
-HBASE-15144 Procedure v2 - Web UI displaying Store state
-HBASE-16056 Procedure v2 - fix master crash for FileNotFound
-HBASE-14805 status should show the master in shell
-HBASE-15957 RpcClientImpl.close never ends in some circumstances
-HBASE-14867 SimpleRegionNormalizer needs to have better heuristics to trigger merge operation
-HBASE-15325 ResultScanner allowing partial result will miss the rest of the row if the region is moved between two rpc requests (Phil Yang)
-HBASE-15471 Added in Priority, General, and Replication queue sizes for RegionServers to the Web UI Changed UI labels so that queue "size" refers to size in bytes and queue "length" refers to number of items in queue.
-HBASE-7171 Initial web UI for region/memstore/storefiles details
-HBASE-15946 Eliminate possible security concerns in RS web UI's store file metrics (Sean Mackrory)
-HBASE-14650  Reenable TestNamespaceAuditor (Heng Chen)
+HBASE-14535 Integration test for rpc connection concurrency / deadlock testing
+
