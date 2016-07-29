@@ -79,6 +79,7 @@ HBASE-16037 Backup/Restore: Make automatic mode default one (Vladimir Rodionov)
 HBASE-16065 hbase backup set describe command does not inform if the set does not exist (Vladimir Rodionov)
 HBASE-16052 Improve HBaseFsck Scalability (Ben Lau)
 HBASE-16132 Scan does not return all the result when regionserver is busy (binlijin)
+HBASE-15377 Per-RS Get metric is time based, per-region metric is size-based (Heng Chen)
 
 Following are the changes on top of Apache HBase 1.1.1
 
