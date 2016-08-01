@@ -1,4 +1,4 @@
-HDP-2.6 is based on Apache HBase 1.1.2
+HDP-2.5 is based on Apache HBase 1.1.2
 
 
 Following are the changes on top of Apache HBase 1.1.2
@@ -80,6 +80,7 @@ HBASE-16065 hbase backup set describe command does not inform if the set does no
 HBASE-16052 Improve HBaseFsck Scalability (Ben Lau)
 HBASE-16132 Scan does not return all the result when regionserver is busy (binlijin)
 HBASE-15377 Per-RS Get metric is time based, per-region metric is size-based (Heng Chen)
+HBASE-16288 HFile intermediate block level indexes might recurse forever creating multi TB files
 
 Following are the changes on top of Apache HBase 1.1.1
 
