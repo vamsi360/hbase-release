@@ -81,6 +81,7 @@ HBASE-16052 Improve HBaseFsck Scalability (Ben Lau)
 HBASE-16132 Scan does not return all the result when regionserver is busy (binlijin)
 HBASE-15377 Per-RS Get metric is time based, per-region metric is size-based (Heng Chen)
 HBASE-16288 HFile intermediate block level indexes might recurse forever creating multi TB files
+HBASE-16314 Retry on table snapshot failure
 
 Following are the changes on top of Apache HBase 1.1.1
 
