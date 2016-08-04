@@ -2,6 +2,7 @@ HDP-2.4 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.1
 
+HBASE-13829 Add more ThrottleType
 HBASE-14252 RegionServers fail to start when setting hbase.ipc.server.callqueue.scan.ratio to 0
 HBASE-14307 Incorrect use of positional read api in HFileBlock (Chris Nauroth)
 HBASE-14963 Remove Guava dependency from HBase client code (ddas)
