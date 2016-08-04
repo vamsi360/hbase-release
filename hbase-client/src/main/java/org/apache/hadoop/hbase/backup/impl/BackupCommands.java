@@ -186,7 +186,7 @@ public final class BackupCommands {
       }
       int bandwidth = cmdline.hasOption('b') ? Integer.parseInt(cmdline.getOptionValue('b')) : -1;
       int workers = cmdline.hasOption('w') ? Integer.parseInt(cmdline.getOptionValue('w')) : -1;
-
+    
       try (Connection conn = ConnectionFactory.createConnection(getConf());
           Admin admin = conn.getAdmin();
           BackupAdmin backupAdmin = admin.getBackupAdmin();) {
@@ -194,8 +194,10 @@ public final class BackupCommands {
         request.setBackupType(BackupType.valueOf(args[1].toUpperCase()))
         .setTableList(tables != null?Lists.newArrayList(BackupClientUtil.parseTableNames(tables)): null)
         .setTargetRootDir(args[2]).setWorkers(workers).setBandwidth(bandwidth);
-        backupAdmin.backupTables(request);
+        String backupId = backupAdmin.backupTables(request);
+        System.out.println("Backup session "+ backupId+" finished. Status: SUCCESS");
       } catch (IOException e) {
+        System.out.println("Backup session finished. Status: FAILURE");
         throw e;
       }
     }
