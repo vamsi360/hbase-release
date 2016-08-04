@@ -642,6 +642,7 @@ public class FullTableBackupProcedure
           try {
             Thread.sleep(delay);
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
           }
         }
       } 
