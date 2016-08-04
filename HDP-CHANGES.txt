@@ -82,6 +82,7 @@ HBASE-16132 Scan does not return all the result when regionserver is busy (binli
 HBASE-15377 Per-RS Get metric is time based, per-region metric is size-based (Heng Chen)
 HBASE-16288 HFile intermediate block level indexes might recurse forever creating multi TB files
 HBASE-16314 Retry on table snapshot failure
+HBASE-16358 Backup create command: log success/failure with backup id
 
 Following are the changes on top of Apache HBase 1.1.1
 
