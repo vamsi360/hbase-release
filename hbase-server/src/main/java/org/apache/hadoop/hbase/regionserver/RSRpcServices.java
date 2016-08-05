@@ -1472,6 +1472,11 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           }
         }
         LOG.info("Open " + region.getRegionNameAsString());
+        htd = htds.get(region.getTable());
+        if (htd == null) {
+          htd = regionServer.tableDescriptors.get(region.getTable());
+          htds.put(region.getTable(), htd);
+        }
 
         final Boolean previous = regionServer.regionsInTransitionInRS.putIfAbsent(
           region.getEncodedNameAsBytes(), Boolean.TRUE);
@@ -1513,11 +1518,6 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
               ZKSplitLog.deleteRecoveringRegionZNodes(regionServer.getZooKeeper(),
                 tmpRegions);
             }
-          }
-          htd = htds.get(region.getTable());
-          if (htd == null) {
-            htd = regionServer.tableDescriptors.get(region.getTable());
-            htds.put(region.getTable(), htd);
           }
           if (htd == null) {
             throw new IOException("Missing table descriptor for " + region.getEncodedName());
