@@ -83,6 +83,10 @@ HBASE-15377 Per-RS Get metric is time based, per-region metric is size-based (He
 HBASE-16288 HFile intermediate block level indexes might recurse forever creating multi TB files
 HBASE-16314 Retry on table snapshot failure
 HBASE-16358 Backup create command: log success/failure with backup id
+HBASE-13829 Add more ThrottleType (Guanghao Zhang)
+HBASE-15378 Scanner cannot handle heartbeat message with no results (Phil Yang)
+HBASE-16319 Fix TestCacheOnWrite after HBASE-16288 (Andrew Purtell)
+HBASE-16267 Remove commons-httpclient dependency from hbase-rest module
 
 Following are the changes on top of Apache HBase 1.1.1
 
