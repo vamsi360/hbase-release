@@ -87,6 +87,7 @@ HBASE-13829 Add more ThrottleType (Guanghao Zhang)
 HBASE-15378 Scanner cannot handle heartbeat message with no results (Phil Yang)
 HBASE-16319 Fix TestCacheOnWrite after HBASE-16288 (Andrew Purtell)
 HBASE-16267 Remove commons-httpclient dependency from hbase-rest module
+HBASE-16359 NullPointerException in RSRpcServices.openRegion()
 
 Following are the changes on top of Apache HBase 1.1.1
 
