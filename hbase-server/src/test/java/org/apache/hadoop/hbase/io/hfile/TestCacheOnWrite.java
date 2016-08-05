@@ -349,7 +349,7 @@ public class TestCacheOnWrite {
         encoderType.encode ? BlockType.ENCODED_DATA : BlockType.DATA;
     if (useTags) {
       assertEquals("{" + cachedDataBlockType
-          + "=2663, LEAF_INDEX=297, BLOOM_CHUNK=9, INTERMEDIATE_INDEX=34}", countByType);
+          + "=2663, LEAF_INDEX=297, BLOOM_CHUNK=9, INTERMEDIATE_INDEX=32}", countByType);
     } else {
       assertEquals("{" + cachedDataBlockType
           + "=2498, LEAF_INDEX=278, BLOOM_CHUNK=9, INTERMEDIATE_INDEX=31}", countByType);
