@@ -90,6 +90,7 @@ HBASE-16267 Remove commons-httpclient dependency from hbase-rest module
 HBASE-16359 NullPointerException in RSRpcServices.openRegion()
 HBASE-16315 RegionSizeCalculator prints region names as binary without escapes
 HBASE-16350 Undo server abort from HBASE-14968
+HBASE-16367 Race between master and region server initialization may lead to premature server abort
 
 Following are the changes on top of Apache HBase 1.1.1
 
