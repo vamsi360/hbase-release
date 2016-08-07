@@ -44,6 +44,8 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -219,6 +221,7 @@ public class HRegionServer extends HasThread implements
   protected MemStoreFlusher cacheFlusher;
 
   protected HeapMemoryManager hMemManager;
+  protected CountDownLatch initLatch = null;
 
   /**
    * Cluster connection to be shared by services.
@@ -611,6 +614,10 @@ public class HRegionServer extends HasThread implements
     this.choreService = new ChoreService(getServerName().toString());
   }
 
+  protected void setInitLatch(CountDownLatch latch) {
+    this.initLatch = latch;
+  }
+
   /*
    * Returns true if configured hostname should be used
    */
@@ -767,6 +774,9 @@ public class HRegionServer extends HasThread implements
     // when ready.
     blockAndCheckIfStopped(this.clusterStatusTracker);
 
+    if (this.initLatch != null) {
+      this.initLatch.await(50, TimeUnit.SECONDS);
+    }
     // Retrieve clusterId
     // Since cluster status is now up
     // ID should have already been set by HMaster
