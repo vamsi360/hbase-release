@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -64,7 +65,7 @@ public class TestRegionServerHostname {
     assertTrue("Failed to validate against invalid hostname", false);
   }
 
-  @Test(timeout=120000)
+  @Ignore @Test(timeout=120000)
   public void testRegionServerHostname() throws Exception {
     final int NUM_MASTERS = 1;
     final int NUM_RS = 1;
