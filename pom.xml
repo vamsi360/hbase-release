@@ -972,12 +972,12 @@
     <surefire.firstPartParallel>classes</surefire.firstPartParallel>
     <surefire.secondPartForkMode>perThread</surefire.secondPartForkMode>
     <surefire.firstPartThreadCount>1</surefire.firstPartThreadCount>
-    <surefire.secondPartThreadCount>2</surefire.secondPartThreadCount>
+    <surefire.secondPartThreadCount>1</surefire.secondPartThreadCount>
     <surefire.firstPartGroups>org.apache.hadoop.hbase.SmallTests</surefire.firstPartGroups>
     <surefire.secondPartGroups>org.apache.hadoop.hbase.MediumTests</surefire.secondPartGroups>
     <surefire.testFailureIgnore>false</surefire.testFailureIgnore>
     <test.output.tofile>true</test.output.tofile>
-    <surefire.timeout>900</surefire.timeout>
+    <surefire.timeout>7200</surefire.timeout>
   </properties>
   <!-- Sorted by groups of dependencies then groupId and artifactId -->
   <dependencyManagement>
@@ -1929,7 +1929,7 @@
         <surefire.firstPartForkMode>once</surefire.firstPartForkMode>
         <surefire.firstPartParallel>none</surefire.firstPartParallel>
         <surefire.firstPartThreadCount>1</surefire.firstPartThreadCount>
-        <surefire.secondPartThreadCount>5</surefire.secondPartThreadCount>
+        <surefire.secondPartThreadCount>1</surefire.secondPartThreadCount>
         <surefire.skipFirstPart>false</surefire.skipFirstPart>
         <surefire.skipSecondPart>false</surefire.skipSecondPart>
         <surefire.firstPartGroups>org.apache.hadoop.hbase.SmallTests</surefire.firstPartGroups>
