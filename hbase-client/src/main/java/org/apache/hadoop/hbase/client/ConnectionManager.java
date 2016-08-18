@@ -2419,9 +2419,6 @@ class ConnectionManager {
       if (this.closed) {
         return;
       }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Closing HConnection (debugging purposes only)", new Exception());
-      }
       closeMaster();
       shutdownPools();
       this.closed = true;
