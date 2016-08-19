@@ -1520,6 +1520,9 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           } else {
             regionServer.updateRegionFavoredNodesMapping(region.getEncodedName(),
               regionOpenInfo.getFavoredNodesList());
+            if (htd == null) {
+              throw new IOException("Missing table descriptor for " + region.getEncodedName());
+            }
             if (htd.getPriority() >= HConstants.ADMIN_QOS || region.getTable().isSystemTable()) {
               regionServer.service.submit(new OpenPriorityRegionHandler(
                 regionServer, regionServer, region, htd, masterSystemTime, coordination, ord));

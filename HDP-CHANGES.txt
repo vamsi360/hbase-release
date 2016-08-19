@@ -123,3 +123,4 @@ HBASE-15471 Added in Priority, General, and Replication queue sizes for RegionSe
 HBASE-7171 Initial web UI for region/memstore/storefiles details
 HBASE-15946 Eliminate possible security concerns in RS web UI's store file metrics (Sean Mackrory)
 HBASE-14650  Reenable TestNamespaceAuditor (Heng Chen)
+HBASE-16359 NullPointerException in RSRpcServices.openRegion()
