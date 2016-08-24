@@ -208,3 +208,4 @@ HBASE-13590 TestEnableTableHandler.testEnableTableWithNoRegionServers is flakey
 HBASE-14968 ConcurrentModificationException in region close resulting in the region staying in closing state
 HBASE-17409 Limit jsonp callback name to prevent xss
 HBASE-17424 Disable external entity parsing in RemoteAdmin
+HBASE-16270 Handle duplicate clearing of snapshot in region replicas (Robert Yokota)
