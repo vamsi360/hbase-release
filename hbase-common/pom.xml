@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 <!--
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -23,7 +23,7 @@
   <parent>
     <artifactId>hbase</artifactId>
     <groupId>org.apache.hbase</groupId>
-    <version>1.1.2</version>
+    <version>1.1.2.2.4.3.0-227</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -72,12 +72,11 @@
             <phase>process-resources</phase>
             <configuration>
               <target>
-                <replace file="${project.build.outputDirectory}/hbase-default.xml"
-                  token="@@@VERSION@@@" value="${project.version}" />
-                <mkdir dir="${project.build.directory}/nativelib"/>
-                <exec executable="tar" dir="${project.build.directory}/nativelib" failonerror="false">
-                  <arg value="xf"/>
-                  <arg value="hadoop-snappy-nativelibs.tar"/>
+                <replace file="${project.build.outputDirectory}/hbase-default.xml" token="@@@VERSION@@@" value="${project.version}" />
+                <mkdir dir="${project.build.directory}/nativelib" />
+                <exec dir="${project.build.directory}/nativelib" executable="tar" failonerror="false">
+                  <arg value="xf" />
+                  <arg value="hadoop-snappy-nativelibs.tar" />
                 </exec>
               </target>
             </configuration>
@@ -91,10 +90,10 @@
                     <phase>generate-sources</phase>
                     <configuration>
                         <target>
-                            <property name="generated.sources" location="${project.build.directory}/generated-sources"/>
+                            <property location="${project.build.directory}/generated-sources" name="generated.sources" />
 
                             <exec executable="bash">
-                                <arg line="${basedir}/src/saveVersion.sh ${project.version} ${generated.sources}/java"/>
+                                <arg line="${basedir}/src/saveVersion.sh ${project.version} ${generated.sources}/java" />
                             </exec>
                         </target>
                     </configuration>
@@ -182,7 +181,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <execute/>
+                    <execute />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -195,7 +194,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore></ignore>
+                    <ignore />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -208,7 +207,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore></ignore>
+                    <ignore />
                   </action>
                 </pluginExecution>
               </pluginExecutions>
