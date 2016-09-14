@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.UnknownScannerException;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
+import org.apache.hadoop.hbase.exceptions.ScannerResetException;
 import org.apache.hadoop.hbase.ipc.PayloadCarryingRpcController;
 import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -265,14 +266,19 @@ public class ScannerCallable extends RegionServerCallable<Result[]> {
           if (e instanceof RemoteException) {
             ioe = RemoteExceptionHandler.decodeRemoteException((RemoteException)e);
           }
-          if (logScannerActivity && (ioe instanceof UnknownScannerException)) {
-            try {
-              HRegionLocation location =
-                getConnection().relocateRegion(getTableName(), scan.getStartRow());
-              LOG.info("Scanner=" + scannerId
-                + " expired, current region location is " + location.toString());
-            } catch (Throwable t) {
-              LOG.info("Failed to relocate region", t);
+          if (logScannerActivity) {
+            if (ioe instanceof UnknownScannerException) {
+              try {
+                HRegionLocation location =
+                  getConnection().relocateRegion(getTableName(), scan.getStartRow());
+                LOG.info("Scanner=" + scannerId
+                  + " expired, current region location is " + location.toString());
+              } catch (Throwable t) {
+                LOG.info("Failed to relocate region", t);
+              }
+            } else if (ioe instanceof ScannerResetException) {
+              LOG.info("Scanner=" + scannerId + " has received an exception, and the server "
+                  + "asked us to reset the scanner state.", ioe);
             }
           }
           // The below convertion of exceptions into DoNotRetryExceptions is a little strange.
