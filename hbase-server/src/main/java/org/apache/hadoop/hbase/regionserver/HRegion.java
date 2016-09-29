@@ -2158,6 +2158,15 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     try {
       try {
         w = mvcc.beginMemstoreInsert();
+        // wait for all in-progress transactions to commit to WAL before                                                                                                                                      
+        // we can start the flush. This prevents
+        // uncommitted transactions from being written into HFiles.
+        // We have to block before we start the flush, otherwise keys that
+        // were removed via a rollbackMemstore could be written to Hfiles.
+        mvcc.waitForPreviousTransactionsComplete(w);
+        // set w to null to prevent mvcc.advanceMemstore from being called again inside finally block
+        w = null;
+
         if (wal != null) {
           Long earliestUnflushedSequenceIdForTheRegion =
               wal.startCacheFlush(encodedRegionName, flushedFamilyNames);
@@ -2233,16 +2242,6 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
               + StringUtils.stringifyException(ioe));
         }
       }
-
-      // wait for all in-progress transactions to commit to WAL before
-      // we can start the flush. This prevents
-      // uncommitted transactions from being written into HFiles.
-      // We have to block before we start the flush, otherwise keys that
-      // were removed via a rollbackMemstore could be written to Hfiles.
-      w.setWriteNumber(flushOpSeqId);
-      mvcc.waitForPreviousTransactionsComplete(w);
-      // set w to null to prevent mvcc.advanceMemstore from being called again inside finally block
-      w = null;
     } finally {
       if (w != null) {
         // in case of failure just mark current w as complete
