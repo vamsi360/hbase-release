@@ -69,9 +69,4 @@ final class NoopOperationQuota implements OperationQuota {
   public long getWriteAvailable() {
     return Long.MAX_VALUE;
   }
-
-  @Override
-  public long getAvgOperationSize(OperationType type) {
-    return -1;
-  }
 }
