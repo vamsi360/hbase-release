@@ -103,6 +103,15 @@ import com.lmax.disruptor.dsl.ProducerType;
 
 
 
+import com.google.common.annotations.VisibleForTesting;
+import com.lmax.disruptor.BlockingWaitStrategy;
+import com.lmax.disruptor.EventHandler;
+import com.lmax.disruptor.ExceptionHandler;
+import com.lmax.disruptor.LifecycleAware;
+import com.lmax.disruptor.TimeoutException;
+import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
+
 /**
  * Implementation of {@link WAL} to go against {@link FileSystem}; i.e. keep WALs in HDFS.
  * Only one WAL is ever being written at a time.  When a WAL hits a configured maximum size,
@@ -1285,7 +1294,8 @@ public class FSHLog implements WAL {
     private volatile long sequence;
     // Keep around last exception thrown. Clear on successful sync.
     private final BlockingQueue<SyncFuture> syncFutures;
- 
+    private volatile SyncFuture takeSyncFuture = null;
+
     /**
      * UPDATE! 
      * @param syncs the batch of calls to sync that arrived as this thread was starting; when done,
@@ -1374,13 +1384,21 @@ public class FSHLog implements WAL {
       return sequence;
     }
 
+    boolean areSyncFuturesReleased() {
+      // check whether there is no sync futures offered, and no in-flight sync futures that is being
+      // processed.
+      return syncFutures.size() <= 0
+          && takeSyncFuture == null;
+    }
+
     public void run() {
       long currentSequence;
       while (!isInterrupted()) {
         int syncCount = 0;
-        SyncFuture takeSyncFuture;
+
         try {
           while (true) {
+            takeSyncFuture = null;
             // We have to process what we 'take' from the queue
             takeSyncFuture = this.syncFutures.take();
             currentSequence = this.sequence;
@@ -2009,8 +2027,19 @@ public class FSHLog implements WAL {
      * @return True if outstanding sync futures still
      */
     private boolean isOutstandingSyncs() {
+      // Look at SyncFutures in the EventHandler
       for (int i = 0; i < this.syncFuturesCount; i++) {
         if (!this.syncFutures[i].isDone()) return true;
+      }
+      return false;
+    }
+
+    private boolean isOutstandingSyncsFromRunners() {
+      // Look at SyncFutures in the SyncRunners
+      for (SyncRunner syncRunner : syncRunners) {
+        if (syncRunner.isAlive() && !syncRunner.areSyncFuturesReleased()) {
+          return true;
+        }
       }
       return false;
     }
@@ -2118,11 +2147,13 @@ public class FSHLog implements WAL {
         // Wait on outstanding syncers; wait for them to finish syncing (unless we've been
         // shutdown or unless our latch has been thrown because we have been aborted or unless
         // this WAL is broken and we can't get a sync/append to complete).
-        while (!this.shutdown && this.zigzagLatch.isCocked() &&
+        while ((!this.shutdown && this.zigzagLatch.isCocked() &&
             highestSyncedSequence.get() < currentSequence &&
             // We could be in here and all syncs are failing or failed. Check for this. Otherwise
             // we'll just be stuck here for ever. In other words, ensure there syncs running.
-            isOutstandingSyncs()) {
+            isOutstandingSyncs())
+            // Wait for all SyncRunners to finish their work so that we can replace the writer
+            || isOutstandingSyncsFromRunners()) {
           synchronized (this.safePointWaiter) {
             this.safePointWaiter.wait(0, 1);
           }
