@@ -872,7 +872,7 @@ public class HTable implements HTableInterface, RegionLocator {
       connConfiguration.getRetriesNumber(),
       operationTimeout,
       connConfiguration.getPrimaryCallTimeoutMicroSecond());
-    return callable.call();
+    return callable.call(operationTimeout);
   }
 
 
