@@ -193,7 +193,7 @@ public class RpcRetryingCallerWithReadReplicas {
    * Globally, the number of retries, timeout and so on still applies, but it's per replica,
    * not global. We continue until all retries are done, or all timeouts are exceeded.
    */
-  public synchronized Result call()
+  public synchronized Result call(int operationTimeout)
       throws DoNotRetryIOException, InterruptedIOException, RetriesExhaustedException {
     boolean isTargetReplicaSpecified = (get.getReplicaId() >= 0);
 
@@ -229,8 +229,12 @@ public class RpcRetryingCallerWithReadReplicas {
     final ResultBoundedCompletionService<Result> cs =
         new ResultBoundedCompletionService<>(this.rpcRetryingCallerFactory, pool, rl.size());
 
+    int startIndex = 0;
+    int endIndex = rl.size();
+
     if(isTargetReplicaSpecified) {
       addCallsForReplica(cs, rl, get.getReplicaId(), get.getReplicaId());
+      endIndex = 1;
     } else {
       if (!skipPrimary) {
         addCallsForReplica(cs, rl, 0, 0);
@@ -245,6 +249,9 @@ public class RpcRetryingCallerWithReadReplicas {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Primary replica returns " + e.getCause());
           }
+
+          // Skip the result from the primary as we know that there is something wrong
+          startIndex = 1;
         } catch (CancellationException e) {
           throw new InterruptedIOException();
         } catch (InterruptedException e) {
@@ -257,12 +264,14 @@ public class RpcRetryingCallerWithReadReplicas {
     }
 
     try {
-      try {
-        Future<Result> f = cs.take();
-        return f.get();
-      } catch (ExecutionException e) {
-        throwEnrichedException(e, retries);
+      Future<Result> f = cs.pollForFirstSuccessfullyCompletedTask(operationTimeout,
+          TimeUnit.MILLISECONDS, startIndex, endIndex);
+      if (f == null) {
+        throw new RetriesExhaustedException("timed out after " + operationTimeout + " ms");
       }
+      return f.get();
+    } catch (ExecutionException e) {
+      throwEnrichedException(e, retries);
     } catch (CancellationException e) {
       throw new InterruptedIOException();
     } catch (InterruptedException e) {
@@ -273,6 +282,7 @@ public class RpcRetryingCallerWithReadReplicas {
       cs.cancelAll();
     }
 
+    LOG.error("Imposible? Arrive at an unreachable line..."); // unreachable
     return null; // unreachable
   }
 
