@@ -43,7 +43,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
@@ -66,6 +65,7 @@ import org.apache.hadoop.hbase.regionserver.StripeStoreFileManager;
 import org.apache.hadoop.hbase.regionserver.StripeStoreFlusher;
 import org.apache.hadoop.hbase.regionserver.TestStripeCompactor.StoreFileWritersCapture;
 import org.apache.hadoop.hbase.regionserver.compactions.StripeCompactionPolicy.StripeInformationProvider;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ConcatenatedLists;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
@@ -210,9 +210,9 @@ public class TestStripeCompactionPolicy {
     assertTrue(policy.needsCompactions(si, al()));
     StripeCompactionPolicy.StripeCompactionRequest scr = policy.selectCompaction(si, al(), false);
     assertEquals(si.getStorefiles(), scr.getRequest().getFiles());
-    scr.execute(sc);
+    scr.execute(sc, null);
     verify(sc, only()).compact(eq(scr.getRequest()), anyInt(), anyLong(),
-        aryEq(OPEN_KEY), aryEq(OPEN_KEY), aryEq(OPEN_KEY), aryEq(OPEN_KEY));
+        aryEq(OPEN_KEY), aryEq(OPEN_KEY), aryEq(OPEN_KEY), aryEq(OPEN_KEY), any(User.class));
   }
 
   @Test
@@ -529,7 +529,7 @@ public class TestStripeCompactionPolicy {
           }
         }),
         dropDeletesFrom == null ? isNull(byte[].class) : aryEq(dropDeletesFrom),
-        dropDeletesTo == null ? isNull(byte[].class) : aryEq(dropDeletesTo));
+        dropDeletesTo == null ? isNull(byte[].class) : aryEq(dropDeletesTo), any(User.class));
   }
 
   /**
@@ -554,7 +554,8 @@ public class TestStripeCompactionPolicy {
     verify(sc, times(1)).compact(eq(scr.getRequest()),
         count == null ? anyInt() : eq(count.intValue()),
         size == null ? anyLong() : eq(size.longValue()), aryEq(start), aryEq(end),
-        dropDeletesMatcher(dropDeletes, start), dropDeletesMatcher(dropDeletes, end));
+        dropDeletesMatcher(dropDeletes, start), dropDeletesMatcher(dropDeletes, end),
+        any(User.class));
   }
 
   /** Verify arbitrary flush. */

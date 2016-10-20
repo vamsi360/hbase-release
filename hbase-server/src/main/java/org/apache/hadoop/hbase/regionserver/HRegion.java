@@ -142,6 +142,7 @@ import org.apache.hadoop.hbase.regionserver.wal.HLogSplitter;
 import org.apache.hadoop.hbase.regionserver.wal.HLogSplitter.MutationReplay;
 import org.apache.hadoop.hbase.regionserver.wal.HLogUtil;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ByteStringer;
@@ -1587,7 +1588,7 @@ public class HRegion implements HeapSize { // , Writable{
     for (Store s : getStores().values()) {
       CompactionContext compaction = s.requestCompaction();
       if (compaction != null) {
-        compact(compaction, s);
+        compact(compaction, s, null);
       }
     }
   }
@@ -1602,7 +1603,7 @@ public class HRegion implements HeapSize { // , Writable{
     Store s = getStore(family);
     CompactionContext compaction = s.requestCompaction();
     if (compaction != null) {
-      compact(compaction, s);
+      compact(compaction, s, null);
     }
   }
 
@@ -1622,6 +1623,10 @@ public class HRegion implements HeapSize { // , Writable{
    * @throws IOException e
    */
   public boolean compact(CompactionContext compaction, Store store) throws IOException {
+    return compact(compaction, store, null);
+  }
+
+  public boolean compact(CompactionContext compaction, Store store, User user) throws IOException {
     assert compaction != null && compaction.hasSelection();
     assert !compaction.getRequest().getFiles().isEmpty();
     if (this.closing.get() || this.closed.get()) {
@@ -1668,7 +1673,7 @@ public class HRegion implements HeapSize { // , Writable{
         try {
           status.setStatus("Compacting store " + store);
           didPerformCompaction = true;
-          store.compact(compaction);
+          store.compact(compaction, user);
         } catch (InterruptedIOException iioe) {
           String msg = "compaction interrupted";
           LOG.info(msg, iioe);

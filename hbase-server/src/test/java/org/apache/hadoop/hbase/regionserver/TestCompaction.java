@@ -59,6 +59,7 @@ import org.apache.hadoop.hbase.regionserver.compactions.CompactionContext;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.regionserver.compactions.DefaultCompactor;
 import org.apache.hadoop.hbase.regionserver.wal.HLog;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.Threads;
@@ -362,6 +363,12 @@ public class TestCompaction {
         finishCompaction(this.selectedFiles);
         return new ArrayList<Path>();
       }
+
+      @Override
+      public List<Path> compact(User user) throws IOException {
+        finishCompaction(this.selectedFiles);
+        return new ArrayList<Path>();
+      }
     }
 
     @Override
@@ -410,6 +417,12 @@ public class TestCompaction {
 
       @Override
       public List<Path> compact() throws IOException {
+        return compact(null);
+      }
+
+      @Override
+      public List<Path> compact(User user)
+          throws IOException {
         try {
           isInCompact = true;
           synchronized (this) { this.wait(); }
@@ -485,7 +498,8 @@ public class TestCompaction {
 
     // Set up the region mock that redirects compactions.
     HRegion r = mock(HRegion.class);
-    when(r.compact(any(CompactionContext.class), any(Store.class))).then(new Answer<Boolean>() {
+    when(r.compact(any(CompactionContext.class), any(Store.class), any(User.class)))
+    .then(new Answer<Boolean>() {
       public Boolean answer(InvocationOnMock invocation) throws Throwable {
         ((CompactionContext)invocation.getArguments()[0]).compact();
         return true;

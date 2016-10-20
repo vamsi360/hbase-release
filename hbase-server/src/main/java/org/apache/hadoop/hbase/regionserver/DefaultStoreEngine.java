@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.regionserver.compactions.CompactionContext;
 import org.apache.hadoop.hbase.regionserver.compactions.ExploringCompactionPolicy;
 import org.apache.hadoop.hbase.regionserver.compactions.RatioBasedCompactionPolicy;
 import org.apache.hadoop.hbase.regionserver.compactions.DefaultCompactor;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.ReflectionUtils;
 
 /**
@@ -106,7 +107,12 @@ public class DefaultStoreEngine extends StoreEngine<
 
     @Override
     public List<Path> compact() throws IOException {
-      return compactor.compact(request);
+      return compact(null);
+    }
+
+    @Override
+    public List<Path> compact(User user) throws IOException {
+      return compactor.compact(request, user);
     }
 
     @Override
