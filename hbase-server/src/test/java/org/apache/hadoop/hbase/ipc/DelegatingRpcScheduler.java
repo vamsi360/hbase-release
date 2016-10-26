@@ -60,7 +60,7 @@ public class DelegatingRpcScheduler extends RpcScheduler {
   }
 
   @Override
-  public void dispatch(CallRunner task) throws IOException, InterruptedException {
-    delegate.dispatch(task);
+  public boolean dispatch(CallRunner task) throws IOException, InterruptedException {
+    return delegate.dispatch(task);
   }
 }
