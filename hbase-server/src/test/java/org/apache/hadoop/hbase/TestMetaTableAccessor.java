@@ -589,13 +589,13 @@ public class TestMetaTableAccessor {
     }
 
     @Override
-    public void dispatch(CallRunner task) throws IOException, InterruptedException {
+    public boolean dispatch(CallRunner task) throws IOException, InterruptedException {
       int priority = task.getCall().getPriority();
 
       if (priority > HConstants.QOS_THRESHOLD) {
         numPriorityCalls++;
       }
-      super.dispatch(task);
+      return super.dispatch(task);
     }
   }
 
