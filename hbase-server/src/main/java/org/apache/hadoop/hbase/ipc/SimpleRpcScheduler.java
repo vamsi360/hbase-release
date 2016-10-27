@@ -19,6 +19,8 @@ package org.apache.hadoop.hbase.ipc;
 
 
 import java.util.Comparator;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -53,6 +55,7 @@ public class SimpleRpcScheduler extends RpcScheduler implements ConfigurationObs
    * priority comes at a cost, reduced throughput.
    */
   public static final String CALL_QUEUE_TYPE_CONF_KEY = "hbase.ipc.server.callqueue.type";
+  public static final String CALL_QUEUE_TYPE_CODEL_CONF_VALUE = "codel";
   public static final String CALL_QUEUE_TYPE_DEADLINE_CONF_VALUE = "deadline";
   public static final String CALL_QUEUE_TYPE_FIFO_CONF_VALUE = "fifo";
   public static final String CALL_QUEUE_TYPE_CONF_DEFAULT = CALL_QUEUE_TYPE_FIFO_CONF_VALUE;
@@ -60,6 +63,21 @@ public class SimpleRpcScheduler extends RpcScheduler implements ConfigurationObs
   /** max delay in msec used to bound the deprioritized requests */
   public static final String QUEUE_MAX_CALL_DELAY_CONF_KEY
       = "hbase.ipc.server.queue.max.call.delay";
+
+  // These 3 are only used by Codel executor
+  public static final String CALL_QUEUE_CODEL_TARGET_DELAY =
+    "hbase.ipc.server.callqueue.codel.target.delay";
+  public static final String CALL_QUEUE_CODEL_INTERVAL =
+    "hbase.ipc.server.callqueue.codel.interval";
+  public static final String CALL_QUEUE_CODEL_LIFO_THRESHOLD =
+    "hbase.ipc.server.callqueue.codel.lifo.threshold";
+
+  public static final int CALL_QUEUE_CODEL_DEFAULT_TARGET_DELAY = 5;
+  public static final int CALL_QUEUE_CODEL_DEFAULT_INTERVAL = 100;
+  public static final double CALL_QUEUE_CODEL_DEFAULT_LIFO_THRESHOLD = 0.8;
+
+  private AtomicLong numGeneralCallsDropped = new AtomicLong();
+  private AtomicLong numLifoModeSwitches = new AtomicLong();
 
   /**
    * Resize call queues;
@@ -73,6 +91,26 @@ public class SimpleRpcScheduler extends RpcScheduler implements ConfigurationObs
     }
     if (replicationExecutor != null) {
       replicationExecutor.resizeQueues(conf);
+    }
+
+    String callQueueType = conf.get(CALL_QUEUE_TYPE_CONF_KEY,
+      CALL_QUEUE_TYPE_DEADLINE_CONF_VALUE);
+
+    if (callQueueType.equals(CALL_QUEUE_TYPE_CODEL_CONF_VALUE)) {
+      // update CoDel Scheduler tunables
+      int codelTargetDelay = conf.getInt(CALL_QUEUE_CODEL_TARGET_DELAY,
+        CALL_QUEUE_CODEL_DEFAULT_TARGET_DELAY);
+      int codelInterval = conf.getInt(CALL_QUEUE_CODEL_INTERVAL,
+        CALL_QUEUE_CODEL_DEFAULT_INTERVAL);
+      double codelLifoThreshold = conf.getDouble(CALL_QUEUE_CODEL_LIFO_THRESHOLD,
+        CALL_QUEUE_CODEL_DEFAULT_LIFO_THRESHOLD);
+
+      for (BlockingQueue<CallRunner> queue : callExecutor.getQueues()) {
+        if (queue instanceof AdaptiveLifoCoDelCallQueue) {
+          ((AdaptiveLifoCoDelCallQueue) queue).updateTunables(codelTargetDelay,
+            codelInterval, codelLifoThreshold);
+        }
+      }
     }
   }
 
@@ -146,6 +184,13 @@ public class SimpleRpcScheduler extends RpcScheduler implements ConfigurationObs
     float callQueuesHandlersFactor = conf.getFloat(CALL_QUEUE_HANDLER_FACTOR_CONF_KEY, 0);
     int numCallQueues = Math.max(1, (int)Math.round(handlerCount * callQueuesHandlersFactor));
 
+    int codelTargetDelay = conf.getInt(CALL_QUEUE_CODEL_TARGET_DELAY,
+        CALL_QUEUE_CODEL_DEFAULT_TARGET_DELAY);
+      int codelInterval = conf.getInt(CALL_QUEUE_CODEL_INTERVAL,
+        CALL_QUEUE_CODEL_DEFAULT_INTERVAL);
+      double codelLifoThreshold = conf.getDouble(CALL_QUEUE_CODEL_LIFO_THRESHOLD,
+        CALL_QUEUE_CODEL_DEFAULT_LIFO_THRESHOLD);
+
     LOG.info("Using " + callQueueType + " as user call queue, count=" + numCallQueues);
 
     if (numCallQueues > 1 && callqReadShare > 0) {
@@ -155,6 +200,13 @@ public class SimpleRpcScheduler extends RpcScheduler implements ConfigurationObs
         callExecutor = new RWQueueRpcExecutor("RW.deadline.Q", handlerCount, numCallQueues,
             callqReadShare, callqScanShare, maxQueueLength, conf, abortable,
             BoundedPriorityBlockingQueue.class, callPriority);
+      } else if (callQueueType.equals(CALL_QUEUE_TYPE_CODEL_CONF_VALUE)) {
+        Object[] callQueueInitArgs = {maxQueueLength, codelTargetDelay, codelInterval,
+          codelLifoThreshold, numGeneralCallsDropped, numLifoModeSwitches};
+        callExecutor = new RWQueueRpcExecutor("B.default", handlerCount,
+          numCallQueues, callqReadShare, callqScanShare,
+          AdaptiveLifoCoDelCallQueue.class, callQueueInitArgs,
+          AdaptiveLifoCoDelCallQueue.class, callQueueInitArgs);
       } else {
         callExecutor = new RWQueueRpcExecutor("RW.fifo.Q", handlerCount, numCallQueues,
           callqReadShare, callqScanShare, maxQueueLength, conf, abortable);
@@ -165,6 +217,11 @@ public class SimpleRpcScheduler extends RpcScheduler implements ConfigurationObs
         CallPriorityComparator callPriority = new CallPriorityComparator(conf, this.priority);
         callExecutor = new BalancedQueueRpcExecutor("B.deadline.Q", handlerCount, numCallQueues,
           conf, abortable, BoundedPriorityBlockingQueue.class, maxQueueLength, callPriority);
+      } else if (callQueueType.equals(CALL_QUEUE_TYPE_CODEL_CONF_VALUE)) {
+        callExecutor = new BalancedQueueRpcExecutor("B.default", handlerCount, numCallQueues,
+          conf, abortable, AdaptiveLifoCoDelCallQueue.class, maxQueueLength,
+          codelTargetDelay, codelInterval, codelLifoThreshold,
+          numGeneralCallsDropped, numLifoModeSwitches);
       } else {
         callExecutor = new BalancedQueueRpcExecutor("B.fifo.Q", handlerCount,
             numCallQueues, maxQueueLength, conf, abortable);
@@ -243,6 +300,16 @@ public class SimpleRpcScheduler extends RpcScheduler implements ConfigurationObs
     return callExecutor.getActiveHandlerCount() +
            (priorityExecutor == null ? 0 : priorityExecutor.getActiveHandlerCount()) +
            (replicationExecutor == null ? 0 : replicationExecutor.getActiveHandlerCount());
+  }
+
+  @Override
+  public long getNumGeneralCallsDropped() {
+    return numGeneralCallsDropped.get();
+  }
+
+  @Override
+  public long getNumLifoModeSwitches() {
+    return numLifoModeSwitches.get();
   }
 }
 

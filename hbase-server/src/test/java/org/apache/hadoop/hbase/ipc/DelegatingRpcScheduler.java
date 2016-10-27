@@ -63,4 +63,14 @@ public class DelegatingRpcScheduler extends RpcScheduler {
   public boolean dispatch(CallRunner task) throws IOException, InterruptedException {
     return delegate.dispatch(task);
   }
+
+  @Override
+  public long getNumGeneralCallsDropped() {
+    return delegate.getNumGeneralCallsDropped();
+  }
+
+  @Override
+  public long getNumLifoModeSwitches() {
+    return delegate.getNumLifoModeSwitches();
+  }
 }
