@@ -30,6 +30,8 @@ import java.net.InetSocketAddress;
 @InterfaceAudience.LimitedPrivate({HBaseInterfaceAudience.COPROC, HBaseInterfaceAudience.PHOENIX})
 @InterfaceStability.Evolving
 public abstract class RpcScheduler {
+  public static final String IPC_SERVER_PRIORITY_MAX_CALLQUEUE_LENGTH =
+      "hbase.ipc.server.priority.max.callqueue.length";
 
   /** Exposes runtime information of a {@code RpcServer} that a {@code RpcScheduler} may need. */
   public static abstract class Context {
