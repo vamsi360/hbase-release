@@ -1769,6 +1769,7 @@ public class RpcServer implements RpcServerInterface {
             connectionHeader.getServiceName() + " is unauthorized for user: " + user);
         }
       }
+      rpcCount.destroy();
     }
 
     /**
