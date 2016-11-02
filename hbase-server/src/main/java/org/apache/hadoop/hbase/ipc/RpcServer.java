@@ -1774,6 +1774,7 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
             connectionHeader.getServiceName() + " is unauthorized for user: " + user);
         }
       }
+      rpcCount.destroy();
     }
 
     /**
