@@ -122,6 +122,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     = "hbase.mapreduce.bulkload.max.hfiles.perRegion.perFamily";
   private static final String ASSIGN_SEQ_IDS = "hbase.mapreduce.bulkload.assign.sequenceNumbers";
   public final static String CREATE_TABLE_CONF_KEY = "create.table";
+  public final static String SILENCE_CONF_KEY = "ignore.unmatched.families";
 
   // We use a '.' prefix which is ignored when walking directory trees
   // above. It is invalid family name.
@@ -129,6 +130,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
 
   private int maxFilesPerRegionPerFamily;
   private boolean assignSeqIds;
+  private Set<String> unmatchedFamilies = new HashSet<String>();
 
   // Source filesystem
   private FileSystem fs;
@@ -165,7 +167,8 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
   private void usage() {
     System.err.println("usage: " + NAME + " /path/to/hfileoutputformat-output tablename" + "\n -D"
         + CREATE_TABLE_CONF_KEY + "=no - can be used to avoid creation of table by this tool\n"
-        + "  Note: if you set this to 'no', then the target table must already exist in HBase\n"
+        + "  Note: if you set this to 'no', then the target table must already exist in HBase\n -D"
+        + SILENCE_CONF_KEY + "=yes - can be used to ignore unmatched column families\n"
         + "\n");
   }
 
@@ -343,12 +346,30 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
    *
    * @param hfofDir the directory that was provided as the output path
    * of a job using HFileOutputFormat
+   * @param admin the Admin
    * @param table the table to load into
+   * @param regionLocator region locator
    * @throws TableNotFoundException if table does not yet exist
    */
   public void doBulkLoad(Path hfofDir, final Admin admin, Table table,
       RegionLocator regionLocator) throws TableNotFoundException, IOException  {
-
+         doBulkLoad(hfofDir, admin, table, regionLocator, false);
+       }
+    
+  /**
+   * Perform a bulk load of the given directory into the given
+   * pre-existing table.  This method is not threadsafe.
+   *
+   * @param hfofDir the directory that was provided as the output path
+   *   of a job using HFileOutputFormat
+   * @param admin the Admin
+   * @param table the table to load into
+   * @param regionLocator region locator
+   * @param silence true to ignore unmatched column families
+   * @throws TableNotFoundException if table does not yet exist
+   */
+  public void doBulkLoad(Path hfofDir, final Admin admin, Table table,
+      RegionLocator regionLocator, boolean silence) throws TableNotFoundException, IOException {
     if (!admin.isTableAvailable(regionLocator.getName())) {
       throw new TableNotFoundException("Table " + table.getName() + "is not currently available.");
     }
@@ -359,7 +380,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     // happen in this thread
     Deque<LoadQueueItem> queue = new LinkedList<LoadQueueItem>();
     try {
-      prepareHFileQueue(hfofDir, table, queue);
+      prepareHFileQueue(hfofDir, table, queue, silence);
       /*
       discoverLoadQueue(queue, hfofDir);
       // check whether there is invalid family name in HFiles to be bulkloaded
@@ -470,8 +491,24 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
    */
   public void prepareHFileQueue(Path hfofDir, Table table, Deque<LoadQueueItem> queue)
       throws IOException {
-    discoverLoadQueue(queue, hfofDir);
-    validateFamiliesInHFiles(table, queue);
+    prepareHFileQueue(hfofDir, table, queue, false);
+  }
+
+  /**
+   * Prepare a collection of {@link LoadQueueItem} from list of source hfiles contained in the
+   * passed directory and validates whether the prepared queue has all the valid table column
+   * families in it.
+   * @param hfilesDir directory containing list of hfiles to be loaded into the table
+   * @param table table to which hfiles should be loaded
+   * @param queue queue which needs to be loaded into the table
+   * @param validateHFile if true hfiles will be validated for its format
+   * @param silence  true to ignore unmatched column families
+   * @throws IOException If any I/O or network error occurred
+   */
+  public void prepareHFileQueue(Path hfilesDir, Table table, Deque<LoadQueueItem> queue,
+      boolean silence) throws IOException {
+    discoverLoadQueue(queue, hfilesDir);
+    validateFamiliesInHFiles(table, queue, silence);
   }
 
   // Initialize a thread pool
@@ -487,7 +524,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
   /**
    * Checks whether there is any invalid family name in HFiles to be bulk loaded.
    */
-  private void validateFamiliesInHFiles(Table table, Deque<LoadQueueItem> queue)
+  private void validateFamiliesInHFiles(Table table, Deque<LoadQueueItem> queue, boolean silence)
       throws IOException {
     Collection<HColumnDescriptor> families = table.getTableDescriptor().getFamilies();
     List<String> familyNames = new ArrayList<String>(families.size());
@@ -509,7 +546,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
               + unmatchedFamilies + "; valid family names of table " + table.getName() + " are: "
               + familyNames;
       LOG.error(msg);
-      throw new IOException(msg);
+      if (!silence) throw new IOException(msg);
     }
   }
 
@@ -834,7 +871,9 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     final List<Pair<byte[], String>> famPaths =
       new ArrayList<Pair<byte[], String>>(lqis.size());
     for (LoadQueueItem lqi : lqis) {
-      famPaths.add(Pair.newPair(lqi.family, lqi.hfilePath.toString()));
+      if (!unmatchedFamilies.contains(Bytes.toString(lqi.family))) {
+        famPaths.add(Pair.newPair(lqi.family, lqi.hfilePath.toString()));
+      }
     }
 
     final RegionServerCallable<Boolean> svrCallable =
@@ -1092,32 +1131,35 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
 
   @Override
   public int run(String[] args) throws Exception {
-    if (args.length != 2) {
+    if (args.length < 2) {
       usage();
       return -1;
     }
 
     initialize();
-
-    String dirPath = args[0];
-    TableName tableName = TableName.valueOf(args[1]);
-
-    boolean tableExists = this.doesTableExist(tableName);
-    if (!tableExists) {
-      if ("yes".equalsIgnoreCase(getConf().get(CREATE_TABLE_CONF_KEY, "yes"))) {
-        this.createTable(tableName, dirPath);
-      } else {
-        String errorMsg = format("Table '%s' does not exist.", tableName);
-        LOG.error(errorMsg);
-        throw new TableNotFoundException(errorMsg);
-      }
-    }
-
-    Path hfofDir = new Path(dirPath);
-
     try (Connection connection = ConnectionFactory.createConnection(getConf());
-        HTable table = (HTable) connection.getTable(tableName);) {
-      doBulkLoad(hfofDir, table);
+        Admin admin = connection.getAdmin()) {
+      String dirPath = args[0];
+      TableName tableName = TableName.valueOf(args[1]);
+
+      boolean tableExists = this.doesTableExist(tableName);
+      if (!tableExists) {
+        if ("yes".equalsIgnoreCase(getConf().get(CREATE_TABLE_CONF_KEY, "yes"))) {
+          this.createTable(tableName, dirPath);
+        } else {
+          String errorMsg = format("Table '%s' does not exist.", tableName);
+          LOG.error(errorMsg);
+          throw new TableNotFoundException(errorMsg);
+        }
+      }
+
+      Path hfofDir = new Path(dirPath);
+
+      try (HTable table = (HTable) connection.getTable(tableName);
+          RegionLocator locator = connection.getRegionLocator(tableName)) {
+        boolean silence = "yes".equalsIgnoreCase(getConf().get(SILENCE_CONF_KEY, ""));
+        doBulkLoad(hfofDir, admin, table, locator, silence);
+      }
     }
     return 0;
   }
