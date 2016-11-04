@@ -70,6 +70,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.exceptions.TimeoutIOException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ClassSize;
 import org.apache.hadoop.hbase.util.DrainBarrier;
@@ -180,6 +181,8 @@ public class FSHLog implements WAL {
    */
   private final Disruptor<RingBufferTruck> disruptor;
 
+  private static final int DEFAULT_WAL_SYNC_TIMEOUT_MS = 5 * 60 * 1000; // in ms, 5min
+
   /**
    * An executorservice that runs the disrutpor AppendEventHandler append executor.
    */
@@ -287,6 +290,8 @@ public class FSHLog implements WAL {
   private final int slowSyncNs;
 
   private final static Object [] NO_ARGS = new Object []{};
+
+  private final long walSyncTimeout;
 
   // If live datanode count is lower than the default replicas value,
   // RollWriter will be triggered in each sync(So the RollWriter will be
@@ -575,6 +580,8 @@ public class FSHLog implements WAL {
     this.slowSyncNs =
         1000000 * conf.getInt("hbase.regionserver.hlog.slowsync.ms",
           DEFAULT_SLOW_SYNC_TIME_MS);
+    this.walSyncTimeout = conf.getLong("hbase.regionserver.hlog.sync.timeout",
+        DEFAULT_WAL_SYNC_TIMEOUT_MS);
     // handle the reflection necessary to call getNumCurrentReplicas(). TODO: Replace with
     // HdfsDataOutputStream#getCurrentBlockReplication() and go without reflection.
     this.getNumCurrentReplicas = getGetNumCurrentReplicas(this.hdfs_out);
@@ -1530,8 +1537,14 @@ public class FSHLog implements WAL {
   private Span blockOnSync(final SyncFuture syncFuture) throws IOException {
     // Now we have published the ringbuffer, halt the current thread until we get an answer back.
     try {
-      syncFuture.get();
+      syncFuture.get(walSyncTimeout);
       return syncFuture.getSpan();
+    } catch (TimeoutIOException tioe) {
+      // SyncFuture reuse by thread, if TimeoutIOException happens, ringbuffer
+      // still refer to it, so if this thread use it next time may get a wrong
+      // result.
+      this.syncFuturesByHandler.remove(Thread.currentThread());
+      throw tioe;
     } catch (InterruptedException ie) {
       LOG.warn("Interrupted", ie);
       throw convertInterruptedExceptionToIOException(ie);
@@ -2050,6 +2063,12 @@ public class FSHLog implements WAL {
           } catch (Exception e) {
             // Failed append. Record the exception.
             this.exception = e;
+            // invoking cleanupOutstandingSyncsOnException when append failed with exception,
+            // it will cleanup existing sync requests recorded in syncFutures but not offered to SyncRunner yet,
+            // so there won't be any sync future left over if no further truck published to disruptor.
+            cleanupOutstandingSyncsOnException(sequence,
+                this.exception instanceof DamagedWALException ? this.exception
+                    : new DamagedWALException("On sync", this.exception));
             // Return to keep processing events coming off the ringbuffer
             return;
           } finally {

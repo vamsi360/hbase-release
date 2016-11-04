@@ -20,11 +20,10 @@ package org.apache.hadoop.hbase.regionserver.wal;
 
 import java.io.IOException;
 
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
-
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.wal.WALKey;
 
 /**
@@ -82,7 +81,7 @@ public interface WALActionsListener {
   */
   void visitLogEntryBeforeWrite(
     HRegionInfo info, WALKey logKey, WALEdit logEdit
-  );
+  ) throws IOException;
 
   /**
    * @param htd
@@ -136,7 +135,7 @@ public interface WALActionsListener {
     public void logCloseRequested() {}
 
     @Override
-    public void visitLogEntryBeforeWrite(HRegionInfo info, WALKey logKey, WALEdit logEdit) {}
+    public void visitLogEntryBeforeWrite(HRegionInfo info, WALKey logKey, WALEdit logEdit) throws IOException {}
 
     @Override
     public void visitLogEntryBeforeWrite(HTableDescriptor htd, WALKey logKey, WALEdit logEdit)
