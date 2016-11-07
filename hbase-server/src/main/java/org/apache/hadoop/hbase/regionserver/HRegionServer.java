@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
@@ -71,6 +72,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HealthCheckChore;
 import org.apache.hadoop.hbase.MetaTableAccessor;
 import org.apache.hadoop.hbase.NotServingRegionException;
+import org.apache.hadoop.hbase.PleaseHoldException;
 import org.apache.hadoop.hbase.RemoteExceptionHandler;
 import org.apache.hadoop.hbase.ScheduledChore;
 import org.apache.hadoop.hbase.ServerName;
@@ -131,11 +133,14 @@ import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.Regio
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerStartupRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerStartupResponse;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerStatusService;
+import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse;
+import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionStateTransition;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionStateTransition.TransitionCode;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRSFatalErrorRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse;
+import org.apache.hadoop.hbase.quotas.FileSystemUtilizationChore;
 import org.apache.hadoop.hbase.quotas.RegionServerQuotaManager;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionProgress;
 import org.apache.hadoop.hbase.regionserver.handler.CloseMetaHandler;
@@ -484,6 +489,8 @@ public class HRegionServer extends HasThread implements
    * when the regionserver is notified that there was a change in the on disk configs.
    */
   protected final ConfigurationManager configurationManager;
+
+  protected FileSystemUtilizationChore fsUtilizationChore;
 
   /**
    * Starts a HRegionServer at the default location.
@@ -861,7 +868,9 @@ public class HRegionServer extends HasThread implements
 
     // Setup the Quota Manager
     rsQuotaManager = new RegionServerQuotaManager(this);
-    
+
+    this.fsUtilizationChore = new FileSystemUtilizationChore(this);
+
     // Setup RPC client for master communication
     rpcClient = RpcClientFactory.createClient(conf, clusterId, new InetSocketAddress(
         rpcServices.isa.getAddress(), 0));
@@ -1173,6 +1182,66 @@ public class HRegionServer extends HasThread implements
       // Method blocks until new master is found or we are stopped
       createRegionServerStatusStub();
     }
+  }
+
+  /**
+   * Reports the given map of Regions and their size on the filesystem to the active Master.
+   *
+   * @param onlineRegionSizes A map of region info to size in bytes
+   */
+  public void reportRegionSizesForQuotas(final Map<HRegionInfo, Long> onlineRegionSizes) {
+    RegionServerStatusService.BlockingInterface rss = rssStub;
+    if (rss == null) {
+      // the current server could be stopping.
+      LOG.trace("Skipping Region size report to HMaster as stub is null");
+      return;
+    }
+    try {
+      RegionSpaceUseReportRequest request = buildRegionSpaceUseReportRequest(
+          Objects.requireNonNull(onlineRegionSizes));
+      rss.reportRegionSpaceUse(null, request);
+    } catch (ServiceException se) {
+      IOException ioe = ProtobufUtil.getRemoteException(se);
+      if (ioe instanceof PleaseHoldException) {
+        LOG.trace("Failed to report region sizes to Master because it is initializing. This will be retried.", ioe);
+        // The Master is coming up. Will retry the report later. Avoid re-creating the stub.
+        return;
+      }
+      LOG.debug("Failed to report region sizes to Master. This will be retried.", ioe);
+      if (rssStub == rss) {
+        rssStub = null;
+      }
+      createRegionServerStatusStub();
+    }
+  }
+
+  /**
+   * Builds a {@link RegionSpaceUseReportRequest} protobuf message from the region size map.
+   *
+   * @param regionSizes Map of region info to size in bytes.
+   * @return The corresponding protocol buffer message.
+   */
+  RegionSpaceUseReportRequest buildRegionSpaceUseReportRequest(Map<HRegionInfo,Long> regionSizes) {
+    RegionSpaceUseReportRequest.Builder request = RegionSpaceUseReportRequest.newBuilder();
+    for (Entry<HRegionInfo, Long> entry : Objects.requireNonNull(regionSizes).entrySet()) {
+      request.addSpaceUse(convertRegionSize(entry.getKey(), entry.getValue()));
+    }
+    return request.build();
+  }
+
+  /**
+   * Converts a pair of {@link HRegionInfo} and {@code long} into a {@link RegionSpaceUse}
+   * protobuf message.
+   *
+   * @param regionInfo The HRegionInfo
+   * @param sizeInBytes The size in bytes of the Region
+   * @return The protocol buffer
+   */
+  RegionSpaceUse convertRegionSize(HRegionInfo regionInfo, Long sizeInBytes) {
+    return RegionSpaceUse.newBuilder()
+        .setRegion(HRegionInfo.convert(Objects.requireNonNull(regionInfo)))
+        .setSize(Objects.requireNonNull(sizeInBytes))
+        .build();
   }
 
   ClusterStatusProtos.ServerLoad buildServerLoad(long reportStartTime, long reportEndTime)
@@ -1753,6 +1822,7 @@ public class HRegionServer extends HasThread implements
     if (this.nonceManagerChore != null) choreService.scheduleChore(nonceManagerChore);
     if (this.storefileRefresher != null) choreService.scheduleChore(storefileRefresher);
     if (this.movedRegionsCleaner != null) choreService.scheduleChore(movedRegionsCleaner);
+    if (this.fsUtilizationChore != null) choreService.scheduleChore(fsUtilizationChore);
 
     // Leases is not a Thread. Internally it runs a daemon thread. If it gets
     // an unhandled exception, it will just exit.
@@ -2159,6 +2229,7 @@ public class HRegionServer extends HasThread implements
     if (this.healthCheckChore != null) healthCheckChore.cancel(true);
     if (this.storefileRefresher != null) storefileRefresher.cancel(true);
     if (this.movedRegionsCleaner != null) movedRegionsCleaner.cancel(true);
+    if (this.fsUtilizationChore != null) fsUtilizationChore.cancel(true);
 
     if (this.cacheFlusher != null) {
       this.cacheFlusher.join();
@@ -2724,6 +2795,20 @@ public class HRegionServer extends HasThread implements
      }
      return tableRegions;
    }
+
+  // Backport from HBASE-15027
+  /**
+   * Get all online regions in this RS.
+   * @return List of online Region
+   */
+  public List<Region> getOnlineRegions() {
+    List<Region> allRegions = new ArrayList<Region>();
+    synchronized (this.onlineRegions) {
+      // Return a clone copy of the onlineRegions
+      allRegions.addAll(onlineRegions.values());
+    }
+    return allRegions;
+  }
   
   /**
    * Gets the online tables in this RS.

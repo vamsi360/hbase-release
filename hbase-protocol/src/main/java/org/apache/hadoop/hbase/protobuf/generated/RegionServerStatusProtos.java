@@ -8469,6 +8469,1814 @@ public final class RegionServerStatusProtos {
     // @@protoc_insertion_point(class_scope:ReportRegionStateTransitionResponse)
   }
 
+  public interface RegionSpaceUseOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+
+    // optional .RegionInfo region = 1;
+    /**
+     * <code>optional .RegionInfo region = 1;</code>
+     *
+     * <pre>
+     * A region identifier
+     * </pre>
+     */
+    boolean hasRegion();
+    /**
+     * <code>optional .RegionInfo region = 1;</code>
+     *
+     * <pre>
+     * A region identifier
+     * </pre>
+     */
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo getRegion();
+    /**
+     * <code>optional .RegionInfo region = 1;</code>
+     *
+     * <pre>
+     * A region identifier
+     * </pre>
+     */
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder getRegionOrBuilder();
+
+    // optional uint64 size = 2;
+    /**
+     * <code>optional uint64 size = 2;</code>
+     *
+     * <pre>
+     * The size in bytes of the region
+     * </pre>
+     */
+    boolean hasSize();
+    /**
+     * <code>optional uint64 size = 2;</code>
+     *
+     * <pre>
+     * The size in bytes of the region
+     * </pre>
+     */
+    long getSize();
+  }
+  /**
+   * Protobuf type {@code RegionSpaceUse}
+   */
+  public static final class RegionSpaceUse extends
+      com.google.protobuf.GeneratedMessage
+      implements RegionSpaceUseOrBuilder {
+    // Use RegionSpaceUse.newBuilder() to construct.
+    private RegionSpaceUse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RegionSpaceUse(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RegionSpaceUse defaultInstance;
+    public static RegionSpaceUse getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RegionSpaceUse getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RegionSpaceUse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000001) == 0x00000001)) {
+                subBuilder = region_.toBuilder();
+              }
+              region_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(region_);
+                region_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000001;
+              break;
+            }
+            case 16: {
+              bitField0_ |= 0x00000002;
+              size_ = input.readUInt64();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUse_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.class, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RegionSpaceUse> PARSER =
+        new com.google.protobuf.AbstractParser<RegionSpaceUse>() {
+      public RegionSpaceUse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RegionSpaceUse(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RegionSpaceUse> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    // optional .RegionInfo region = 1;
+    public static final int REGION_FIELD_NUMBER = 1;
+    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo region_;
+    /**
+     * <code>optional .RegionInfo region = 1;</code>
+     *
+     * <pre>
+     * A region identifier
+     * </pre>
+     */
+    public boolean hasRegion() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional .RegionInfo region = 1;</code>
+     *
+     * <pre>
+     * A region identifier
+     * </pre>
+     */
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo getRegion() {
+      return region_;
+    }
+    /**
+     * <code>optional .RegionInfo region = 1;</code>
+     *
+     * <pre>
+     * A region identifier
+     * </pre>
+     */
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder getRegionOrBuilder() {
+      return region_;
+    }
+
+    // optional uint64 size = 2;
+    public static final int SIZE_FIELD_NUMBER = 2;
+    private long size_;
+    /**
+     * <code>optional uint64 size = 2;</code>
+     *
+     * <pre>
+     * The size in bytes of the region
+     * </pre>
+     */
+    public boolean hasSize() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional uint64 size = 2;</code>
+     *
+     * <pre>
+     * The size in bytes of the region
+     * </pre>
+     */
+    public long getSize() {
+      return size_;
+    }
+
+    private void initFields() {
+      region_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
+      size_ = 0L;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+
+      if (hasRegion()) {
+        if (!getRegion().isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeMessage(1, region_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeUInt64(2, size_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, region_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt64Size(2, size_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse)) {
+        return super.equals(obj);
+      }
+      org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse other = (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse) obj;
+
+      boolean result = true;
+      result = result && (hasRegion() == other.hasRegion());
+      if (hasRegion()) {
+        result = result && getRegion()
+            .equals(other.getRegion());
+      }
+      result = result && (hasSize() == other.hasSize());
+      if (hasSize()) {
+        result = result && (getSize()
+            == other.getSize());
+      }
+      result = result &&
+          getUnknownFields().equals(other.getUnknownFields());
+      return result;
+    }
+
+    private int memoizedHashCode = 0;
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      if (hasRegion()) {
+        hash = (37 * hash) + REGION_FIELD_NUMBER;
+        hash = (53 * hash) + getRegion().hashCode();
+      }
+      if (hasSize()) {
+        hash = (37 * hash) + SIZE_FIELD_NUMBER;
+        hash = (53 * hash) + hashLong(getSize());
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code RegionSpaceUse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUse_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.class, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder.class);
+      }
+
+      // Construct using org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          getRegionFieldBuilder();
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        if (regionBuilder_ == null) {
+          region_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
+        } else {
+          regionBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000001);
+        size_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUse_descriptor;
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse getDefaultInstanceForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.getDefaultInstance();
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse build() {
+        org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse buildPartial() {
+        org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse result = new org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        if (regionBuilder_ == null) {
+          result.region_ = region_;
+        } else {
+          result.region_ = regionBuilder_.build();
+        }
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.size_ = size_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse) {
+          return mergeFrom((org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse other) {
+        if (other == org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.getDefaultInstance()) return this;
+        if (other.hasRegion()) {
+          mergeRegion(other.getRegion());
+        }
+        if (other.hasSize()) {
+          setSize(other.getSize());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (hasRegion()) {
+          if (!getRegion().isInitialized()) {
+            
+            return false;
+          }
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      // optional .RegionInfo region = 1;
+      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo region_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder> regionBuilder_;
+      /**
+       * <code>optional .RegionInfo region = 1;</code>
+       *
+       * <pre>
+       * A region identifier
+       * </pre>
+       */
+      public boolean hasRegion() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional .RegionInfo region = 1;</code>
+       *
+       * <pre>
+       * A region identifier
+       * </pre>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo getRegion() {
+        if (regionBuilder_ == null) {
+          return region_;
+        } else {
+          return regionBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .RegionInfo region = 1;</code>
+       *
+       * <pre>
+       * A region identifier
+       * </pre>
+       */
+      public Builder setRegion(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo value) {
+        if (regionBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          region_ = value;
+          onChanged();
+        } else {
+          regionBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000001;
+        return this;
+      }
+      /**
+       * <code>optional .RegionInfo region = 1;</code>
+       *
+       * <pre>
+       * A region identifier
+       * </pre>
+       */
+      public Builder setRegion(
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder builderForValue) {
+        if (regionBuilder_ == null) {
+          region_ = builderForValue.build();
+          onChanged();
+        } else {
+          regionBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000001;
+        return this;
+      }
+      /**
+       * <code>optional .RegionInfo region = 1;</code>
+       *
+       * <pre>
+       * A region identifier
+       * </pre>
+       */
+      public Builder mergeRegion(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo value) {
+        if (regionBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) == 0x00000001) &&
+              region_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance()) {
+            region_ =
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.newBuilder(region_).mergeFrom(value).buildPartial();
+          } else {
+            region_ = value;
+          }
+          onChanged();
+        } else {
+          regionBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000001;
+        return this;
+      }
+      /**
+       * <code>optional .RegionInfo region = 1;</code>
+       *
+       * <pre>
+       * A region identifier
+       * </pre>
+       */
+      public Builder clearRegion() {
+        if (regionBuilder_ == null) {
+          region_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
+          onChanged();
+        } else {
+          regionBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000001);
+        return this;
+      }
+      /**
+       * <code>optional .RegionInfo region = 1;</code>
+       *
+       * <pre>
+       * A region identifier
+       * </pre>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder getRegionBuilder() {
+        bitField0_ |= 0x00000001;
+        onChanged();
+        return getRegionFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .RegionInfo region = 1;</code>
+       *
+       * <pre>
+       * A region identifier
+       * </pre>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder getRegionOrBuilder() {
+        if (regionBuilder_ != null) {
+          return regionBuilder_.getMessageOrBuilder();
+        } else {
+          return region_;
+        }
+      }
+      /**
+       * <code>optional .RegionInfo region = 1;</code>
+       *
+       * <pre>
+       * A region identifier
+       * </pre>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder> 
+          getRegionFieldBuilder() {
+        if (regionBuilder_ == null) {
+          regionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder>(
+                  region_,
+                  getParentForChildren(),
+                  isClean());
+          region_ = null;
+        }
+        return regionBuilder_;
+      }
+
+      // optional uint64 size = 2;
+      private long size_ ;
+      /**
+       * <code>optional uint64 size = 2;</code>
+       *
+       * <pre>
+       * The size in bytes of the region
+       * </pre>
+       */
+      public boolean hasSize() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional uint64 size = 2;</code>
+       *
+       * <pre>
+       * The size in bytes of the region
+       * </pre>
+       */
+      public long getSize() {
+        return size_;
+      }
+      /**
+       * <code>optional uint64 size = 2;</code>
+       *
+       * <pre>
+       * The size in bytes of the region
+       * </pre>
+       */
+      public Builder setSize(long value) {
+        bitField0_ |= 0x00000002;
+        size_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint64 size = 2;</code>
+       *
+       * <pre>
+       * The size in bytes of the region
+       * </pre>
+       */
+      public Builder clearSize() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        size_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:RegionSpaceUse)
+    }
+
+    static {
+      defaultInstance = new RegionSpaceUse(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:RegionSpaceUse)
+  }
+
+  public interface RegionSpaceUseReportRequestOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+
+    // repeated .RegionSpaceUse space_use = 1;
+    /**
+     * <code>repeated .RegionSpaceUse space_use = 1;</code>
+     */
+    java.util.List<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse> 
+        getSpaceUseList();
+    /**
+     * <code>repeated .RegionSpaceUse space_use = 1;</code>
+     */
+    org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse getSpaceUse(int index);
+    /**
+     * <code>repeated .RegionSpaceUse space_use = 1;</code>
+     */
+    int getSpaceUseCount();
+    /**
+     * <code>repeated .RegionSpaceUse space_use = 1;</code>
+     */
+    java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseOrBuilder> 
+        getSpaceUseOrBuilderList();
+    /**
+     * <code>repeated .RegionSpaceUse space_use = 1;</code>
+     */
+    org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseOrBuilder getSpaceUseOrBuilder(
+        int index);
+  }
+  /**
+   * Protobuf type {@code RegionSpaceUseReportRequest}
+   *
+   * <pre>
+   **
+   * Reports filesystem usage for regions.
+   * </pre>
+   */
+  public static final class RegionSpaceUseReportRequest extends
+      com.google.protobuf.GeneratedMessage
+      implements RegionSpaceUseReportRequestOrBuilder {
+    // Use RegionSpaceUseReportRequest.newBuilder() to construct.
+    private RegionSpaceUseReportRequest(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RegionSpaceUseReportRequest(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RegionSpaceUseReportRequest defaultInstance;
+    public static RegionSpaceUseReportRequest getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RegionSpaceUseReportRequest getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RegionSpaceUseReportRequest(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                spaceUse_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse>();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              spaceUse_.add(input.readMessage(org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.PARSER, extensionRegistry));
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          spaceUse_ = java.util.Collections.unmodifiableList(spaceUse_);
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUseReportRequest_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUseReportRequest_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest.class, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RegionSpaceUseReportRequest> PARSER =
+        new com.google.protobuf.AbstractParser<RegionSpaceUseReportRequest>() {
+      public RegionSpaceUseReportRequest parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RegionSpaceUseReportRequest(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RegionSpaceUseReportRequest> getParserForType() {
+      return PARSER;
+    }
+
+    // repeated .RegionSpaceUse space_use = 1;
+    public static final int SPACE_USE_FIELD_NUMBER = 1;
+    private java.util.List<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse> spaceUse_;
+    /**
+     * <code>repeated .RegionSpaceUse space_use = 1;</code>
+     */
+    public java.util.List<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse> getSpaceUseList() {
+      return spaceUse_;
+    }
+    /**
+     * <code>repeated .RegionSpaceUse space_use = 1;</code>
+     */
+    public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseOrBuilder> 
+        getSpaceUseOrBuilderList() {
+      return spaceUse_;
+    }
+    /**
+     * <code>repeated .RegionSpaceUse space_use = 1;</code>
+     */
+    public int getSpaceUseCount() {
+      return spaceUse_.size();
+    }
+    /**
+     * <code>repeated .RegionSpaceUse space_use = 1;</code>
+     */
+    public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse getSpaceUse(int index) {
+      return spaceUse_.get(index);
+    }
+    /**
+     * <code>repeated .RegionSpaceUse space_use = 1;</code>
+     */
+    public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseOrBuilder getSpaceUseOrBuilder(
+        int index) {
+      return spaceUse_.get(index);
+    }
+
+    private void initFields() {
+      spaceUse_ = java.util.Collections.emptyList();
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+
+      for (int i = 0; i < getSpaceUseCount(); i++) {
+        if (!getSpaceUse(i).isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      for (int i = 0; i < spaceUse_.size(); i++) {
+        output.writeMessage(1, spaceUse_.get(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      for (int i = 0; i < spaceUse_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, spaceUse_.get(i));
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest)) {
+        return super.equals(obj);
+      }
+      org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest other = (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest) obj;
+
+      boolean result = true;
+      result = result && getSpaceUseList()
+          .equals(other.getSpaceUseList());
+      result = result &&
+          getUnknownFields().equals(other.getUnknownFields());
+      return result;
+    }
+
+    private int memoizedHashCode = 0;
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      if (getSpaceUseCount() > 0) {
+        hash = (37 * hash) + SPACE_USE_FIELD_NUMBER;
+        hash = (53 * hash) + getSpaceUseList().hashCode();
+      }
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code RegionSpaceUseReportRequest}
+     *
+     * <pre>
+     **
+     * Reports filesystem usage for regions.
+     * </pre>
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequestOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUseReportRequest_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUseReportRequest_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest.class, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest.Builder.class);
+      }
+
+      // Construct using org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          getSpaceUseFieldBuilder();
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        if (spaceUseBuilder_ == null) {
+          spaceUse_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+        } else {
+          spaceUseBuilder_.clear();
+        }
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUseReportRequest_descriptor;
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest getDefaultInstanceForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest.getDefaultInstance();
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest build() {
+        org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest buildPartial() {
+        org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest result = new org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest(this);
+        int from_bitField0_ = bitField0_;
+        if (spaceUseBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            spaceUse_ = java.util.Collections.unmodifiableList(spaceUse_);
+            bitField0_ = (bitField0_ & ~0x00000001);
+          }
+          result.spaceUse_ = spaceUse_;
+        } else {
+          result.spaceUse_ = spaceUseBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest) {
+          return mergeFrom((org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest other) {
+        if (other == org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest.getDefaultInstance()) return this;
+        if (spaceUseBuilder_ == null) {
+          if (!other.spaceUse_.isEmpty()) {
+            if (spaceUse_.isEmpty()) {
+              spaceUse_ = other.spaceUse_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+            } else {
+              ensureSpaceUseIsMutable();
+              spaceUse_.addAll(other.spaceUse_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.spaceUse_.isEmpty()) {
+            if (spaceUseBuilder_.isEmpty()) {
+              spaceUseBuilder_.dispose();
+              spaceUseBuilder_ = null;
+              spaceUse_ = other.spaceUse_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+              spaceUseBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getSpaceUseFieldBuilder() : null;
+            } else {
+              spaceUseBuilder_.addAllMessages(other.spaceUse_);
+            }
+          }
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        for (int i = 0; i < getSpaceUseCount(); i++) {
+          if (!getSpaceUse(i).isInitialized()) {
+            
+            return false;
+          }
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      // repeated .RegionSpaceUse space_use = 1;
+      private java.util.List<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse> spaceUse_ =
+        java.util.Collections.emptyList();
+      private void ensureSpaceUseIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          spaceUse_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse>(spaceUse_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseOrBuilder> spaceUseBuilder_;
+
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse> getSpaceUseList() {
+        if (spaceUseBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(spaceUse_);
+        } else {
+          return spaceUseBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public int getSpaceUseCount() {
+        if (spaceUseBuilder_ == null) {
+          return spaceUse_.size();
+        } else {
+          return spaceUseBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse getSpaceUse(int index) {
+        if (spaceUseBuilder_ == null) {
+          return spaceUse_.get(index);
+        } else {
+          return spaceUseBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public Builder setSpaceUse(
+          int index, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse value) {
+        if (spaceUseBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureSpaceUseIsMutable();
+          spaceUse_.set(index, value);
+          onChanged();
+        } else {
+          spaceUseBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public Builder setSpaceUse(
+          int index, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder builderForValue) {
+        if (spaceUseBuilder_ == null) {
+          ensureSpaceUseIsMutable();
+          spaceUse_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          spaceUseBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public Builder addSpaceUse(org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse value) {
+        if (spaceUseBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureSpaceUseIsMutable();
+          spaceUse_.add(value);
+          onChanged();
+        } else {
+          spaceUseBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public Builder addSpaceUse(
+          int index, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse value) {
+        if (spaceUseBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureSpaceUseIsMutable();
+          spaceUse_.add(index, value);
+          onChanged();
+        } else {
+          spaceUseBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public Builder addSpaceUse(
+          org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder builderForValue) {
+        if (spaceUseBuilder_ == null) {
+          ensureSpaceUseIsMutable();
+          spaceUse_.add(builderForValue.build());
+          onChanged();
+        } else {
+          spaceUseBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public Builder addSpaceUse(
+          int index, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder builderForValue) {
+        if (spaceUseBuilder_ == null) {
+          ensureSpaceUseIsMutable();
+          spaceUse_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          spaceUseBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public Builder addAllSpaceUse(
+          java.lang.Iterable<? extends org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse> values) {
+        if (spaceUseBuilder_ == null) {
+          ensureSpaceUseIsMutable();
+          super.addAll(values, spaceUse_);
+          onChanged();
+        } else {
+          spaceUseBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public Builder clearSpaceUse() {
+        if (spaceUseBuilder_ == null) {
+          spaceUse_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+        } else {
+          spaceUseBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public Builder removeSpaceUse(int index) {
+        if (spaceUseBuilder_ == null) {
+          ensureSpaceUseIsMutable();
+          spaceUse_.remove(index);
+          onChanged();
+        } else {
+          spaceUseBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder getSpaceUseBuilder(
+          int index) {
+        return getSpaceUseFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseOrBuilder getSpaceUseOrBuilder(
+          int index) {
+        if (spaceUseBuilder_ == null) {
+          return spaceUse_.get(index);  } else {
+          return spaceUseBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseOrBuilder> 
+           getSpaceUseOrBuilderList() {
+        if (spaceUseBuilder_ != null) {
+          return spaceUseBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(spaceUse_);
+        }
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder addSpaceUseBuilder() {
+        return getSpaceUseFieldBuilder().addBuilder(
+            org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder addSpaceUseBuilder(
+          int index) {
+        return getSpaceUseFieldBuilder().addBuilder(
+            index, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .RegionSpaceUse space_use = 1;</code>
+       */
+      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder> 
+           getSpaceUseBuilderList() {
+        return getSpaceUseFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseOrBuilder> 
+          getSpaceUseFieldBuilder() {
+        if (spaceUseBuilder_ == null) {
+          spaceUseBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.Builder, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseOrBuilder>(
+                  spaceUse_,
+                  ((bitField0_ & 0x00000001) == 0x00000001),
+                  getParentForChildren(),
+                  isClean());
+          spaceUse_ = null;
+        }
+        return spaceUseBuilder_;
+      }
+
+      // @@protoc_insertion_point(builder_scope:RegionSpaceUseReportRequest)
+    }
+
+    static {
+      defaultInstance = new RegionSpaceUseReportRequest(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:RegionSpaceUseReportRequest)
+  }
+
+  public interface RegionSpaceUseReportResponseOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+  }
+  /**
+   * Protobuf type {@code RegionSpaceUseReportResponse}
+   */
+  public static final class RegionSpaceUseReportResponse extends
+      com.google.protobuf.GeneratedMessage
+      implements RegionSpaceUseReportResponseOrBuilder {
+    // Use RegionSpaceUseReportResponse.newBuilder() to construct.
+    private RegionSpaceUseReportResponse(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private RegionSpaceUseReportResponse(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final RegionSpaceUseReportResponse defaultInstance;
+    public static RegionSpaceUseReportResponse getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public RegionSpaceUseReportResponse getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private RegionSpaceUseReportResponse(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUseReportResponse_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUseReportResponse_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.class, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<RegionSpaceUseReportResponse> PARSER =
+        new com.google.protobuf.AbstractParser<RegionSpaceUseReportResponse>() {
+      public RegionSpaceUseReportResponse parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new RegionSpaceUseReportResponse(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<RegionSpaceUseReportResponse> getParserForType() {
+      return PARSER;
+    }
+
+    private void initFields() {
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse)) {
+        return super.equals(obj);
+      }
+      org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse other = (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse) obj;
+
+      boolean result = true;
+      result = result &&
+          getUnknownFields().equals(other.getUnknownFields());
+      return result;
+    }
+
+    private int memoizedHashCode = 0;
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code RegionSpaceUseReportResponse}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponseOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUseReportResponse_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUseReportResponse_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.class, org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.Builder.class);
+      }
+
+      // Construct using org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.internal_static_RegionSpaceUseReportResponse_descriptor;
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse getDefaultInstanceForType() {
+        return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.getDefaultInstance();
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse build() {
+        org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse buildPartial() {
+        org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse result = new org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse(this);
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse) {
+          return mergeFrom((org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse other) {
+        if (other == org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.getDefaultInstance()) return this;
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:RegionSpaceUseReportResponse)
+    }
+
+    static {
+      defaultInstance = new RegionSpaceUseReportResponse(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:RegionSpaceUseReportResponse)
+  }
+
   /**
    * Protobuf service {@code RegionServerStatusService}
    */
@@ -8544,6 +10352,19 @@ public final class RegionServerStatusProtos {
           org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionRequest request,
           com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse> done);
 
+      /**
+       * <code>rpc ReportRegionSpaceUse(.RegionSpaceUseReportRequest) returns (.RegionSpaceUseReportResponse);</code>
+       *
+       * <pre>
+       **
+       * Reports Region filesystem space use
+       * </pre>
+       */
+      public abstract void reportRegionSpaceUse(
+          com.google.protobuf.RpcController controller,
+          org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest request,
+          com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse> done);
+
     }
 
     public static com.google.protobuf.Service newReflectiveService(
@@ -8589,6 +10410,14 @@ public final class RegionServerStatusProtos {
           impl.reportRegionStateTransition(controller, request, done);
         }
 
+        @java.lang.Override
+        public  void reportRegionSpaceUse(
+            com.google.protobuf.RpcController controller,
+            org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest request,
+            com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse> done) {
+          impl.reportRegionSpaceUse(controller, request, done);
+        }
+
       };
     }
 
@@ -8621,6 +10450,8 @@ public final class RegionServerStatusProtos {
               return impl.getLastFlushedSequenceId(controller, (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.GetLastFlushedSequenceIdRequest)request);
             case 4:
               return impl.reportRegionStateTransition(controller, (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionRequest)request);
+            case 5:
+              return impl.reportRegionSpaceUse(controller, (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest)request);
             default:
               throw new java.lang.AssertionError("Can't get here.");
           }
@@ -8645,6 +10476,8 @@ public final class RegionServerStatusProtos {
               return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.GetLastFlushedSequenceIdRequest.getDefaultInstance();
             case 4:
               return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionRequest.getDefaultInstance();
+            case 5:
+              return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest.getDefaultInstance();
             default:
               throw new java.lang.AssertionError("Can't get here.");
           }
@@ -8669,6 +10502,8 @@ public final class RegionServerStatusProtos {
               return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.GetLastFlushedSequenceIdResponse.getDefaultInstance();
             case 4:
               return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse.getDefaultInstance();
+            case 5:
+              return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.getDefaultInstance();
             default:
               throw new java.lang.AssertionError("Can't get here.");
           }
@@ -8744,6 +10579,19 @@ public final class RegionServerStatusProtos {
         org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionRequest request,
         com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse> done);
 
+    /**
+     * <code>rpc ReportRegionSpaceUse(.RegionSpaceUseReportRequest) returns (.RegionSpaceUseReportResponse);</code>
+     *
+     * <pre>
+     **
+     * Reports Region filesystem space use
+     * </pre>
+     */
+    public abstract void reportRegionSpaceUse(
+        com.google.protobuf.RpcController controller,
+        org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest request,
+        com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse> done);
+
     public static final
         com.google.protobuf.Descriptors.ServiceDescriptor
         getDescriptor() {
@@ -8791,6 +10639,11 @@ public final class RegionServerStatusProtos {
             com.google.protobuf.RpcUtil.<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse>specializeCallback(
               done));
           return;
+        case 5:
+          this.reportRegionSpaceUse(controller, (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest)request,
+            com.google.protobuf.RpcUtil.<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse>specializeCallback(
+              done));
+          return;
         default:
           throw new java.lang.AssertionError("Can't get here.");
       }
@@ -8815,6 +10668,8 @@ public final class RegionServerStatusProtos {
           return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.GetLastFlushedSequenceIdRequest.getDefaultInstance();
         case 4:
           return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionRequest.getDefaultInstance();
+        case 5:
+          return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest.getDefaultInstance();
         default:
           throw new java.lang.AssertionError("Can't get here.");
       }
@@ -8839,6 +10694,8 @@ public final class RegionServerStatusProtos {
           return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.GetLastFlushedSequenceIdResponse.getDefaultInstance();
         case 4:
           return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse.getDefaultInstance();
+        case 5:
+          return org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.getDefaultInstance();
         default:
           throw new java.lang.AssertionError("Can't get here.");
       }
@@ -8934,6 +10791,21 @@ public final class RegionServerStatusProtos {
             org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse.class,
             org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse.getDefaultInstance()));
       }
+
+      public  void reportRegionSpaceUse(
+          com.google.protobuf.RpcController controller,
+          org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest request,
+          com.google.protobuf.RpcCallback<org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse> done) {
+        channel.callMethod(
+          getDescriptor().getMethods().get(5),
+          controller,
+          request,
+          org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.getDefaultInstance(),
+          com.google.protobuf.RpcUtil.generalizeCallback(
+            done,
+            org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.class,
+            org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.getDefaultInstance()));
+      }
     }
 
     public static BlockingInterface newBlockingStub(
@@ -8965,6 +10837,11 @@ public final class RegionServerStatusProtos {
       public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse reportRegionStateTransition(
           com.google.protobuf.RpcController controller,
           org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionRequest request)
+          throws com.google.protobuf.ServiceException;
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse reportRegionSpaceUse(
+          com.google.protobuf.RpcController controller,
+          org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest request)
           throws com.google.protobuf.ServiceException;
     }
 
@@ -9034,6 +10911,18 @@ public final class RegionServerStatusProtos {
           org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse.getDefaultInstance());
       }
 
+
+      public org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse reportRegionSpaceUse(
+          com.google.protobuf.RpcController controller,
+          org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportRequest request)
+          throws com.google.protobuf.ServiceException {
+        return (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse) channel.callBlockingMethod(
+          getDescriptor().getMethods().get(5),
+          controller,
+          request,
+          org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUseReportResponse.getDefaultInstance());
+      }
+
     }
 
     // @@protoc_insertion_point(class_scope:RegionServerStatusService)
@@ -9094,6 +10983,21 @@ public final class RegionServerStatusProtos {
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_ReportRegionStateTransitionResponse_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_RegionSpaceUse_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_RegionSpaceUse_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_RegionSpaceUseReportRequest_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_RegionSpaceUseReportRequest_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_RegionSpaceUseReportResponse_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_RegionSpaceUseReportResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -9132,21 +11036,27 @@ public final class RegionServerStatusProtos {
       "nsitionRequest\022\033\n\006server\030\001 \002(\0132\013.ServerN" +
       "ame\022*\n\ntransition\030\002 \003(\0132\026.RegionStateTra" +
       "nsition\"<\n#ReportRegionStateTransitionRe" +
-      "sponse\022\025\n\rerror_message\030\001 \001(\t2\326\003\n\031Region",
+      "sponse\022\025\n\rerror_message\030\001 \001(\t\";\n\016RegionS",
+      "paceUse\022\033\n\006region\030\001 \001(\0132\013.RegionInfo\022\014\n\004" +
+      "size\030\002 \001(\004\"A\n\033RegionSpaceUseReportReques" +
+      "t\022\"\n\tspace_use\030\001 \003(\0132\017.RegionSpaceUse\"\036\n" +
+      "\034RegionSpaceUseReportResponse2\253\004\n\031Region" +
       "ServerStatusService\022P\n\023RegionServerStart" +
       "up\022\033.RegionServerStartupRequest\032\034.Region" +
       "ServerStartupResponse\022M\n\022RegionServerRep" +
       "ort\022\032.RegionServerReportRequest\032\033.Region" +
       "ServerReportResponse\022M\n\022ReportRSFatalErr" +
-      "or\022\032.ReportRSFatalErrorRequest\032\033.ReportR" +
+      "or\022\032.ReportRSFatalErrorRequest\032\033.ReportR",
       "SFatalErrorResponse\022_\n\030GetLastFlushedSeq" +
       "uenceId\022 .GetLastFlushedSequenceIdReques" +
       "t\032!.GetLastFlushedSequenceIdResponse\022h\n\033" +
-      "ReportRegionStateTransition\022#.ReportRegi",
+      "ReportRegionStateTransition\022#.ReportRegi" +
       "onStateTransitionRequest\032$.ReportRegionS" +
-      "tateTransitionResponseBN\n*org.apache.had" +
-      "oop.hbase.protobuf.generatedB\030RegionServ" +
-      "erStatusProtosH\001\210\001\001\240\001\001"
+      "tateTransitionResponse\022S\n\024ReportRegionSp" +
+      "aceUse\022\034.RegionSpaceUseReportRequest\032\035.R" +
+      "egionSpaceUseReportResponseBN\n*org.apach" +
+      "e.hadoop.hbase.protobuf.generatedB\030Regio" +
+      "nServerStatusProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -9219,6 +11129,24 @@ public final class RegionServerStatusProtos {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ReportRegionStateTransitionResponse_descriptor,
               new java.lang.String[] { "ErrorMessage", });
+          internal_static_RegionSpaceUse_descriptor =
+            getDescriptor().getMessageTypes().get(11);
+          internal_static_RegionSpaceUse_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_RegionSpaceUse_descriptor,
+              new java.lang.String[] { "Region", "Size", });
+          internal_static_RegionSpaceUseReportRequest_descriptor =
+            getDescriptor().getMessageTypes().get(12);
+          internal_static_RegionSpaceUseReportRequest_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_RegionSpaceUseReportRequest_descriptor,
+              new java.lang.String[] { "SpaceUse", });
+          internal_static_RegionSpaceUseReportResponse_descriptor =
+            getDescriptor().getMessageTypes().get(13);
+          internal_static_RegionSpaceUseReportResponse_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_RegionSpaceUseReportResponse_descriptor,
+              new java.lang.String[] { });
           return null;
         }
       };
