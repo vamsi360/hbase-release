@@ -6922,11 +6922,6 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
 
   void metricsUpdateForGet(List<Cell> results, long before) {
     if (this.metricsRegion != null) {
-      long totalSize = 0L;
-      for (Cell cell : results) {
-        totalSize += CellUtil.estimatedSerializedSizeOf(cell);
-      }
-      this.metricsRegion.updateGetSize(totalSize);
       this.metricsRegion.updateGet(EnvironmentEdgeManager.currentTime() - before);
     }
 

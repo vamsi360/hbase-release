@@ -2547,7 +2547,6 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
               }
               region.updateReadRequestsCount(i);
               long end = EnvironmentEdgeManager.currentTime();
-              region.getMetrics().updateScanSize(totalCellSize);
               region.getMetrics().updateScanTime(end - before);
               if (regionServer.metricsRegionServer != null) {
                 regionServer.metricsRegionServer.updateScanSize(totalCellSize);
