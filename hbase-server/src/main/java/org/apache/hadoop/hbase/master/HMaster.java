@@ -154,7 +154,10 @@ import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionServerInfo;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos.SplitLogTask.RecoveryMode;
 import org.apache.hadoop.hbase.quotas.MasterQuotaManager;
+import org.apache.hadoop.hbase.quotas.QuotaObserverChore;
 import org.apache.hadoop.hbase.quotas.RegionStateListener;
+import org.apache.hadoop.hbase.quotas.SpaceQuotaViolationNotifier;
+import org.apache.hadoop.hbase.quotas.SpaceQuotaViolationNotifierForTest;
 import org.apache.hadoop.hbase.regionserver.DefaultStoreEngine;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.regionserver.HStore;
@@ -371,6 +374,8 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
 
   // it is assigned after 'initialized' guard set to true, so should be volatile
   private volatile MasterQuotaManager quotaManager;
+  private SpaceQuotaViolationNotifier spaceQuotaViolationNotifier;
+  private QuotaObserverChore quotaObserverChore;
 
   private ProcedureExecutor<MasterProcedureEnv> procedureExecutor;
   private WALProcedureStore procedureStore;
@@ -862,6 +867,10 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
 
     status.setStatus("Starting quota manager");
     initQuotaManager();
+    this.spaceQuotaViolationNotifier = createQuotaViolationNotifier();
+    this.quotaObserverChore = new QuotaObserverChore(this);
+    // Start the chore to read the region FS space reports and act on them
+    getChoreService().scheduleChore(quotaObserverChore);
 
     // assign the meta replicas
     Set<ServerName> EMPTY_SET = new HashSet<ServerName>();
@@ -1065,6 +1074,10 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     //create namespace manager
     tableNamespaceManager = new TableNamespaceManager(this);
     tableNamespaceManager.start();
+  }
+
+  SpaceQuotaViolationNotifier createQuotaViolationNotifier() {
+    return new SpaceQuotaViolationNotifierForTest();
   }
 
   boolean isCatalogJanitorEnabled() {
@@ -1309,6 +1322,9 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     }
     if (this.mobCompactThread != null) {
       this.mobCompactThread.close();
+    }
+    if (this.quotaObserverChore != null) {
+      quotaObserverChore.cancel();
     }
   }
 
@@ -3239,5 +3255,13 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
   @Override
   public TableStateManager getTableStateManager() {
     return assignmentManager.getTableStateManager();
+  }
+
+  public QuotaObserverChore getQuotaObserverChore() {
+    return this.quotaObserverChore;
+  }
+
+  public SpaceQuotaViolationNotifier getSpaceQuotaViolationNotifier() {
+    return this.spaceQuotaViolationNotifier;
   }
 }
