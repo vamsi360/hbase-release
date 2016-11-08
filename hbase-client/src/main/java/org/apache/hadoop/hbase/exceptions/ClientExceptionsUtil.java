@@ -19,6 +19,7 @@
 
 package org.apache.hadoop.hbase.exceptions;
 
+import org.apache.hadoop.hbase.CallDroppedException;
 import org.apache.hadoop.hbase.CallQueueTooBigException;
 import org.apache.hadoop.hbase.RegionTooBusyException;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
@@ -44,9 +45,30 @@ public final class ClientExceptionsUtil {
   public static boolean isSpecialException(Throwable cur) {
     return (cur instanceof RegionMovedException || cur instanceof RegionOpeningException
         || cur instanceof RegionTooBusyException || cur instanceof ThrottlingException
-        || cur instanceof CallQueueTooBigException);
+        || cur instanceof CallQueueTooBigException || cur instanceof CallDroppedException);
   }
 
+  /**
+   * Checks if the exception is CallQueueTooBig exception (maybe wrapped
+   * into some RemoteException).
+   * @param t exception to check
+   * @return true if it's a CQTBE, false otherwise
+   */
+  public static boolean isCallQueueTooBigException(Throwable t) {
+    t = findException(t);
+    return (t instanceof CallQueueTooBigException);
+  }
+
+  /**
+   * Checks if the exception is CallDroppedException (maybe wrapped
+   * into some RemoteException).
+   * @param t exception to check
+   * @return true if it's a CQTBE, false otherwise
+   */
+  public static boolean isCallDroppedException(Throwable t) {
+    t = findException(t);
+    return (t instanceof CallDroppedException);
+  }
 
   /**
    * Look for an exception we know in the remote exception:
