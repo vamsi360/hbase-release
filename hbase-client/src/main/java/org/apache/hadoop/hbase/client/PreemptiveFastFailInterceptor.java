@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.exceptions.ClientExceptionsUtil;
 import org.apache.hadoop.hbase.exceptions.ConnectionClosingException;
 import org.apache.hadoop.hbase.exceptions.PreemptiveFastFailException;
 import org.apache.hadoop.hbase.ipc.FailedServerException;
@@ -175,7 +176,9 @@ class PreemptiveFastFailInterceptor extends RetryingCallerInterceptor {
       MutableBoolean couldNotCommunicateWithServer) throws IOException {
     Throwable t2 = translateException(t1);
     boolean isLocalException = !(t2 instanceof RemoteException);
-    if (isLocalException && isConnectionException(t2)) {
+    if ((isLocalException && isConnectionException(t2)) ||
+        ClientExceptionsUtil.isCallQueueTooBigException(t2) ||
+        ClientExceptionsUtil.isCallDroppedException(t2)) {
       couldNotCommunicateWithServer.setValue(true);
       handleFailureToServer(serverName, t2);
     }
