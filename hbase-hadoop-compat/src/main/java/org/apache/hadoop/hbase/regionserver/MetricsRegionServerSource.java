@@ -332,6 +332,7 @@ public interface MetricsRegionServerSource extends BaseSource, JvmPauseMonitorSo
   String MUTATE_KEY = "mutate";
   String APPEND_KEY = "append";
   String REPLAY_KEY = "replay";
+  String SCAN_KEY = "scan";
   String SCAN_SIZE_KEY = "scanSize";
   String SCAN_TIME_KEY = "scanTime";
 
@@ -475,6 +476,6 @@ public interface MetricsRegionServerSource extends BaseSource, JvmPauseMonitorSo
   String RPC_MUTATE_REQUEST_COUNT_DESC =
       "Number of rpc mutation requests this region server has answered.";
   String AVERAGE_REGION_SIZE = "averageRegionSize";
-  String AVERAGE_REGION_SIZE_DESC = 
+  String AVERAGE_REGION_SIZE_DESC =
       "Average region size over the region server including memstore and storefile sizes.";
 }
