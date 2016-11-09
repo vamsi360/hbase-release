@@ -176,9 +176,7 @@ class PreemptiveFastFailInterceptor extends RetryingCallerInterceptor {
       MutableBoolean couldNotCommunicateWithServer) throws IOException {
     Throwable t2 = translateException(t1);
     boolean isLocalException = !(t2 instanceof RemoteException);
-    if ((isLocalException && isConnectionException(t2)) ||
-        ClientExceptionsUtil.isCallQueueTooBigException(t2) ||
-        ClientExceptionsUtil.isCallDroppedException(t2)) {
+    if ((isLocalException && isConnectionException(t2))) {
       couldNotCommunicateWithServer.setValue(true);
       handleFailureToServer(serverName, t2);
     }
