@@ -17,44 +17,6 @@
  */
 package org.apache.hadoop.hbase.ipc;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import com.google.protobuf.Message;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.monitoring.MonitoredRPCHandlerImpl;
-import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.testclassification.SmallTests;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.ipc.RpcServer.Call;
-import org.apache.hadoop.hbase.protobuf.RequestConverter;
-import org.apache.hadoop.hbase.protobuf.generated.RPCProtos;
-import org.apache.hadoop.hbase.protobuf.generated.RPCProtos.RequestHeader;
-import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanRequest;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Threads;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -67,6 +29,47 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.ipc.RpcServer.Call;
+import org.apache.hadoop.hbase.monitoring.MonitoredRPCHandlerImpl;
+import org.apache.hadoop.hbase.protobuf.RequestConverter;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanRequest;
+import org.apache.hadoop.hbase.protobuf.generated.RPCProtos;
+import org.apache.hadoop.hbase.protobuf.generated.RPCProtos.RequestHeader;
+import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.testclassification.SmallTests;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.EnvironmentEdge;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
+import org.apache.hadoop.hbase.util.Threads;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.protobuf.Message;
 
 @Category(SmallTests.class)
 public class TestSimpleRpcScheduler {
@@ -372,67 +375,131 @@ public class TestSimpleRpcScheduler {
       scheduler.stop();
     }
   }
+  private static final class CoDelEnvironmentEdge implements EnvironmentEdge {
+    private final BlockingQueue<Long> timeQ = new LinkedBlockingQueue<>();
+
+    private long offset;
+
+    private final Set<String> threadNamePrefixs = new HashSet<>();
+
+    @Override
+    public long currentTime() {
+      for (String threadNamePrefix : threadNamePrefixs) {
+        String threadName = Thread.currentThread().getName();
+        if (threadName.startsWith(threadNamePrefix)) {
+          return timeQ.poll().longValue() + offset;
+        }
+      }
+      return System.currentTimeMillis();
+    }
+  }
+
+  private static void waitUntilQueueEmpty(SimpleRpcScheduler scheduler)
+      throws InterruptedException {
+    while (scheduler.getGeneralQueueLength() > 0) {
+      Thread.sleep(100);
+    }
+  }
 
   @Test
   public void testCoDelScheduling() throws Exception {
+    CoDelEnvironmentEdge envEdge = new CoDelEnvironmentEdge();
+    envEdge.threadNamePrefixs.add("RpcServer.CodelBQ.default.handler");
     Configuration schedConf = HBaseConfiguration.create();
+    schedConf.setInt(RpcScheduler.IPC_SERVER_MAX_CALLQUEUE_LENGTH, 250);
 
     schedConf.set(SimpleRpcScheduler.CALL_QUEUE_TYPE_CONF_KEY,
       SimpleRpcScheduler.CALL_QUEUE_TYPE_CODEL_CONF_VALUE);
 
     PriorityFunction priority = mock(PriorityFunction.class);
-    when(priority.getPriority(any(RPCProtos.RequestHeader.class), any(Message.class)
-      )).thenReturn(HConstants.NORMAL_QOS);
+    when(priority.getPriority(any(RPCProtos.RequestHeader.class), any(Message.class)))
+    .thenReturn(HConstants.NORMAL_QOS);
     SimpleRpcScheduler scheduler = new SimpleRpcScheduler(schedConf, 1, 1, 1, priority,
       HConstants.QOS_THRESHOLD);
     try {
       scheduler.start();
-
+      EnvironmentEdgeManager.injectEdge(envEdge);
+      envEdge.offset = 5;
       // calls faster than min delay
       for (int i = 0; i < 100; i++) {
-        CallRunner cr = getMockedCallRunner();
-        Thread.sleep(5);
+        long time = System.currentTimeMillis();
+        envEdge.timeQ.put(time);
+        CallRunner cr = getMockedCallRunner(time, 2);
         scheduler.dispatch(cr);
       }
-      Thread.sleep(100); // make sure fast calls are handled
+      // make sure fast calls are handled
+      waitUntilQueueEmpty(scheduler);
+      Thread.sleep(100);
       assertEquals("None of these calls should have been discarded", 0,
         scheduler.getNumGeneralCallsDropped());
 
+      envEdge.offset = 151;
       // calls slower than min delay, but not individually slow enough to be dropped
       for (int i = 0; i < 20; i++) {
-        CallRunner cr = getMockedCallRunner();
-        Thread.sleep(6);
+        long time = System.currentTimeMillis();
+        envEdge.timeQ.put(time);
+        CallRunner cr = getMockedCallRunner(time, 2);
         scheduler.dispatch(cr);
       }
 
-      Thread.sleep(100); // make sure somewhat slow calls are handled
+      // make sure somewhat slow calls are handled
+      waitUntilQueueEmpty(scheduler);
+      Thread.sleep(100);
       assertEquals("None of these calls should have been discarded", 0,
         scheduler.getNumGeneralCallsDropped());
 
+      envEdge.offset = 2000;
       // now slow calls and the ones to be dropped
-      for (int i = 0; i < 20; i++) {
-        CallRunner cr = getMockedCallRunner();
-        Thread.sleep(12);
+      for (int i = 0; i < 60; i++) {
+        long time = System.currentTimeMillis();
+        envEdge.timeQ.put(time);
+        CallRunner cr = getMockedCallRunner(time, 100);
         scheduler.dispatch(cr);
       }
 
-      Thread.sleep(100); // make sure somewhat slow calls are handled
-      assertTrue("There should have been at least 12 calls dropped",
-        scheduler.getNumGeneralCallsDropped() > 12);
+      // make sure somewhat slow calls are handled
+      waitUntilQueueEmpty(scheduler);
+      Thread.sleep(100);
+      assertTrue(
+          "There should have been at least 12 calls dropped however there were "
+              + scheduler.getNumGeneralCallsDropped(),
+          scheduler.getNumGeneralCallsDropped() > 12);
     } finally {
       scheduler.stop();
     }
   }
 
-  private CallRunner getMockedCallRunner() throws IOException {
-    CallRunner putCallTask = mock(CallRunner.class);
-    RpcServer.Call putCall = mock(RpcServer.Call.class);
+  // Get mocked call that has the CallRunner sleep for a while so that the fast
+  // path isn't hit.
+  private CallRunner getMockedCallRunner(long timestamp, final long sleepTime) throws IOException {
+    final RpcServer.Call putCall = mock(RpcServer.Call.class);
+
+    putCall.timestamp = timestamp;
     putCall.param = RequestConverter.buildMutateRequest(
-      Bytes.toBytes("abc"), new Put(Bytes.toBytes("row")));
-    RPCProtos.RequestHeader putHead = RPCProtos.RequestHeader.newBuilder().setMethodName("mutate").build();
-    when(putCallTask.getCall()).thenReturn(putCall);
+        Bytes.toBytes("abc"), new Put(Bytes.toBytes("row")));
+
+    RPCProtos.RequestHeader putHead = RPCProtos.RequestHeader.newBuilder()
+                                                             .setMethodName("mutate")
+                                                             .build();
+    when(putCall.getSize()).thenReturn(9L);
     when(putCall.getHeader()).thenReturn(putHead);
-    putCall.timestamp = System.currentTimeMillis();
-    return putCallTask;
+
+    CallRunner cr = new CallRunner(null, putCall) {
+      public void run() {
+        try {
+          LOG.warn("Sleeping for " + sleepTime);
+          Thread.sleep(sleepTime);
+          LOG.warn("Done Sleeping for " + sleepTime);
+        } catch (InterruptedException e) {
+        }
+      }
+      public Call getCall() {
+        return putCall;
+      }
+
+      public void drop() {}
+    };
+
+    return cr;
   }
 }
