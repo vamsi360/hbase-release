@@ -19,5 +19,7 @@ import org.apache.hadoop.hbase.classification.InterfaceStability;
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
 public enum QuotaType {
-  THROTTLE, GLOBAL_BYPASS,
+  THROTTLE,
+  GLOBAL_BYPASS,
+  SPACE,
 }

@@ -53345,6 +53345,20 @@ public final class MasterProtos {
      * <code>optional .ThrottleRequest throttle = 7;</code>
      */
     org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.ThrottleRequestOrBuilder getThrottleOrBuilder();
+
+    // optional .SpaceLimitRequest space_limit = 8;
+    /**
+     * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+     */
+    boolean hasSpaceLimit();
+    /**
+     * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+     */
+    org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest getSpaceLimit();
+    /**
+     * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+     */
+    org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequestOrBuilder getSpaceLimitOrBuilder();
   }
   /**
    * Protobuf type {@code SetQuotaRequest}
@@ -53446,6 +53460,19 @@ public final class MasterProtos {
                 throttle_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000040;
+              break;
+            }
+            case 66: {
+              org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000080) == 0x00000080)) {
+                subBuilder = spaceLimit_.toBuilder();
+              }
+              spaceLimit_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(spaceLimit_);
+                spaceLimit_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000080;
               break;
             }
           }
@@ -53693,6 +53720,28 @@ public final class MasterProtos {
       return throttle_;
     }
 
+    // optional .SpaceLimitRequest space_limit = 8;
+    public static final int SPACE_LIMIT_FIELD_NUMBER = 8;
+    private org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest spaceLimit_;
+    /**
+     * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+     */
+    public boolean hasSpaceLimit() {
+      return ((bitField0_ & 0x00000080) == 0x00000080);
+    }
+    /**
+     * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+     */
+    public org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest getSpaceLimit() {
+      return spaceLimit_;
+    }
+    /**
+     * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+     */
+    public org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequestOrBuilder getSpaceLimitOrBuilder() {
+      return spaceLimit_;
+    }
+
     private void initFields() {
       userName_ = "";
       userGroup_ = "";
@@ -53701,6 +53750,7 @@ public final class MasterProtos {
       removeAll_ = false;
       bypassGlobals_ = false;
       throttle_ = org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.ThrottleRequest.getDefaultInstance();
+      spaceLimit_ = org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -53747,6 +53797,9 @@ public final class MasterProtos {
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         output.writeMessage(7, throttle_);
       }
+      if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        output.writeMessage(8, spaceLimit_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -53783,6 +53836,10 @@ public final class MasterProtos {
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(7, throttle_);
+      }
+      if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(8, spaceLimit_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -53842,6 +53899,11 @@ public final class MasterProtos {
         result = result && getThrottle()
             .equals(other.getThrottle());
       }
+      result = result && (hasSpaceLimit() == other.hasSpaceLimit());
+      if (hasSpaceLimit()) {
+        result = result && getSpaceLimit()
+            .equals(other.getSpaceLimit());
+      }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -53882,6 +53944,10 @@ public final class MasterProtos {
       if (hasThrottle()) {
         hash = (37 * hash) + THROTTLE_FIELD_NUMBER;
         hash = (53 * hash) + getThrottle().hashCode();
+      }
+      if (hasSpaceLimit()) {
+        hash = (37 * hash) + SPACE_LIMIT_FIELD_NUMBER;
+        hash = (53 * hash) + getSpaceLimit().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -53986,6 +54052,7 @@ public final class MasterProtos {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getTableNameFieldBuilder();
           getThrottleFieldBuilder();
+          getSpaceLimitFieldBuilder();
         }
       }
       private static Builder create() {
@@ -54016,6 +54083,12 @@ public final class MasterProtos {
           throttleBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000040);
+        if (spaceLimitBuilder_ == null) {
+          spaceLimit_ = org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.getDefaultInstance();
+        } else {
+          spaceLimitBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000080);
         return this;
       }
 
@@ -54080,6 +54153,14 @@ public final class MasterProtos {
         } else {
           result.throttle_ = throttleBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+          to_bitField0_ |= 0x00000080;
+        }
+        if (spaceLimitBuilder_ == null) {
+          result.spaceLimit_ = spaceLimit_;
+        } else {
+          result.spaceLimit_ = spaceLimitBuilder_.build();
+        }
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -54122,6 +54203,9 @@ public final class MasterProtos {
         }
         if (other.hasThrottle()) {
           mergeThrottle(other.getThrottle());
+        }
+        if (other.hasSpaceLimit()) {
+          mergeSpaceLimit(other.getSpaceLimit());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -54682,6 +54766,123 @@ public final class MasterProtos {
           throttle_ = null;
         }
         return throttleBuilder_;
+      }
+
+      // optional .SpaceLimitRequest space_limit = 8;
+      private org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest spaceLimit_ = org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest, org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.Builder, org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequestOrBuilder> spaceLimitBuilder_;
+      /**
+       * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+       */
+      public boolean hasSpaceLimit() {
+        return ((bitField0_ & 0x00000080) == 0x00000080);
+      }
+      /**
+       * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest getSpaceLimit() {
+        if (spaceLimitBuilder_ == null) {
+          return spaceLimit_;
+        } else {
+          return spaceLimitBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+       */
+      public Builder setSpaceLimit(org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest value) {
+        if (spaceLimitBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          spaceLimit_ = value;
+          onChanged();
+        } else {
+          spaceLimitBuilder_.setMessage(value);
+        }
+        bitField0_ |= 0x00000080;
+        return this;
+      }
+      /**
+       * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+       */
+      public Builder setSpaceLimit(
+          org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.Builder builderForValue) {
+        if (spaceLimitBuilder_ == null) {
+          spaceLimit_ = builderForValue.build();
+          onChanged();
+        } else {
+          spaceLimitBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000080;
+        return this;
+      }
+      /**
+       * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+       */
+      public Builder mergeSpaceLimit(org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest value) {
+        if (spaceLimitBuilder_ == null) {
+          if (((bitField0_ & 0x00000080) == 0x00000080) &&
+              spaceLimit_ != org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.getDefaultInstance()) {
+            spaceLimit_ =
+              org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.newBuilder(spaceLimit_).mergeFrom(value).buildPartial();
+          } else {
+            spaceLimit_ = value;
+          }
+          onChanged();
+        } else {
+          spaceLimitBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000080;
+        return this;
+      }
+      /**
+       * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+       */
+      public Builder clearSpaceLimit() {
+        if (spaceLimitBuilder_ == null) {
+          spaceLimit_ = org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.getDefaultInstance();
+          onChanged();
+        } else {
+          spaceLimitBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000080);
+        return this;
+      }
+      /**
+       * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.Builder getSpaceLimitBuilder() {
+        bitField0_ |= 0x00000080;
+        onChanged();
+        return getSpaceLimitFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+       */
+      public org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequestOrBuilder getSpaceLimitOrBuilder() {
+        if (spaceLimitBuilder_ != null) {
+          return spaceLimitBuilder_.getMessageOrBuilder();
+        } else {
+          return spaceLimit_;
+        }
+      }
+      /**
+       * <code>optional .SpaceLimitRequest space_limit = 8;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest, org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.Builder, org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequestOrBuilder> 
+          getSpaceLimitFieldBuilder() {
+        if (spaceLimitBuilder_ == null) {
+          spaceLimitBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest, org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest.Builder, org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequestOrBuilder>(
+                  spaceLimit_,
+                  getParentForChildren(),
+                  isClean());
+          spaceLimit_ = null;
+        }
+        return spaceLimitBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:SetQuotaRequest)
@@ -63813,130 +64014,131 @@ public final class MasterProtos {
       "ue\"6\n\026AbortProcedureResponse\022\034\n\024is_proce" +
       "dure_aborted\030\001 \002(\010\"\027\n\025ListProceduresRequ" +
       "est\"7\n\026ListProceduresResponse\022\035\n\tprocedu" +
-      "re\030\001 \003(\0132\n.Procedure\"\273\001\n\017SetQuotaRequest" +
+      "re\030\001 \003(\0132\n.Procedure\"\344\001\n\017SetQuotaRequest" +
       "\022\021\n\tuser_name\030\001 \001(\t\022\022\n\nuser_group\030\002 \001(\t\022" +
       "\021\n\tnamespace\030\003 \001(\t\022\036\n\ntable_name\030\004 \001(\0132\n" +
       ".TableName\022\022\n\nremove_all\030\005 \001(\010\022\026\n\016bypass" +
       "_globals\030\006 \001(\010\022\"\n\010throttle\030\007 \001(\0132\020.Throt",
-      "tleRequest\"\022\n\020SetQuotaResponse\"A\n\037MajorC" +
-      "ompactionTimestampRequest\022\036\n\ntable_name\030" +
-      "\001 \002(\0132\n.TableName\"L\n(MajorCompactionTime" +
-      "stampForRegionRequest\022 \n\006region\030\001 \002(\0132\020." +
-      "RegionSpecifier\"@\n MajorCompactionTimest" +
-      "ampResponse\022\034\n\024compaction_timestamp\030\001 \002(" +
-      "\003\"\211\001\n\023BackupTablesRequest\022\031\n\004type\030\001 \002(\0162" +
-      "\013.BackupType\022\032\n\006tables\030\002 \003(\0132\n.TableName" +
-      "\022\027\n\017target_root_dir\030\003 \002(\t\022\017\n\007workers\030\004 \001" +
-      "(\003\022\021\n\tbandwidth\030\005 \001(\003\":\n\024BackupTablesRes",
-      "ponse\022\017\n\007proc_id\030\001 \001(\004\022\021\n\tbackup_id\030\002 \001(" +
-      "\t*(\n\020MasterSwitchType\022\t\n\005SPLIT\020\000\022\t\n\005MERG" +
-      "E\020\0012\314 \n\rMasterService\022S\n\024GetSchemaAlterS" +
-      "tatus\022\034.GetSchemaAlterStatusRequest\032\035.Ge" +
-      "tSchemaAlterStatusResponse\022P\n\023GetTableDe" +
-      "scriptors\022\033.GetTableDescriptorsRequest\032\034" +
-      ".GetTableDescriptorsResponse\022>\n\rGetTable" +
-      "Names\022\025.GetTableNamesRequest\032\026.GetTableN" +
-      "amesResponse\022G\n\020GetClusterStatus\022\030.GetCl" +
-      "usterStatusRequest\032\031.GetClusterStatusRes",
-      "ponse\022D\n\017IsMasterRunning\022\027.IsMasterRunni" +
-      "ngRequest\032\030.IsMasterRunningResponse\0222\n\tA" +
-      "ddColumn\022\021.AddColumnRequest\032\022.AddColumnR" +
-      "esponse\022;\n\014DeleteColumn\022\024.DeleteColumnRe" +
-      "quest\032\025.DeleteColumnResponse\022;\n\014ModifyCo" +
-      "lumn\022\024.ModifyColumnRequest\032\025.ModifyColum" +
-      "nResponse\0225\n\nMoveRegion\022\022.MoveRegionRequ" +
-      "est\032\023.MoveRegionResponse\022Y\n\026DispatchMerg" +
-      "ingRegions\022\036.DispatchMergingRegionsReque" +
-      "st\032\037.DispatchMergingRegionsResponse\022;\n\014A",
-      "ssignRegion\022\024.AssignRegionRequest\032\025.Assi" +
-      "gnRegionResponse\022A\n\016UnassignRegion\022\026.Una" +
-      "ssignRegionRequest\032\027.UnassignRegionRespo" +
-      "nse\022>\n\rOfflineRegion\022\025.OfflineRegionRequ" +
-      "est\032\026.OfflineRegionResponse\0228\n\013DeleteTab" +
-      "le\022\023.DeleteTableRequest\032\024.DeleteTableRes" +
-      "ponse\022>\n\rtruncateTable\022\025.TruncateTableRe" +
-      "quest\032\026.TruncateTableResponse\0228\n\013EnableT" +
-      "able\022\023.EnableTableRequest\032\024.EnableTableR" +
-      "esponse\022;\n\014DisableTable\022\024.DisableTableRe",
-      "quest\032\025.DisableTableResponse\0228\n\013ModifyTa" +
-      "ble\022\023.ModifyTableRequest\032\024.ModifyTableRe" +
-      "sponse\0228\n\013CreateTable\022\023.CreateTableReque" +
-      "st\032\024.CreateTableResponse\022/\n\010Shutdown\022\020.S" +
-      "hutdownRequest\032\021.ShutdownResponse\0225\n\nSto" +
-      "pMaster\022\022.StopMasterRequest\032\023.StopMaster" +
-      "Response\022V\n\031IsMasterInMaintenanceMode\022\033." +
-      "IsInMaintenanceModeRequest\032\034.IsInMainten" +
-      "anceModeResponse\022,\n\007Balance\022\017.BalanceReq" +
-      "uest\032\020.BalanceResponse\022M\n\022SetBalancerRun",
-      "ning\022\032.SetBalancerRunningRequest\032\033.SetBa" +
-      "lancerRunningResponse\022J\n\021IsBalancerEnabl" +
-      "ed\022\031.IsBalancerEnabledRequest\032\032.IsBalanc" +
-      "erEnabledResponse\022Y\n\026SetSplitOrMergeEnab" +
-      "led\022\036.SetSplitOrMergeEnabledRequest\032\037.Se" +
-      "tSplitOrMergeEnabledResponse\022V\n\025IsSplitO" +
-      "rMergeEnabled\022\035.IsSplitOrMergeEnabledReq" +
-      "uest\032\036.IsSplitOrMergeEnabledResponse\0222\n\t" +
-      "Normalize\022\021.NormalizeRequest\032\022.Normalize" +
-      "Response\022S\n\024SetNormalizerRunning\022\034.SetNo",
-      "rmalizerRunningRequest\032\035.SetNormalizerRu" +
-      "nningResponse\022P\n\023IsNormalizerEnabled\022\033.I" +
-      "sNormalizerEnabledRequest\032\034.IsNormalizer" +
-      "EnabledResponse\022A\n\016RunCatalogScan\022\026.RunC" +
-      "atalogScanRequest\032\027.RunCatalogScanRespon" +
-      "se\022S\n\024EnableCatalogJanitor\022\034.EnableCatal" +
-      "ogJanitorRequest\032\035.EnableCatalogJanitorR" +
-      "esponse\022\\\n\027IsCatalogJanitorEnabled\022\037.IsC" +
-      "atalogJanitorEnabledRequest\032 .IsCatalogJ" +
-      "anitorEnabledResponse\022L\n\021ExecMasterServi",
-      "ce\022\032.CoprocessorServiceRequest\032\033.Coproce" +
-      "ssorServiceResponse\022/\n\010Snapshot\022\020.Snapsh" +
-      "otRequest\032\021.SnapshotResponse\022V\n\025GetCompl" +
-      "etedSnapshots\022\035.GetCompletedSnapshotsReq" +
-      "uest\032\036.GetCompletedSnapshotsResponse\022A\n\016" +
-      "DeleteSnapshot\022\026.DeleteSnapshotRequest\032\027" +
-      ".DeleteSnapshotResponse\022A\n\016IsSnapshotDon" +
-      "e\022\026.IsSnapshotDoneRequest\032\027.IsSnapshotDo" +
-      "neResponse\022D\n\017RestoreSnapshot\022\027.RestoreS" +
-      "napshotRequest\032\030.RestoreSnapshotResponse",
-      "\022V\n\025IsRestoreSnapshotDone\022\035.IsRestoreSna" +
-      "pshotDoneRequest\032\036.IsRestoreSnapshotDone" +
-      "Response\022>\n\rExecProcedure\022\025.ExecProcedur" +
-      "eRequest\032\026.ExecProcedureResponse\022E\n\024Exec" +
-      "ProcedureWithRet\022\025.ExecProcedureRequest\032" +
-      "\026.ExecProcedureResponse\022D\n\017IsProcedureDo" +
-      "ne\022\027.IsProcedureDoneRequest\032\030.IsProcedur" +
-      "eDoneResponse\022D\n\017ModifyNamespace\022\027.Modif" +
-      "yNamespaceRequest\032\030.ModifyNamespaceRespo" +
-      "nse\022D\n\017CreateNamespace\022\027.CreateNamespace",
-      "Request\032\030.CreateNamespaceResponse\022D\n\017Del" +
-      "eteNamespace\022\027.DeleteNamespaceRequest\032\030." +
-      "DeleteNamespaceResponse\022Y\n\026GetNamespaceD" +
-      "escriptor\022\036.GetNamespaceDescriptorReques" +
-      "t\032\037.GetNamespaceDescriptorResponse\022_\n\030Li" +
-      "stNamespaceDescriptors\022 .ListNamespaceDe" +
-      "scriptorsRequest\032!.ListNamespaceDescript" +
-      "orsResponse\022t\n\037ListTableDescriptorsByNam" +
-      "espace\022\'.ListTableDescriptorsByNamespace" +
-      "Request\032(.ListTableDescriptorsByNamespac",
-      "eResponse\022b\n\031ListTableNamesByNamespace\022!" +
-      ".ListTableNamesByNamespaceRequest\032\".List" +
-      "TableNamesByNamespaceResponse\022/\n\010SetQuot" +
-      "a\022\020.SetQuotaRequest\032\021.SetQuotaResponse\022f" +
-      "\n\037getLastMajorCompactionTimestamp\022 .Majo" +
-      "rCompactionTimestampRequest\032!.MajorCompa" +
-      "ctionTimestampResponse\022x\n(getLastMajorCo" +
-      "mpactionTimestampForRegion\022).MajorCompac" +
-      "tionTimestampForRegionRequest\032!.MajorCom" +
-      "pactionTimestampResponse\022M\n\022getProcedure",
-      "Result\022\032.GetProcedureResultRequest\032\033.Get" +
-      "ProcedureResultResponse\022A\n\016AbortProcedur" +
-      "e\022\026.AbortProcedureRequest\032\027.AbortProcedu" +
-      "reResponse\022A\n\016ListProcedures\022\026.ListProce" +
-      "duresRequest\032\027.ListProceduresResponse\022;\n" +
-      "\014backupTables\022\024.BackupTablesRequest\032\025.Ba" +
-      "ckupTablesResponseBB\n*org.apache.hadoop." +
-      "hbase.protobuf.generatedB\014MasterProtosH\001" +
-      "\210\001\001\240\001\001"
+      "tleRequest\022\'\n\013space_limit\030\010 \001(\0132\022.SpaceL" +
+      "imitRequest\"\022\n\020SetQuotaResponse\"A\n\037Major" +
+      "CompactionTimestampRequest\022\036\n\ntable_name" +
+      "\030\001 \002(\0132\n.TableName\"L\n(MajorCompactionTim" +
+      "estampForRegionRequest\022 \n\006region\030\001 \002(\0132\020" +
+      ".RegionSpecifier\"@\n MajorCompactionTimes" +
+      "tampResponse\022\034\n\024compaction_timestamp\030\001 \002" +
+      "(\003\"\211\001\n\023BackupTablesRequest\022\031\n\004type\030\001 \002(\016" +
+      "2\013.BackupType\022\032\n\006tables\030\002 \003(\0132\n.TableNam" +
+      "e\022\027\n\017target_root_dir\030\003 \002(\t\022\017\n\007workers\030\004 ",
+      "\001(\003\022\021\n\tbandwidth\030\005 \001(\003\":\n\024BackupTablesRe" +
+      "sponse\022\017\n\007proc_id\030\001 \001(\004\022\021\n\tbackup_id\030\002 \001" +
+      "(\t*(\n\020MasterSwitchType\022\t\n\005SPLIT\020\000\022\t\n\005MER" +
+      "GE\020\0012\314 \n\rMasterService\022S\n\024GetSchemaAlter" +
+      "Status\022\034.GetSchemaAlterStatusRequest\032\035.G" +
+      "etSchemaAlterStatusResponse\022P\n\023GetTableD" +
+      "escriptors\022\033.GetTableDescriptorsRequest\032" +
+      "\034.GetTableDescriptorsResponse\022>\n\rGetTabl" +
+      "eNames\022\025.GetTableNamesRequest\032\026.GetTable" +
+      "NamesResponse\022G\n\020GetClusterStatus\022\030.GetC",
+      "lusterStatusRequest\032\031.GetClusterStatusRe" +
+      "sponse\022D\n\017IsMasterRunning\022\027.IsMasterRunn" +
+      "ingRequest\032\030.IsMasterRunningResponse\0222\n\t" +
+      "AddColumn\022\021.AddColumnRequest\032\022.AddColumn" +
+      "Response\022;\n\014DeleteColumn\022\024.DeleteColumnR" +
+      "equest\032\025.DeleteColumnResponse\022;\n\014ModifyC" +
+      "olumn\022\024.ModifyColumnRequest\032\025.ModifyColu" +
+      "mnResponse\0225\n\nMoveRegion\022\022.MoveRegionReq" +
+      "uest\032\023.MoveRegionResponse\022Y\n\026DispatchMer" +
+      "gingRegions\022\036.DispatchMergingRegionsRequ",
+      "est\032\037.DispatchMergingRegionsResponse\022;\n\014" +
+      "AssignRegion\022\024.AssignRegionRequest\032\025.Ass" +
+      "ignRegionResponse\022A\n\016UnassignRegion\022\026.Un" +
+      "assignRegionRequest\032\027.UnassignRegionResp" +
+      "onse\022>\n\rOfflineRegion\022\025.OfflineRegionReq" +
+      "uest\032\026.OfflineRegionResponse\0228\n\013DeleteTa" +
+      "ble\022\023.DeleteTableRequest\032\024.DeleteTableRe" +
+      "sponse\022>\n\rtruncateTable\022\025.TruncateTableR" +
+      "equest\032\026.TruncateTableResponse\0228\n\013Enable" +
+      "Table\022\023.EnableTableRequest\032\024.EnableTable",
+      "Response\022;\n\014DisableTable\022\024.DisableTableR" +
+      "equest\032\025.DisableTableResponse\0228\n\013ModifyT" +
+      "able\022\023.ModifyTableRequest\032\024.ModifyTableR" +
+      "esponse\0228\n\013CreateTable\022\023.CreateTableRequ" +
+      "est\032\024.CreateTableResponse\022/\n\010Shutdown\022\020." +
+      "ShutdownRequest\032\021.ShutdownResponse\0225\n\nSt" +
+      "opMaster\022\022.StopMasterRequest\032\023.StopMaste" +
+      "rResponse\022V\n\031IsMasterInMaintenanceMode\022\033" +
+      ".IsInMaintenanceModeRequest\032\034.IsInMainte" +
+      "nanceModeResponse\022,\n\007Balance\022\017.BalanceRe",
+      "quest\032\020.BalanceResponse\022M\n\022SetBalancerRu" +
+      "nning\022\032.SetBalancerRunningRequest\032\033.SetB" +
+      "alancerRunningResponse\022J\n\021IsBalancerEnab" +
+      "led\022\031.IsBalancerEnabledRequest\032\032.IsBalan" +
+      "cerEnabledResponse\022Y\n\026SetSplitOrMergeEna" +
+      "bled\022\036.SetSplitOrMergeEnabledRequest\032\037.S" +
+      "etSplitOrMergeEnabledResponse\022V\n\025IsSplit" +
+      "OrMergeEnabled\022\035.IsSplitOrMergeEnabledRe" +
+      "quest\032\036.IsSplitOrMergeEnabledResponse\0222\n" +
+      "\tNormalize\022\021.NormalizeRequest\032\022.Normaliz",
+      "eResponse\022S\n\024SetNormalizerRunning\022\034.SetN" +
+      "ormalizerRunningRequest\032\035.SetNormalizerR" +
+      "unningResponse\022P\n\023IsNormalizerEnabled\022\033." +
+      "IsNormalizerEnabledRequest\032\034.IsNormalize" +
+      "rEnabledResponse\022A\n\016RunCatalogScan\022\026.Run" +
+      "CatalogScanRequest\032\027.RunCatalogScanRespo" +
+      "nse\022S\n\024EnableCatalogJanitor\022\034.EnableCata" +
+      "logJanitorRequest\032\035.EnableCatalogJanitor" +
+      "Response\022\\\n\027IsCatalogJanitorEnabled\022\037.Is" +
+      "CatalogJanitorEnabledRequest\032 .IsCatalog",
+      "JanitorEnabledResponse\022L\n\021ExecMasterServ" +
+      "ice\022\032.CoprocessorServiceRequest\032\033.Coproc" +
+      "essorServiceResponse\022/\n\010Snapshot\022\020.Snaps" +
+      "hotRequest\032\021.SnapshotResponse\022V\n\025GetComp" +
+      "letedSnapshots\022\035.GetCompletedSnapshotsRe" +
+      "quest\032\036.GetCompletedSnapshotsResponse\022A\n" +
+      "\016DeleteSnapshot\022\026.DeleteSnapshotRequest\032" +
+      "\027.DeleteSnapshotResponse\022A\n\016IsSnapshotDo" +
+      "ne\022\026.IsSnapshotDoneRequest\032\027.IsSnapshotD" +
+      "oneResponse\022D\n\017RestoreSnapshot\022\027.Restore",
+      "SnapshotRequest\032\030.RestoreSnapshotRespons" +
+      "e\022V\n\025IsRestoreSnapshotDone\022\035.IsRestoreSn" +
+      "apshotDoneRequest\032\036.IsRestoreSnapshotDon" +
+      "eResponse\022>\n\rExecProcedure\022\025.ExecProcedu" +
+      "reRequest\032\026.ExecProcedureResponse\022E\n\024Exe" +
+      "cProcedureWithRet\022\025.ExecProcedureRequest" +
+      "\032\026.ExecProcedureResponse\022D\n\017IsProcedureD" +
+      "one\022\027.IsProcedureDoneRequest\032\030.IsProcedu" +
+      "reDoneResponse\022D\n\017ModifyNamespace\022\027.Modi" +
+      "fyNamespaceRequest\032\030.ModifyNamespaceResp",
+      "onse\022D\n\017CreateNamespace\022\027.CreateNamespac" +
+      "eRequest\032\030.CreateNamespaceResponse\022D\n\017De" +
+      "leteNamespace\022\027.DeleteNamespaceRequest\032\030" +
+      ".DeleteNamespaceResponse\022Y\n\026GetNamespace" +
+      "Descriptor\022\036.GetNamespaceDescriptorReque" +
+      "st\032\037.GetNamespaceDescriptorResponse\022_\n\030L" +
+      "istNamespaceDescriptors\022 .ListNamespaceD" +
+      "escriptorsRequest\032!.ListNamespaceDescrip" +
+      "torsResponse\022t\n\037ListTableDescriptorsByNa" +
+      "mespace\022\'.ListTableDescriptorsByNamespac",
+      "eRequest\032(.ListTableDescriptorsByNamespa" +
+      "ceResponse\022b\n\031ListTableNamesByNamespace\022" +
+      "!.ListTableNamesByNamespaceRequest\032\".Lis" +
+      "tTableNamesByNamespaceResponse\022/\n\010SetQuo" +
+      "ta\022\020.SetQuotaRequest\032\021.SetQuotaResponse\022" +
+      "f\n\037getLastMajorCompactionTimestamp\022 .Maj" +
+      "orCompactionTimestampRequest\032!.MajorComp" +
+      "actionTimestampResponse\022x\n(getLastMajorC" +
+      "ompactionTimestampForRegion\022).MajorCompa" +
+      "ctionTimestampForRegionRequest\032!.MajorCo",
+      "mpactionTimestampResponse\022M\n\022getProcedur" +
+      "eResult\022\032.GetProcedureResultRequest\032\033.Ge" +
+      "tProcedureResultResponse\022A\n\016AbortProcedu" +
+      "re\022\026.AbortProcedureRequest\032\027.AbortProced" +
+      "ureResponse\022A\n\016ListProcedures\022\026.ListProc" +
+      "eduresRequest\032\027.ListProceduresResponse\022;" +
+      "\n\014backupTables\022\024.BackupTablesRequest\032\025.B" +
+      "ackupTablesResponseBB\n*org.apache.hadoop" +
+      ".hbase.protobuf.generatedB\014MasterProtosH" +
+      "\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -64560,7 +64762,7 @@ public final class MasterProtos {
           internal_static_SetQuotaRequest_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_SetQuotaRequest_descriptor,
-              new java.lang.String[] { "UserName", "UserGroup", "Namespace", "TableName", "RemoveAll", "BypassGlobals", "Throttle", });
+              new java.lang.String[] { "UserName", "UserGroup", "Namespace", "TableName", "RemoveAll", "BypassGlobals", "Throttle", "SpaceLimit", });
           internal_static_SetQuotaResponse_descriptor =
             getDescriptor().getMessageTypes().get(103);
           internal_static_SetQuotaResponse_fieldAccessorTable = new
