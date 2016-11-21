@@ -333,6 +333,7 @@ public class KeyValueHeap extends NonReversedNonLazyKeyValueScanner
           LOG.warn("close KeyValueScanner error", ce);
         }
       }
+      throw e;
     }
 
     // Heap is returning empty, scanner is done
