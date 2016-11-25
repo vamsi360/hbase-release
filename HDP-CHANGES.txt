@@ -3,6 +3,11 @@ HDP-2.5 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.2
 
+HBASE-16824 Writer.flush() can be called on already closed streams in WAL roll
+HBASE-16675 Average region size may be incorrect
+HBASE-16678 MapReduce jobs do not update counters from ScanMetrics
+HBASE-16721 Concurrency issue in WAL unflushed seqId tracking
+HBASE-16750 Updating asciidoctor plugin version
 HBASE-15925 compat-module maven variable not evaluated (Sean Busbey)
 HBASE-16056 Procedure v2 - fix master crash for FileNotFound (Matteo Bertozzi)
 HBASE-16016 Fix overflow deadline value in AssignmentManager#waitForAssignment (Stephen Yuan Jiang)
