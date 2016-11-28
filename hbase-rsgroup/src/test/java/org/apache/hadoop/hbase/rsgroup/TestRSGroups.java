@@ -78,25 +78,21 @@ public class TestRSGroups extends TestRSGroupsBase {
   @BeforeClass
   public static void setUp() throws Exception {
     TEST_UTIL = new HBaseTestingUtility();
-    TEST_UTIL.getConfiguration().set(
-        HConstants.HBASE_MASTER_LOADBALANCER_CLASS,
-        RSGroupBasedLoadBalancer.class.getName());
-    TEST_UTIL.getConfiguration().set(CoprocessorHost.MASTER_COPROCESSOR_CONF_KEY,
-        RSGroupAdminEndpoint.class.getName());
-    TEST_UTIL.getConfiguration().setBoolean(
-        HConstants.ZOOKEEPER_USEMULTI,
-        true);
-    TEST_UTIL.startMiniCluster(NUM_SLAVES_BASE);
-    TEST_UTIL.getConfiguration().set(
-        ServerManager.WAIT_ON_REGIONSERVERS_MINTOSTART,
-        ""+NUM_SLAVES_BASE);
+    conf = TEST_UTIL.getConfiguration();
+    conf.set(HConstants.HBASE_MASTER_LOADBALANCER_CLASS, RSGroupBasedLoadBalancer.class.getName());
+    conf.set(CoprocessorHost.MASTER_COPROCESSOR_CONF_KEY, RSGroupAdminEndpoint.class.getName());
+    conf.setBoolean(HConstants.ZOOKEEPER_USEMULTI, true);
+    final int numSlaves = conf.getInt(NUM_SLAVES_BASE_KEY, DEFAULT_NUM_SLAVES_BASE);
+    TEST_UTIL.startMiniCluster(numSlaves);
+    conf.set(ServerManager.WAIT_ON_REGIONSERVERS_MINTOSTART, Integer.toString(numSlaves));
 
     admin = TEST_UTIL.getHBaseAdmin();
     cluster = TEST_UTIL.getHBaseCluster();
     master = ((MiniHBaseCluster)cluster).getMaster();
 
     //wait for balancer to come online
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return master.isInitialized() &&
@@ -105,7 +101,7 @@ public class TestRSGroups extends TestRSGroupsBase {
     });
     admin.setBalancerRunning(false,true);
     rsGroupAdmin = new VerifyingRSGroupAdminClient(rsGroupAdmin.newClient(TEST_UTIL.getConnection()),
-        TEST_UTIL.getConfiguration());
+        conf);
     RSGroupAdminEndpoint =
         master.getMasterCoprocessorHost().findCoprocessors(RSGroupAdminEndpoint.class).get(0);
   }
@@ -130,7 +126,8 @@ public class TestRSGroups extends TestRSGroupsBase {
     deleteNamespaceIfNecessary();
     deleteGroups();
 
-    int missing = NUM_SLAVES_BASE - getNumServers();
+    final int numSlaves = conf.getInt(NUM_SLAVES_BASE_KEY, DEFAULT_NUM_SLAVES_BASE);
+    int missing = numSlaves - getNumServers();
     LOG.info("Restoring servers: "+missing);
     for(int i=0; i<missing; i++) {
       ((MiniHBaseCluster)cluster).startRegionServer();
@@ -147,7 +144,8 @@ public class TestRSGroups extends TestRSGroupsBase {
     } catch (Exception ex) {
       // ignore
     }
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         LOG.info("Waiting for cleanup to finish " + rsGroupAdmin.listRSGroups());
@@ -155,7 +153,7 @@ public class TestRSGroups extends TestRSGroupsBase {
         //is after starting a server
 
         return rsGroupAdmin.getRSGroupInfo(RSGroupInfo.DEFAULT_GROUP).getServers().size()
-            == NUM_SLAVES_BASE;
+            == numSlaves;
       }
     });
   }
@@ -182,7 +180,8 @@ public class TestRSGroups extends TestRSGroupsBase {
     desc.addFamily(new HColumnDescriptor("f"));
     admin.createTable(desc);
     //wait for created table to be assigned
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return getTableRegionMap().get(desc.getTableName()) != null;
@@ -205,7 +204,8 @@ public class TestRSGroups extends TestRSGroupsBase {
     desc.addFamily(new HColumnDescriptor("f"));
     admin.createTable(desc);
     //wait for created table to be assigned
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return getTableRegionMap().get(desc.getTableName()) != null;
