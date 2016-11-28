@@ -21,6 +21,7 @@ package org.apache.hadoop.hbase.rsgroup;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.IntegrationTestingUtility;
 import org.apache.hadoop.hbase.Waiter;
 import org.apache.hadoop.hbase.testclassification.IntegrationTests;
@@ -43,9 +44,11 @@ public class IntegrationTestRSGroup extends TestRSGroupsBase {
   public void beforeMethod() throws Exception {
     if(!initialized) {
       LOG.info("Setting up IntegrationTestGroup");
-      LOG.info("Initializing cluster with " + NUM_SLAVES_BASE + " servers");
       TEST_UTIL = new IntegrationTestingUtility();
-      ((IntegrationTestingUtility)TEST_UTIL).initializeCluster(NUM_SLAVES_BASE);
+      conf = new Configuration(TEST_UTIL.getConfiguration());
+      final int numSlaves = conf.getInt(NUM_SLAVES_BASE_KEY, DEFAULT_NUM_SLAVES_BASE);
+      LOG.info("Initializing cluster with " + numSlaves + " servers");
+      ((IntegrationTestingUtility)TEST_UTIL).initializeCluster(numSlaves);
       //set shared configs
       admin = TEST_UTIL.getHBaseAdmin();
       cluster = TEST_UTIL.getHBaseClusterInterface();
@@ -72,18 +75,20 @@ public class IntegrationTestRSGroup extends TestRSGroupsBase {
     ((IntegrationTestingUtility)TEST_UTIL).restoreCluster();
     LOG.info("Done restoring the cluster");
 
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    final int numSlaves = conf.getInt(NUM_SLAVES_BASE_KEY, DEFAULT_NUM_SLAVES_BASE);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         LOG.info("Waiting for cleanup to finish "+ rsGroupAdmin.listRSGroups());
         //Might be greater since moving servers back to default
         //is after starting a server
         return rsGroupAdmin.getRSGroupInfo(RSGroupInfo.DEFAULT_GROUP).getServers().size()
-            >= NUM_SLAVES_BASE;
+            >= numSlaves;
       }
     });
 
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         LOG.info("Waiting for regionservers to be registered "+ rsGroupAdmin.listRSGroups());

@@ -24,6 +24,7 @@ import com.google.common.collect.Sets;
 import com.google.common.net.HostAndPort;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseCluster;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -70,9 +71,12 @@ public abstract class TestRSGroupsBase {
   protected static HBaseAdmin admin;
   protected static HBaseCluster cluster;
   protected static RSGroupAdmin rsGroupAdmin;
+  protected static Configuration conf;
 
-  public final static long WAIT_TIMEOUT = 60000*5;
-  public final static int NUM_SLAVES_BASE = 4; //number of slaves for the smallest cluster
+  public final static String WAIT_TIMEOUT_KEY = "hbase.it.rsgroups.wait.timeout";
+  public final static long DEFAULT_WAIT_TIMEOUT = 60000*5;
+  public final static String NUM_SLAVES_BASE_KEY = "hbase.it.rsgroups.num.slaves.base";
+  public final static int DEFAULT_NUM_SLAVES_BASE = 4; //number of slaves for the smallest cluster
 
 
 
@@ -215,7 +219,8 @@ public abstract class TestRSGroupsBase {
     final TableName tableName = TableName.valueOf(tablePrefix + "_testCreateAndDrop");
     TEST_UTIL.createTable(tableName, Bytes.toBytes("cf"));
     //wait for created table to be assigned
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return getTableRegionMap().get(tableName) != null;
@@ -295,7 +300,8 @@ public abstract class TestRSGroupsBase {
     LOG.info("moving servers "+fooGroup.getServers()+" to group default");
     rsGroupAdmin.moveServers(fooGroup.getServers(), RSGroupInfo.DEFAULT_GROUP);
 
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return getNumServers() ==
@@ -325,7 +331,8 @@ public abstract class TestRSGroupsBase {
     final RSGroupInfo newGroup = addGroup(rsGroupAdmin, newGroupName, 2);
 
     TEST_UTIL.createMultiRegionTable(tableName, familyNameBytes, 5);
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         List<String> regions = getTableRegionMap().get(tableName);
@@ -346,7 +353,7 @@ public abstract class TestRSGroupsBase {
     Assert.assertEquals(newGroup.getName(),
         rsGroupAdmin.getRSGroupInfoOfTable(tableName).getName());
 
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         Map<ServerName, List<String>> serverMap = getTableServerRegionMap().get(tableName);
@@ -390,7 +397,8 @@ public abstract class TestRSGroupsBase {
     byte [] startKey = Bytes.toBytes("aaaaa");
     byte [] endKey = Bytes.toBytes("zzzzz");
     admin.createTable(desc, startKey, endKey, 6);
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         List<String> regions = getTableRegionMap().get(tableName);
@@ -410,7 +418,7 @@ public abstract class TestRSGroupsBase {
         admin.move(region.getEncodedNameAsBytes(), Bytes.toBytes(first.getServerName()));
       }
     }
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         Map<ServerName, List<String>> map = getTableServerRegionMap().get(tableName);
@@ -430,7 +438,7 @@ public abstract class TestRSGroupsBase {
     assertEquals(6, getTableServerRegionMap().get(tableName).get(first).size());
 
     rsGroupAdmin.balanceRSGroup(newGroupName);
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         for (List<String> regions : getTableServerRegionMap().get(tableName).values()) {
@@ -452,7 +460,8 @@ public abstract class TestRSGroupsBase {
     final byte[] familyNameBytes = Bytes.toBytes("f");
     // All the regions created below will be assigned to the default group.
     TEST_UTIL.createMultiRegionTable(tableName, familyNameBytes, 6);
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         List<String> regions = getTableRegionMap().get(tableName);
@@ -487,7 +496,7 @@ public abstract class TestRSGroupsBase {
     //move target server to group
     rsGroupAdmin.moveServers(Sets.newHashSet(targetServer.getHostPort()),
         newGroup.getName());
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return ProtobufUtil.getOnlineRegions(targetRS).size() <= 0;
@@ -497,7 +506,7 @@ public abstract class TestRSGroupsBase {
     // Lets move this region to the new group.
     TEST_UTIL.getHBaseAdmin().move(Bytes.toBytes(HRegionInfo.encodeRegionName(Bytes.toBytes(targetRegion))),
         Bytes.toBytes(targetServer.getServerName()));
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return
@@ -561,7 +570,8 @@ public abstract class TestRSGroupsBase {
     desc.addFamily(new HColumnDescriptor("f"));
     admin.createTable(desc);
     //wait for created table to be assigned
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    final long waitTimeout = conf.getLong(WAIT_TIMEOUT_KEY, DEFAULT_WAIT_TIMEOUT);
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return getTableRegionMap().get(desc.getTableName()) != null;
@@ -585,7 +595,7 @@ public abstract class TestRSGroupsBase {
     assertFalse(cluster.getClusterStatus().getServers().contains(targetServer));
 
     //wait for created table to be assigned
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return cluster.getClusterStatus().getRegionsInTransition().size() == 0;
@@ -602,7 +612,7 @@ public abstract class TestRSGroupsBase {
     admin.enableTable(tableName);
 
     //wait for region to be assigned
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+    TEST_UTIL.waitFor(waitTimeout, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return cluster.getClusterStatus().getRegionsInTransition().size() == 0;
