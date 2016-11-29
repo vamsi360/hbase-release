@@ -2507,6 +2507,21 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           // row that the client has last seen.
           closeScanner(region, scanner, scannerName);
 
+          // If it is a DoNotRetryIOException already, throw as it is. Unfortunately, DNRIOE is
+          // used in two different semantics.
+          // (1) The first is to close the client scanner and bubble up the exception all the way
+          // to the application. This is preferred when the exception is really un-recoverable
+          // (like CorruptHFileException, etc). Plain DoNotRetryIOException also falls into this
+          // bucket usually.
+          // (2) Second semantics is to close the current region scanner only, but continue the
+          // client scanner by overriding the exception. This is usually UnknownScannerException,
+          // OutOfOrderScannerNextException, etc where the region scanner has to be closed, but the
+          // application-level ClientScanner has to continue without bubbling up the exception to
+          // the client. See ClientScanner code to see how it deals with these special exceptions.
+          if (e instanceof DoNotRetryIOException) {
+            throw e;
+          }
+
           // We closed the scanner already. Instead of throwing the IOException, and client
           // retrying with the same scannerId only to get USE on the next RPC, we directly throw
           // a special exception to save an RPC.
