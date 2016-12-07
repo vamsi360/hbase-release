@@ -144,7 +144,7 @@ public class HFileReplicator {
 
       // Prepare collection of queue of hfiles to be loaded(replicated)
       Deque<LoadQueueItem> queue = new LinkedList<LoadQueueItem>();
-      loadHFiles.prepareHFileQueue(stagingDir, table, queue);
+      loadHFiles.prepareHFileQueue(stagingDir, table, queue, false);
 
       if (queue.isEmpty()) {
         LOG.warn("Replication process did not find any files to replicate in directory "
