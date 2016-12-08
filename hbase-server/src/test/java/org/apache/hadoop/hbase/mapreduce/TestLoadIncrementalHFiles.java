@@ -132,6 +132,17 @@ public class TestLoadIncrementalHFiles {
     });
   }
 
+  @Test(timeout = 120000)
+  public void testSimpleLoadWithFileCopy() throws Exception {
+    String testName = "mytable_testSimpleLoadWithFileCopy";
+    final byte[] TABLE_NAME = Bytes.toBytes("mytable_" + testName);
+    runTest(testName, buildHTD(TableName.valueOf(TABLE_NAME), BloomType.NONE), BloomType.NONE,
+        false, null, new byte[][][] {
+          new byte[][]{ Bytes.toBytes("aaaa"), Bytes.toBytes("cccc") },
+          new byte[][]{ Bytes.toBytes("ddd"), Bytes.toBytes("ooo") },
+    }, false, true);
+  }
+
   /**
    * Test case that creates some regions and loads
    * HFiles that cross the boundaries of those regions
@@ -269,11 +280,12 @@ public class TestLoadIncrementalHFiles {
       boolean preCreateTable, byte[][] tableSplitKeys, byte[][][] hfileRanges, boolean useMap)
           throws Exception {
     HTableDescriptor htd = buildHTD(tableName, bloomType);
-    runTest(testName, htd, bloomType, preCreateTable, tableSplitKeys, hfileRanges, useMap);
+    runTest(testName, htd, bloomType, preCreateTable, tableSplitKeys, hfileRanges, useMap, false);
   }
 
   private void runTest(String testName, HTableDescriptor htd, BloomType bloomType,
-      boolean preCreateTable, byte[][] tableSplitKeys, byte[][][] hfileRanges, boolean useMap)
+      boolean preCreateTable, byte[][] tableSplitKeys, byte[][][] hfileRanges, boolean useMap,
+      boolean copyFiles)
           throws Exception {
     for (boolean managed : new boolean[] { true, false }) {
       Path dir = util.getDataTestDirOnTestFS(testName);
@@ -284,9 +296,11 @@ public class TestLoadIncrementalHFiles {
       int hfileIdx = 0;
       Map<byte[], List<Path>> map = null;
       List<Path> list = null;
+      if (useMap || copyFiles) {
+        list = new ArrayList<>();
+      }
       if (useMap) {
         map = new TreeMap<byte[], List<Path>>(Bytes.BYTES_COMPARATOR);
-        list = new ArrayList<>();
         map.put(FAMILY, list);
       }
       for (byte[][] range : hfileRanges) {
@@ -308,7 +322,11 @@ public class TestLoadIncrementalHFiles {
       if (!util.getHBaseAdmin().tableExists(tableName)) {
         util.getHBaseAdmin().createTable(htd);
       }
-      LoadIncrementalHFiles loader = new LoadIncrementalHFiles(util.getConfiguration());
+      Configuration conf = util.getConfiguration();
+      if (copyFiles) {
+        conf.setBoolean(LoadIncrementalHFiles.ALWAYS_COPY_FILES, true);
+      }
+      LoadIncrementalHFiles loader = new LoadIncrementalHFiles(conf);
       String [] args= { dir.toString(), tableName.toString() };
 
       if (managed) {
@@ -328,6 +346,12 @@ public class TestLoadIncrementalHFiles {
           } else {
             loader.run(args);
           }
+        }
+      }
+
+      if (copyFiles) {
+        for (Path p : list) {
+          assertTrue(fs.exists(p));
         }
       }
 
@@ -410,7 +434,7 @@ public class TestLoadIncrementalHFiles {
     htd.addFamily(family);
 
     try {
-      runTest(testName, htd, BloomType.NONE, true, SPLIT_KEYS, hFileRanges, false);
+      runTest(testName, htd, BloomType.NONE, true, SPLIT_KEYS, hFileRanges, false, false);
       assertTrue("Loading into table with non-existent family should have failed", false);
     } catch (Exception e) {
       assertTrue("IOException expected", e instanceof IOException);
