@@ -303,12 +303,14 @@ public class TestLoadIncrementalHFiles {
         map = new TreeMap<byte[], List<Path>>(Bytes.BYTES_COMPARATOR);
         map.put(FAMILY, list);
       }
+      Path last = null;
       for (byte[][] range : hfileRanges) {
         byte[] from = range[0];
         byte[] to = range[1];
         Path path = new Path(familyDir, "hfile_" + hfileIdx++);
         HFileTestUtil.createHFile(util.getConfiguration(), fs, path, FAMILY, QUALIFIER, from, to, 1000);
         if (useMap) {
+          last = path;
           list.add(path);
         }
       }
@@ -332,7 +334,10 @@ public class TestLoadIncrementalHFiles {
       if (managed) {
         try (HTable table = new HTable(util.getConfiguration(), tableName)) {
           if (useMap) {
-            loader.run(null, map, tableName);
+            fs.delete(last);
+            List<String> missingHFiles =loader.run(null, map, tableName);
+            expectedRows -= 1000;
+            assertTrue(missingHFiles.contains(last.getName()));
           } else {
             loader.run(args);
           }
