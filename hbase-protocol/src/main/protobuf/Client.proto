@@ -331,6 +331,7 @@ message BulkLoadHFileRequest {
   required RegionSpecifier region = 1;
   repeated FamilyPath family_path = 2;
   optional bool assign_seq_num = 3;
+  optional bool copy_file = 4 [default = false];
 
   message FamilyPath {
     required bytes family = 1;

@@ -187,7 +187,7 @@ public class HFileReplicator {
       count++;
 
       // Try bulk load
-      loadHFiles.loadHFileQueue(table, connection, queue, startEndKeys);
+      loadHFiles.loadHFileQueue(table, connection, queue, startEndKeys, false);
     }
   }
 

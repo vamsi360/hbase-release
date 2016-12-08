@@ -19949,6 +19949,16 @@ public final class ClientProtos {
      * <code>optional bool assign_seq_num = 3;</code>
      */
     boolean getAssignSeqNum();
+
+    // optional bool copy_file = 4 [default = false];
+    /**
+     * <code>optional bool copy_file = 4 [default = false];</code>
+     */
+    boolean hasCopyFile();
+    /**
+     * <code>optional bool copy_file = 4 [default = false];</code>
+     */
+    boolean getCopyFile();
   }
   /**
    * Protobuf type {@code BulkLoadHFileRequest}
@@ -20031,6 +20041,11 @@ public final class ClientProtos {
             case 24: {
               bitField0_ |= 0x00000002;
               assignSeqNum_ = input.readBool();
+              break;
+            }
+            case 32: {
+              bitField0_ |= 0x00000004;
+              copyFile_ = input.readBool();
               break;
             }
           }
@@ -20768,10 +20783,27 @@ public final class ClientProtos {
       return assignSeqNum_;
     }
 
+    // optional bool copy_file = 4 [default = false];
+    public static final int COPY_FILE_FIELD_NUMBER = 4;
+    private boolean copyFile_;
+    /**
+     * <code>optional bool copy_file = 4 [default = false];</code>
+     */
+    public boolean hasCopyFile() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional bool copy_file = 4 [default = false];</code>
+     */
+    public boolean getCopyFile() {
+      return copyFile_;
+    }
+
     private void initFields() {
       region_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier.getDefaultInstance();
       familyPath_ = java.util.Collections.emptyList();
       assignSeqNum_ = false;
+      copyFile_ = false;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -20808,6 +20840,9 @@ public final class ClientProtos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeBool(3, assignSeqNum_);
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBool(4, copyFile_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -20828,6 +20863,10 @@ public final class ClientProtos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(3, assignSeqNum_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(4, copyFile_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -20864,6 +20903,11 @@ public final class ClientProtos {
         result = result && (getAssignSeqNum()
             == other.getAssignSeqNum());
       }
+      result = result && (hasCopyFile() == other.hasCopyFile());
+      if (hasCopyFile()) {
+        result = result && (getCopyFile()
+            == other.getCopyFile());
+      }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -20888,6 +20932,10 @@ public final class ClientProtos {
       if (hasAssignSeqNum()) {
         hash = (37 * hash) + ASSIGN_SEQ_NUM_FIELD_NUMBER;
         hash = (53 * hash) + hashBoolean(getAssignSeqNum());
+      }
+      if (hasCopyFile()) {
+        hash = (37 * hash) + COPY_FILE_FIELD_NUMBER;
+        hash = (53 * hash) + hashBoolean(getCopyFile());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -21020,6 +21068,8 @@ public final class ClientProtos {
         }
         assignSeqNum_ = false;
         bitField0_ = (bitField0_ & ~0x00000004);
+        copyFile_ = false;
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
 
@@ -21069,6 +21119,10 @@ public final class ClientProtos {
           to_bitField0_ |= 0x00000002;
         }
         result.assignSeqNum_ = assignSeqNum_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.copyFile_ = copyFile_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -21116,6 +21170,9 @@ public final class ClientProtos {
         }
         if (other.hasAssignSeqNum()) {
           setAssignSeqNum(other.getAssignSeqNum());
+        }
+        if (other.hasCopyFile()) {
+          setCopyFile(other.getCopyFile());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -21544,6 +21601,39 @@ public final class ClientProtos {
       public Builder clearAssignSeqNum() {
         bitField0_ = (bitField0_ & ~0x00000004);
         assignSeqNum_ = false;
+        onChanged();
+        return this;
+      }
+
+      // optional bool copy_file = 4 [default = false];
+      private boolean copyFile_ ;
+      /**
+       * <code>optional bool copy_file = 4 [default = false];</code>
+       */
+      public boolean hasCopyFile() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      /**
+       * <code>optional bool copy_file = 4 [default = false];</code>
+       */
+      public boolean getCopyFile() {
+        return copyFile_;
+      }
+      /**
+       * <code>optional bool copy_file = 4 [default = false];</code>
+       */
+      public Builder setCopyFile(boolean value) {
+        bitField0_ |= 0x00000008;
+        copyFile_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool copy_file = 4 [default = false];</code>
+       */
+      public Builder clearCopyFile() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        copyFile_ = false;
         onChanged();
         return this;
       }
@@ -33028,53 +33118,53 @@ public final class ClientProtos {
       "\030\005 \003(\0132\007.Result\022\r\n\005stale\030\006 \001(\010\022\037\n\027partia" +
       "l_flag_per_result\030\007 \003(\010\022\036\n\026more_results_",
       "in_region\030\010 \001(\010\022\031\n\021heartbeat_message\030\t \001" +
-      "(\010\"\263\001\n\024BulkLoadHFileRequest\022 \n\006region\030\001 " +
+      "(\010\"\315\001\n\024BulkLoadHFileRequest\022 \n\006region\030\001 " +
       "\002(\0132\020.RegionSpecifier\0225\n\013family_path\030\002 \003" +
       "(\0132 .BulkLoadHFileRequest.FamilyPath\022\026\n\016" +
-      "assign_seq_num\030\003 \001(\010\032*\n\nFamilyPath\022\016\n\006fa" +
-      "mily\030\001 \002(\014\022\014\n\004path\030\002 \002(\t\"\'\n\025BulkLoadHFil" +
-      "eResponse\022\016\n\006loaded\030\001 \002(\010\"a\n\026Coprocessor" +
-      "ServiceCall\022\013\n\003row\030\001 \002(\014\022\024\n\014service_name" +
-      "\030\002 \002(\t\022\023\n\013method_name\030\003 \002(\t\022\017\n\007request\030\004" +
-      " \002(\014\"9\n\030CoprocessorServiceResult\022\035\n\005valu",
-      "e\030\001 \001(\0132\016.NameBytesPair\"d\n\031CoprocessorSe" +
-      "rviceRequest\022 \n\006region\030\001 \002(\0132\020.RegionSpe" +
-      "cifier\022%\n\004call\030\002 \002(\0132\027.CoprocessorServic" +
-      "eCall\"]\n\032CoprocessorServiceResponse\022 \n\006r" +
-      "egion\030\001 \002(\0132\020.RegionSpecifier\022\035\n\005value\030\002" +
-      " \002(\0132\016.NameBytesPair\"{\n\006Action\022\r\n\005index\030" +
-      "\001 \001(\r\022 \n\010mutation\030\002 \001(\0132\016.MutationProto\022" +
-      "\021\n\003get\030\003 \001(\0132\004.Get\022-\n\014service_call\030\004 \001(\013" +
-      "2\027.CoprocessorServiceCall\"Y\n\014RegionActio" +
-      "n\022 \n\006region\030\001 \002(\0132\020.RegionSpecifier\022\016\n\006a",
-      "tomic\030\002 \001(\010\022\027\n\006action\030\003 \003(\0132\007.Action\"D\n\017" +
-      "RegionLoadStats\022\027\n\014memstoreLoad\030\001 \001(\005:\0010" +
-      "\022\030\n\rheapOccupancy\030\002 \001(\005:\0010\"\266\001\n\021ResultOrE" +
-      "xception\022\r\n\005index\030\001 \001(\r\022\027\n\006result\030\002 \001(\0132" +
-      "\007.Result\022!\n\texception\030\003 \001(\0132\016.NameBytesP" +
-      "air\0221\n\016service_result\030\004 \001(\0132\031.Coprocesso" +
-      "rServiceResult\022#\n\tloadStats\030\005 \001(\0132\020.Regi" +
-      "onLoadStats\"f\n\022RegionActionResult\022-\n\021res" +
-      "ultOrException\030\001 \003(\0132\022.ResultOrException" +
-      "\022!\n\texception\030\002 \001(\0132\016.NameBytesPair\"f\n\014M",
-      "ultiRequest\022#\n\014regionAction\030\001 \003(\0132\r.Regi" +
-      "onAction\022\022\n\nnonceGroup\030\002 \001(\004\022\035\n\tconditio" +
-      "n\030\003 \001(\0132\n.Condition\"S\n\rMultiResponse\022/\n\022" +
-      "regionActionResult\030\001 \003(\0132\023.RegionActionR" +
-      "esult\022\021\n\tprocessed\030\002 \001(\010*\'\n\013Consistency\022" +
-      "\n\n\006STRONG\020\000\022\014\n\010TIMELINE\020\0012\205\003\n\rClientServ" +
-      "ice\022 \n\003Get\022\013.GetRequest\032\014.GetResponse\022)\n" +
-      "\006Mutate\022\016.MutateRequest\032\017.MutateResponse" +
-      "\022#\n\004Scan\022\014.ScanRequest\032\r.ScanResponse\022>\n" +
-      "\rBulkLoadHFile\022\025.BulkLoadHFileRequest\032\026.",
-      "BulkLoadHFileResponse\022F\n\013ExecService\022\032.C" +
-      "oprocessorServiceRequest\032\033.CoprocessorSe" +
-      "rviceResponse\022R\n\027ExecRegionServerService" +
-      "\022\032.CoprocessorServiceRequest\032\033.Coprocess" +
-      "orServiceResponse\022&\n\005Multi\022\r.MultiReques" +
-      "t\032\016.MultiResponseBB\n*org.apache.hadoop.h" +
-      "base.protobuf.generatedB\014ClientProtosH\001\210" +
-      "\001\001\240\001\001"
+      "assign_seq_num\030\003 \001(\010\022\030\n\tcopy_file\030\004 \001(\010:" +
+      "\005false\032*\n\nFamilyPath\022\016\n\006family\030\001 \002(\014\022\014\n\004" +
+      "path\030\002 \002(\t\"\'\n\025BulkLoadHFileResponse\022\016\n\006l" +
+      "oaded\030\001 \002(\010\"a\n\026CoprocessorServiceCall\022\013\n" +
+      "\003row\030\001 \002(\014\022\024\n\014service_name\030\002 \002(\t\022\023\n\013meth" +
+      "od_name\030\003 \002(\t\022\017\n\007request\030\004 \002(\014\"9\n\030Coproc",
+      "essorServiceResult\022\035\n\005value\030\001 \001(\0132\016.Name" +
+      "BytesPair\"d\n\031CoprocessorServiceRequest\022 " +
+      "\n\006region\030\001 \002(\0132\020.RegionSpecifier\022%\n\004call" +
+      "\030\002 \002(\0132\027.CoprocessorServiceCall\"]\n\032Copro" +
+      "cessorServiceResponse\022 \n\006region\030\001 \002(\0132\020." +
+      "RegionSpecifier\022\035\n\005value\030\002 \002(\0132\016.NameByt" +
+      "esPair\"{\n\006Action\022\r\n\005index\030\001 \001(\r\022 \n\010mutat" +
+      "ion\030\002 \001(\0132\016.MutationProto\022\021\n\003get\030\003 \001(\0132\004" +
+      ".Get\022-\n\014service_call\030\004 \001(\0132\027.Coprocessor" +
+      "ServiceCall\"Y\n\014RegionAction\022 \n\006region\030\001 ",
+      "\002(\0132\020.RegionSpecifier\022\016\n\006atomic\030\002 \001(\010\022\027\n" +
+      "\006action\030\003 \003(\0132\007.Action\"D\n\017RegionLoadStat" +
+      "s\022\027\n\014memstoreLoad\030\001 \001(\005:\0010\022\030\n\rheapOccupa" +
+      "ncy\030\002 \001(\005:\0010\"\266\001\n\021ResultOrException\022\r\n\005in" +
+      "dex\030\001 \001(\r\022\027\n\006result\030\002 \001(\0132\007.Result\022!\n\tex" +
+      "ception\030\003 \001(\0132\016.NameBytesPair\0221\n\016service" +
+      "_result\030\004 \001(\0132\031.CoprocessorServiceResult" +
+      "\022#\n\tloadStats\030\005 \001(\0132\020.RegionLoadStats\"f\n" +
+      "\022RegionActionResult\022-\n\021resultOrException" +
+      "\030\001 \003(\0132\022.ResultOrException\022!\n\texception\030",
+      "\002 \001(\0132\016.NameBytesPair\"f\n\014MultiRequest\022#\n" +
+      "\014regionAction\030\001 \003(\0132\r.RegionAction\022\022\n\nno" +
+      "nceGroup\030\002 \001(\004\022\035\n\tcondition\030\003 \001(\0132\n.Cond" +
+      "ition\"S\n\rMultiResponse\022/\n\022regionActionRe" +
+      "sult\030\001 \003(\0132\023.RegionActionResult\022\021\n\tproce" +
+      "ssed\030\002 \001(\010*\'\n\013Consistency\022\n\n\006STRONG\020\000\022\014\n" +
+      "\010TIMELINE\020\0012\205\003\n\rClientService\022 \n\003Get\022\013.G" +
+      "etRequest\032\014.GetResponse\022)\n\006Mutate\022\016.Muta" +
+      "teRequest\032\017.MutateResponse\022#\n\004Scan\022\014.Sca" +
+      "nRequest\032\r.ScanResponse\022>\n\rBulkLoadHFile",
+      "\022\025.BulkLoadHFileRequest\032\026.BulkLoadHFileR" +
+      "esponse\022F\n\013ExecService\022\032.CoprocessorServ" +
+      "iceRequest\032\033.CoprocessorServiceResponse\022" +
+      "R\n\027ExecRegionServerService\022\032.Coprocessor" +
+      "ServiceRequest\032\033.CoprocessorServiceRespo" +
+      "nse\022&\n\005Multi\022\r.MultiRequest\032\016.MultiRespo" +
+      "nseBB\n*org.apache.hadoop.hbase.protobuf." +
+      "generatedB\014ClientProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -33182,7 +33272,7 @@ public final class ClientProtos {
           internal_static_BulkLoadHFileRequest_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_BulkLoadHFileRequest_descriptor,
-              new java.lang.String[] { "Region", "FamilyPath", "AssignSeqNum", });
+              new java.lang.String[] { "Region", "FamilyPath", "AssignSeqNum", "CopyFile", });
           internal_static_BulkLoadHFileRequest_FamilyPath_descriptor =
             internal_static_BulkLoadHFileRequest_descriptor.getNestedTypes().get(0);
           internal_static_BulkLoadHFileRequest_FamilyPath_fieldAccessorTable = new
