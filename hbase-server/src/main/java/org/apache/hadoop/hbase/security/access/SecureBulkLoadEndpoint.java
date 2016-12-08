@@ -211,7 +211,7 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
 
   @Override
   public void secureBulkLoadHFiles(RpcController controller,
-                                   SecureBulkLoadHFilesRequest request,
+                                   final SecureBulkLoadHFilesRequest request,
                                    RpcCallback<SecureBulkLoadHFilesResponse> done) {
     final List<Pair<byte[], String>> familyPaths = new ArrayList<Pair<byte[], String>>();
     for(ClientProtos.BulkLoadHFileRequest.FamilyPath el : request.getFamilyPathList()) {
@@ -290,7 +290,8 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
             //We call bulkLoadHFiles as requesting user
             //To enable access prior to staging
             return env.getRegion().bulkLoadHFiles(familyPaths, true,
-                new SecureBulkLoadListener(fs, bulkToken, conf));
+                new SecureBulkLoadListener(fs, bulkToken, conf),
+                request.hasCopyFiles() ? request.getCopyFiles() : false);
           } catch (Exception e) {
             LOG.error("Failed to complete bulk load", e);
           }
@@ -372,7 +373,8 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
     }
 
     @Override
-    public String prepareBulkLoad(final byte[] family, final String srcPath) throws IOException {
+    public String prepareBulkLoad(final byte[] family, final String srcPath, boolean copyFile)
+        throws IOException {
       Path p = new Path(srcPath);
       Path stageP = new Path(stagingDir, new Path(Bytes.toString(family), p.getName()));
 
@@ -395,6 +397,9 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
       if (!FSHDFSUtils.isSameHdfs(conf, srcFs, fs)) {
         LOG.debug("Bulk-load file " + srcPath + " is on different filesystem than " +
             "the destination filesystem. Copying file over to destination staging dir.");
+        FileUtil.copy(srcFs, p, fs, stageP, false, conf);
+      } else if (copyFile) {
+        LOG.debug("Bulk-load file " + srcPath + " is copied to destination staging dir.");
         FileUtil.copy(srcFs, p, fs, stageP, false, conf);
       } else {
         LOG.debug("Moving " + p + " to " + stageP);
