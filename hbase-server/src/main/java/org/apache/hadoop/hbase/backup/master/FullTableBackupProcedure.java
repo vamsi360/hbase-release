@@ -635,7 +635,7 @@ public class FullTableBackupProcedure
         BackupServerUtil.waitForSnapshot(backupSnapshot, waitTime,
           env.getMasterServices().getSnapshotManager(), env.getMasterConfiguration());
         break;
-      } catch( NotServingRegionException ee) {
+      } catch( Exception ee) {
         LOG.warn("Snapshot attempt "+attempts +" failed for table "+backupSnapshot.getTable() +
           ", sleeping for " + delay+"ms", ee);        
         if(attempts < maxAttempts) {
