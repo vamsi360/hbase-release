@@ -250,6 +250,7 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
       }
     }
     boolean loaded = false;
+    Map<byte[], List<Path>> map = null;
     if (!bypass) {
       // Get the target fs (HBase region server fs) delegation token
       // Since we have checked the permission via 'preBulkLoadHFile', now let's give
@@ -272,9 +273,9 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
         }
       }
 
-      loaded = ugi.doAs(new PrivilegedAction<Boolean>() {
+      map = ugi.doAs(new PrivilegedAction<Map<byte[], List<Path>>>() {
         @Override
-        public Boolean run() {
+        public Map<byte[], List<Path>> run() {
           FileSystem fs = null;
           try {
             Configuration conf = env.getConfiguration();
@@ -295,13 +296,14 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
           } catch (Exception e) {
             LOG.error("Failed to complete bulk load", e);
           }
-          return false;
+          return null;
         }
       });
+      loaded = map != null && !map.isEmpty();
     }
     if (region.getCoprocessorHost() != null) {
       try {
-        loaded = region.getCoprocessorHost().postBulkLoadHFile(familyPaths, loaded);
+        loaded = region.getCoprocessorHost().postBulkLoadHFile(familyPaths, map, loaded);
       } catch (IOException e) {
         ResponseConverter.setControllerException(controller, e);
         done.run(SecureBulkLoadHFilesResponse.newBuilder().setLoaded(false).build());
