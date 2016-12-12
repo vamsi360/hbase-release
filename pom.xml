@@ -68,6 +68,7 @@
     <module>hbase-annotations</module>
     <module>hbase-checkstyle</module>
     <module>hbase-shaded</module>
+    <module>hbase-spark</module>
   </modules>
   <!--Add apache snapshots in case we want to use unreleased versions of plugins:
       e.g. surefire 2.18-SNAPSHOT-->
@@ -1147,6 +1148,11 @@
         <version>2.5.3</version>
         <inherited>true</inherited>
         <extensions>true</extensions>
+      </plugin>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+        <version>2.15.2</version>
       </plugin>
     </plugins>
   </build>
@@ -2595,6 +2601,10 @@
           <configLocation>hbase/checkstyle.xml</configLocation>
           <suppressionsLocation>hbase/checkstyle-suppressions.xml</suppressionsLocation>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
       </plugin>
     </plugins>
   </reporting>
