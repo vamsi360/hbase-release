@@ -77,6 +77,10 @@
       <id>apache.snapshots</id>
       <url>http://repository.apache.org/snapshots/</url>
     </pluginRepository>
+    <pluginRepository>
+      <id>hwx</id>
+      <url>http://nexus-private.hortonworks.com/nexus/content/groups/public/</url>
+    </pluginRepository>
   </pluginRepositories>
   <scm>
     <connection>scm:git:git://git.apache.org/hbase.git</connection>
