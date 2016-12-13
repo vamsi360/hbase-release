@@ -556,7 +556,7 @@ public abstract class TestRSGroupsBase {
     Assert.assertEquals(initNumGroups, rsGroupAdmin.listRSGroups().size());
   }
 
-  @Test
+  //@Test
   public void testKillRS() throws Exception {
     LOG.info("testKillRS");
     RSGroupInfo appInfo = addGroup(rsGroupAdmin, "appInfo", 1);
