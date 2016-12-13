@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
@@ -36,6 +37,7 @@ import org.apache.hadoop.hbase.protobuf.generated.ProcedureProtos;
 import org.apache.hadoop.hbase.protobuf.generated.ProcedureProtos.ProcedureState;
 import org.apache.hadoop.hbase.util.ByteStringer;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
+import org.apache.hadoop.hbase.util.NonceKey;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -78,6 +80,8 @@ public abstract class Procedure<TEnvironment> implements Comparable<Procedure> {
 
   private RemoteProcedureException exception = null;
   private byte[] result = null;
+
+  private NonceKey nonceKey = null;
 
   /**
    * The main code of the procedure. It must be idempotent since execute()
@@ -278,6 +282,10 @@ public abstract class Procedure<TEnvironment> implements Comparable<Procedure> {
     return parentProcId;
   }
 
+  public NonceKey getNonceKey() {
+    return nonceKey;
+  }
+
   /**
    * @return true if the procedure has failed.
    *         true may mean failed but not yet rolledback or failed and rolledback.
@@ -429,6 +437,15 @@ public abstract class Procedure<TEnvironment> implements Comparable<Procedure> {
   @InterfaceAudience.Private
   protected void setParentProcId(final long parentProcId) {
     this.parentProcId = parentProcId;
+  }
+
+  /**
+   * Called by the ProcedureExecutor to set the value to the newly created procedure.
+   */
+  @VisibleForTesting
+  @InterfaceAudience.Private
+  protected void setNonceKey(final NonceKey nonceKey) {
+    this.nonceKey = nonceKey;
   }
 
   /**
@@ -615,7 +632,7 @@ public abstract class Procedure<TEnvironment> implements Comparable<Procedure> {
    * Helper to create the ProcedureInfo from Procedure.
    */
   @InterfaceAudience.Private
-  public static ProcedureInfo createProcedureInfo(final Procedure proc) {
+  public static ProcedureInfo createProcedureInfo(final Procedure proc, final NonceKey nonceKey) {
     RemoteProcedureException exception = proc.hasException() ? proc.getException() : null;
     return new ProcedureInfo(
       proc.getProcId(),
@@ -623,8 +640,9 @@ public abstract class Procedure<TEnvironment> implements Comparable<Procedure> {
       proc.getOwner(),
       proc.getState(),
       proc.hasParent() ? proc.getParentProcId() : -1,
+      nonceKey,
       exception != null ?
-        RemoteProcedureException.toProto(exception.getSource(), exception.getCause()) : null,
+          RemoteProcedureException.toProto(exception.getSource(), exception.getCause()) : null,
       proc.getLastUpdate(),
       proc.getStartTime(),
       proc.getResult());
@@ -683,6 +701,11 @@ public abstract class Procedure<TEnvironment> implements Comparable<Procedure> {
       builder.setStateData(stateStream.toByteString());
     }
 
+    if (proc.getNonceKey() != null) {
+      builder.setNonceGroup(proc.getNonceKey().getNonceGroup());
+      builder.setNonce(proc.getNonceKey().getNonce());
+    }
+
     return builder.build();
   }
 
@@ -732,6 +755,11 @@ public abstract class Procedure<TEnvironment> implements Comparable<Procedure> {
 
     if (proto.hasResult()) {
       proc.setResult(proto.getResult().toByteArray());
+    }
+
+    if (proto.getNonce() != HConstants.NO_NONCE) {
+      NonceKey nonceKey = new NonceKey(proto.getNonceGroup(), proto.getNonce());
+      proc.setNonceKey(nonceKey);
     }
 
     // we want to call deserialize even when the stream is empty, mainly for testing.

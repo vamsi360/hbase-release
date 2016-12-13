@@ -27,7 +27,10 @@ import org.apache.hadoop.hbase.protobuf.generated.ProcedureProtos;
 import org.apache.hadoop.hbase.protobuf.generated.ProcedureProtos.ProcedureState;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.ByteStringer;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.ForeignExceptionUtil;
+import org.apache.hadoop.hbase.util.NonceKey;
+import org.apache.hadoop.util.StringUtils;
 
 /**
  * Procedure information
@@ -40,6 +43,7 @@ public class ProcedureInfo {
   private final String procOwner;
   private final ProcedureState procState;
   private final long parentId;
+  private final NonceKey nonceKey;
   private final ForeignExceptionMessage exception;
   private final long lastUpdate;
   private final long startTime;
@@ -54,6 +58,7 @@ public class ProcedureInfo {
       final String procOwner,
       final ProcedureState procState,
       final long parentId,
+      final NonceKey nonceKey,
       final ForeignExceptionMessage exception,
       final long lastUpdate,
       final long startTime,
@@ -63,6 +68,7 @@ public class ProcedureInfo {
     this.procOwner = procOwner;
     this.procState = procState;
     this.parentId = parentId;
+    this.nonceKey = nonceKey;
     this.lastUpdate = lastUpdate;
     this.startTime = startTime;
 
@@ -72,8 +78,42 @@ public class ProcedureInfo {
   }
 
   public ProcedureInfo clone() {
-    return new ProcedureInfo(
-      procId, procName, procOwner, procState, parentId, exception, lastUpdate, startTime, result);
+    return new ProcedureInfo(procId, procName, procOwner, procState, parentId, nonceKey,
+      exception, lastUpdate, startTime, result);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Procedure=");
+    sb.append(procName);
+    sb.append(" (id=");
+    sb.append(procId);
+    if (hasParentId()) {
+      sb.append(", parent=");
+      sb.append(parentId);
+    }
+    if (hasOwner()) {
+      sb.append(", owner=");
+      sb.append(procOwner);
+    }
+    sb.append(", state=");
+    sb.append(procState);
+
+    long now = EnvironmentEdgeManager.currentTime();
+    sb.append(", startTime=");
+    sb.append(StringUtils.formatTime(now - startTime));
+    sb.append(" ago, lastUpdate=");
+    sb.append(StringUtils.formatTime(now - startTime));
+    sb.append(" ago");
+
+    if (isFailed()) {
+      sb.append(", exception=\"");
+      sb.append(getExceptionMessage());
+      sb.append("\"");
+    }
+    sb.append(")");
+    return sb.toString();
   }
 
   public long getProcId() {
@@ -82,6 +122,10 @@ public class ProcedureInfo {
 
   public String getProcName() {
     return procName;
+  }
+
+  private boolean hasOwner() {
+    return procOwner != null;
   }
 
   public String getProcOwner() {
@@ -98,6 +142,10 @@ public class ProcedureInfo {
 
   public long getParentId() {
     return parentId;
+  }
+
+  public NonceKey getNonceKey() {
+    return nonceKey;
   }
 
   public boolean isFailed() {
@@ -207,12 +255,18 @@ public class ProcedureInfo {
    */
   @InterfaceAudience.Private
   public static ProcedureInfo convert(final ProcedureProtos.Procedure procProto) {
+    NonceKey nonceKey = null;
+    if (procProto.getNonce() != HConstants.NO_NONCE) {
+      nonceKey = new NonceKey(procProto.getNonceGroup(), procProto.getNonce());
+    }
+
     return new ProcedureInfo(
       procProto.getProcId(),
       procProto.getClassName(),
       procProto.getOwner(),
       procProto.getState(),
       procProto.hasParentId() ? procProto.getParentId() : -1,
+      nonceKey,
       procProto.hasException() ? procProto.getException() : null,
       procProto.getLastUpdate(),
       procProto.getStartTime(),

@@ -225,6 +225,8 @@ public class HBaseAdmin implements Admin {
   private RpcRetryingCallerFactory rpcCallerFactory;
   private RpcControllerFactory rpcControllerFactory;
 
+  private NonceGenerator ng;
+
   /**
    * Constructor.
    * See {@link #HBaseAdmin(Connection connection)}
@@ -283,6 +285,8 @@ public class HBaseAdmin implements Admin {
       "hbase.client.backup.wait.timeout.sec", 24 * 3600); // 24 h
     this.rpcCallerFactory = connection.getRpcRetryingCallerFactory();
     this.rpcControllerFactory = connection.getRpcControllerFactory();
+
+    this.ng = this.connection.getNonceGenerator();
   }
 
   @Override
@@ -749,7 +753,7 @@ public class HBaseAdmin implements Admin {
         controller.setCallTimeout(callTimeout);
         controller.setPriority(desc.getTableName());
         CreateTableRequest request = RequestConverter.buildCreateTableRequest(
-            desc, splitKeys);
+            desc, splitKeys, ng.getNonceGroup(), ng.newNonce());
         return master.createTable(controller, request);
       }
     });
@@ -923,7 +927,7 @@ public class HBaseAdmin implements Admin {
         controller.setCallTimeout(callTimeout);
         controller.setPriority(tableName);
         DeleteTableRequest req =
-            RequestConverter.buildDeleteTableRequest(tableName);
+            RequestConverter.buildDeleteTableRequest(tableName, ng.getNonceGroup(), ng.newNonce());
         return master.deleteTable(controller,req);
       }
     });
@@ -1035,7 +1039,7 @@ public class HBaseAdmin implements Admin {
       @Override
       public Void call(int callTimeout) throws ServiceException {
         TruncateTableRequest req = RequestConverter.buildTruncateTableRequest(
-          tableName, preserveSplits);
+          tableName, preserveSplits, ng.getNonceGroup(), ng.newNonce());
         master.truncateTable(null, req);
         return null;
       }
@@ -1176,7 +1180,7 @@ public class HBaseAdmin implements Admin {
 
         LOG.info("Started enable of " + tableName);
         EnableTableRequest req =
-            RequestConverter.buildEnableTableRequest(tableName);
+            RequestConverter.buildEnableTableRequest(tableName, ng.getNonceGroup(), ng.newNonce());
         return master.enableTable(controller, req);
       }
     });
@@ -1368,8 +1372,7 @@ public class HBaseAdmin implements Admin {
 
         LOG.info("Started disable of " + tableName);
         DisableTableRequest req =
-            RequestConverter.buildDisableTableRequest(
-                tableName);
+            RequestConverter.buildDisableTableRequest(tableName, ng.getNonceGroup(), ng.newNonce());
         return master.disableTable(controller, req);
       }
     });
@@ -1654,7 +1657,8 @@ public class HBaseAdmin implements Admin {
         PayloadCarryingRpcController controller = rpcControllerFactory.newController();
         controller.setCallTimeout(callTimeout);
         controller.setPriority(tableName);
-        AddColumnRequest req = RequestConverter.buildAddColumnRequest(tableName, column);
+        AddColumnRequest req = RequestConverter.buildAddColumnRequest(
+          tableName, column, ng.getNonceGroup(), ng.newNonce());
         master.addColumn(controller, req);
         return null;
       }
@@ -1704,7 +1708,8 @@ public class HBaseAdmin implements Admin {
         PayloadCarryingRpcController controller = rpcControllerFactory.newController();
         controller.setCallTimeout(callTimeout);
         controller.setPriority(tableName);
-        DeleteColumnRequest req = RequestConverter.buildDeleteColumnRequest(tableName, columnName);
+        DeleteColumnRequest req = RequestConverter.buildDeleteColumnRequest(
+                tableName, columnName, ng.getNonceGroup(), ng.newNonce());
         master.deleteColumn(controller, req);
         return null;
       }
@@ -1754,7 +1759,8 @@ public class HBaseAdmin implements Admin {
         PayloadCarryingRpcController controller = rpcControllerFactory.newController();
         controller.setCallTimeout(callTimeout);
         controller.setPriority(tableName);
-        ModifyColumnRequest req = RequestConverter.buildModifyColumnRequest(tableName, descriptor);
+        ModifyColumnRequest req = RequestConverter.buildModifyColumnRequest(
+                tableName, descriptor, ng.getNonceGroup(), ng.newNonce());
         master.modifyColumn(controller, req);
         return null;
       }
@@ -2812,7 +2818,8 @@ public class HBaseAdmin implements Admin {
         PayloadCarryingRpcController controller = rpcControllerFactory.newController();
         controller.setCallTimeout(callTimeout);
         controller.setPriority(tableName);
-        ModifyTableRequest request = RequestConverter.buildModifyTableRequest(tableName, htd);
+        ModifyTableRequest request = RequestConverter.buildModifyTableRequest(
+                tableName, htd, ng.getNonceGroup(), ng.newNonce());
         master.modifyTable(controller, request);
         return null;
       }

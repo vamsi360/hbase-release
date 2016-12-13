@@ -235,8 +235,11 @@ public class TestCatalogJanitor {
     }
 
     @Override
-    public long createTable(HTableDescriptor desc, byte[][] splitKeys)
-        throws IOException {
+    public long createTable(
+        final HTableDescriptor desc,
+        final byte[][] splitKeys,
+        final long nonceGroup,
+        final long nonce) throws IOException {
       // no-op
       return -1;
     }
@@ -451,7 +454,10 @@ public class TestCatalogJanitor {
     }
 
     @Override
-    public long deleteTable(TableName tableName) throws IOException {
+    public long deleteTable(
+        final TableName tableName,
+        final long nonceGroup,
+        final long nonce) throws IOException {
       return -1;
     }
     @Override
@@ -459,35 +465,57 @@ public class TestCatalogJanitor {
       return null;
     }
 
-    @Override
-    public void truncateTable(TableName tableName, boolean preserveSplits) throws IOException { }
+    public void truncateTable(
+        final TableName tableName,
+        final boolean preserveSplits,
+        final long nonceGroup,
+        final long nonce) throws IOException {
+    }
 
+    @Override
+    public void modifyTable(
+        final TableName tableName,
+        final HTableDescriptor descriptor,
+        final long nonceGroup,
+        final long nonce) throws IOException {
+    }
 
     @Override
-    public void modifyTable(TableName tableName, HTableDescriptor descriptor)
-        throws IOException { }
-
-    @Override
-    public long enableTable(TableName tableName) throws IOException {
+    public long enableTable(
+        final TableName tableName,
+        final long nonceGroup,
+        final long nonce) throws IOException {
       return -1;
     }
 
     @Override
-    public long disableTable(TableName tableName) throws IOException {
+    public long disableTable(
+        TableName tableName,
+        final long nonceGroup,
+        final long nonce) throws IOException {
       return -1;
     }
 
     @Override
-    public void addColumn(TableName tableName, HColumnDescriptor column)
-        throws IOException { }
+    public void addColumn(
+        final TableName tableName,
+        final HColumnDescriptor columnDescriptor,
+        final long nonceGroup,
+        final long nonce) throws IOException { }
 
     @Override
-    public void modifyColumn(TableName tableName, HColumnDescriptor descriptor)
-        throws IOException { }
+    public void modifyColumn(
+        final TableName tableName,
+        final HColumnDescriptor descriptor,
+        final long nonceGroup,
+        final long nonce) throws IOException { }
 
     @Override
-    public void deleteColumn(TableName tableName, byte[] columnName)
-        throws IOException { }
+    public void deleteColumn(
+        final TableName tableName,
+        final byte[] columnName,
+        final long nonceGroup,
+        final long nonce) throws IOException { }
 
     @Override
     public TableLockManager getTableLockManager() {
