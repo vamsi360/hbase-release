@@ -157,6 +157,11 @@ import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor;
 import org.apache.hadoop.hbase.quotas.OperationQuota;
 import org.apache.hadoop.hbase.quotas.RegionServerRpcQuotaManager;
+import org.apache.hadoop.hbase.quotas.ActivePolicyEnforcement;
+import org.apache.hadoop.hbase.quotas.RegionServerSpaceQuotaManager;
+import org.apache.hadoop.hbase.quotas.SpaceViolationPolicyEnforcement;
+import org.apache.hadoop.hbase.regionserver.HRegion.RegionScannerImpl;
+import org.apache.hadoop.hbase.regionserver.Leases.Lease;
 import org.apache.hadoop.hbase.regionserver.Leases.LeaseStillHeldException;
 import org.apache.hadoop.hbase.regionserver.Region.Operation;
 import org.apache.hadoop.hbase.regionserver.ScannerContext.LimitScope;
@@ -473,7 +478,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
    */
   private boolean checkAndRowMutate(final Region region, final List<ClientProtos.Action> actions,
       final CellScanner cellScanner, byte[] row, byte[] family, byte[] qualifier,
-      CompareOp compareOp, ByteArrayComparable comparator) throws IOException {
+      CompareOp compareOp, ByteArrayComparable comparator,
+      ActivePolicyEnforcement spaceQuotaEnforcement) throws IOException {
     if (!region.getRegionInfo().isMetaTable()) {
       regionServer.cacheFlusher.reclaimMemStoreMemory();
     }
@@ -488,14 +494,18 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
         rm = new RowMutations(action.getMutation().getRow().toByteArray());
       }
       switch (type) {
-      case PUT:
-        rm.add(ProtobufUtil.toPut(action.getMutation(), cellScanner));
-        break;
-      case DELETE:
-        rm.add(ProtobufUtil.toDelete(action.getMutation(), cellScanner));
-        break;
-      default:
-        throw new DoNotRetryIOException("Atomic put and/or delete only, not " + type.name());
+        case PUT:
+          Put put = ProtobufUtil.toPut(action.getMutation(), cellScanner);
+          spaceQuotaEnforcement.getPolicyEnforcement(region).check(put);
+          rm.add(put);
+          break;
+        case DELETE:
+          Delete del = ProtobufUtil.toDelete(action.getMutation(), cellScanner);
+          spaceQuotaEnforcement.getPolicyEnforcement(region).check(del);
+          rm.add(del);
+          break;
+        default:
+          throw new DoNotRetryIOException("Atomic put and/or delete only, not " + type.name());
       }
     }
     return region.checkAndRowMutate(row, family, qualifier, compareOp, comparator, rm, Boolean.TRUE);
@@ -511,10 +521,13 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
    * bypassed as indicated by RegionObserver, null otherwise
    * @throws IOException
    */
-  private Result append(final Region region, final OperationQuota quota, final MutationProto m,
-      final CellScanner cellScanner, long nonceGroup) throws IOException {
+  private Result append(final Region region, final OperationQuota quota,
+      final MutationProto m, final CellScanner cellScanner, long nonceGroup,
+      ActivePolicyEnforcement spaceQuota)
+      throws IOException {
     long before = EnvironmentEdgeManager.currentTime();
     Append append = ProtobufUtil.toAppend(m, cellScanner);
+    spaceQuota.getPolicyEnforcement(region).check(append);
     quota.addMutation(append);
     Result r = null;
     if (region.getCoprocessorHost() != null) {
@@ -549,9 +562,11 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
    * @throws IOException
    */
   private Result increment(final Region region, final OperationQuota quota,
-      final MutationProto mutation, final CellScanner cells, long nonceGroup) throws IOException {
+      final MutationProto mutation, final CellScanner cells, long nonceGroup,
+      ActivePolicyEnforcement spaceQuota) throws IOException {
     long before = EnvironmentEdgeManager.currentTime();
     Increment increment = ProtobufUtil.toIncrement(mutation, cells);
+    spaceQuota.getPolicyEnforcement(region).check(increment);
     quota.addMutation(increment);
     Result r = null;
     if (region.getCoprocessorHost() != null) {
@@ -590,7 +605,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
    */
   private List<CellScannable> doNonAtomicRegionMutation(final Region region,
       final OperationQuota quota, final RegionAction actions, final CellScanner cellScanner,
-      final RegionActionResult.Builder builder, List<CellScannable> cellsToReturn, long nonceGroup) {
+      final RegionActionResult.Builder builder, List<CellScannable> cellsToReturn, long nonceGroup,
+      ActivePolicyEnforcement spaceQuotaEnforcement) {
     // Gather up CONTIGUOUS Puts and Deletes in this mutations List.  Idea is that rather than do
     // one at a time, we instead pass them in batch.  Be aware that the corresponding
     // ResultOrException instance that matches each Put or Delete is then added down in the
@@ -623,26 +639,28 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           if (type != MutationType.PUT && type != MutationType.DELETE && mutations != null &&
               !mutations.isEmpty()) {
             // Flush out any Puts or Deletes already collected.
-            doBatchOp(builder, region, quota, mutations, cellScanner);
+            doBatchOp(builder, region, quota, mutations, cellScanner, spaceQuotaEnforcement);
             mutations.clear();
           }
           switch (type) {
-          case APPEND:
-            r = append(region, quota, action.getMutation(), cellScanner, nonceGroup);
-            break;
-          case INCREMENT:
-            r = increment(region, quota, action.getMutation(), cellScanner,  nonceGroup);
-            break;
-          case PUT:
-          case DELETE:
-            // Collect the individual mutations and apply in a batch
-            if (mutations == null) {
-              mutations = new ArrayList<ClientProtos.Action>(actions.getActionCount());
-            }
-            mutations.add(action);
-            break;
-          default:
-            throw new DoNotRetryIOException("Unsupported mutate type: " + type.name());
+            case APPEND:
+              r = append(region, quota, action.getMutation(), cellScanner, nonceGroup,
+                  spaceQuotaEnforcement);
+              break;
+            case INCREMENT:
+              r = increment(region, quota, action.getMutation(), cellScanner, nonceGroup,
+                  spaceQuotaEnforcement);
+              break;
+            case PUT:
+            case DELETE:
+              // Collect the individual mutations and apply in a batch
+              if (mutations == null) {
+                mutations = new ArrayList<ClientProtos.Action>(actions.getActionCount());
+              }
+              mutations.add(action);
+              break;
+            default:
+              throw new DoNotRetryIOException("Unsupported mutate type: " + type.name());
           }
         } else {
           throw new HBaseIOException("Unexpected Action type");
@@ -677,7 +695,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
     }
     // Finish up any outstanding mutations
     if (mutations != null && !mutations.isEmpty()) {
-      doBatchOp(builder, region, quota, mutations, cellScanner);
+      doBatchOp(builder, region, quota, mutations, cellScanner, spaceQuotaEnforcement);
     }
     return cellsToReturn;
   }
@@ -690,8 +708,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
    * @param mutations
    */
   private void doBatchOp(final RegionActionResult.Builder builder, final Region region,
-      final OperationQuota quota,
-      final List<ClientProtos.Action> mutations, final CellScanner cells) {
+      final OperationQuota quota, final List<ClientProtos.Action> mutations,
+      final CellScanner cells, ActivePolicyEnforcement spaceQuotaEnforcement) {
     Mutation[] mArray = new Mutation[mutations.size()];
     long before = EnvironmentEdgeManager.currentTime();
     boolean batchContainsPuts = false, batchContainsDelete = false;
@@ -708,6 +726,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           batchContainsDelete = true;
         }
         mArray[i++] = mutation;
+        // Check if a space quota disallows this mutation
+        spaceQuotaEnforcement.getPolicyEnforcement(region).check(mutation);
         quota.addMutation(mutation);
       }
 
@@ -987,8 +1007,12 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
     return regionServer.getConfiguration();
   }
 
-  private RegionServerRpcQuotaManager getQuotaManager() {
+  private RegionServerRpcQuotaManager getRpcQuotaManager() {
     return regionServer.getRegionServerRpcQuotaManager();
+  }
+
+  private RegionServerSpaceQuotaManager getSpaceQuotaManager() {
+    return regionServer.getRegionServerSpaceQuotaManager();
   }
 
   void start() {
@@ -1136,6 +1160,11 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       checkOpen();
       requestCount.increment();
       Region region = getRegion(request.getRegion());
+      if (this.regionServer.getRegionServerSpaceQuotaManager().areCompactionsDisabled(
+          region.getTableDesc().getTableName())) {
+        throw new DoNotRetryIOException("Compactions on this region are "
+            + "disabled due to a space quota violation.");
+      }
       region.startRegionOperation(Operation.COMPACT_REGION);
       LOG.info("Compacting " + region.getRegionInfo().getRegionNameAsString());
       boolean major = false;
@@ -1856,6 +1885,20 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
         bypass = region.getCoprocessorHost().preBulkLoadHFile(familyPaths);
       }
       boolean loaded = false;
+
+      // Check to see if this bulk load would exceed the space quota for this table
+      ActivePolicyEnforcement activeSpaceQuotas = getSpaceQuotaManager().getActiveEnforcements();
+      SpaceViolationPolicyEnforcement enforcement = activeSpaceQuotas.getPolicyEnforcement(region);
+      if (null != enforcement) {
+        // Bulk loads must still be atomic. We must enact all or none.
+        List<String> filePaths = new ArrayList<>(request.getFamilyPathCount());
+        for (FamilyPath familyPath : request.getFamilyPathList()) {
+          filePaths.add(familyPath.getPath());
+        }
+        // Check if the batch of files exceeds the current quota
+        enforcement.checkBulkLoad(regionServer.getFileSystem(), filePaths);
+      }
+
       Map<byte[], List<Path>> map = null;
       if (!bypass) {
         map = region.bulkLoadHFiles(familyPaths, request.getAssignSeqNum(), null,
@@ -1932,7 +1975,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       ClientProtos.Get get = request.getGet();
       Boolean existence = null;
       Result r = null;
-      quota = getQuotaManager().checkQuota(region, OperationQuota.OperationType.GET);
+      quota = getRpcQuotaManager().checkQuota(region, OperationQuota.OperationType.GET);
 
       if (get.hasClosestRowBefore() && get.getClosestRowBefore()) {
         if (get.getColumnCount() != 1) {
@@ -2016,6 +2059,9 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
 
     RpcCallContext context = RpcServer.getCurrentCall();
     this.rpcMultiRequestCount.increment();
+    Map<RegionSpecifier, ClientProtos.RegionLoadStats> regionStats = new HashMap<>(request
+      .getRegionActionCount());
+    ActivePolicyEnforcement spaceQuotaEnforcement = getSpaceQuotaManager().getActiveEnforcements();
     for (RegionAction regionAction : request.getRegionActionList()) {
       this.requestCount.add(regionAction.getActionCount());
       OperationQuota quota;
@@ -2023,7 +2069,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       regionActionResultBuilder.clear();
       try {
         region = getRegion(regionAction.getRegion());
-        quota = getQuotaManager().checkQuota(region, regionAction.getActionList());
+        quota = getRpcQuotaManager().checkQuota(region, regionAction.getActionList());
       } catch (IOException e) {
         rpcServer.getMetrics().exception(e);
         regionActionResultBuilder.setException(ResponseConverter.buildException(e));
@@ -2044,7 +2090,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
             ByteArrayComparable comparator =
                 ProtobufUtil.toComparator(condition.getComparator());
             processed = checkAndRowMutate(region, regionAction.getActionList(),
-                  cellScanner, row, family, qualifier, compareOp, comparator);
+                  cellScanner, row, family, qualifier, compareOp,
+                  comparator, spaceQuotaEnforcement);
           } else {
             ClientProtos.RegionLoadStats stats = mutateRows(region, regionAction.getActionList(),
                 cellScanner);
@@ -2063,7 +2110,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       } else {
         // doNonAtomicRegionMutation manages the exception internally
         cellsToReturn = doNonAtomicRegionMutation(region, quota, regionAction, cellScanner,
-            regionActionResultBuilder, cellsToReturn, nonceGroup);
+            regionActionResultBuilder, cellsToReturn, nonceGroup, spaceQuotaEnforcement);
       }
       responseBuilder.addRegionActionResult(regionActionResultBuilder.build());
       quota.close();
@@ -2091,6 +2138,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
     PayloadCarryingRpcController controller = (PayloadCarryingRpcController)rpcc;
     CellScanner cellScanner = controller != null? controller.cellScanner(): null;
     OperationQuota quota = null;
+    ActivePolicyEnforcement spaceQuotaEnforcement = null;
     // Clear scanner so we are not holding on to reference across call.
     if (controller != null) controller.setCellScanner(null);
     try {
@@ -2107,19 +2155,22 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       Result r = null;
       Boolean processed = null;
       MutationType type = mutation.getMutateType();
-      long mutationSize = 0;
-      quota = getQuotaManager().checkQuota(region, OperationQuota.OperationType.MUTATE);
+      quota = getRpcQuotaManager().checkQuota(region, OperationQuota.OperationType.MUTATE);
+      spaceQuotaEnforcement = getSpaceQuotaManager().getActiveEnforcements();
+
       switch (type) {
       case APPEND:
         // TODO: this doesn't actually check anything.
-        r = append(region, quota, mutation, cellScanner, nonceGroup);
+        r = append(region, quota, mutation, cellScanner, nonceGroup, spaceQuotaEnforcement);
         break;
       case INCREMENT:
         // TODO: this doesn't actually check anything.
-        r = increment(region, quota, mutation, cellScanner, nonceGroup);
+        r = increment(region, quota, mutation, cellScanner, nonceGroup, spaceQuotaEnforcement);
         break;
       case PUT:
         Put put = ProtobufUtil.toPut(mutation, cellScanner);
+        // Throws an exception when violated
+        spaceQuotaEnforcement.getPolicyEnforcement(region).check(put);
         quota.addMutation(put);
         if (request.hasCondition()) {
           Condition condition = request.getCondition();
@@ -2149,6 +2200,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
         break;
       case DELETE:
         Delete delete = ProtobufUtil.toDelete(mutation, cellScanner);
+        spaceQuotaEnforcement.getPolicyEnforcement(region).check(delete);
         quota.addMutation(delete);
         if (request.hasCondition()) {
           Condition condition = request.getCondition();
@@ -2308,7 +2360,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
         return builder.build();
       }
 
-      quota = getQuotaManager().checkQuota(region, OperationQuota.OperationType.SCAN);
+      quota = getRpcQuotaManager().checkQuota(region, OperationQuota.OperationType.SCAN);
       long maxQuotaResultSize = Math.min(maxScannerResultSize, quota.getReadAvailable());
       if (rows > 0) {
         // if nextCallSeq does not match throw Exception straight away. This needs to be
