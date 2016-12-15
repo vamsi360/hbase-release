@@ -66,6 +66,7 @@ import org.apache.log4j.Level;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -112,6 +113,7 @@ public class TestBlockReorder {
    * Test that we're can add a hook, and that this hook works when we try to read the file in HDFS.
    */
   @Test
+  @Ignore
   public void testBlockLocationReorder() throws Exception {
     Path p = new Path("hello");
 
@@ -248,6 +250,7 @@ public class TestBlockReorder {
    * Test that the hook works within HBase, including when there are multiple blocks.
    */
   @Test()
+  @Ignore
   public void testHBaseCluster() throws Exception {
     byte[] sb = "sb".getBytes();
     htu.startMiniZKCluster();

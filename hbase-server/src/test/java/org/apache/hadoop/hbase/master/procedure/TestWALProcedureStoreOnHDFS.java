@@ -54,6 +54,7 @@ import org.apache.hadoop.hdfs.server.datanode.DataNode;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
@@ -181,6 +182,7 @@ public class TestWALProcedureStoreOnHDFS {
   }
 
   @Test(timeout=60000)
+  @Ignore
   public void testWalRollOnLowReplication() throws Exception {
     int dnCount = 0;
     store.insert(new TestProcedure(1, -1), null);
