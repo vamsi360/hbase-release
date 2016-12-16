@@ -5447,7 +5447,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
         StringBuilder list = new StringBuilder();
         for (Pair<byte[], String> p : failures) {
           list.append("\n").append(Bytes.toString(p.getFirst())).append(" : ")
-              .append(p.getSecond());
+          .append(p.getSecond());
         }
         // problem when validating
         LOG.warn("There was a recoverable bulk load failure likely due to a" +
@@ -5468,46 +5468,31 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
           seqId = ((FlushResultImpl)fs).flushSequenceId;
         } else {
           throw new IOException("Could not bulk load with an assigned sequential ID because the "+
-            "flush didn't run. Reason for not flushing: " + ((FlushResultImpl)fs).failureReason);
+              "flush didn't run. Reason for not flushing: " + ((FlushResultImpl)fs).failureReason);
         }
       }
 
+      Map<byte[], List<Pair<Path, Path>>> familyWithFinalPath =
+          new TreeMap<>(Bytes.BYTES_COMPARATOR);
       for (Pair<byte[], String> p : familyPaths) {
         byte[] familyName = p.getFirst();
         String path = p.getSecond();
         Store store = getStore(familyName);
+        if (!familyWithFinalPath.containsKey(familyName)) {
+          familyWithFinalPath.put(familyName, new ArrayList<Pair<Path, Path>>());
+        }
+        List<Pair<Path, Path>> lst = familyWithFinalPath.get(familyName);
         try {
           String finalPath = path;
           if (bulkLoadListener != null) {
             finalPath = bulkLoadListener.prepareBulkLoad(familyName, path, copyFile);
           }
-          Path commitedStoreFile = store.bulkLoadHFile(finalPath, seqId);
-
-          // Note the size of the store file
-          try {
-            FileSystem fs = commitedStoreFile.getFileSystem(baseConf);
-            storeFilesSizes.put(commitedStoreFile.getName(), fs.getFileStatus(commitedStoreFile)
-                .getLen());
-          } catch (IOException e) {
-            LOG.warn("Failed to find the size of hfile " + commitedStoreFile);
-            storeFilesSizes.put(commitedStoreFile.getName(), 0L);
-          }
-
-          if(storeFiles.containsKey(familyName)) {
-            storeFiles.get(familyName).add(commitedStoreFile);
-          } else {
-            List<Path> storeFileNames = new ArrayList<Path>();
-            storeFileNames.add(commitedStoreFile);
-            storeFiles.put(familyName, storeFileNames);
-          }
-          if (bulkLoadListener != null) {
-            bulkLoadListener.doneBulkLoad(familyName, path);
-          }
+          Path commitedStoreFile = ((HStore)store).preBulkLoadHFile(finalPath, seqId);
+          lst.add(new Pair<Path, Path>(new Path(finalPath), commitedStoreFile));
         } catch (IOException ioe) {
           // A failure here can cause an atomicity violation that we currently
           // cannot recover from since it is likely a failed HDFS operation.
 
-          // TODO Need a better story for reverting partial failures due to HDFS.
           LOG.error("There was a partial failure due to IO when attempting to" +
               " load " + Bytes.toString(p.getFirst()) + " : " + p.getSecond(), ioe);
           if (bulkLoadListener != null) {
@@ -5520,6 +5505,60 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
           }
           throw ioe;
         }
+      }
+
+      if (this.getCoprocessorHost() != null) {
+        for (Map.Entry<byte[], List<Pair<Path, Path>>> entry : familyWithFinalPath.entrySet()) {
+          this.getCoprocessorHost().preCommitStoreFile(entry.getKey(), entry.getValue());
+        }
+      }
+      for (Map.Entry<byte[], List<Pair<Path, Path>>> entry : familyWithFinalPath.entrySet()) {
+        byte[] familyName = entry.getKey();
+        for (Pair<Path, Path> p : entry.getValue()) {
+          String path = p.getFirst().toString();
+          Path commitedStoreFile = p.getSecond();
+          Store store = getStore(familyName);
+          try {
+            store.bulkLoadHFile(familyName, path, commitedStoreFile);
+            // Note the size of the store file
+            try {
+              FileSystem fs = commitedStoreFile.getFileSystem(baseConf);
+              storeFilesSizes.put(commitedStoreFile.getName(), fs.getFileStatus(commitedStoreFile)
+                  .getLen());
+            } catch (IOException e) {
+              LOG.warn("Failed to find the size of hfile " + commitedStoreFile);
+              storeFilesSizes.put(commitedStoreFile.getName(), 0L);
+            }
+
+            if(storeFiles.containsKey(familyName)) {
+              storeFiles.get(familyName).add(commitedStoreFile);
+            } else {
+              List<Path> storeFileNames = new ArrayList<Path>();
+              storeFileNames.add(commitedStoreFile);
+              storeFiles.put(familyName, storeFileNames);
+            }
+            if (bulkLoadListener != null) {
+              bulkLoadListener.doneBulkLoad(familyName, path);
+            }
+          } catch (IOException ioe) {
+            // A failure here can cause an atomicity violation that we currently
+            // cannot recover from since it is likely a failed HDFS operation.
+
+            // TODO Need a better story for reverting partial failures due to HDFS.
+            LOG.error("There was a partial failure due to IO when attempting to" +
+                " load " + p.getFirst() + " : " + p.getSecond(), ioe);
+            if (bulkLoadListener != null) {
+              try {
+                bulkLoadListener.failedBulkLoad(familyName, path);
+              } catch (Exception ex) {
+                LOG.error("Error while calling failedBulkLoad for family " +
+                    Bytes.toString(familyName) + " with path " + path, ex);
+              }
+            }
+            throw ioe;
+          }
+        }
+
       }
 
       isSuccessful = true;

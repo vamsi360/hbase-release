@@ -808,11 +808,21 @@ public class HStore implements Store {
     }
   }
 
-  @Override
-  public Path bulkLoadHFile(String srcPathStr, long seqNum) throws IOException {
+  public Path preBulkLoadHFile(String srcPathStr, long seqNum) throws IOException {
     Path srcPath = new Path(srcPathStr);
-    Path dstPath = fs.bulkLoadStoreFile(getColumnFamilyName(), srcPath, seqNum);
+    return fs.bulkLoadStoreFile(getColumnFamilyName(), srcPath, seqNum);
+  }
 
+  @Override
+  public Path bulkLoadHFile(byte[] family, String srcPathStr, Path dstPath) throws IOException {
+    Path srcPath = new Path(srcPathStr);
+    try {
+      fs.commitStoreFile(srcPath, dstPath);
+    } finally {
+      if (this.getCoprocessorHost() != null) {
+        this.getCoprocessorHost().postCommitStoreFile(family, srcPath, dstPath);
+      }
+    }
     LOG.info("Loaded HFile " + srcPath + " into store '" + getColumnFamilyName() + "' as "
         + dstPath + " - updating store file list.");
 
