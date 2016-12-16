@@ -317,7 +317,7 @@ public final class BackupCommands {
         System.exit(-1);
       }
 
-      String backupId = args == null ? null : args[1];
+      String backupId = (args == null || args.length <= 1) ? null : args[1];
       Configuration conf = getConf() != null? getConf(): HBaseConfiguration.create();
       try(final Connection conn = ConnectionFactory.createConnection(conf); 
           final BackupAdmin admin = conn.getAdmin().getBackupAdmin();){
