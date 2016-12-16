@@ -5487,8 +5487,8 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
           if (bulkLoadListener != null) {
             finalPath = bulkLoadListener.prepareBulkLoad(familyName, path, copyFile);
           }
-          Path commitedStoreFile = ((HStore)store).preBulkLoadHFile(finalPath, seqId);
-          lst.add(new Pair<Path, Path>(new Path(finalPath), commitedStoreFile));
+          Pair<Path, Path> pair = ((HStore)store).preBulkLoadHFile(finalPath, seqId);
+          lst.add(pair);
         } catch (IOException ioe) {
           // A failure here can cause an atomicity violation that we currently
           // cannot recover from since it is likely a failed HDFS operation.

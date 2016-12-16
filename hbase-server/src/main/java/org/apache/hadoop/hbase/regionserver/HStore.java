@@ -808,7 +808,7 @@ public class HStore implements Store {
     }
   }
 
-  public Path preBulkLoadHFile(String srcPathStr, long seqNum) throws IOException {
+  public Pair<Path, Path> preBulkLoadHFile(String srcPathStr, long seqNum) throws IOException {
     Path srcPath = new Path(srcPathStr);
     return fs.bulkLoadStoreFile(getColumnFamilyName(), srcPath, seqNum);
   }
