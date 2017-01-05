@@ -26,6 +26,7 @@ option optimize_for = SPEED;
 
 import "Client.proto";
 import "HBase.proto";
+import "Quota.proto";
 import "WAL.proto";
 
 message GetRegionInfoRequest {
@@ -306,4 +307,12 @@ service AdminService {
 
   rpc UpdateConfiguration(UpdateConfigurationRequest)
     returns(UpdateConfigurationResponse);
+
+  /** Fetches the RegionServer's view of space quotas */
+  rpc GetSpaceQuotaSnapshots(GetSpaceQuotaSnapshotsRequest)
+    returns(GetSpaceQuotaSnapshotsResponse);
+
+  /** Fetches the RegionServer's space quota active enforcements */
+  rpc GetSpaceQuotaEnforcements(GetSpaceQuotaEnforcementsRequest)
+    returns(GetSpaceQuotaEnforcementsResponse);
 }

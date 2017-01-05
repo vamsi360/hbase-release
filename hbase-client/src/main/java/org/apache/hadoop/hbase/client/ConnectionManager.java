@@ -179,6 +179,8 @@ import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.TruncateTableRequ
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.TruncateTableResponse;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.UnassignRegionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.UnassignRegionResponse;
+import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaRegionSizesRequest;
+import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaRegionSizesResponse;
 import org.apache.hadoop.hbase.regionserver.RegionServerStoppedException;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.UserProvider;
@@ -2097,6 +2099,13 @@ class ConnectionManager {
             IsNormalizerEnabledRequest request) throws ServiceException {
           return stub.isNormalizerEnabled(controller, request);
         }
+
+	      @Override
+	      public GetSpaceQuotaRegionSizesResponse getSpaceQuotaRegionSizes(
+	          RpcController controller, GetSpaceQuotaRegionSizesRequest request)
+	          throws ServiceException {
+	        return stub.getSpaceQuotaRegionSizes(controller, request);
+	      }
       };
     }
 
