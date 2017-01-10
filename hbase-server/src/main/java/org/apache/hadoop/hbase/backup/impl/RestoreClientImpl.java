@@ -19,11 +19,13 @@
 package org.apache.hadoop.hbase.backup.impl;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeSet;
 
@@ -37,6 +39,7 @@ import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.backup.HBackupFileSystem;
 import org.apache.hadoop.hbase.backup.RestoreClient;
 import org.apache.hadoop.hbase.backup.impl.BackupManifest.BackupImage;
+import org.apache.hadoop.hbase.backup.mapreduce.MapReduceRestoreService;
 import org.apache.hadoop.hbase.backup.util.BackupClientUtil;
 import org.apache.hadoop.hbase.backup.util.RestoreServerUtil;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
@@ -44,6 +47,8 @@ import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
+import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles.LoadQueueItem;
 
 /**
  * The main class which interprets the given arguments and trigger restore operation.
@@ -54,6 +59,7 @@ public final class RestoreClientImpl implements RestoreClient {
 
   private static final Log LOG = LogFactory.getLog(RestoreClientImpl.class);
   private Configuration conf;
+  private String fullBackupId;
 
   public RestoreClientImpl() {
   }
@@ -104,7 +110,7 @@ public final class RestoreClientImpl implements RestoreClient {
       // check the target tables
       checkTargetTables(tTableArray, isOverwrite);
       // start restore process      
-      restoreStage(backupManifestMap, sTableArray, tTableArray, isOverwrite);
+      restoreStage(backupId, backupManifestMap, sTableArray, tTableArray, isOverwrite);
       LOG.info("Restore for " + Arrays.asList(sTableArray) + " are successful!");
     } catch (IOException e) {
       LOG.error("ERROR: restore failed with error: " + e.getMessage());
@@ -197,7 +203,7 @@ public final class RestoreClientImpl implements RestoreClient {
    * @return set of BackupImages restored
    * @throws IOException exception
    */
-  private void restoreStage(HashMap<TableName, BackupManifest> backupManifestMap,
+  private void restoreStage(String backupId, HashMap<TableName, BackupManifest> backupManifestMap,
       TableName[] sTableArray, TableName[] tTableArray, boolean isOverwrite) throws IOException {
     TreeSet<BackupImage> restoreImageSet = new TreeSet<BackupImage>();
     boolean truncateIfExists = isOverwrite;
@@ -227,12 +233,56 @@ public final class RestoreClientImpl implements RestoreClient {
           }
         }
       }
+      try (Connection conn = ConnectionFactory.createConnection(conf);
+          BackupSystemTable table = new BackupSystemTable(conn)) {
+        List<TableName> sTableList = Arrays.asList(sTableArray);
+        Map<byte[], List<Path>>[] mapForSrc = table.readBulkLoadedFiles(backupId, sTableList);
+        Map<LoadQueueItem, ByteBuffer> loaderResult;
+        conf.setBoolean(LoadIncrementalHFiles.ALWAYS_COPY_FILES, true);
+        LoadIncrementalHFiles loader = MapReduceRestoreService.createLoader(conf);
+        for (int i = 0; i < sTableList.size(); i++) {
+          if (mapForSrc[i] != null && !mapForSrc[i].isEmpty()) {
+            loaderResult = loader.run(null, mapForSrc[i], tTableArray[i]);
+            LOG.debug("bulk loading " + sTableList.get(i) + " to " + tTableArray[i]);
+            if (loaderResult.isEmpty()) {
+              String msg = "Couldn't bulk load for " + sTableList.get(i) + " to " + tTableArray[i];
+              LOG.error(msg);
+              throw new IOException(msg);
+            }
+          }
+        }
+      }
     } catch (Exception e) {
       LOG.error("Failed", e);
+      if (e instanceof IOException) {
+        throw (IOException)e;
+      }
       throw new IOException(e);
     }
     LOG.debug("restoreStage finished");
+  }
 
+  static long getTsFromBackupId(String backupId) {
+    if (backupId == null) {
+      return 0;
+    }
+    return Long.valueOf(backupId.substring(backupId.lastIndexOf("_")+1));
+  }
+
+  static boolean withinRange(long a, long lower, long upper) {
+    if (a < lower || a > upper) {
+      return false;
+    }
+    return true;
+  }
+
+  int getIndex(TableName tbl, List<TableName> sTableList) {
+    for (int i = 0; i < sTableList.size(); i++) {
+      if (tbl.equals(sTableList.get(i))) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   /**
@@ -263,6 +313,9 @@ public final class RestoreClientImpl implements RestoreClient {
     boolean converted = false;
 
     if (manifest.getType() == BackupType.FULL || converted) {
+      if (manifest.getType() == BackupType.FULL) {
+        fullBackupId = manifest.getBackupImage().getBackupId();
+      }
       LOG.info("Restoring '" + sTable + "' to '" + tTable + "' from "
           + (converted ? "converted" : "full") + " backup image " + tableBackupPath.toString());
       restoreTool.fullRestoreTable(tableBackupPath, sTable, tTable, 

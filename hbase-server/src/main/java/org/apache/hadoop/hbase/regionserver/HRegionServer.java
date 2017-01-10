@@ -1656,6 +1656,8 @@ public class HRegionServer extends HasThread implements
     // listeners the wal factory will add to wals it creates.
     final List<WALActionsListener> listeners = new ArrayList<WALActionsListener>();
     listeners.add(new MetricsWAL());
+    /* loader = new BulkLoadHandler(getConnection());
+    listeners.add(loader); */
     if (this.replicationSourceHandler != null &&
         this.replicationSourceHandler.getWALActionsListener() != null) {
       // Replication handler is an implementation of WALActionsListener.
@@ -2148,6 +2150,7 @@ public class HRegionServer extends HasThread implements
    * have already been called.
    */
   protected void stopServiceThreads() {
+    //loader.close();
     // clean up the scheduled chores
     if (this.choreService != null) choreService.shutdown();
     if (this.nonceManagerChore != null) nonceManagerChore.cancel(true);

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -38,9 +39,9 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupInfo;
+import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
 import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.backup.HBackupFileSystem;
-import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
 import org.apache.hadoop.hbase.backup.impl.BackupManifest.BackupImage;
 import org.apache.hadoop.hbase.backup.master.BackupController;
 import org.apache.hadoop.hbase.backup.master.BackupLogCleaner;
@@ -51,6 +52,7 @@ import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.util.Pair;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
@@ -161,7 +163,7 @@ public class BackupManager implements Closeable {
   }
   
   
-  private static boolean isBackupEnabled(Configuration conf) {
+  public static boolean isBackupEnabled(Configuration conf) {
     return conf.getBoolean(HConstants.BACKUP_ENABLE_KEY, HConstants.BACKUP_ENABLE_DEFAULT);
   }
 
@@ -414,6 +416,20 @@ public class BackupManager implements Closeable {
    */
   public void writeBackupStartCode(Long startCode) throws IOException {
     systemTable.writeBackupStartCode(startCode, backupInfo.getTargetRootDir());
+  }
+
+  public Pair<Map<TableName, Map<String, Map<String, List<Pair<String, Boolean>>>>>, List<byte[]>>
+  readOrigBulkloadRows(List<TableName> tableList) throws IOException {
+    return systemTable.readOrigBulkloadRows(tableList);
+  }
+
+  public void removeOrigBulkLoadedRows(List<TableName> lst, List<byte[]> rows) throws IOException {
+    systemTable.removeOrigBulkLoadedRows(lst, rows);
+  }
+
+  public void writeBulkLoadedFiles(List<TableName> sTableList, Map<byte[], List<Path>>[] maps)
+      throws IOException {
+    systemTable.writeBulkLoadedFiles(sTableList, maps, backupInfo.getBackupId());
   }
 
   /**

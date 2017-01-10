@@ -286,89 +286,101 @@ public class TestLoadIncrementalHFiles {
     runTest(testName, htd, bloomType, preCreateTable, tableSplitKeys, hfileRanges, useMap, false);
   }
 
-  private void runTest(String testName, HTableDescriptor htd, BloomType bloomType,
-      boolean preCreateTable, byte[][] tableSplitKeys, byte[][][] hfileRanges, boolean useMap,
-      boolean copyFiles)
-          throws Exception {
-    for (boolean managed : new boolean[] { true, false }) {
-      Path dir = util.getDataTestDirOnTestFS(testName);
-      FileSystem fs = util.getTestFileSystem();
-      dir = dir.makeQualified(fs);
-      Path familyDir = new Path(dir, Bytes.toString(FAMILY));
+  public static int loadHFiles(String testName, HTableDescriptor htd, HBaseTestingUtility util,
+      byte[] fam, byte[] qual, boolean preCreateTable, byte[][] tableSplitKeys,
+      byte[][][] hfileRanges, boolean useMap, boolean deleteFile,
+      boolean copyFiles, int initRowCount, int factor, boolean managed) throws Exception {
+    Path dir = util.getDataTestDirOnTestFS(testName);
+    FileSystem fs = util.getTestFileSystem();
+    dir = dir.makeQualified(fs);
+    Path familyDir = new Path(dir, Bytes.toString(fam));
 
-      int hfileIdx = 0;
-      Map<byte[], List<Path>> map = null;
-      List<Path> list = null;
-      if (useMap || copyFiles) {
-        list = new ArrayList<>();
-      }
+    int hfileIdx = 0;
+    Map<byte[], List<Path>> map = null;
+    List<Path> list = null;
+    if (useMap || copyFiles) {
+      list = new ArrayList<>();
+    }
+    if (useMap) {
+      map = new TreeMap<byte[], List<Path>>(Bytes.BYTES_COMPARATOR);
+      map.put(fam, list);
+    }
+    Path last = null;
+    for (byte[][] range : hfileRanges) {
+      byte[] from = range[0];
+      byte[] to = range[1];
+      Path path = new Path(familyDir, "hfile_" + hfileIdx++);
+      HFileTestUtil.createHFile(util.getConfiguration(), fs, path, fam, qual, from, to, factor);
       if (useMap) {
-        map = new TreeMap<byte[], List<Path>>(Bytes.BYTES_COMPARATOR);
-        map.put(FAMILY, list);
+        last = path;
+        list.add(path);
+        map.put(fam, list);
       }
-      Path last = null;
-      for (byte[][] range : hfileRanges) {
-        byte[] from = range[0];
-        byte[] to = range[1];
-        Path path = new Path(familyDir, "hfile_" + hfileIdx++);
-        HFileTestUtil.createHFile(util.getConfiguration(), fs, path, FAMILY, QUALIFIER, from, to, 1000);
+    }
+    int expectedRows = hfileIdx * factor;
+
+    final TableName tableName = htd.getTableName();
+    if (!util.getHBaseAdmin().tableExists(tableName) && (preCreateTable || map != null)) {
+      util.getHBaseAdmin().createTable(htd, tableSplitKeys);
+    }
+
+    if (!util.getHBaseAdmin().tableExists(tableName)) {
+      util.getHBaseAdmin().createTable(htd);
+    }
+    Configuration conf = util.getConfiguration();
+    if (copyFiles) {
+      conf.setBoolean(LoadIncrementalHFiles.ALWAYS_COPY_FILES, true);
+    }
+    LoadIncrementalHFiles loader = new LoadIncrementalHFiles(conf);
+    String [] args= { dir.toString(), tableName.toString() };
+
+    if (managed) {
+      try (HTable table = new HTable(util.getConfiguration(), tableName)) {
         if (useMap) {
-          last = path;
-          list.add(path);
-        }
-      }
-      int expectedRows = hfileIdx * 1000;
-
-      if (preCreateTable || map != null) {
-        util.getHBaseAdmin().createTable(htd, tableSplitKeys);
-      }
-
-      final TableName tableName = htd.getTableName();
-      if (!util.getHBaseAdmin().tableExists(tableName)) {
-        util.getHBaseAdmin().createTable(htd);
-      }
-      Configuration conf = util.getConfiguration();
-      if (copyFiles) {
-        conf.setBoolean(LoadIncrementalHFiles.ALWAYS_COPY_FILES, true);
-      }
-      LoadIncrementalHFiles loader = new LoadIncrementalHFiles(conf);
-      String [] args= { dir.toString(), tableName.toString() };
-
-      if (managed) {
-        try (HTable table = new HTable(util.getConfiguration(), tableName)) {
-          if (useMap) {
-            fs.delete(last);
-            Map<LoadQueueItem, ByteBuffer> loaded = loader.run(null, map, tableName);
+          if (deleteFile) fs.delete(last);
+          Map<LoadQueueItem, ByteBuffer> loaded = loader.run(null, map, tableName);
+          if (deleteFile) {
             expectedRows -= 1000;
             for (LoadQueueItem item : loaded.keySet()) {
               if (item.hfilePath.getName().equals(last.getName())) {
                 fail(last + " should be missing");
               }
             }
-          } else {
-            loader.run(args);
           }
-          assertEquals(expectedRows, util.countRows(table));
+        } else {
+          loader.run(args);
         }
-      } else {
-        try (Connection conn = ConnectionFactory.createConnection(util.getConfiguration());
-            HTable table = (HTable) conn.getTable(tableName)) {
-          if (useMap) {
-            loader.run(null, map, tableName);
-          } else {
-            loader.run(args);
-          }
+        assertEquals(initRowCount + expectedRows, util.countRows(table));
+      }
+    } else {
+      try (Connection conn = ConnectionFactory.createConnection(util.getConfiguration());
+          HTable table = (HTable) conn.getTable(tableName)) {
+        if (useMap) {
+          loader.run(null, map, tableName);
+        } else {
+          loader.run(args);
         }
       }
+    }
 
-      if (copyFiles) {
-        for (Path p : list) {
-          assertTrue(fs.exists(p));
-        }
+    if (copyFiles) {
+      for (Path p : list) {
+        assertTrue(p + " should exist", fs.exists(p));
       }
+    }
+    return expectedRows;
+  }
+  private void runTest(String testName, HTableDescriptor htd, BloomType bloomType,
+      boolean preCreateTable, byte[][] tableSplitKeys, byte[][][] hfileRanges, boolean useMap,
+      boolean copyFiles) throws Exception {
+    for (boolean managed : new boolean[] { true, false }) {
+      loadHFiles(testName, htd, util, FAMILY, QUALIFIER, preCreateTable, tableSplitKeys,
+          hfileRanges, useMap, true, copyFiles, 0, 1000, managed);
 
+      final TableName tableName = htd.getTableName();
       // verify staging folder has been cleaned up
       Path stagingBasePath = SecureBulkLoadUtil.getBaseStagingDir(util.getConfiguration());
+      FileSystem fs = util.getTestFileSystem();
       if (fs.exists(stagingBasePath)) {
         FileStatus[] files = fs.listStatus(stagingBasePath);
         for (FileStatus file : files) {

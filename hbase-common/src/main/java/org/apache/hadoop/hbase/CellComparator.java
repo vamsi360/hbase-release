@@ -170,6 +170,11 @@ public class CellComparator implements Comparator<Cell>, Serializable {
         right.getQualifierLength());
   }
 
+  public final static int compareQualifiers(Cell left, byte[] right, int rOffset, int rLength) {
+    return Bytes.compareTo(left.getQualifierArray(), left.getQualifierOffset(),
+        left.getQualifierLength(), right, rOffset, rLength);
+  }
+
   public int compareFlatKey(Cell left, Cell right) {
     int compare = compareRows(left, right);
     if (compare != 0) {

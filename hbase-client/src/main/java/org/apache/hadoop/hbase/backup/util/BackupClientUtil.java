@@ -231,10 +231,12 @@ public final class BackupClientUtil {
         }
 
         Path tableDir = targetDirPath.getParent();
-        FileStatus[] backups = listStatus(outputFs, tableDir, null);
-        if (backups == null || backups.length == 0) {
-          outputFs.delete(tableDir, true);
-          LOG.debug(tableDir.toString() + " is empty, remove it.");
+        if (tableDir != null) {
+          FileStatus[] backups = listStatus(outputFs, tableDir, null);
+          if (backups == null || backups.length == 0) {
+            outputFs.delete(tableDir, true);
+            LOG.debug(tableDir.toString() + " is empty, remove it.");
+          }
         }
       }
       outputFs.delete(new Path(targetDir, backupContext.getBackupId()), true);

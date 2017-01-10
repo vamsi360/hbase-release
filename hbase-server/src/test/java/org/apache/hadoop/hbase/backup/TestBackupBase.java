@@ -46,6 +46,10 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
+import org.apache.hadoop.hbase.mapreduce.HadoopSecurityEnabledUserProviderForTesting;
+import org.apache.hadoop.hbase.security.UserProvider;
+import org.apache.hadoop.hbase.security.access.SecureTestUtil;
 import org.apache.hadoop.hbase.snapshot.SnapshotTestingUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
@@ -68,6 +72,7 @@ public class TestBackupBase {
   protected static HBaseTestingUtility TEST_UTIL;
   protected static HBaseTestingUtility TEST_UTIL2;
   protected static TableName table1 = TableName.valueOf("table1");
+  protected static HTableDescriptor table1Desc;
   protected static TableName table2 = TableName.valueOf("table2");
   protected static TableName table3 = TableName.valueOf("table3");
   protected static TableName table4 = TableName.valueOf("table4");
@@ -84,6 +89,7 @@ public class TestBackupBase {
   protected static String BACKUP_ROOT_DIR = "/backupUT";
   protected static String BACKUP_REMOTE_ROOT_DIR = "/backupUT";
 
+  protected static boolean secure = false;
   protected static final String BACKUP_ZNODE = "/backup/hbase";
   protected static final String BACKUP_SUCCEED_NODE = "complete";
   protected static final String BACKUP_FAILED_NODE = "failed";
@@ -96,6 +102,16 @@ public class TestBackupBase {
     TEST_UTIL = new HBaseTestingUtility();
     conf1 = TEST_UTIL.getConfiguration();
     conf1.set(HConstants.ZOOKEEPER_ZNODE_PARENT, "/1");
+    if (secure) {
+      // set the always on security provider
+      UserProvider.setUserProviderForTesting(TEST_UTIL.getConfiguration(),
+          HadoopSecurityEnabledUserProviderForTesting.class);
+      // setup configuration
+      SecureTestUtil.enableSecurity(TEST_UTIL.getConfiguration());
+    }
+    String coproc = conf1.get(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY);
+    conf1.set(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY, (coproc == null ? "" : coproc + ",") +
+        BackupObserver.class.getName());
     // Set MultiWAL (with 2 default WAL files per RS)
     //conf1.set(WAL_PROVIDER, "multiwal");
     TEST_UTIL.startMiniZKCluster();
@@ -114,11 +130,11 @@ public class TestBackupBase {
     LOG.info("ROOTDIR " + BACKUP_ROOT_DIR);
     BACKUP_REMOTE_ROOT_DIR = TEST_UTIL2.getConfiguration().get("fs.defaultFS") + "/backupUT";
     LOG.info("REMOTE ROOTDIR " + BACKUP_REMOTE_ROOT_DIR);
-    waitForSystemTable();
+    waitForSystemTable(TEST_UTIL);
     createTables();
   }
   
-  public static void waitForSystemTable() throws Exception
+  public static void waitForSystemTable(HBaseTestingUtility TEST_UTIL) throws Exception
   {
     try(Admin admin = TEST_UTIL.getHBaseAdmin();) {
       while (!admin.tableExists(BackupSystemTable.getTableName()) 
@@ -209,6 +225,7 @@ public class TestBackupBase {
     HColumnDescriptor fam = new HColumnDescriptor(famName);
     desc.addFamily(fam);
     ha.createTable(desc);
+    table1Desc = desc;
     Connection conn = ConnectionFactory.createConnection(conf1);
     HTable table = (HTable) conn.getTable(table1);
     loadTable(table);

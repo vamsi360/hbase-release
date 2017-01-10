@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,6 +64,9 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.backup.BackupType;
+import org.apache.hadoop.hbase.backup.impl.BackupManager;
+import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.client.Admin;
@@ -150,7 +154,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     initialize();
   }
 
-  private void initialize() throws Exception {
+  private void initialize() throws IOException {
     if (hbAdmin == null) {
       // make a copy, just to be sure we're not overriding someone else's config
       setConf(HBaseConfiguration.create(getConf()));
@@ -272,6 +276,14 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     @Override
     public String toString() {
       return "family:"+ Bytes.toString(family) + " path:" + hfilePath.toString();
+    }
+
+    public byte[] getFamily() {
+      return family;
+    }
+
+    public Path getFilePath() {
+      return hfilePath;
     }
   }
 
@@ -1163,7 +1175,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     return !HFile.isReservedFileInfoKey(key);
   }
 
-  private boolean doesTableExist(TableName tableName) throws Exception {
+  private boolean doesTableExist(TableName tableName) throws IOException {
     return hbAdmin.tableExists(tableName);
   }
 
@@ -1201,7 +1213,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
    * If the table is created for the first time, then "completebulkload" reads the files twice.
    * More modifications necessary if we want to avoid doing it.
    */
-  private void createTable(TableName tableName, String dirPath) throws Exception {
+  private void createTable(TableName tableName, String dirPath) throws IOException {
     final Path hfofDir = new Path(dirPath);
     final FileSystem fs = hfofDir.getFileSystem(getConf());
 
@@ -1255,7 +1267,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
   }
 
   public Map<LoadQueueItem, ByteBuffer> run(String dirPath, Map<byte[], List<Path>> map,
-      TableName tableName) throws Exception{
+      TableName tableName) throws IOException {
     initialize();
     try (Connection connection = ConnectionFactory.createConnection(getConf());
         Admin admin = connection.getAdmin()) {
@@ -1279,7 +1291,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
       try (HTable table = (HTable) connection.getTable(tableName);
           RegionLocator locator = connection.getRegionLocator(tableName)) {
         boolean silence = "yes".equalsIgnoreCase(getConf().get(SILENCE_CONF_KEY, ""));
-        boolean copyFiles = "yes".equalsIgnoreCase(getConf().get(ALWAYS_COPY_FILES, ""));
+        boolean copyFiles = getConf().getBoolean(ALWAYS_COPY_FILES, false);
         if (dirPath != null) {
           doBulkLoad(hfofDir, admin, table, locator, silence, copyFiles);
         } else {

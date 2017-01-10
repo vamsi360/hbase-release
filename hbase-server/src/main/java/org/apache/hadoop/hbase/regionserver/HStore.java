@@ -859,7 +859,7 @@ public class HStore implements Store {
       this.lock.writeLock().unlock();
     }
     notifyChangedReadersObservers();
-    LOG.info("Loaded HFile " + sf.getFileInfo() + " into store '" + getColumnFamilyName());
+    LOG.info("Loaded HFile " + sf.getFileInfo() + " into store " + getColumnFamilyName());
     if (LOG.isTraceEnabled()) {
       String traceMessage = "BULK LOAD time,size,store size,store files ["
           + EnvironmentEdgeManager.currentTime() + "," + r.length() + "," + storeSize

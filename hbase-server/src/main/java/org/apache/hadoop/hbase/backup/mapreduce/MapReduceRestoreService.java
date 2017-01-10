@@ -73,7 +73,7 @@ public class MapReduceRestoreService implements IncrementalRestoreService {
         result = player.run(playerArgs);
         if (succeeded(result)) {
           // do bulk load
-          LoadIncrementalHFiles loader = createLoader();
+          LoadIncrementalHFiles loader = createLoader(getConf());
           if (LOG.isDebugEnabled()) {
             LOG.debug("Restoring HFiles from directory " + bulkOutputPath);
           }
@@ -109,14 +109,14 @@ public class MapReduceRestoreService implements IncrementalRestoreService {
     return result == 0;
   }
 
-  private LoadIncrementalHFiles createLoader()
+  public static LoadIncrementalHFiles createLoader(Configuration config)
       throws IOException {
     // set configuration for restore:
     // LoadIncrementalHFile needs more time
     // <name>hbase.rpc.timeout</name> <value>600000</value>
     // calculates
     Integer milliSecInHour = 3600000;
-    Configuration conf = new Configuration(getConf());
+    Configuration conf = new Configuration(config);
     conf.setInt(HConstants.HBASE_RPC_TIMEOUT_KEY, milliSecInHour);
     
     // By default, it is 32 and loader will fail if # of files in any region exceed this

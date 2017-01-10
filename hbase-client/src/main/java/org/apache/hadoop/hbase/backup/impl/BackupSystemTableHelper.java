@@ -21,9 +21,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
@@ -37,6 +41,8 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
+import org.apache.hadoop.hbase.util.Pair;
 
 
 /**
@@ -46,6 +52,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
 public final class BackupSystemTableHelper {
+  private static final Log LOG = LogFactory.getLog(BackupSystemTableHelper.class);
 
   /**
    * hbase:backup schema:
@@ -64,8 +71,22 @@ public final class BackupSystemTableHelper {
   private final static String INCR_BACKUP_SET = "incrbackupset:";
   private final static String TABLE_RS_LOG_MAP_PREFIX = "trslm:";
   private final static String RS_LOG_TS_PREFIX = "rslogts:";
+  //private final static String BULK_LOADING_PREFIX = "loading:";
+  private final static String BULK_LOAD_PREFIX = "bulk:";
+  private final static byte[] BULK_LOAD_PREFIX_BYTES = BULK_LOAD_PREFIX.getBytes();
+  // separator between BULK_LOAD_PREFIX and ordinals
+  final static byte[] TBL_COL = "tbl".getBytes();
+  final static byte[] FAM_COL = "fam".getBytes();
+  final static byte[] PATH_COL = "path".getBytes();
+  final static byte[] STATE_COL = "state".getBytes();
+  // the two states a bulk loaded file can be
+  final static byte[] BL_RAW = "R".getBytes();
+  final static byte[] BL_DONE = "D".getBytes();
+
   private final static String WALS_PREFIX = "wals:";
   private final static String SET_KEY_PREFIX = "backupset:";
+
+  protected final static String BLK_LD_DELIM = ":";
 
   private final static byte[] EMPTY_VALUE = new byte[] {};
   
@@ -252,6 +273,124 @@ public final class BackupSystemTableHelper {
     Put put = new Put(rowkey(RS_LOG_TS_PREFIX, backupRoot, NULL, server));
     put.addColumn(BackupSystemTable.META_FAMILY, "rs-log-ts".getBytes(), 
       timestamp.toString().getBytes());
+    return put;
+  }
+
+  /*
+   * Creates Put's for bulk load resulting from running LoadIncrementalHFiles
+   */
+  static List<Put> createPutForOrigBulkload(TableName table, byte[] region,
+      Map<byte[], List<Path>> finalPaths) {
+    List<Put> puts = new ArrayList<>();
+    for (Map.Entry<byte[], List<Path>> entry : finalPaths.entrySet()) {
+      for (Path path : entry.getValue()) {
+        String file = path.toString();
+        int lastSlash = file.lastIndexOf("/");
+        String filename = file.substring(lastSlash+1);
+        Put put = new Put(rowkey(BULK_LOAD_PREFIX, table.toString(), BLK_LD_DELIM,
+            Bytes.toString(region), BLK_LD_DELIM, filename));
+        put.addColumn(BackupSystemTable.META_FAMILY, TBL_COL, table.getName());
+        put.addColumn(BackupSystemTable.META_FAMILY, FAM_COL, entry.getKey());
+        put.addColumn(BackupSystemTable.META_FAMILY, PATH_COL,
+            file.getBytes());
+        put.addColumn(BackupSystemTable.META_FAMILY, STATE_COL, BL_DONE);
+        puts.add(put);
+        LOG.debug("writing done bulk path " + file + " for " + table + " " +
+            Bytes.toString(region));
+      }
+    }
+    return puts;
+  }
+
+  /*
+   * Creates Put's for bulk load resulting from running LoadIncrementalHFiles
+   */
+  static List<Put> createPutForOrigBulkload(TableName table, byte[] region,
+      final byte[] family, final List<Pair<Path, Path>> pairs) {
+    List<Put> puts = new ArrayList<>();
+    for (Pair<Path, Path> pair : pairs) {
+      Path path = pair.getSecond();
+      String file = path.toString();
+      int lastSlash = file.lastIndexOf("/");
+      String filename = file.substring(lastSlash+1);
+      Put put = new Put(rowkey(BULK_LOAD_PREFIX, table.toString(), BLK_LD_DELIM,
+          Bytes.toString(region), BLK_LD_DELIM, filename));
+      put.addColumn(BackupSystemTable.META_FAMILY, TBL_COL, table.getName());
+      put.addColumn(BackupSystemTable.META_FAMILY, FAM_COL, family);
+      put.addColumn(BackupSystemTable.META_FAMILY, PATH_COL,
+          file.getBytes());
+      put.addColumn(BackupSystemTable.META_FAMILY, STATE_COL, BL_RAW);
+      puts.add(put);
+      LOG.debug("writing raw bulk path " + file + " for " + table + " " +
+          Bytes.toString(region));
+    }
+    return puts;
+  }
+  public static List<Delete> createDeleteForOrigBulkLoad(List<TableName> lst) {
+    List<Delete> lstDels = new ArrayList<>();
+    for (TableName table : lst) {
+      Delete del = new Delete(rowkey(BULK_LOAD_PREFIX, table.toString(), BLK_LD_DELIM));
+      del.addFamily(BackupSystemTable.META_FAMILY);
+      lstDels.add(del);
+    }
+    return lstDels;
+  }
+
+  static Scan createScanForOrigBulkLoadedFiles(TableName table) throws IOException {
+    Scan scan = new Scan();
+    byte[] startRow = rowkey(BULK_LOAD_PREFIX, table.toString(), BLK_LD_DELIM);
+    byte[] stopRow = Arrays.copyOf(startRow, startRow.length);
+    stopRow[stopRow.length - 1] = (byte) (stopRow[stopRow.length - 1] + 1);
+    scan.setStartRow(startRow);
+    scan.setStopRow(stopRow);
+    scan.addFamily(BackupSystemTable.META_FAMILY);
+    scan.setMaxVersions(1);
+    return scan;
+  }
+
+  static String getTableNameFromOrigBulkLoadRow(String rowStr) {
+    LOG.debug("bulk row string " + rowStr);
+    // format is bulk : namespace : table : region : file
+    String[] parts = rowStr.split(BLK_LD_DELIM);
+    return parts[2];
+  }
+
+  static String getRegionNameFromOrigBulkLoadRow(String rowStr) {
+    // format is bulk : namespace : table : region : file
+    String[] parts = rowStr.split(BLK_LD_DELIM);
+    int idx = 3;
+    if (parts.length == 4) {
+      // the table is in default namespace
+      idx = 2;
+    }
+    LOG.debug("bulk row string " + rowStr + " region " + parts[idx]);
+    return parts[idx];
+  }
+  /*
+   * Used to query bulk loaded hfiles which have been copied by incremental backup
+   * @param backupId the backup Id. It can be null when querying for all tables
+   * @return the Scan object
+   */
+  static Scan createScanForBulkLoadedFiles(String backupId) throws IOException {
+    Scan scan = new Scan();
+    byte[] startRow = backupId == null ? BULK_LOAD_PREFIX_BYTES :
+      rowkey(BULK_LOAD_PREFIX, backupId+BLK_LD_DELIM);
+    byte[] stopRow = Arrays.copyOf(startRow, startRow.length);
+    stopRow[stopRow.length - 1] = (byte) (stopRow[stopRow.length - 1] + 1);
+    scan.setStartRow(startRow);
+    scan.setStopRow(stopRow);
+    //scan.setTimeRange(lower, Long.MAX_VALUE);
+    scan.addFamily(BackupSystemTable.META_FAMILY);
+    scan.setMaxVersions(1);
+    return scan;
+  }
+
+  static Put createPutForBulkLoadedFile(TableName tn, byte[] fam, String p, String backupId,
+      long ts, int idx) {
+    Put put = new Put(rowkey(BULK_LOAD_PREFIX, backupId+BLK_LD_DELIM+ts+BLK_LD_DELIM+idx));
+    put.addColumn(BackupSystemTable.META_FAMILY, TBL_COL, tn.getName());
+    put.addColumn(BackupSystemTable.META_FAMILY, FAM_COL, fam);
+    put.addColumn(BackupSystemTable.META_FAMILY, PATH_COL, p.getBytes());
     return put;
   }
 

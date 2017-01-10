@@ -20,11 +20,14 @@ package org.apache.hadoop.hbase.client;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupInfo;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
@@ -114,6 +117,31 @@ public class HBaseBackupAdmin implements BackupAdmin {
         backupInfo = table.readBackupInfo(backupId);
         if (backupInfo != null) {
           BackupClientUtil.cleanupBackupData(backupInfo, admin.getConfiguration());
+
+          Map<byte[], String> map = table.readBulkLoadedFiles(backupId);
+          FileSystem fs = FileSystem.get(conn.getConfiguration());
+          boolean succ = true;
+          int numDeleted = 0;
+          for (String f : map.values()) {
+            Path p = new Path(f);
+            try {
+              if (!fs.delete(p)) {
+                if (fs.exists(p)) {
+                  LOG.warn(f + " was not deleted");
+                  succ = false;
+                }
+              } else {
+                numDeleted++;
+              }
+            } catch (IOException ioe) {
+              LOG.warn(f + " was not deleted", ioe);
+              succ = false;
+            }
+          }
+          LOG.debug(numDeleted + " bulk loaded files out of " + map.size() + " were deleted");
+          if (succ) {
+            table.deleteBulkLoadedFiles(map);
+          }
           table.deleteBackupInfo(backupInfo.getBackupId());
           LOG.info("Delete backup for backupID=" + backupId + " completed.");
           totalDeleted++;
