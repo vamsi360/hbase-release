@@ -155,7 +155,7 @@ public class IncrementalTableBackupProcedure
             files = new ArrayList<Path>();
             mapForSrc[srcIdx].put(fam.getBytes(), files);
           } else {
-            files = mapForSrc[srcIdx].get(fam);
+            files = mapForSrc[srcIdx].get(fam.getBytes());
           }
           Path archiveDir = HFileArchiveUtil.getStoreArchivePath(conf, srcTable, regionName, fam);
           String tblName = srcTable.getQualifierAsString();
