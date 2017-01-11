@@ -4658,6 +4658,24 @@ public final class QuotaProtos {
      * </pre>
      */
     org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceViolationPolicy getViolationPolicy();
+
+    // optional bool remove = 3 [default = false];
+    /**
+     * <code>optional bool remove = 3 [default = false];</code>
+     *
+     * <pre>
+     * When true, remove the quota.
+     * </pre>
+     */
+    boolean hasRemove();
+    /**
+     * <code>optional bool remove = 3 [default = false];</code>
+     *
+     * <pre>
+     * When true, remove the quota.
+     * </pre>
+     */
+    boolean getRemove();
   }
   /**
    * Protobuf type {@code SpaceQuota}
@@ -4728,6 +4746,11 @@ public final class QuotaProtos {
                 bitField0_ |= 0x00000002;
                 violationPolicy_ = value;
               }
+              break;
+            }
+            case 24: {
+              bitField0_ |= 0x00000004;
+              remove_ = input.readBool();
               break;
             }
           }
@@ -4818,9 +4841,34 @@ public final class QuotaProtos {
       return violationPolicy_;
     }
 
+    // optional bool remove = 3 [default = false];
+    public static final int REMOVE_FIELD_NUMBER = 3;
+    private boolean remove_;
+    /**
+     * <code>optional bool remove = 3 [default = false];</code>
+     *
+     * <pre>
+     * When true, remove the quota.
+     * </pre>
+     */
+    public boolean hasRemove() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional bool remove = 3 [default = false];</code>
+     *
+     * <pre>
+     * When true, remove the quota.
+     * </pre>
+     */
+    public boolean getRemove() {
+      return remove_;
+    }
+
     private void initFields() {
       softLimit_ = 0L;
       violationPolicy_ = org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceViolationPolicy.DISABLE;
+      remove_ = false;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -4840,6 +4888,9 @@ public final class QuotaProtos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeEnum(2, violationPolicy_.getNumber());
       }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBool(3, remove_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -4856,6 +4907,10 @@ public final class QuotaProtos {
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(2, violationPolicy_.getNumber());
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(3, remove_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -4890,6 +4945,11 @@ public final class QuotaProtos {
         result = result &&
             (getViolationPolicy() == other.getViolationPolicy());
       }
+      result = result && (hasRemove() == other.hasRemove());
+      if (hasRemove()) {
+        result = result && (getRemove()
+            == other.getRemove());
+      }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -4910,6 +4970,10 @@ public final class QuotaProtos {
       if (hasViolationPolicy()) {
         hash = (37 * hash) + VIOLATION_POLICY_FIELD_NUMBER;
         hash = (53 * hash) + hashEnum(getViolationPolicy());
+      }
+      if (hasRemove()) {
+        hash = (37 * hash) + REMOVE_FIELD_NUMBER;
+        hash = (53 * hash) + hashBoolean(getRemove());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -5028,6 +5092,8 @@ public final class QuotaProtos {
         bitField0_ = (bitField0_ & ~0x00000001);
         violationPolicy_ = org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceViolationPolicy.DISABLE;
         bitField0_ = (bitField0_ & ~0x00000002);
+        remove_ = false;
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -5064,6 +5130,10 @@ public final class QuotaProtos {
           to_bitField0_ |= 0x00000002;
         }
         result.violationPolicy_ = violationPolicy_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.remove_ = remove_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -5085,6 +5155,9 @@ public final class QuotaProtos {
         }
         if (other.hasViolationPolicy()) {
           setViolationPolicy(other.getViolationPolicy());
+        }
+        if (other.hasRemove()) {
+          setRemove(other.getRemove());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -5210,6 +5283,55 @@ public final class QuotaProtos {
       public Builder clearViolationPolicy() {
         bitField0_ = (bitField0_ & ~0x00000002);
         violationPolicy_ = org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceViolationPolicy.DISABLE;
+        onChanged();
+        return this;
+      }
+
+      // optional bool remove = 3 [default = false];
+      private boolean remove_ ;
+      /**
+       * <code>optional bool remove = 3 [default = false];</code>
+       *
+       * <pre>
+       * When true, remove the quota.
+       * </pre>
+       */
+      public boolean hasRemove() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional bool remove = 3 [default = false];</code>
+       *
+       * <pre>
+       * When true, remove the quota.
+       * </pre>
+       */
+      public boolean getRemove() {
+        return remove_;
+      }
+      /**
+       * <code>optional bool remove = 3 [default = false];</code>
+       *
+       * <pre>
+       * When true, remove the quota.
+       * </pre>
+       */
+      public Builder setRemove(boolean value) {
+        bitField0_ |= 0x00000004;
+        remove_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool remove = 3 [default = false];</code>
+       *
+       * <pre>
+       * When true, remove the quota.
+       * </pre>
+       */
+      public Builder clearRemove() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        remove_ = false;
         onChanged();
         return this;
       }
@@ -12422,41 +12544,41 @@ public final class QuotaProtos {
       "d_quota\030\002 \001(\0132\013.TimedQuota\"`\n\006Quotas\022\035\n\016" +
       "bypass_globals\030\001 \001(\010:\005false\022\033\n\010throttle\030" +
       "\002 \001(\0132\t.Throttle\022\032\n\005space\030\003 \001(\0132\013.SpaceQ" +
-      "uota\"\014\n\nQuotaUsage\"Q\n\nSpaceQuota\022\022\n\nsoft" +
+      "uota\"\014\n\nQuotaUsage\"h\n\nSpaceQuota\022\022\n\nsoft" +
       "_limit\030\001 \001(\004\022/\n\020violation_policy\030\002 \001(\0162\025" +
-      ".SpaceViolationPolicy\"/\n\021SpaceLimitReque" +
-      "st\022\032\n\005quota\030\001 \001(\0132\013.SpaceQuota\"O\n\020SpaceQ" +
-      "uotaStatus\022%\n\006policy\030\001 \001(\0162\025.SpaceViolat" +
-      "ionPolicy\022\024\n\014in_violation\030\002 \001(\010\"U\n\022Space" +
-      "QuotaSnapshot\022!\n\006status\030\001 \001(\0132\021.SpaceQuo",
-      "taStatus\022\r\n\005usage\030\002 \001(\004\022\r\n\005limit\030\003 \001(\004\"!" +
-      "\n\037GetSpaceQuotaRegionSizesRequest\"\235\001\n Ge" +
-      "tSpaceQuotaRegionSizesResponse\022<\n\005sizes\030" +
-      "\001 \003(\0132-.GetSpaceQuotaRegionSizesResponse" +
-      ".RegionSizes\032;\n\013RegionSizes\022\036\n\ntable_nam" +
-      "e\030\001 \001(\0132\n.TableName\022\014\n\004size\030\002 \001(\004\"\037\n\035Get" +
-      "SpaceQuotaSnapshotsRequest\"\304\001\n\036GetSpaceQ" +
-      "uotaSnapshotsResponse\022E\n\tsnapshots\030\001 \003(\013" +
-      "22.GetSpaceQuotaSnapshotsResponse.TableQ" +
-      "uotaSnapshot\032[\n\022TableQuotaSnapshot\022\036\n\nta",
-      "ble_name\030\001 \001(\0132\n.TableName\022%\n\010snapshot\030\002" +
-      " \001(\0132\023.SpaceQuotaSnapshot\"\"\n GetSpaceQuo" +
-      "taEnforcementsRequest\"\341\001\n!GetSpaceQuotaE" +
-      "nforcementsResponse\022S\n\022violation_policie" +
-      "s\030\001 \003(\01327.GetSpaceQuotaEnforcementsRespo" +
-      "nse.TableViolationPolicy\032g\n\024TableViolati" +
-      "onPolicy\022\036\n\ntable_name\030\001 \001(\0132\n.TableName" +
-      "\022/\n\020violation_policy\030\002 \001(\0162\025.SpaceViolat" +
-      "ionPolicy*&\n\nQuotaScope\022\013\n\007CLUSTER\020\001\022\013\n\007" +
-      "MACHINE\020\002*v\n\014ThrottleType\022\022\n\016REQUEST_NUM",
-      "BER\020\001\022\020\n\014REQUEST_SIZE\020\002\022\020\n\014WRITE_NUMBER\020" +
-      "\003\022\016\n\nWRITE_SIZE\020\004\022\017\n\013READ_NUMBER\020\005\022\r\n\tRE" +
-      "AD_SIZE\020\006*$\n\tQuotaType\022\014\n\010THROTTLE\020\001\022\t\n\005" +
-      "SPACE\020\002*]\n\024SpaceViolationPolicy\022\013\n\007DISAB" +
-      "LE\020\001\022\031\n\025NO_WRITES_COMPACTIONS\020\002\022\r\n\tNO_WR" +
-      "ITES\020\003\022\016\n\nNO_INSERTS\020\004BA\n*org.apache.had" +
-      "oop.hbase.protobuf.generatedB\013QuotaProto" +
-      "sH\001\210\001\001\240\001\001"
+      ".SpaceViolationPolicy\022\025\n\006remove\030\003 \001(\010:\005f" +
+      "alse\"/\n\021SpaceLimitRequest\022\032\n\005quota\030\001 \001(\013" +
+      "2\013.SpaceQuota\"O\n\020SpaceQuotaStatus\022%\n\006pol" +
+      "icy\030\001 \001(\0162\025.SpaceViolationPolicy\022\024\n\014in_v" +
+      "iolation\030\002 \001(\010\"U\n\022SpaceQuotaSnapshot\022!\n\006",
+      "status\030\001 \001(\0132\021.SpaceQuotaStatus\022\r\n\005usage" +
+      "\030\002 \001(\004\022\r\n\005limit\030\003 \001(\004\"!\n\037GetSpaceQuotaRe" +
+      "gionSizesRequest\"\235\001\n GetSpaceQuotaRegion" +
+      "SizesResponse\022<\n\005sizes\030\001 \003(\0132-.GetSpaceQ" +
+      "uotaRegionSizesResponse.RegionSizes\032;\n\013R" +
+      "egionSizes\022\036\n\ntable_name\030\001 \001(\0132\n.TableNa" +
+      "me\022\014\n\004size\030\002 \001(\004\"\037\n\035GetSpaceQuotaSnapsho" +
+      "tsRequest\"\304\001\n\036GetSpaceQuotaSnapshotsResp" +
+      "onse\022E\n\tsnapshots\030\001 \003(\01322.GetSpaceQuotaS" +
+      "napshotsResponse.TableQuotaSnapshot\032[\n\022T",
+      "ableQuotaSnapshot\022\036\n\ntable_name\030\001 \001(\0132\n." +
+      "TableName\022%\n\010snapshot\030\002 \001(\0132\023.SpaceQuota" +
+      "Snapshot\"\"\n GetSpaceQuotaEnforcementsReq" +
+      "uest\"\341\001\n!GetSpaceQuotaEnforcementsRespon" +
+      "se\022S\n\022violation_policies\030\001 \003(\01327.GetSpac" +
+      "eQuotaEnforcementsResponse.TableViolatio" +
+      "nPolicy\032g\n\024TableViolationPolicy\022\036\n\ntable" +
+      "_name\030\001 \001(\0132\n.TableName\022/\n\020violation_pol" +
+      "icy\030\002 \001(\0162\025.SpaceViolationPolicy*&\n\nQuot" +
+      "aScope\022\013\n\007CLUSTER\020\001\022\013\n\007MACHINE\020\002*v\n\014Thro",
+      "ttleType\022\022\n\016REQUEST_NUMBER\020\001\022\020\n\014REQUEST_" +
+      "SIZE\020\002\022\020\n\014WRITE_NUMBER\020\003\022\016\n\nWRITE_SIZE\020\004" +
+      "\022\017\n\013READ_NUMBER\020\005\022\r\n\tREAD_SIZE\020\006*$\n\tQuot" +
+      "aType\022\014\n\010THROTTLE\020\001\022\t\n\005SPACE\020\002*]\n\024SpaceV" +
+      "iolationPolicy\022\013\n\007DISABLE\020\001\022\031\n\025NO_WRITES" +
+      "_COMPACTIONS\020\002\022\r\n\tNO_WRITES\020\003\022\016\n\nNO_INSE" +
+      "RTS\020\004BA\n*org.apache.hadoop.hbase.protobu" +
+      "f.generatedB\013QuotaProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -12498,7 +12620,7 @@ public final class QuotaProtos {
           internal_static_SpaceQuota_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_SpaceQuota_descriptor,
-              new java.lang.String[] { "SoftLimit", "ViolationPolicy", });
+              new java.lang.String[] { "SoftLimit", "ViolationPolicy", "Remove", });
           internal_static_SpaceLimitRequest_descriptor =
             getDescriptor().getMessageTypes().get(6);
           internal_static_SpaceLimitRequest_fieldAccessorTable = new
