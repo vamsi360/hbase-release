@@ -50,7 +50,7 @@ import com.google.common.collect.Lists;
 public final class BackupCommands {
 
   private static final String USAGE = "Usage: hbase backup COMMAND\n"
-      + "where COMMAND is one of:\n" 
+      + "where COMMAND is one of:\n"
       + "  create     create a new backup image\n"
       + "  cancel     cancel an ongoing backup\n"
       + "  delete     delete an existing backup image\n"
@@ -68,8 +68,8 @@ public final class BackupCommands {
           + "                    the prefix can be hdfs, webhdfs or gpfs\n" + " Options:\n"
           + "  tables      If no tables (\"\") are specified, all tables are backed up. "
           + "Otherwise it is a\n" + "               comma separated list of tables.\n"
-          + " -w          number of parallel workers.\n" 
-          + " -b          bandwith per one worker (in MB sec)\n" 
+          + " -w          number of parallel workers.\n"
+          + " -b          bandwith per one worker (in MB sec)\n"
           + " -set        name of backup set" ;
 
   private static final String PROGRESS_CMD_USAGE = "Usage: hbase backup progress <backupId>\n"
@@ -91,7 +91,7 @@ public final class BackupCommands {
       + " name       Backup set name\n"
       + " tables      If no tables (\"\") are specified, all tables will belong to the set. "
       + "Otherwise it is a\n" + "               comma separated list of tables.\n"
-      + "where COMMAND is one of:\n" 
+      + "where COMMAND is one of:\n"
       + "  add      add tables to a set, crete set if needed\n"
       + "  remove   remove tables from set\n"
       + "  list     list all sets\n"
@@ -149,7 +149,7 @@ public final class BackupCommands {
       super(conf);
       this.cmdline = cmdline;
     }
-    
+
     @Override
     public void execute() throws IOException {
       if (cmdline == null || cmdline.getArgs() == null) {
@@ -186,7 +186,7 @@ public final class BackupCommands {
       }
       int bandwidth = cmdline.hasOption('b') ? Integer.parseInt(cmdline.getOptionValue('b')) : -1;
       int workers = cmdline.hasOption('w') ? Integer.parseInt(cmdline.getOptionValue('w')) : -1;
-    
+
       try (Connection conn = ConnectionFactory.createConnection(getConf());
           Admin admin = conn.getAdmin();
           BackupAdmin backupAdmin = admin.getBackupAdmin();) {
@@ -207,7 +207,7 @@ public final class BackupCommands {
           final BackupSystemTable table = new BackupSystemTable(conn)) {
         List<TableName> tables = table.describeBackupSet(name);
         if (tables == null) return null;
-        return StringUtils.join(tables, BackupRestoreConstants.TABLENAME_DELIMITER_IN_COMMAND);        
+        return StringUtils.join(tables, BackupRestoreConstants.TABLENAME_DELIMITER_IN_COMMAND);
       }
     }
   }
@@ -290,7 +290,11 @@ public final class BackupCommands {
       try (final Connection conn = ConnectionFactory.createConnection(conf);
           final BackupAdmin admin = conn.getAdmin().getBackupAdmin();) {
         BackupInfo info = admin.getBackupInfo(backupId);
-        System.out.println(info.getShortDescription());
+        if (info != null) {
+          System.out.println(info.getShortDescription());
+        } else {
+          System.out.println("ERROR: "+backupId +" not found.");
+        }
       }
     }
   }
@@ -319,7 +323,7 @@ public final class BackupCommands {
 
       String backupId = args == null ? null : args[1];
       Configuration conf = getConf() != null? getConf(): HBaseConfiguration.create();
-      try(final Connection conn = ConnectionFactory.createConnection(conf); 
+      try(final Connection conn = ConnectionFactory.createConnection(conf);
           final BackupAdmin admin = conn.getAdmin().getBackupAdmin();){
         int progress = admin.getProgress(backupId);
         if(progress < 0){
@@ -327,12 +331,12 @@ public final class BackupCommands {
         } else{
           System.out.println(backupId+" progress=" + progress+"%");
         }
-      } 
+      }
     }
   }
 
   private static class DeleteCommand extends Command {
-    
+
     CommandLine cmdline;
     DeleteCommand(Configuration conf, CommandLine cmdline) {
       super(conf);
@@ -360,8 +364,8 @@ public final class BackupCommands {
     }
   }
 
-// TODO Cancel command  
-  
+// TODO Cancel command
+
   private static class CancelCommand extends Command {
     CommandLine cmdline;
 
@@ -388,7 +392,7 @@ public final class BackupCommands {
   private static class HistoryCommand extends Command {
     CommandLine cmdline;
     private final static int DEFAULT_HISTORY_LENGTH = 10;
-    
+
     HistoryCommand(Configuration conf, CommandLine cmdline) {
       super(conf);
       this.cmdline = cmdline;
@@ -399,13 +403,13 @@ public final class BackupCommands {
 
       int n = parseHistoryLength();
       Configuration conf = getConf() != null? getConf(): HBaseConfiguration.create();
-      try(final Connection conn = ConnectionFactory.createConnection(conf); 
+      try(final Connection conn = ConnectionFactory.createConnection(conf);
           final BackupAdmin admin = conn.getAdmin().getBackupAdmin();){
         List<BackupInfo> history = admin.getHistory(n);
         for(BackupInfo info: history){
           System.out.println(info.getShortDescription());
         }
-      } 
+      }
     }
 
     private int parseHistoryLength() {
@@ -466,7 +470,7 @@ public final class BackupCommands {
       // List all backup set names
       // does not expect any args
       Configuration conf = getConf() != null? getConf(): HBaseConfiguration.create();
-      try(final Connection conn = ConnectionFactory.createConnection(conf); 
+      try(final Connection conn = ConnectionFactory.createConnection(conf);
           final BackupAdmin admin = conn.getAdmin().getBackupAdmin();){
         List<BackupSet> list = admin.listBackupSets();
         for(BackupSet bs: list){
@@ -481,7 +485,7 @@ public final class BackupCommands {
       }
       String setName = args[2];
       Configuration conf = getConf() != null? getConf(): HBaseConfiguration.create();
-      try(final Connection conn = ConnectionFactory.createConnection(conf); 
+      try(final Connection conn = ConnectionFactory.createConnection(conf);
           final BackupAdmin admin = conn.getAdmin().getBackupAdmin();){
         BackupSet set = admin.getBackupSet(setName);
         if(set == null) {
@@ -498,7 +502,7 @@ public final class BackupCommands {
       }
       String setName = args[2];
       Configuration conf = getConf() != null? getConf(): HBaseConfiguration.create();
-      try(final Connection conn = ConnectionFactory.createConnection(conf); 
+      try(final Connection conn = ConnectionFactory.createConnection(conf);
           final BackupAdmin admin = conn.getAdmin().getBackupAdmin();){
         boolean result = admin.deleteBackupSet(setName);
         if(result){
@@ -516,7 +520,7 @@ public final class BackupCommands {
       String setName = args[2];
       String[] tables = args[3].split(",");
       Configuration conf = getConf() != null? getConf(): HBaseConfiguration.create();
-      try(final Connection conn = ConnectionFactory.createConnection(conf); 
+      try(final Connection conn = ConnectionFactory.createConnection(conf);
           final BackupAdmin admin = conn.getAdmin().getBackupAdmin();){
         admin.removeFromBackupSet(setName, tables);
       }
@@ -533,11 +537,11 @@ public final class BackupCommands {
         tableNames[i] = TableName.valueOf(tables[i]);
       }
       Configuration conf = getConf() != null? getConf():HBaseConfiguration.create();
-      try(final Connection conn = ConnectionFactory.createConnection(conf); 
+      try(final Connection conn = ConnectionFactory.createConnection(conf);
           final BackupAdmin admin = conn.getAdmin().getBackupAdmin();){
         admin.addToBackupSet(setName, tableNames);
       }
-      
+
     }
 
     private BackupCommand getCommand(String cmdStr) throws IOException {
@@ -556,5 +560,5 @@ public final class BackupCommands {
       }
     }
 
-  }  
+  }
 }
