@@ -23,10 +23,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.lang.StringUtils;
@@ -208,6 +210,7 @@ public final class RestoreClientImpl implements RestoreClient {
     TreeSet<BackupImage> restoreImageSet = new TreeSet<BackupImage>();
     boolean truncateIfExists = isOverwrite;
     try {
+      Set<String> backupIdSet = new HashSet<>();
       for (int i = 0; i < sTableArray.length; i++) {
         TableName table = sTableArray[i];
         BackupManifest manifest = backupManifestMap.get(table);
@@ -224,30 +227,38 @@ public final class RestoreClientImpl implements RestoreClient {
 
         if (restoreImageSet != null && !restoreImageSet.isEmpty()) {
           LOG.info("Restore includes the following image(s):");
+          int idx = 0;
           for (BackupImage image : restoreImageSet) {
             LOG.info("Backup: "
                 + image.getBackupId()
                 + " "
                 + HBackupFileSystem.getTableBackupDir(image.getRootDir(), image.getBackupId(),
                   table));
+            if (idx++ > 0) {
+              backupIdSet.add(image.getBackupId());
+              LOG.debug("adding " + image.getBackupId() + " for bulk load");
+            }
           }
         }
       }
       try (Connection conn = ConnectionFactory.createConnection(conf);
           BackupSystemTable table = new BackupSystemTable(conn)) {
         List<TableName> sTableList = Arrays.asList(sTableArray);
-        Map<byte[], List<Path>>[] mapForSrc = table.readBulkLoadedFiles(backupId, sTableList);
-        Map<LoadQueueItem, ByteBuffer> loaderResult;
-        conf.setBoolean(LoadIncrementalHFiles.ALWAYS_COPY_FILES, true);
-        LoadIncrementalHFiles loader = MapReduceRestoreService.createLoader(conf);
-        for (int i = 0; i < sTableList.size(); i++) {
-          if (mapForSrc[i] != null && !mapForSrc[i].isEmpty()) {
-            loaderResult = loader.run(null, mapForSrc[i], tTableArray[i]);
-            LOG.debug("bulk loading " + sTableList.get(i) + " to " + tTableArray[i]);
-            if (loaderResult.isEmpty()) {
-              String msg = "Couldn't bulk load for " + sTableList.get(i) + " to " + tTableArray[i];
-              LOG.error(msg);
-              throw new IOException(msg);
+        for (String id : backupIdSet) {
+          LOG.debug("restoring bulk load for " + id);
+          Map<byte[], List<Path>>[] mapForSrc = table.readBulkLoadedFiles(id, sTableList);
+          Map<LoadQueueItem, ByteBuffer> loaderResult;
+          conf.setBoolean(LoadIncrementalHFiles.ALWAYS_COPY_FILES, true);
+          LoadIncrementalHFiles loader = MapReduceRestoreService.createLoader(conf);
+          for (int i = 0; i < sTableList.size(); i++) {
+            if (mapForSrc[i] != null && !mapForSrc[i].isEmpty()) {
+              loaderResult = loader.run(null, mapForSrc[i], tTableArray[i]);
+              LOG.debug("bulk loading " + sTableList.get(i) + " to " + tTableArray[i]);
+              if (loaderResult.isEmpty()) {
+                String msg = "Couldn't bulk load for " + sTableList.get(i) + " to " +tTableArray[i];
+                LOG.error(msg);
+                throw new IOException(msg);
+              }
             }
           }
         }
