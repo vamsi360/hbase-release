@@ -801,4 +801,8 @@ service MasterService {
   /** backup table set */
   rpc backupTables(BackupTablesRequest)
     returns(BackupTablesResponse);
+
+  /** Fetches the Master's view of space quotas */
+  rpc GetSpaceQuotaRegionSizes(GetSpaceQuotaRegionSizesRequest)
+    returns(GetSpaceQuotaRegionSizesResponse);
 }
