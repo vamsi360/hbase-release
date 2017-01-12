@@ -227,14 +227,13 @@ public final class RestoreClientImpl implements RestoreClient {
 
         if (restoreImageSet != null && !restoreImageSet.isEmpty()) {
           LOG.info("Restore includes the following image(s):");
-          int idx = 0;
           for (BackupImage image : restoreImageSet) {
             LOG.info("Backup: "
                 + image.getBackupId()
                 + " "
                 + HBackupFileSystem.getTableBackupDir(image.getRootDir(), image.getBackupId(),
                   table));
-            if (idx++ > 0) {
+            if (image.getType() == BackupType.INCREMENTAL) {
               backupIdSet.add(image.getBackupId());
               LOG.debug("adding " + image.getBackupId() + " for bulk load");
             }
