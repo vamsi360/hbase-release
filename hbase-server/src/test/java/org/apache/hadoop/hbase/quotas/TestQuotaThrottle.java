@@ -86,7 +86,7 @@ public class TestQuotaThrottle {
   @After
   public void tearDown() throws Exception {
     for (RegionServerThread rst : TEST_UTIL.getMiniHBaseCluster().getRegionServerThreads()) {
-      RegionServerQuotaManager quotaManager = rst.getRegionServer().getRegionServerQuotaManager();
+      RegionServerRpcQuotaManager quotaManager = rst.getRegionServer().getRegionServerRpcQuotaManager();
       QuotaCache quotaCache = quotaManager.getQuotaCache();
       quotaCache.getNamespaceQuotaCache().clear();
       quotaCache.getTableQuotaCache().clear();
@@ -537,7 +537,7 @@ public class TestQuotaThrottle {
   private void triggerCacheRefresh(boolean bypass, boolean userLimiter, boolean tableLimiter,
       boolean nsLimiter, final TableName... tables) throws Exception {
     for (RegionServerThread rst : TEST_UTIL.getMiniHBaseCluster().getRegionServerThreads()) {
-      RegionServerQuotaManager quotaManager = rst.getRegionServer().getRegionServerQuotaManager();
+      RegionServerRpcQuotaManager quotaManager = rst.getRegionServer().getRegionServerRpcQuotaManager();
       QuotaCache quotaCache = quotaManager.getQuotaCache();
 
       quotaCache.triggerCacheRefresh();
