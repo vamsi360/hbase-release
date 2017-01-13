@@ -34,13 +34,14 @@ EOF
       end
 
       def command(args = {})
+        start = Time.now
         formatter.header(["TABLE", "SIZE"])
         count = 0
         quotas_admin.get_master_table_sizes().each do |tableName,size|
           formatter.row([tableName.to_s, size.to_s])
           count += 1
         end
-        formatter.footer(count)
+        formatter.footer(start, count)
       end
     end
   end

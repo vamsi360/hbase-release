@@ -35,13 +35,14 @@ EOF
       end
 
       def command(hostname, args = {})
+        start = Time.now
         formatter.header(["TABLE", "POLICY"])
         count = 0
         quotas_admin.get_rs_quota_violations(hostname).each do |tableName,policy|
           formatter.row([tableName.to_s, policy.name])
           count += 1
         end
-        formatter.footer(count)
+        formatter.footer(start, count)
       end
     end
   end

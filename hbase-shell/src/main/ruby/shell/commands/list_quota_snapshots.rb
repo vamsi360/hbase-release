@@ -35,6 +35,7 @@ EOF
       end
 
       def command(hostname, args = {})
+        start = Time.now
         formatter.header(["TABLE", "USAGE", "LIMIT", "IN VIOLATION", "POLICY"])
         count = 0
         quotas_admin.get_rs_quota_snapshots(hostname).each do |tableName,snapshot|
@@ -47,7 +48,7 @@ EOF
           formatter.row([tableName.to_s, snapshot.getUsage().to_s, snapshot.getLimit().to_s, inViolation.to_s, policy])
           count += 1
         end
-        formatter.footer(count)
+        formatter.footer(start, count)
       end
     end
   end
