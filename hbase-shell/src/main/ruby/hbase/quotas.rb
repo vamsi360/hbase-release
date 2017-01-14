@@ -144,7 +144,8 @@ module Hbase
     def remove_space_limit(args)
       raise(ArgumentError, 'Argument should be a Hash') unless args.kind_of?(Hash)
       if args.key?(TABLE)
-        settings = QuotaSettingsFactory.removeTableSpaceLimit(args.delete(TABLE))
+        table = TableName.valueOf(args.delete(TABLE))
+        settings = QuotaSettingsFactory.removeTableSpaceLimit(table)
       elsif args.key?(NAMESPACE)
         settings = QuotaSettingsFactory.removeNamespaceSpaceLimit(args.delete(NAMESPACE))
       else
