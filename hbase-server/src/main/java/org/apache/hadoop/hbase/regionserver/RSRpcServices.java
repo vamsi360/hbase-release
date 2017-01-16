@@ -164,6 +164,7 @@ import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FlushDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.RegionEventDescriptor;
 import org.apache.hadoop.hbase.quotas.ActivePolicyEnforcement;
 import org.apache.hadoop.hbase.quotas.OperationQuota;
+import org.apache.hadoop.hbase.quotas.QuotaUtil;
 import org.apache.hadoop.hbase.quotas.RegionServerRpcQuotaManager;
 import org.apache.hadoop.hbase.quotas.ActivePolicyEnforcement;
 import org.apache.hadoop.hbase.quotas.RegionServerSpaceQuotaManager;
@@ -1896,16 +1897,18 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       boolean loaded = false;
 
       // Check to see if this bulk load would exceed the space quota for this table
-      ActivePolicyEnforcement activeSpaceQuotas = getSpaceQuotaManager().getActiveEnforcements();
-      SpaceViolationPolicyEnforcement enforcement = activeSpaceQuotas.getPolicyEnforcement(region);
-      if (null != enforcement) {
-        // Bulk loads must still be atomic. We must enact all or none.
-        List<String> filePaths = new ArrayList<>(request.getFamilyPathCount());
-        for (FamilyPath familyPath : request.getFamilyPathList()) {
-          filePaths.add(familyPath.getPath());
+      if (QuotaUtil.isQuotaEnabled(getConfiguration())) {
+        ActivePolicyEnforcement activeSpaceQuotas = getSpaceQuotaManager().getActiveEnforcements();
+        SpaceViolationPolicyEnforcement enforcement = activeSpaceQuotas.getPolicyEnforcement(region);
+        if (null != enforcement && enforcement.shouldCheckBulkLoads()) {
+          // Bulk loads must still be atomic. We must enact all or none.
+          List<String> filePaths = new ArrayList<>(request.getFamilyPathCount());
+          for (FamilyPath familyPath : request.getFamilyPathList()) {
+            filePaths.add(familyPath.getPath());
+          }
+          // Check if the batch of files exceeds the current quota
+          enforcement.checkBulkLoad(regionServer.getFileSystem(), filePaths);
         }
-        // Check if the batch of files exceeds the current quota
-        enforcement.checkBulkLoad(regionServer.getFileSystem(), filePaths);
       }
 
       Map<byte[], List<Path>> map = null;

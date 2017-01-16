@@ -23,11 +23,8 @@ import java.util.Objects;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
-import org.apache.hadoop.hbase.quotas.SpaceQuotaSnapshot.SpaceQuotaStatus;
 import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.regionserver.RegionServerServices;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * A class to ease dealing with tables that have and do not have violation policies
@@ -73,7 +70,7 @@ public class ActivePolicyEnforcement {
         // If we've never seen a snapshot, assume no use, and infinite limit
         SpaceQuotaSnapshot snapshot = snapshots.get(tableName);
         if (null == snapshot) {
-          snapshot = new SpaceQuotaSnapshot(SpaceQuotaStatus.notInViolation(), 0, Long.MAX_VALUE);
+          snapshot = SpaceQuotaSnapshot.getNoSuchSnapshot();
         }
         // Create the default policy and cache it
         return SpaceViolationPolicyEnforcementFactory.getInstance().createWithoutViolation(

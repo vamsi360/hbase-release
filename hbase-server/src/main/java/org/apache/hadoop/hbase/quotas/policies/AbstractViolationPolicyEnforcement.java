@@ -77,6 +77,12 @@ public abstract class AbstractViolationPolicyEnforcement
   }
 
   @Override
+  public boolean shouldCheckBulkLoads() {
+    // Reference check. The singleton is used when no quota exists to check against
+    return SpaceQuotaSnapshot.getNoSuchSnapshot() != quotaSnapshot;
+  }
+
+  @Override
   public void checkBulkLoad(FileSystem fs, List<String> paths) throws SpaceLimitingException {
     long size = 0L;
     for (String path : paths) {

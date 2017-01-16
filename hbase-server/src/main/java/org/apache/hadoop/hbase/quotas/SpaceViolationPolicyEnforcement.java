@@ -72,6 +72,11 @@ public interface SpaceViolationPolicyEnforcement {
   SpaceQuotaSnapshot getQuotaSnapshot();
 
   /**
+   * Returns whether the caller should verify any bulk loads against <code>this</code>.
+   */
+  boolean shouldCheckBulkLoads();
+
+  /**
    * Checks the file at the given path against <code>this</code> policy and the current
    * {@link SpaceQuotaSnapshot}. If the file would violate the policy, a
    * {@link SpaceLimitingException} will be thrown.

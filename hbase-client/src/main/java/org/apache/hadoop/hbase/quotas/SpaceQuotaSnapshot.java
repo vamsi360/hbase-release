@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos;
  */
 @InterfaceAudience.Private
 public class SpaceQuotaSnapshot {
+  private static final SpaceQuotaSnapshot NO_SUCH_SNAPSHOT = new SpaceQuotaSnapshot(SpaceQuotaStatus.notInViolation(), 0, Long.MAX_VALUE);
   private final SpaceQuotaStatus quotaStatus;
   private final long usage;
   private final long limit;
@@ -179,5 +180,9 @@ public class SpaceQuotaSnapshot {
     return QuotaProtos.SpaceQuotaSnapshot.newBuilder()
         .setStatus(SpaceQuotaStatus.toProto(snapshot.getQuotaStatus()))
         .setUsage(snapshot.getUsage()).setLimit(snapshot.getLimit()).build();
+  }
+
+  public static SpaceQuotaSnapshot getNoSuchSnapshot() {
+    return NO_SUCH_SNAPSHOT;
   }
 }

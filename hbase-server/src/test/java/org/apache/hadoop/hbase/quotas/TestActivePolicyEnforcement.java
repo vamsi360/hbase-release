@@ -17,6 +17,7 @@
 package org.apache.hadoop.hbase.quotas;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -61,5 +62,16 @@ public class TestActivePolicyEnforcement {
     assertTrue(
         "Expected an instance of NoopViolationPolicyEnforcement",
         enforcement instanceof BulkLoadCheckingViolationPolicyEnforcement);
+  }
+
+  @Test
+  public void testNoBulkLoadChecksOnNoSnapshot() {
+    ActivePolicyEnforcement ape = new ActivePolicyEnforcement(
+        new HashMap<TableName, SpaceViolationPolicyEnforcement>(),
+        Collections.<TableName,SpaceQuotaSnapshot> emptyMap(),
+        mock(RegionServerServices.class));
+    SpaceViolationPolicyEnforcement enforcement = ape.getPolicyEnforcement(
+        TableName.valueOf("nonexistent"));
+    assertFalse("Should not check bulkloads", enforcement.shouldCheckBulkLoads());
   }
 }
