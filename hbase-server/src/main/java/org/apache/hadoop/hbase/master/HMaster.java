@@ -872,9 +872,11 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     status.setStatus("Starting quota manager");
     initQuotaManager();
     this.spaceQuotaViolationNotifier = createQuotaViolationNotifier();
-    this.quotaObserverChore = new QuotaObserverChore(this);
-    // Start the chore to read the region FS space reports and act on them
-    getChoreService().scheduleChore(quotaObserverChore);
+    if (QuotaUtil.isQuotaEnabled(conf)) {
+      this.quotaObserverChore = new QuotaObserverChore(this);
+      // Start the chore to read the region FS space reports and act on them
+      getChoreService().scheduleChore(quotaObserverChore);
+    }
 
     // assign the meta replicas
     Set<ServerName> EMPTY_SET = new HashSet<ServerName>();
