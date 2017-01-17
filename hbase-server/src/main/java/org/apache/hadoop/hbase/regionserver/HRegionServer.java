@@ -141,6 +141,7 @@ import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.Repor
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse;
 import org.apache.hadoop.hbase.quotas.FileSystemUtilizationChore;
+import org.apache.hadoop.hbase.quotas.QuotaUtil;
 import org.apache.hadoop.hbase.quotas.RegionServerRpcQuotaManager;
 import org.apache.hadoop.hbase.quotas.RegionServerSpaceQuotaManager;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionProgress;
@@ -872,7 +873,9 @@ public class HRegionServer extends HasThread implements
     rsQuotaManager = new RegionServerRpcQuotaManager(this);
     rsSpaceQuotaManager = new RegionServerSpaceQuotaManager(this);
 
-    this.fsUtilizationChore = new FileSystemUtilizationChore(this);
+    if (QuotaUtil.isQuotaEnabled(conf)) {
+      this.fsUtilizationChore = new FileSystemUtilizationChore(this);
+    }
 
     // Setup RPC client for master communication
     rpcClient = RpcClientFactory.createClient(conf, clusterId, new InetSocketAddress(

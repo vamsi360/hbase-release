@@ -191,6 +191,7 @@ import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.Repor
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.ReportRegionStateTransitionResponse;
 import org.apache.hadoop.hbase.quotas.MasterQuotaManager;
+import org.apache.hadoop.hbase.quotas.QuotaUtil;
 import org.apache.hadoop.hbase.regionserver.RSRpcServices;
 import org.apache.hadoop.hbase.snapshot.ClientSnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
@@ -1711,6 +1712,9 @@ public class MasterRpcServices extends RSRpcServices
       RegionSpaceUseReportRequest request) throws ServiceException {
     try {
       master.checkInitialized();
+      if (!QuotaUtil.isQuotaEnabled(master.getConfiguration())) {
+        return RegionSpaceUseReportResponse.newBuilder().build();
+      }
       MasterQuotaManager quotaManager = this.master.getMasterQuotaManager();
       for (RegionSpaceUse report : request.getSpaceUseList()) {
         quotaManager.addRegionSize(HRegionInfo.convert(report.getRegion()), report.getSize());
