@@ -487,6 +487,7 @@ public class ReplicationSource extends Thread
           logKey.addClusterId(clusterId);
           currentNbOperations += countDistinctRowKeys(edit);
           entries.add(entry);
+          currentSize += entry.getEdit().heapSize();
           currentSize += calculateTotalSizeOfStoreFiles(edit);
         } else {
           this.metrics.incrLogEditsFiltered();
