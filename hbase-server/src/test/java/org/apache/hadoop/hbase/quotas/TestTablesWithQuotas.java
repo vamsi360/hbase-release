@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,7 +32,9 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.quotas.QuotaObserverChore.TablesWithQuotas;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
@@ -162,5 +165,34 @@ public class TestTablesWithQuotas {
         tablesInNs.containsAll(Arrays.asList(
             TableName.valueOf("ns2", "t1"),
             TableName.valueOf("ns2", "t2"))));
+  }
+
+  @Test
+  public void testFilteringMissingTables() throws Exception {
+    final TableName missingTable = TableName.valueOf("doesNotExist");
+    // Set up Admin to return null (match the implementation)
+    Admin admin = mock(Admin.class);
+    when(conn.getAdmin()).thenReturn(admin);
+    when(admin.getTableRegions(missingTable)).thenReturn(null);
+
+    QuotaObserverChore chore = mock(QuotaObserverChore.class);
+    Map<HRegionInfo,Long> regionUsage = new HashMap<>();
+    TableQuotaSnapshotStore store = new TableQuotaSnapshotStore(conn, chore, regionUsage);
+
+    // A super dirty hack to verify that, after getting no regions for our table,
+    // we bail out and start processing the next element (which there is none).
+    final TablesWithQuotas tables = new TablesWithQuotas(conn, conf) {
+      @Override
+      int getNumReportedRegions(TableName table, QuotaSnapshotStore<TableName> tableStore) {
+        throw new RuntimeException("Should should not reach here");
+      }
+    };
+    tables.addTableQuotaTable(missingTable);
+
+    tables.filterInsufficientlyReportedTables(store);
+
+    final Set<TableName> tablesWithQuotas = tables.getTableQuotaTables();
+    assertTrue(
+        "Expected to find no tables, but found " + tablesWithQuotas, tablesWithQuotas.isEmpty());
   }
 }
