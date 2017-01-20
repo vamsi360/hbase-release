@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -538,6 +539,14 @@ public class QuotaObserverChore extends ScheduledChore {
           continue;
         }
         final int numRegionsInTable = getNumRegions(table);
+        // If the table doesn't exist (no regions), bail out.
+        if (0 == numRegionsInTable) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Filtering " + table + " because no regions were reported.");
+          }
+          tablesToRemove.add(table);
+          continue;
+        }
         final int reportedRegionsInQuota = getNumReportedRegions(table, tableStore);
         final double ratioReported = ((double) reportedRegionsInQuota) / numRegionsInTable;
         if (ratioReported < percentRegionsReportedThreshold) {
@@ -561,7 +570,11 @@ public class QuotaObserverChore extends ScheduledChore {
      * Computes the total number of regions in a table.
      */
     int getNumRegions(TableName table) throws IOException {
-      return this.conn.getAdmin().getTableRegions(table).size();
+      List<HRegionInfo> regions = this.conn.getAdmin().getTableRegions(table);
+      if (null == regions) {
+        return 0;
+      }
+      return regions.size();
     }
 
     /**
