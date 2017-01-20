@@ -38,5 +38,5 @@ public interface IncrementalRestoreService extends Configurable{
    * @throws IOException
    */
   public void run(Path[] logDirectoryPaths, TableName[] fromTables, TableName[] toTables)
-    throws IOException;
+      throws IOException;
 }

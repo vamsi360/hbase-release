@@ -54,6 +54,7 @@ import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.SnapshotManifest;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.FSHDFSUtils;
 
 /**
  * A collection for methods used by multiple classes to restore HBase tables.
@@ -99,7 +100,7 @@ public class RestoreServerUtil {
    */
   Path getTableArchivePath(TableName tableName)
       throws IOException {
-    Path baseDir = new Path(HBackupFileSystem.getTableBackupPath(tableName, backupRootPath, 
+    Path baseDir = new Path(HBackupFileSystem.getTableBackupPath(tableName, backupRootPath,
       backupId), HConstants.HFILE_ARCHIVE_DIRECTORY);
     Path dataDir = new Path(baseDir, HConstants.BASE_NAMESPACE_DIR);
     Path archivePath = new Path(dataDir, tableName.getNamespaceAsString());
@@ -159,10 +160,25 @@ public class RestoreServerUtil {
             + " does not exist. Create the table first, e.g. by restoring a full backup.");
         }
       }
+      // Copy files to local
+      Path[] tempDirs = new Path[logDirs.length];
+      int index = 0;
+      for(Path p : logDirs) {
+        tempDirs[index++] = checkLocalAndCopy(p);
+      }
       IncrementalRestoreService restoreService =
           BackupRestoreServerFactory.getIncrementalRestoreService(conf);
 
-      restoreService.run(logDirs, tableNames, newTableNames);
+      restoreService.run(tempDirs, tableNames, newTableNames);
+      cleanTmp();
+    }
+  }
+
+  private void cleanTmp() throws IOException {
+    FileSystem fs = FileSystem.get(conf);
+    boolean result = fs.delete(restoreTmpPath, true);
+    if (!result) {
+      LOG.warn("Could not delete " + restoreTmpPath);
     }
   }
 
@@ -226,12 +242,15 @@ public class RestoreServerUtil {
       LOG.error("couldn't find Table Desc for table: " + tableName + " under tableInfoPath: "
           + tableInfoPath.toString());
       LOG.error("tableDescriptor.getNameAsString() = " + tableDescriptor.getNameAsString());
-      throw new FileNotFoundException("couldn't find Table Desc for table: " + tableName + 
+      throw new FileNotFoundException("couldn't find Table Desc for table: " + tableName +
         " under tableInfoPath: " + tableInfoPath.toString());
     }
     return tableDescriptor;
   }
 
+  Path checkLocalAndBackup(Path tableArchivePath) throws IOException {
+    return checkLocalAndBackup(tableArchivePath, true);
+  }
   /**
    * Duplicate the backup image if it's on local cluster
    * @see HStore#bulkLoadHFile(String, long)
@@ -240,7 +259,41 @@ public class RestoreServerUtil {
    * @return the new tableArchivePath
    * @throws IOException exception
    */
-  Path checkLocalAndBackup(Path tableArchivePath) throws IOException {
+  Path checkLocalAndCopy(Path tableArchivePath) throws IOException {
+    // Move the file if it's on local cluster
+    boolean isCopyNeeded = false;
+    Path p = tableArchivePath.getParent();
+    String tableName = p.getName();
+    String ns = p.getParent().getName();
+    Path tmpPath = new Path(restoreTmpPath, ns);
+    tmpPath = new Path(tmpPath, tableName);
+    FileSystem srcFs = tableArchivePath.getFileSystem(conf);
+    FileSystem desFs = FileSystem.get(conf);
+    if (tableArchivePath.getName().startsWith("/")) {
+      isCopyNeeded = true;
+    } else {
+      // This should match what is done in @see HRegionFileSystem#bulkLoadStoreFile(String, Path,
+      // long)
+      if (FSHDFSUtils.isSameHdfs(conf, srcFs, desFs)) {
+        LOG.debug("cluster hold the backup image: " + srcFs.getUri() + "; local cluster node: "
+            + desFs.getUri());
+        isCopyNeeded = true;
+      }
+    }
+    if (isCopyNeeded) {
+      LOG.debug("File " + tableArchivePath + " on local cluster, back it up before restore");
+
+      boolean result = FileUtil.copy(srcFs, tableArchivePath, desFs, tmpPath, false, conf);
+      if (!result) {
+        throw new IOException("Copy failed: src="+tableArchivePath+" dst="+tmpPath);
+      }
+      LOG.debug("Copied to temporary path on local cluster: " + tmpPath);
+      tableArchivePath = tmpPath;
+    }
+    return tableArchivePath;
+  }
+
+  Path checkLocalAndBackup(Path tableArchivePath, boolean clean) throws IOException {
     // Move the file if it's on local cluster
     boolean isCopyNeeded = false;
 
@@ -259,7 +312,7 @@ public class RestoreServerUtil {
     }
     if (isCopyNeeded) {
       LOG.debug("File " + tableArchivePath + " on local cluster, back it up before restore");
-      if (desFs.exists(restoreTmpPath)) {
+      if (desFs.exists(restoreTmpPath) && clean) {
         try {
           desFs.delete(restoreTmpPath, true);
         } catch (IOException e) {
@@ -316,7 +369,7 @@ public class RestoreServerUtil {
             + ", will only create table");
         }
         tableDescriptor.setName(newTableName);
-        checkAndCreateTable(tableBackupPath, tableName, newTableName, null, 
+        checkAndCreateTable(tableBackupPath, tableName, newTableName, null,
           tableDescriptor, truncateIfExists);
         return;
       } else {
@@ -355,7 +408,6 @@ public class RestoreServerUtil {
               LOG.debug("TableArchivePath for bulkload using tempPath: " + tempTableArchivePath);
             }
           }
-
           LoadIncrementalHFiles loader = createLoader(tempTableArchivePath, false);
           for (Path regionPath : regionPathList) {
             String regionName = regionPath.toString();
@@ -571,7 +623,7 @@ public class RestoreServerUtil {
    * @throws IOException exception
    */
   private void checkAndCreateTable(Path tableBackupPath, TableName tableName,
-      TableName targetTableName, ArrayList<Path> regionDirList, 
+      TableName targetTableName, ArrayList<Path> regionDirList,
       HTableDescriptor htd, boolean truncateIfExists)
           throws IOException {
     HBaseAdmin hbadmin = null;
@@ -591,7 +643,7 @@ public class RestoreServerUtil {
         }
       } else {
         createNew = true;
-      }      
+      }
       if(createNew){
         LOG.info("Creating target table '" + targetTableName + "'");
         // if no region directory given, create the table and return

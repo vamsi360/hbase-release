@@ -26,10 +26,6 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -192,7 +188,7 @@ public class TestBackupBase {
   protected String incrementalTableBackup(List<TableName> tables) throws IOException {
     return backupTables(BackupType.INCREMENTAL, tables, BACKUP_ROOT_DIR);
   }
-  
+
   protected static void loadTable(HTable table) throws Exception {
 
     Put p; // 100 + 1 row to t1_syncup
@@ -208,19 +204,19 @@ public class TestBackupBase {
     long tid = System.currentTimeMillis();
     table1 = TableName.valueOf("ns1:test-" + tid);
     HBaseAdmin ha = TEST_UTIL.getHBaseAdmin();
-    
+
     // Create namespaces
     NamespaceDescriptor desc1 = NamespaceDescriptor.create("ns1").build();
     NamespaceDescriptor desc2 = NamespaceDescriptor.create("ns2").build();
     NamespaceDescriptor desc3 = NamespaceDescriptor.create("ns3").build();
     NamespaceDescriptor desc4 = NamespaceDescriptor.create("ns4").build();
-    
+
     ha.createNamespace(desc1);
     ha.createNamespace(desc2);
     ha.createNamespace(desc3);
     ha.createNamespace(desc4);
 
-    
+
     HTableDescriptor desc = new HTableDescriptor(table1);
     HColumnDescriptor fam = new HColumnDescriptor(famName);
     desc.addFamily(fam);
@@ -270,10 +266,10 @@ public class TestBackupBase {
   protected BackupAdmin getBackupAdmin() throws IOException {
     return TEST_UTIL.getConnection().getAdmin().getBackupAdmin();
   }
-  
+
   /**
    * Get restore request.
-   *  
+   *
    */
   public  RestoreRequest createRestoreRequest(
       String backupRootDir,
@@ -284,7 +280,7 @@ public class TestBackupBase {
     setFromTables(fromTables).setToTables(toTables).setOverwrite(isOverwrite);
     return request;
 }
-  
+
   /**
    * Helper method
    */
@@ -295,15 +291,5 @@ public class TestBackupBase {
     }
     return ret;
   }
-    
-  protected void dumpBackupDir() throws IOException
-  {
-    // Dump Backup Dir
-    FileSystem fs = FileSystem.get(conf1);
-    RemoteIterator<LocatedFileStatus> it = fs.listFiles( new Path(BACKUP_ROOT_DIR), true);
-    while(it.hasNext()){
-      LOG.debug("DDEBUG: "+it.next().getPath());
-    }
 
-  }
 }

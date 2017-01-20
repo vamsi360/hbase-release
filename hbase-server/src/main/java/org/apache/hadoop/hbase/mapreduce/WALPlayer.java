@@ -74,7 +74,7 @@ public class WALPlayer extends Configured implements Tool {
   public final static String BULK_OUTPUT_CONF_KEY = "wal.bulk.output";
   public final static String TABLES_KEY = "wal.input.tables";
   public final static String TABLE_MAP_KEY = "wal.input.tablesmap";
-
+  public final static String INPUT_FILES_SEPARATOR_KEY = "wal.input.separator";
   // This relies on Hadoop Configuration to handle warning about deprecated configs and
   // to set the correct non-deprecated configs when an old one shows up.
   static {
@@ -133,8 +133,8 @@ public class WALPlayer extends Configured implements Tool {
   protected static class WALMapper
     extends Mapper<WALKey, WALEdit, ImmutableBytesWritable, Mutation> {
     private Map<TableName, TableName> tables = new TreeMap<TableName, TableName>();
-    
-    
+
+
     @Override
     public void map(WALKey key, WALEdit value, Context context)
     throws IOException {
@@ -147,7 +147,7 @@ public class WALPlayer extends Configured implements Tool {
           Put put = null;
           Delete del = null;
           Cell lastCell = null;
-                    
+
           for (Cell cell : value.getCells()) {
             // filtering WAL meta entries
             if (WALEdit.isMetaEditFamily(cell.getFamily())) continue;
@@ -214,9 +214,15 @@ public class WALPlayer extends Configured implements Tool {
     public void setup(Context context) throws IOException {
       String[] tableMap = context.getConfiguration().getStrings(TABLE_MAP_KEY);
       String[] tablesToUse = context.getConfiguration().getStrings(TABLES_KEY);
-      if (tablesToUse == null || tableMap == null || tablesToUse.length != tableMap.length) {
-        // this can only happen when WALMapper is used directly by a class other than WALPlayer
-        throw new IOException("No tables or incorrect table mapping specified.");
+
+      if (tableMap == null) {
+        tableMap = tablesToUse;
+      }
+      if (tablesToUse == null) {
+        // Then user wants all tables.
+      } else if (tablesToUse.length != tableMap.length) {
+         // this can only happen when WALMapper is used directly by a class other than WALPlayer
+        throw new IOException("Incorrect table mapping specified.");
       }
       int i = 0;
       if (tablesToUse != null) {
@@ -283,9 +289,9 @@ public class WALPlayer extends Configured implements Tool {
     }
     conf.setStrings(TABLES_KEY, tables);
     conf.setStrings(TABLE_MAP_KEY, tableMap);
+    conf.set(FileInputFormat.INPUT_DIR, inputDirs);
     Job job = new Job(conf, NAME + "_" + System.currentTimeMillis());
     job.setJarByClass(WALPlayer.class);
-    FileInputFormat.setInputPaths(job, inputDirs);
     job.setInputFormatClass(WALInputFormat.class);
     job.setMapOutputKeyClass(ImmutableBytesWritable.class);
     String hfileOutPath = conf.get(BULK_OUTPUT_CONF_KEY);
@@ -306,7 +312,7 @@ public class WALPlayer extends Configured implements Tool {
         HFileOutputFormat2.configureIncrementalLoad(job, table.getTableDescriptor(), regionLocator);
       }
       LOG.debug("success configuring load incremental job");
-      
+
       TableMapReduceUtil.addDependencyJars(job.getConfiguration(),
           com.google.common.base.Preconditions.class);
     } else {
@@ -328,7 +334,7 @@ public class WALPlayer extends Configured implements Tool {
     return job;
   }
 
- 
+
   /**
    * Print usage
    * @param errorMsg Error message.  Can be null.
