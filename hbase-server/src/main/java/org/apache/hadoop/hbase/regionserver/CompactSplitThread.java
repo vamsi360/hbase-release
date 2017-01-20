@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.RemoteExceptionHandler;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.conf.ConfigurationManager;
 import org.apache.hadoop.hbase.conf.PropagatingConfigurationObserver;
+import org.apache.hadoop.hbase.quotas.RegionServerSpaceQuotaManager;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionContext;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionThroughputController;
@@ -353,8 +354,10 @@ public class CompactSplitThread implements CompactionRequestor, PropagatingConfi
       if (compaction == null) return null; // message logged inside
     }
 
-    if (this.server.getRegionServerSpaceQuotaManager().areCompactionsDisabled(
-        r.getTableDesc().getTableName())) {
+    final RegionServerSpaceQuotaManager spaceQuotaManager =
+      this.server.getRegionServerSpaceQuotaManager();
+    if (null != spaceQuotaManager &&
+        spaceQuotaManager.areCompactionsDisabled(r.getTableDesc().getTableName())) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Ignoring compaction request for " + r + " as an active space quota violation "
             + " policy disallows compactions.");
