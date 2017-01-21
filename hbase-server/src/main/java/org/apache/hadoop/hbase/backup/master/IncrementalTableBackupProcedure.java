@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -51,6 +52,9 @@ import org.apache.hadoop.hbase.backup.impl.IncrementalBackupManager;
 import org.apache.hadoop.hbase.backup.util.BackupClientUtil;
 import org.apache.hadoop.hbase.backup.util.BackupServerUtil;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.mapreduce.WALPlayer;
 import org.apache.hadoop.hbase.master.procedure.MasterProcedureEnv;
 import org.apache.hadoop.hbase.master.procedure.TableProcedureInterface;
 import org.apache.hadoop.hbase.procedure2.StateMachineProcedure;
@@ -61,10 +65,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.HFileArchiveUtil;
 import org.apache.hadoop.hbase.util.Pair;
+import org.apache.hadoop.util.StringUtils;
+import org.apache.hadoop.util.Tool;
 
 @InterfaceAudience.Private
 public class IncrementalTableBackupProcedure
-    extends StateMachineProcedure<MasterProcedureEnv, IncrementalTableBackupState> 
+    extends StateMachineProcedure<MasterProcedureEnv, IncrementalTableBackupState>
     implements TableProcedureInterface {
   private static final Log LOG = LogFactory.getLog(IncrementalTableBackupProcedure.class);
 
@@ -276,7 +282,9 @@ public class IncrementalTableBackupProcedure
           try {
             // copy out the table and region info files for each table
             BackupServerUtil.copyTableRegionInfo(backupContext, conf);
-            incrementalCopy(backupContext);
+            // convert WAL to HFiles and copy them to .tmp under BACKUP_ROOT
+            convertWALsAndCopy(backupContext, env.getMasterServices().getConnection());
+            incrementalCopyHFiles(backupContext);
             // Save list of WAL files copied
             backupManager.recordWALFiles(backupContext.getIncrBackupFileList());
           } catch (Exception e) {
@@ -444,4 +452,111 @@ public class IncrementalTableBackupProcedure
   protected void releaseLock(final MasterProcedureEnv env) {
     env.getProcedureQueue().releaseTableWrite(getTableName());
   }
+
+   private void incrementalCopyHFiles(BackupInfo backupContext) throws Exception {
+
+    LOG.info("Incremental copy HFiles is starting.");
+    // set overall backup phase: incremental_copy
+    backupContext.setPhase(BackupPhase.INCREMENTAL_COPY);
+    // get incremental backup file list and prepare parms for DistCp
+    List<String> incrBackupFileList = new ArrayList<String>();
+    // Add Bulk output
+    incrBackupFileList.add(getBulkOutputDir().toString());
+    // filter missing files out (they have been copied by previous backups)
+    String[] strArr = incrBackupFileList.toArray(new String[incrBackupFileList.size() + 1]);
+    strArr[strArr.length - 1] = backupContext.getTargetRootDir();
+
+    BackupCopyService copyService = BackupRestoreServerFactory.getBackupCopyService(conf);
+
+    int res = copyService.copy(backupContext, backupManager, conf, BackupCopyService.Type.INCREMENTAL, strArr);
+
+    if (res != 0) {
+      LOG.error("Copy incremental HFile files failed with return code: " + res + ".");
+      throw new IOException("Failed of Hadoop Distributed Copy from "
+          + StringUtils.join(",", incrBackupFileList) + " to " + backupContext.getHLogTargetDir());
+    }
+    deleteBulkLoadDirectory();
+    LOG.info("Incremental copy HFiles from " + StringUtils.join(",", incrBackupFileList) + " to "
+        + backupContext.getTargetRootDir() + " finished.");
+  }
+
+  private void deleteBulkLoadDirectory() throws IOException {
+    // delete original bulk load directory on method exit
+    Path path = getBulkOutputDir();
+    FileSystem fs = FileSystem.get(conf);
+    boolean result = fs.delete(path, true);
+    if (!result) {
+      LOG.warn ("Could not delete " + path);
+    }
+
+}
+  private void convertWALsAndCopy(BackupInfo backupContext, Connection conn) throws IOException {
+    // get incremental backup file list and prepare parms for DistCp
+    List<String> incrBackupFileList = backupContext.getIncrBackupFileList();
+    // filter missing files out (they have been copied by previous backups)
+    incrBackupFileList = filterMissingFiles(incrBackupFileList);
+    // Get list of tables in incremental backup set
+    Set<TableName> tableSet = backupManager.getIncrementalBackupTableSet();
+    for(TableName table : tableSet) {
+      // Check if table exists
+      if(tableExists(table, conn)) {
+        convertWALToHFiles(incrBackupFileList, table);
+      } else {
+        LOG.warn("Table "+ table+" does not exists. Skipping in WAL converter");
+      }
+    }
+
+  }
+
+  private boolean tableExists(TableName table, Connection conn) throws IOException {
+    try (Admin admin = conn.getAdmin();) {
+      return admin.tableExists(table);
+    }
+  }
+
+  private void convertWALToHFiles(List<String> dirPaths, TableName tableName) throws IOException {
+
+    String bulkOutputConfKey;
+    Tool player = new WALPlayer();
+
+    bulkOutputConfKey = WALPlayer.BULK_OUTPUT_CONF_KEY;
+
+    // Player reads all files in arbitrary directory structure and creates
+    // a Map task for each file. We use ';' as separator
+    // because WAL file names contains ','
+     String dirs = StringUtils.join(";", dirPaths);
+
+     Path bulkOutputPath = getBulkOutputDirForTable(tableName);
+     conf.set(bulkOutputConfKey, bulkOutputPath.toString());
+     conf.set(WALPlayer.INPUT_FILES_SEPARATOR_KEY, ";");
+     String[] playerArgs = { dirs, tableName.getNameAsString() };
+
+     try {
+       // TODO Player must tolerate missing files or exceptions during conversion
+       player.setConf(conf);
+       player.run(playerArgs);
+      // TODO Check missing files and repeat
+      conf.unset(WALPlayer.INPUT_FILES_SEPARATOR_KEY);
+    } catch (Exception e) {
+      throw new IOException("Can not convert from directory " + dirs
+          + " (check Hadoop and HBase logs) ", e);
+      }
+    }
+
+  private Path getBulkOutputDirForTable(TableName table) {
+    Path tablePath = getBulkOutputDir();
+    tablePath = new Path(tablePath, table.getNamespaceAsString());
+    tablePath = new Path(tablePath, table.getQualifierAsString());
+    return new Path(tablePath, "data");
+  }
+
+  private Path getBulkOutputDir() {
+    String backupId = backupContext.getBackupId();
+    Path path = new Path(backupContext.getTargetRootDir());
+    path = new Path(path, ".tmp");
+    path = new Path(path, backupId);
+    return path;
+  }
+
+
 }

@@ -34,7 +34,7 @@ public final class BackupRestoreServerFactory {
   private BackupRestoreServerFactory(){
     throw new AssertionError("Instantiating utility class...");
   }
-  
+
   /**
    * Gets incremental restore service
    * @param conf - configuration
@@ -48,7 +48,7 @@ public final class BackupRestoreServerFactory {
     service.setConf(conf);
     return service;
   }
-  
+
   /**
    * Gets backup copy service
    * @param conf - configuration

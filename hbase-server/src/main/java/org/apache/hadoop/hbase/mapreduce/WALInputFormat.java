@@ -44,6 +44,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.StringUtils;
 
 /**
@@ -233,7 +234,7 @@ public class WALInputFormat extends InputFormat<WALKey, WALEdit> {
   List<InputSplit> getSplits(final JobContext context, final String startKey, final String endKey)
       throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-    
+
     Path[] inputPaths = getInputPaths(conf);
 
     long startTime = conf.getLong(startKey, Long.MIN_VALUE);
@@ -253,8 +254,8 @@ public class WALInputFormat extends InputFormat<WALKey, WALEdit> {
   }
 
   private Path[] getInputPaths(Configuration conf) {
-    String inpDirs = conf.get("mapreduce.input.fileinputformat.inputdir");
-    return StringUtils.stringToPath(inpDirs.split(","));
+    String inpDirs = conf.get(FileInputFormat.INPUT_DIR);
+    return StringUtils.stringToPath(inpDirs.split(conf.get(WALPlayer.INPUT_FILES_SEPARATOR_KEY, ",")));
   }
 
   private List<FileStatus> getFiles(FileSystem fs, Path dir, long startTime, long endTime)

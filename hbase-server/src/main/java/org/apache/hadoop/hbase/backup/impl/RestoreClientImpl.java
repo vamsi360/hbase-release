@@ -71,8 +71,8 @@ public final class RestoreClientImpl implements RestoreClient {
     this.conf = conf;
   }
 
-  
-  
+
+
   /**
    * Restore operation. Stage 1: validate backupManifest, and check target tables
    * @param backupRootDir The root dir for backup image
@@ -111,7 +111,7 @@ public final class RestoreClientImpl implements RestoreClient {
       }
       // check the target tables
       checkTargetTables(tTableArray, isOverwrite);
-      // start restore process      
+      // start restore process
       restoreStage(backupId, backupManifestMap, sTableArray, tTableArray, isOverwrite);
       LOG.info("Restore for " + Arrays.asList(sTableArray) + " are successful!");
     } catch (IOException e) {
@@ -302,7 +302,7 @@ public final class RestoreClientImpl implements RestoreClient {
    * @param tTable: table to be restored to
    * @throws IOException exception
    */
-  private void restoreImages(Iterator<BackupImage> it, TableName sTable, 
+  private void restoreImages(Iterator<BackupImage> it, TableName sTable,
       TableName tTable, boolean truncateIfExists)
       throws IOException {
 
@@ -312,7 +312,7 @@ public final class RestoreClientImpl implements RestoreClient {
     String rootDir = image.getRootDir();
     String backupId = image.getBackupId();
     Path backupRoot = new Path(rootDir);
-    
+
     // We need hFS only for full restore (see the code)
     RestoreServerUtil restoreTool = new RestoreServerUtil(conf, backupRoot, backupId);
     BackupManifest manifest = HBackupFileSystem.getManifest(sTable, conf, backupRoot, backupId);
@@ -328,31 +328,32 @@ public final class RestoreClientImpl implements RestoreClient {
       }
       LOG.info("Restoring '" + sTable + "' to '" + tTable + "' from "
           + (converted ? "converted" : "full") + " backup image " + tableBackupPath.toString());
-      restoreTool.fullRestoreTable(tableBackupPath, sTable, tTable, 
+      restoreTool.fullRestoreTable(tableBackupPath, sTable, tTable,
         converted, truncateIfExists);
-      
+
     } else { // incremental Backup
       throw new IOException("Unexpected backup type " + image.getType());
     }
 
     // The rest one are incremental
     if (it.hasNext()) {
-      List<String> logDirList = new ArrayList<String>();
+      List<String> fileDirList = new ArrayList<String>();
       while (it.hasNext()) {
         BackupImage im = it.next();
-        String logBackupDir = HBackupFileSystem.getLogBackupDir(im.getRootDir(), im.getBackupId());
-        logDirList.add(logBackupDir);
+        String fileBackupDir = HBackupFileSystem.getTableBackupDir(im.getRootDir(),
+          im.getBackupId(), sTable)+ Path.SEPARATOR+"data";
+        fileDirList.add(fileBackupDir);
       }
-      String logDirs = StringUtils.join(logDirList, ",");
+      String logDirs = StringUtils.join(fileDirList, ",");
       LOG.info("Restoring '" + sTable + "' to '" + tTable
-          + "' from log dirs: " + logDirs);
-      String[] sarr = new String[logDirList.size()];
-      logDirList.toArray(sarr);
+          + "' from file dirs: " + logDirs);
+      String[] sarr = new String[fileDirList.size()];
+      fileDirList.toArray(sarr);
       Path[] paths = org.apache.hadoop.util.StringUtils.stringToPath(sarr);
       restoreTool.incrementalRestoreTable(paths, new TableName[] { sTable },
         new TableName[] { tTable });
     }
     LOG.info(sTable + " has been successfully restored to " + tTable);
   }
-  
+
 }
