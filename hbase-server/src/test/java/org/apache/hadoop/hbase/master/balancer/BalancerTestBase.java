@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.hbase.master.balancer;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -33,16 +35,21 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.master.RackManager;
 import org.apache.hadoop.hbase.master.RegionPlan;
+import org.apache.hadoop.hbase.master.balancer.BalancerTestBase.MockMapping;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.net.DNSToSwitchMapping;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 
 /**
  * Class used to be the base of unit tests on load balancers. It gives helper
@@ -51,9 +58,21 @@ import org.junit.Assert;
  *
  */
 public class BalancerTestBase {
-
+  private static final Log LOG = LogFactory.getLog(BalancerTestBase.class);
   protected static Random rand = new Random();
   static int regionId = 0;
+  protected static StochasticLoadBalancer loadBalancer;
+  protected static Configuration conf;
+
+  @BeforeClass
+  public static void beforeAllTests() throws Exception {
+    conf = HBaseConfiguration.create();
+    conf.setClass("hbase.util.ip.to.rack.determiner", MockMapping.class, DNSToSwitchMapping.class);
+    conf.setFloat("hbase.master.balancer.stochastic.maxMovePercent", 0.75f);
+    conf.setFloat("hbase.regions.slop", 0.0f);
+    loadBalancer = new StochasticLoadBalancer();
+    loadBalancer.setConf(conf);
+  }
 
   // This class is introduced because IP to rack resolution can be lengthy.
   public static class MockMapping implements DNSToSwitchMapping {
@@ -74,6 +93,76 @@ public class BalancerTestBase {
 
     // do not add @Override annotations here. It mighty break compilation with earlier Hadoops
     public void reloadCachedMappings(List<String> arg0) {
+    }
+  }
+
+  protected void testWithCluster(int numNodes,
+      int numRegions,
+      int numRegionsPerServer,
+      int replication,
+      int numTables,
+      boolean assertFullyBalanced, boolean assertFullyBalancedForReplicas) {
+    Map<ServerName, List<HRegionInfo>> serverMap =
+        createServerMap(numNodes, numRegions, numRegionsPerServer, replication, numTables);
+    testWithCluster(serverMap, null, assertFullyBalanced, assertFullyBalancedForReplicas);
+  }
+
+  protected Map<ServerName, List<HRegionInfo>> createServerMap(int numNodes,
+      int numRegions,
+      int numRegionsPerServer,
+      int replication,
+      int numTables) {
+    //construct a cluster of numNodes, having  a total of numRegions. Each RS will hold
+    //numRegionsPerServer many regions except for the last one, which will host all the
+    //remaining regions
+    int[] cluster = new int[numNodes];
+    for (int i =0; i < numNodes; i++) {
+      cluster[i] = numRegionsPerServer;
+    }
+    cluster[cluster.length - 1] = numRegions - ((cluster.length - 1) * numRegionsPerServer);
+    Map<ServerName, List<HRegionInfo>> clusterState = mockClusterServers(cluster, numTables);
+    if (replication > 0) {
+      // replicate the regions to the same servers
+      for (List<HRegionInfo> regions : clusterState.values()) {
+        int length = regions.size();
+        for (int i = 0; i < length; i++) {
+          for (int r = 1; r < replication ; r++) {
+            regions.add(RegionReplicaUtil.getRegionInfoForReplica(regions.get(i), r));
+          }
+        }
+      }
+    }
+
+    return clusterState;
+  }
+
+  protected void testWithCluster(Map<ServerName, List<HRegionInfo>> serverMap,
+      RackManager rackManager, boolean assertFullyBalanced, boolean assertFullyBalancedForReplicas) {
+    List<ServerAndLoad> list = convertToList(serverMap);
+    LOG.info("Mock Cluster : " + printMock(list) + " " + printStats(list));
+
+    loadBalancer.setRackManager(rackManager);
+    // Run the balancer.
+    List<RegionPlan> plans = loadBalancer.balanceCluster(serverMap);
+    assertNotNull(plans);
+
+    // Check to see that this actually got to a stable place.
+    if (assertFullyBalanced || assertFullyBalancedForReplicas) {
+      // Apply the plan to the mock cluster.
+      List<ServerAndLoad> balancedCluster = reconcile(list, plans, serverMap);
+
+      // Print out the cluster loads to make debugging easier.
+      LOG.info("Mock Balance : " + printMock(balancedCluster));
+
+      if (assertFullyBalanced) {
+        assertClusterAsBalanced(balancedCluster);
+        List<RegionPlan> secondPlans =  loadBalancer.balanceCluster(serverMap);
+        assertNull(secondPlans);
+      }
+
+      if (assertFullyBalancedForReplicas) {
+        assertRegionReplicaPlacement(serverMap, rackManager);
+      }
     }
   }
 
