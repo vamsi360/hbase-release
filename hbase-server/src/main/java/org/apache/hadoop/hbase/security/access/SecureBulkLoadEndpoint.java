@@ -50,6 +50,7 @@ import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
+import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.BulkLoadHFileRequest.FamilyPath;
 import org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos.CleanupBulkLoadRequest;
 import org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos.CleanupBulkLoadResponse;
 import org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos.PrepareBulkLoadRequest;
@@ -57,6 +58,10 @@ import org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos.PrepareBu
 import org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos.SecureBulkLoadHFilesRequest;
 import org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos.SecureBulkLoadHFilesResponse;
 import org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos.SecureBulkLoadService;
+import org.apache.hadoop.hbase.quotas.ActivePolicyEnforcement;
+import org.apache.hadoop.hbase.quotas.QuotaUtil;
+import org.apache.hadoop.hbase.quotas.SpaceLimitingException;
+import org.apache.hadoop.hbase.quotas.SpaceViolationPolicyEnforcement;
 import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.regionserver.Region.BulkLoadListener;
 import org.apache.hadoop.hbase.security.SecureBulkLoadUtil;
@@ -263,6 +268,29 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
         return;
       }
     }
+
+    // Ensure that the files would not exceed the space quota.
+    if (QuotaUtil.isQuotaEnabled(conf)) {
+      ActivePolicyEnforcement activeSpaceQuotas = env.getRegionServerServices()
+          .getRegionServerSpaceQuotaManager().getActiveEnforcements();
+      SpaceViolationPolicyEnforcement enforcement = activeSpaceQuotas.getPolicyEnforcement(region);
+      if (null != enforcement && enforcement.shouldCheckBulkLoads()) {
+        // Bulk loads must still be atomic. We must enact all or none.
+        List<String> filePaths = new ArrayList<>(request.getFamilyPathCount());
+        for (FamilyPath familyPath : request.getFamilyPathList()) {
+          filePaths.add(familyPath.getPath());
+        }
+        try {
+          // Check if the batch of files exceeds the current quota
+          enforcement.checkBulkLoad(env.getRegionServerServices().getFileSystem(), filePaths);
+        } catch (SpaceLimitingException e) {
+          ResponseConverter.setControllerException(controller, e);
+          done.run(SecureBulkLoadHFilesResponse.newBuilder().setLoaded(false).build());
+          return;
+        }
+      }
+    }
+
     boolean loaded = false;
     Map<byte[], List<Path>> map = null;
     if (!bypass) {
