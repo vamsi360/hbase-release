@@ -290,7 +290,11 @@ public final class BackupCommands {
       try (final Connection conn = ConnectionFactory.createConnection(conf);
           final BackupAdmin admin = conn.getAdmin().getBackupAdmin();) {
         BackupInfo info = admin.getBackupInfo(backupId);
-        System.out.println(info.getShortDescription());
+        if (info != null) {
+          System.out.println(info.getShortDescription());
+        } else {
+          System.out.println("ERROR: "+ backupId +" not found");
+        }
       }
     }
   }
