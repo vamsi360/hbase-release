@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.Waiter;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Connection;
@@ -52,6 +53,8 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RpcRetryingCallerFactory;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
+import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.quotas.policies.BulkLoadCheckingViolationPolicyEnforcement;
@@ -87,6 +90,11 @@ public class TestSpaceQuotas {
   @BeforeClass
   public static void setUp() throws Exception {
     Configuration conf = TEST_UTIL.getConfiguration();
+    // Hack to work around HBASE-17534
+    conf.setInt("hbase.client.retries.number", 5);
+    conf.set(
+        CoprocessorHost.REGION_COPROCESSOR_CONF_KEY,
+        "org.apache.hadoop.hbase.security.access.SecureBulkLoadEndpoint");
     // Increase the frequency of some of the chores for responsiveness of the test
     conf.setInt(FileSystemUtilizationChore.FS_UTILIZATION_CHORE_DELAY_KEY, 1000);
     conf.setInt(FileSystemUtilizationChore.FS_UTILIZATION_CHORE_PERIOD_KEY, 1000);
@@ -255,7 +263,10 @@ public class TestSpaceQuotas {
     TableName tableName = writeUntilViolationAndVerifyViolation(SpaceViolationPolicy.NO_WRITES, p);
 
     // The table is now in violation. Try to do a bulk load
-    RegionServerCallable<byte[]> callable = generateFileToLoad(tableName, 1, 50);
+    FileSystem fs = TEST_UTIL.getTestFileSystem();
+    Path baseDir = new Path(fs.getHomeDirectory(), testName.getMethodName() + "_files");
+    fs.mkdirs(baseDir);
+    RegionServerCallable<byte[]> callable = generateFileToLoad(tableName, 1, 50, baseDir);
     try {
       RpcRetryingCallerFactory.instantiate(TEST_UTIL.getConfiguration(), null).<byte[]> newCaller()
           .callWithRetries(callable, Integer.MAX_VALUE);
@@ -300,10 +311,11 @@ public class TestSpaceQuotas {
     assertTrue("Expected to find Noop policy, but got " + enforcement.getClass().getSimpleName(), enforcement instanceof BulkLoadCheckingViolationPolicyEnforcement);
 
     // Should generate two files, each of which is over 25KB each
-    RegionServerCallable<byte[]> callable = generateFileToLoad(tn, 2, 500);
     FileSystem fs = TEST_UTIL.getTestFileSystem();
-    FileStatus[] files = fs.listStatus(
-        new Path(fs.getHomeDirectory(), testName.getMethodName() + "_files"));
+    Path baseDir = new Path(fs.getHomeDirectory(), testName.getMethodName() + "_files");
+    fs.mkdirs(baseDir);
+    RegionServerCallable<byte[]> callable = generateFileToLoad(tn, 2, 500, baseDir);
+    FileStatus[] files = fs.listStatus(baseDir);
     for (FileStatus file : files) {
       assertTrue(
           "Expected the file, " + file.getPath() + ",  length to be larger than 25KB, but was " 
@@ -355,6 +367,71 @@ public class TestSpaceQuotas {
     p.addColumn(
         Bytes.toBytes(SpaceQuotaHelperForTests.F1), Bytes.toBytes("to"), Bytes.toBytes("reject"));
     verifyViolation(policy, tn, p);
+  }
+
+  @Test
+  public void testSecureBulkLoads() throws Exception {
+    final TableName tn = helper.createTableWithRegions(10);
+
+    // Set a very small limit
+    final long sizeLimit = 1L * SpaceQuotaHelperForTests.ONE_KILOBYTE;
+    QuotaSettings settings = QuotaSettingsFactory.limitTableSpace(
+        tn, sizeLimit, SpaceViolationPolicy.NO_INSERTS);
+    TEST_UTIL.getHBaseAdmin().setQuota(settings);
+
+    // Wait for the RS to acknowledge this small limit
+    HRegionServer rs = TEST_UTIL.getMiniHBaseCluster().getRegionServer(0);
+    final RegionServerSpaceQuotaManager spaceQuotaManager = rs.getRegionServerSpaceQuotaManager();
+    TEST_UTIL.waitFor(60000, 3000, new Waiter.Predicate<Exception>() {
+      @Override
+      public boolean evaluate() throws Exception {
+        Map<TableName,SpaceQuotaSnapshot> snapshots = spaceQuotaManager.copyQuotaSnapshots();
+        SpaceQuotaSnapshot snapshot = snapshots.get(tn);
+        LOG.debug("Snapshots: " + snapshots);
+        return null != snapshot && snapshot.getLimit() > 0;
+      }
+    });
+    // Our quota limit should be reflected in the latest snapshot
+    Map<TableName,SpaceQuotaSnapshot> snapshots = spaceQuotaManager.copyQuotaSnapshots();
+    SpaceQuotaSnapshot snapshot = snapshots.get(tn);
+    assertEquals(0L, snapshot.getUsage());
+    assertEquals(sizeLimit, snapshot.getLimit());
+
+    // Generate a file that is ~25KB
+    FileSystem fs = TEST_UTIL.getTestFileSystem();
+    Path baseDir = new Path(fs.getHomeDirectory(), testName.getMethodName() + "_files");
+    fs.mkdirs(baseDir);
+    Path hfilesDir = new Path(baseDir, SpaceQuotaHelperForTests.F1);
+    fs.mkdirs(hfilesDir);
+    List<Pair<byte[], String>> filesToLoad = createFiles(tn, 1, 500, hfilesDir);
+    // Verify that they are the size we expecte
+    for (Pair<byte[], String> pair : filesToLoad) {
+      String file = pair.getSecond();
+      FileStatus[] statuses = fs.listStatus(new Path(file));
+      assertEquals(1, statuses.length);
+      FileStatus status = statuses[0];
+      assertTrue(
+          "Expected the file, " + file + ",  length to be larger than 25KB, but was " 
+              + status.getLen(),
+              status.getLen() > 25 * SpaceQuotaHelperForTests.ONE_KILOBYTE);
+      LOG.debug(file + " -> " + status.getLen() +"B");
+    }
+
+    // Use LoadIncrementalHFiles to load the file which should be rejected since
+    // it would violate the quota.
+    LoadIncrementalHFiles loader = new LoadIncrementalHFiles(TEST_UTIL.getConfiguration());
+    try {
+      loader.run(new String[] {new Path(
+          fs.getHomeDirectory(), testName.getMethodName() + "_files").toString(), tn.toString()});
+      fail("Expected the bulk load to be rejected, but it was not");
+    } catch (Exception e) {
+      LOG.debug("Caught expected exception", e);
+      String stringifiedException = StringUtils.stringifyException(e);
+      assertTrue(
+          "Expected exception message to contain the SpaceLimitingException class name: "
+              + stringifiedException,
+          stringifiedException.contains(SpaceLimitingException.class.getName()));
+    }
   }
 
   private Map<HRegionInfo,Long> getReportedSizesForTable(TableName tn) {
@@ -430,10 +507,9 @@ public class TestSpaceQuotas {
     assertTrue("Expected to see an exception writing data to a table exceeding its quota", sawError);
   }
 
-  private RegionServerCallable<byte[]> generateFileToLoad(TableName tn, int numFiles, int numRowsPerFile) throws Exception {
-    final Connection conn = TEST_UTIL.getConnection();
+  private List<Pair<byte[], String>> createFiles(
+      TableName tn, int numFiles, int numRowsPerFile, Path baseDir) throws Exception {
     FileSystem fs = TEST_UTIL.getTestFileSystem();
-    Path baseDir = new Path(fs.getHomeDirectory(), testName.getMethodName() + "_files");
     fs.mkdirs(baseDir);
     final List<Pair<byte[], String>> famPaths = new ArrayList<Pair<byte[], String>>();
     for (int i = 1; i <= numFiles; i++) {
@@ -443,7 +519,13 @@ public class TestSpaceQuotas {
           Bytes.toBytes("reject"), numRowsPerFile);
       famPaths.add(new Pair<>(Bytes.toBytes(SpaceQuotaHelperForTests.F1), hfile.toString()));
     }
-    
+    return famPaths;
+  }
+
+  private RegionServerCallable<byte[]> generateFileToLoad(
+      TableName tn, int numFiles, int numRowsPerFile, Path baseDir) throws Exception {
+    final Connection conn = TEST_UTIL.getConnection();
+    final List<Pair<byte[], String>> famPaths = createFiles(tn, numFiles, numRowsPerFile, baseDir);
     // bulk load HFiles
     return new RegionServerCallable<byte[]>(conn, tn, Bytes.toBytes("row")) {
       @Override
