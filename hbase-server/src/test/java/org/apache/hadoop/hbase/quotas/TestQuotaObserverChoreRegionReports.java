@@ -17,6 +17,7 @@
 package org.apache.hadoop.hbase.quotas;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -188,6 +189,13 @@ public class TestQuotaObserverChoreRegionReports {
         return !snapshot.getQuotaStatus().isInViolation();
       }
     });
+
+    // The QuotaObserverChore's memory should also show it not in violation.
+    final HMaster master = TEST_UTIL.getMiniHBaseCluster().getMaster();
+    QuotaSnapshotStore<TableName> tableStore =
+        master.getQuotaObserverChore().getTableViolationStore();
+    SpaceQuotaSnapshot snapshot = tableStore.getCurrentState(tn);
+    assertFalse("Quota should not be in violation", snapshot.getQuotaStatus().isInViolation());
   }
 
   private SpaceQuotaSnapshot getSnapshotForTable(

@@ -166,6 +166,8 @@ public class QuotaObserverChore extends ScheduledChore {
             SpaceQuotaStatus.notInViolation(), currentSnapshot.getUsage(),
             currentSnapshot.getLimit());
         this.snapshotNotifier.transitionTable(tableInLimbo, targetSnapshot);
+        // Update it in the Table QuotaStore so that memory is consistent with no violation.
+        tableViolationStore.setCurrentState(tableInLimbo, targetSnapshot);
       }
     }
 
