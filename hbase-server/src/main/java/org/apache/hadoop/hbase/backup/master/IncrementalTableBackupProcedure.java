@@ -266,7 +266,7 @@ public class IncrementalTableBackupProcedure
     for (int i = 0; i < len-1; i++) {
       sb.append(tableList.get(i)).append(",");
     }
-    sb.append(tableList.get(len-1));
+    if (len >= 1) sb.append(tableList.get(len-1));
     sb.append(")");
   }
 
