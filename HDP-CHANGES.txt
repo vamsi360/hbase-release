@@ -3,6 +3,7 @@ HDP-2.5 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.2
 
+HBASE-16621 HBCK should have -fixHFileLinks
 HBASE-16284 Unauthorized client can shutdown the cluster
 HBASE-16604 Scanner retries on IOException can cause the scans to miss data
 HBASE-16824 Writer.flush() can be called on already closed streams in WAL roll
