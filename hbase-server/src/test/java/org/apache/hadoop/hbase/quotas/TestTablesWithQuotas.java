@@ -96,7 +96,7 @@ public class TestTablesWithQuotas {
     final Map<TableName,Integer> reportedRegions = new HashMap<>();
     final Map<TableName,Integer> actualRegions = new HashMap<>();
     final Configuration conf = HBaseConfiguration.create();
-    conf.setDouble(QuotaObserverChore.VIOLATION_OBSERVER_CHORE_REPORT_PERCENT_KEY, 0.95);
+    conf.setDouble(QuotaObserverChore.QUOTA_OBSERVER_CHORE_REPORT_PERCENT_KEY, 0.95);
 
     TableName tooFewRegionsTable = TableName.valueOf("tn1");
     TableName sufficientRegionsTable = TableName.valueOf("tn2");

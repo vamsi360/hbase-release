@@ -51,21 +51,21 @@ import com.google.common.collect.Multimap;
  */
 public class QuotaObserverChore extends ScheduledChore {
   private static final Log LOG = LogFactory.getLog(QuotaObserverChore.class);
-  static final String VIOLATION_OBSERVER_CHORE_PERIOD_KEY =
-      "hbase.master.quotas.violation.observer.chore.period";
-  static final int VIOLATION_OBSERVER_CHORE_PERIOD_DEFAULT = 1000 * 60 * 1; // 1 minute in millis
+  static final String QUOTA_OBSERVER_CHORE_PERIOD_KEY =
+      "hbase.master.quotas.observer.chore.period";
+  static final int QUOTA_OBSERVER_CHORE_PERIOD_DEFAULT = 1000 * 60 * 1; // 1 minutes in millis
 
-  static final String VIOLATION_OBSERVER_CHORE_DELAY_KEY =
-      "hbase.master.quotas.violation.observer.chore.delay";
-  static final long VIOLATION_OBSERVER_CHORE_DELAY_DEFAULT = 1000L * 15L; // 15 seconds
+  static final String QUOTA_OBSERVER_CHORE_DELAY_KEY =
+      "hbase.master.quotas.observer.chore.delay";
+  static final long QUOTA_OBSERVER_CHORE_DELAY_DEFAULT = 1000L * 15L; // 15 seconds in millis
 
-  static final String VIOLATION_OBSERVER_CHORE_TIMEUNIT_KEY =
-      "hbase.master.quotas.violation.observer.chore.timeunit";
-  static final String VIOLATION_OBSERVER_CHORE_TIMEUNIT_DEFAULT = TimeUnit.MILLISECONDS.name();
+  static final String QUOTA_OBSERVER_CHORE_TIMEUNIT_KEY =
+      "hbase.master.quotas.observer.chore.timeunit";
+  static final String QUOTA_OBSERVER_CHORE_TIMEUNIT_DEFAULT = TimeUnit.MILLISECONDS.name();
 
-  static final String VIOLATION_OBSERVER_CHORE_REPORT_PERCENT_KEY =
-      "hbase.master.quotas.violation.observer.report.percent";
-  static final double VIOLATION_OBSERVER_CHORE_REPORT_PERCENT_DEFAULT= 0.95;
+  static final String QUOTA_OBSERVER_CHORE_REPORT_PERCENT_KEY =
+      "hbase.master.quotas.observer.report.percent";
+  static final double QUOTA_OBSERVER_CHORE_REPORT_PERCENT_DEFAULT= 0.95;
 
   static final String REGION_REPORT_RETENTION_DURATION_KEY = 
       "hbase.master.quotas.region.report.retention.millis";
@@ -457,8 +457,8 @@ public class QuotaObserverChore extends ScheduledChore {
    * @return The configured chore period or the default value.
    */
   static int getPeriod(Configuration conf) {
-    return conf.getInt(VIOLATION_OBSERVER_CHORE_PERIOD_KEY,
-        VIOLATION_OBSERVER_CHORE_PERIOD_DEFAULT);
+    return conf.getInt(QUOTA_OBSERVER_CHORE_PERIOD_KEY,
+        QUOTA_OBSERVER_CHORE_PERIOD_DEFAULT);
   }
 
   /**
@@ -468,21 +468,21 @@ public class QuotaObserverChore extends ScheduledChore {
    * @return The configured chore initial delay or the default value.
    */
   static long getInitialDelay(Configuration conf) {
-    return conf.getLong(VIOLATION_OBSERVER_CHORE_DELAY_KEY,
-        VIOLATION_OBSERVER_CHORE_DELAY_DEFAULT);
+    return conf.getLong(QUOTA_OBSERVER_CHORE_DELAY_KEY,
+        QUOTA_OBSERVER_CHORE_DELAY_DEFAULT);
   }
 
   /**
    * Extracts the time unit for the chore period and initial delay from the configuration. The
-   * configuration value for {@link #VIOLATION_OBSERVER_CHORE_TIMEUNIT_KEY} must correspond to
+   * configuration value for {@link #QUOTA_OBSERVER_CHORE_TIMEUNIT_KEY} must correspond to
    * a {@link TimeUnit} value.
    *
    * @param conf The configuration object.
    * @return The configured time unit for the chore period and initial delay or the default value.
    */
   static TimeUnit getTimeUnit(Configuration conf) {
-    return TimeUnit.valueOf(conf.get(VIOLATION_OBSERVER_CHORE_TIMEUNIT_KEY,
-        VIOLATION_OBSERVER_CHORE_TIMEUNIT_DEFAULT));
+    return TimeUnit.valueOf(conf.get(QUOTA_OBSERVER_CHORE_TIMEUNIT_KEY,
+        QUOTA_OBSERVER_CHORE_TIMEUNIT_DEFAULT));
   }
 
   /**
@@ -493,8 +493,8 @@ public class QuotaObserverChore extends ScheduledChore {
    * @return The percent of regions reported to use.
    */
   static Double getRegionReportPercent(Configuration conf) {
-    return conf.getDouble(VIOLATION_OBSERVER_CHORE_REPORT_PERCENT_KEY,
-        VIOLATION_OBSERVER_CHORE_REPORT_PERCENT_DEFAULT);
+    return conf.getDouble(QUOTA_OBSERVER_CHORE_REPORT_PERCENT_KEY,
+        QUOTA_OBSERVER_CHORE_REPORT_PERCENT_DEFAULT);
   }
 
   /**
