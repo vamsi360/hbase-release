@@ -118,7 +118,7 @@ public class TestMasterFailoverWithProcedures {
     Mockito.doReturn(true).when(backupMaster3).isActiveMaster();
     final WALProcedureStore backupStore3 = new WALProcedureStore(firstMaster.getConfiguration(),
         firstMaster.getMasterFileSystem().getFileSystem(),
-        ((WALProcedureStore)masterStore).getLogDir(),
+        ((WALProcedureStore)masterStore).getWALDir(),
         new MasterProcedureEnv.WALStoreLeaseRecovery(backupMaster3));
     // Abort Latch for the test store
     final CountDownLatch backupStore3Abort = new CountDownLatch(1);
@@ -198,7 +198,7 @@ public class TestMasterFailoverWithProcedures {
     Mockito.doReturn(true).when(backupMaster3).isActiveMaster();
     final WALProcedureStore procStore2 = new WALProcedureStore(firstMaster.getConfiguration(),
         firstMaster.getMasterFileSystem().getFileSystem(),
-        ((WALProcedureStore)procStore).getLogDir(),
+        ((WALProcedureStore)procStore).getWALDir(),
         new MasterProcedureEnv.WALStoreLeaseRecovery(backupMaster3));
 
     // start a second store which should fence the first one out

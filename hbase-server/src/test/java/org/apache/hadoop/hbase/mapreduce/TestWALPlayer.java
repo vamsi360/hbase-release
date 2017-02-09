@@ -26,10 +26,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -48,6 +50,7 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.WALPlayer.WALKeyValueMapper;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.wal.WALKey;
+import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.LauncherSecurityManager;
@@ -59,6 +62,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.mortbay.log.Log;
 
 /**
  * Basic test for the WALPlayer M/R tool
@@ -67,10 +71,20 @@ import org.mockito.stubbing.Answer;
 public class TestWALPlayer {
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   private static MiniHBaseCluster cluster;
+  private static Path rootDir;
+  private static Path walRootDir;
+  private static FileSystem fs;
+  private static FileSystem walFs;
+  private static Configuration conf;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     cluster = TEST_UTIL.startMiniCluster();
+    conf= TEST_UTIL.getConfiguration();
+    rootDir = TEST_UTIL.createRootDir();
+    walRootDir = TEST_UTIL.createWALRootDir();
+    fs = FSUtils.getRootDirFileSystem(conf);
+    walFs = FSUtils.getWALFileSystem(conf);
     TEST_UTIL.startMiniMapReduceCluster();
   }
 
@@ -78,6 +92,16 @@ public class TestWALPlayer {
   public static void afterClass() throws Exception {
     TEST_UTIL.shutdownMiniMapReduceCluster();
     TEST_UTIL.shutdownMiniCluster();
+    try {
+      fs.delete(rootDir, true);
+    } catch (IOException ioe) {
+      Log.debug("Got " + ioe.getMessage() + " deleting " + rootDir);
+    }
+    try {
+      walFs.delete(walRootDir, true);
+    } catch (IOException ioe) {
+      Log.debug("Got " + ioe.getMessage() + " deleting " + walRootDir);
+    }
   }
 
   /**
@@ -109,7 +133,7 @@ public class TestWALPlayer {
     WAL log = cluster.getRegionServer(0).getWAL(null);
     log.rollWriter();
     String walInputDir = new Path(cluster.getMaster().getMasterFileSystem()
-        .getRootDir(), HConstants.HREGION_LOGDIR_NAME).toString();
+        .getWALRootDir(), HConstants.HREGION_LOGDIR_NAME).toString();
 
     Configuration configuration= TEST_UTIL.getConfiguration();
     WALPlayer player = new WALPlayer(configuration);

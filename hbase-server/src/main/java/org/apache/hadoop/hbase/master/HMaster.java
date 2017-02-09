@@ -1199,7 +1199,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
    int cleanerInterval = conf.getInt("hbase.master.cleaner.interval", 60 * 1000);
    this.logCleaner =
       new LogCleaner(cleanerInterval,
-         this, conf, getMasterFileSystem().getFileSystem(),
+         this, conf, getMasterFileSystem().getOldLogDir().getFileSystem(conf),
          getMasterFileSystem().getOldLogDir());
     getChoreService().scheduleChore(logCleaner);
 
@@ -1263,7 +1263,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
 
   private void startProcedureExecutor() throws IOException {
     final MasterProcedureEnv procEnv = new MasterProcedureEnv(this);
-    final Path logDir = new Path(fileSystemManager.getRootDir(),
+    final Path walDir = new Path(FSUtils.getWALRootDir(this.conf),
         MasterProcedureConstants.MASTER_PROCEDURE_LOGDIR);
 
     if (this.procedureConf == ProcedureConf.PROCEDURE_FULLY_DISABLED) {
@@ -1271,7 +1271,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
       // is enabled later.
       // Note: hbck might needed for uncompleted procedures.
       try {
-        fs.delete(logDir, true);
+        fs.delete(walDir, true);
         LOG.warn("Procedure executor is disabled from configuartion. " +
             "All the state logs from procedure store were removed." +
             "You should check the cluster state using HBCK.");
@@ -1283,7 +1283,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
       return;
     }
 
-    procedureStore = new WALProcedureStore(conf, fileSystemManager.getFileSystem(), logDir,
+    procedureStore = new WALProcedureStore(conf, walDir.getFileSystem(conf), walDir,
         new MasterProcedureEnv.WALStoreLeaseRecovery(this));
 
     procedureStore.registerListener(new MasterProcedureEnv.MasterProcedureStoreListener(this));

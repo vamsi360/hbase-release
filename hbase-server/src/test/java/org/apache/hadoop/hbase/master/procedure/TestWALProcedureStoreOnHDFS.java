@@ -107,7 +107,7 @@ public class TestWALProcedureStoreOnHDFS {
   @After
   public void tearDown() throws Exception {
     store.stop(false);
-    UTIL.getDFSCluster().getFileSystem().delete(store.getLogDir(), true);
+    UTIL.getDFSCluster().getFileSystem().delete(store.getWALDir(), true);
 
     try {
       UTIL.shutdownMiniCluster();
