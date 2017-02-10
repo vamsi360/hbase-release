@@ -67,6 +67,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Query;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.coprocessor.BaseMasterAndRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.BulkLoadObserver;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorException;
@@ -259,10 +260,12 @@ public class AccessController extends BaseMasterAndRegionObserver
     Configuration conf = regionEnv.getConfiguration();
     for (byte[] entry: entries) {
       try {
-        ListMultimap<String,TablePermission> perms =
-          AccessControlLists.getPermissions(conf, entry);
-        byte[] serialized = AccessControlLists.writePermissionsAsBytes(perms, conf);
-        zkw.writeToZookeeper(entry, serialized);
+        try (Table t = regionEnv.getTable(AccessControlLists.ACL_TABLE_NAME)) {
+          ListMultimap<String,TablePermission> perms =
+              AccessControlLists.getPermissions(conf, entry, t);
+          byte[] serialized = AccessControlLists.writePermissionsAsBytes(perms, conf);
+          zkw.writeToZookeeper(entry, serialized);
+        }
       } catch (IOException ex) {
         LOG.error("Failed updating permissions mirror for '" + Bytes.toString(entry) + "'",
             ex);
@@ -1032,7 +1035,7 @@ public class AccessController extends BaseMasterAndRegionObserver
           @Override
           public Void run() throws Exception {
             AccessControlLists.addUserPermission(c.getEnvironment().getConfiguration(),
-                userperm);
+                userperm, c.getEnvironment().getTable(AccessControlLists.ACL_TABLE_NAME));
             return null;
           }
         });
@@ -1047,13 +1050,14 @@ public class AccessController extends BaseMasterAndRegionObserver
   }
 
   @Override
-  public void postDeleteTable(ObserverContext<MasterCoprocessorEnvironment> c,
+  public void postDeleteTable(final ObserverContext<MasterCoprocessorEnvironment> c,
       final TableName tableName) throws IOException {
     final Configuration conf = c.getEnvironment().getConfiguration();
     User.runAsLoginUser(new PrivilegedExceptionAction<Void>() {
       @Override
       public Void run() throws Exception {
-        AccessControlLists.removeTablePermissions(conf, tableName);
+        AccessControlLists.removeTablePermissions(conf, tableName,
+            c.getEnvironment().getTable(AccessControlLists.ACL_TABLE_NAME));
         return null;
       }
     });
@@ -1079,7 +1083,7 @@ public class AccessController extends BaseMasterAndRegionObserver
   }
 
   @Override
-  public void postTruncateTable(ObserverContext<MasterCoprocessorEnvironment> ctx,
+  public void postTruncateTable(final ObserverContext<MasterCoprocessorEnvironment> ctx,
       final TableName tableName) throws IOException {
     final Configuration conf = ctx.getEnvironment().getConfiguration();
     User.runAsLoginUser(new PrivilegedExceptionAction<Void>() {
@@ -1088,7 +1092,8 @@ public class AccessController extends BaseMasterAndRegionObserver
         List<UserPermission> perms = tableAcls.get(tableName);
         if (perms != null) {
           for (UserPermission perm : perms) {
-            AccessControlLists.addUserPermission(conf, perm);
+            AccessControlLists.addUserPermission(conf, perm,
+                ctx.getEnvironment().getTable(AccessControlLists.ACL_TABLE_NAME));
           }
         }
         tableAcls.remove(tableName);
@@ -1104,7 +1109,7 @@ public class AccessController extends BaseMasterAndRegionObserver
   }
 
   @Override
-  public void postModifyTable(ObserverContext<MasterCoprocessorEnvironment> c,
+  public void postModifyTable(final ObserverContext<MasterCoprocessorEnvironment> c,
       TableName tableName, final HTableDescriptor htd) throws IOException {
     final Configuration conf = c.getEnvironment().getConfiguration();
     // default the table owner to current user, if not specified.
@@ -1115,7 +1120,8 @@ public class AccessController extends BaseMasterAndRegionObserver
       public Void run() throws Exception {
         UserPermission userperm = new UserPermission(Bytes.toBytes(owner),
           htd.getTableName(), null, Action.values());
-        AccessControlLists.addUserPermission(conf, userperm);
+        AccessControlLists.addUserPermission(conf, userperm,
+            c.getEnvironment().getTable(AccessControlLists.ACL_TABLE_NAME));
         return null;
       }
     });
@@ -1142,13 +1148,14 @@ public class AccessController extends BaseMasterAndRegionObserver
   }
 
   @Override
-  public void postDeleteColumn(ObserverContext<MasterCoprocessorEnvironment> c,
+  public void postDeleteColumn(final ObserverContext<MasterCoprocessorEnvironment> c,
       final TableName tableName, final byte[] col) throws IOException {
     final Configuration conf = c.getEnvironment().getConfiguration();
     User.runAsLoginUser(new PrivilegedExceptionAction<Void>() {
       @Override
       public Void run() throws Exception {
-        AccessControlLists.removeTablePermissions(conf, tableName, col);
+        AccessControlLists.removeTablePermissions(conf, tableName, col,
+            c.getEnvironment().getTable(AccessControlLists.ACL_TABLE_NAME));
         return null;
       }
     });
@@ -1352,13 +1359,14 @@ public class AccessController extends BaseMasterAndRegionObserver
   }
 
   @Override
-  public void postDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
+  public void postDeleteNamespace(final ObserverContext<MasterCoprocessorEnvironment> ctx,
       final String namespace) throws IOException {
     final Configuration conf = ctx.getEnvironment().getConfiguration();
     User.runAsLoginUser(new PrivilegedExceptionAction<Void>() {
       @Override
       public Void run() throws Exception {
-        AccessControlLists.removeNamespacePermissions(conf, namespace);
+        AccessControlLists.removeNamespacePermissions(conf, namespace,
+            ctx.getEnvironment().getTable(AccessControlLists.ACL_TABLE_NAME));
         return null;
       }
     });
@@ -2224,7 +2232,8 @@ public class AccessController extends BaseMasterAndRegionObserver
         User.runAsLoginUser(new PrivilegedExceptionAction<Void>() {
           @Override
           public Void run() throws Exception {
-            AccessControlLists.addUserPermission(regionEnv.getConfiguration(), perm);
+            AccessControlLists.addUserPermission(regionEnv.getConfiguration(), perm,
+                regionEnv.getTable(AccessControlLists.ACL_TABLE_NAME));
             return null;
           }
         });
@@ -2275,7 +2284,7 @@ public class AccessController extends BaseMasterAndRegionObserver
         User.runAsLoginUser(new PrivilegedExceptionAction<Void>() {
           @Override
           public Void run() throws Exception {
-            AccessControlLists.removeUserPermission(regionEnv.getConfiguration(), perm);
+            AccessControlLists.removeUserPermission(regionEnv.getConfiguration(), perm, null);
             return null;
           }
         });
