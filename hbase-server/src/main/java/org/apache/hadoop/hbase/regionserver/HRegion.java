@@ -1144,7 +1144,8 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
     long size = this.memstoreSize.addAndGet(memStoreSize);
     // This is extremely bad if we make memstoreSize negative. Log as much info on the offending
     // caller as possible. (memStoreSize might be a negative value already -- freeing memory)
-    if (size < 0) {
+    // Only perform this call for the primary replica (not the secondaries)
+    if (HRegionInfo.DEFAULT_REPLICA_ID == this.getRegionInfo().getReplicaId() && size < 0) {
       LOG.error("Asked to modify this region's (" + this.toString()
       + ") memstoreSize to a negative value which is incorrect. Current memstoreSize="
       + (size-memStoreSize) + ", delta=" + memStoreSize, new Exception());
