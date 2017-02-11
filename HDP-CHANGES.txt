@@ -3,6 +3,7 @@ HDP-2.5 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.2
 
+HBASE-16430 Fix RegionServer Group's bug when moving multiple tables
 HBASE-14694 Scan copy constructor doesn't handle allowPartialResults
 HBASE-16621 HBCK should have -fixHFileLinks
 HBASE-16284 Unauthorized client can shutdown the cluster
