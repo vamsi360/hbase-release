@@ -807,8 +807,9 @@ public class RestoreSnapshotHelper {
       Path restoreDir, String snapshotName) throws IOException {
     // ensure that restore dir is not under root dir
     if (!restoreDir.getFileSystem(conf).getUri().equals(rootDir.getFileSystem(conf).getUri())) {
-      throw new IllegalArgumentException("Filesystems for restore directory and HBase root directory " +
-          "should be the same");
+      throw new IllegalArgumentException("Filesystems for restore directory (" +
+          restoreDir.getFileSystem(conf).getUri() + ") and HBase root directory (" +
+          rootDir.getFileSystem(conf).getUri() + ") should be the same");
     }
     if (restoreDir.toUri().getPath().startsWith(rootDir.toUri().getPath())) {
       throw new IllegalArgumentException("Restore directory cannot be a sub directory of HBase " +
