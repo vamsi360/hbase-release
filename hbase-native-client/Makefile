@@ -56,7 +56,7 @@ ARC_RELEASE := $(RELEASE_PATH)/libHbaseClient.a
 LIB_DEBUG := $(DEBUG_PATH)/libHbaseClient_d.so
 ARC_DEBUG := $(DEBUG_PATH)/libHbaseClient_d.a
 
-build: checkdirs protos $(LIB_DEBUG) $(LIB_RELEASE) $(ARC_DEBUG) $(ARC_RELEASE)
+build: checkdirs copyfiles protos $(LIB_DEBUG) $(LIB_RELEASE) $(ARC_DEBUG) $(ARC_RELEASE)
 
 vpath %.cc $(SRC_DIR)
 
@@ -81,7 +81,6 @@ endef
 checkdirs: $(DEBUG_BUILD_DIR) $(RELEASE_BUILD_DIR) $(PROTO_CXX_DIR)
 
 copyfiles:
-	@bin/copy-protobuf.sh
 	@bin/copy-version.sh
 
 $(PROTO_CXX_DIR)/%.pb.cc $(PROTO_CXX_DIR)/%.pb.h: $(PROTO_SRC_DIR)/%.proto
