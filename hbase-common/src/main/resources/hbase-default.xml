@@ -620,6 +620,18 @@ possible configurations would overwhelm and obscure the important.
     hbase.server.thread.wakefrequency milliseconds.</description>
   </property>
   <property>
+    <name>hbase.regionserver.executor.openregion.threads</name>
+    <value>20</value>
+  </property>
+  <property>
+    <name>hbase.master.namespace.init.timeout</name>
+    <value>2400000</value>
+  </property>
+  <property>
+    <name>hbase.master.wait.on.regionservers.timeout</name>
+    <value>30000</value>
+  </property>
+  <property>
     <name>hbase.hregion.memstore.flush.size</name>
     <value>134217728</value>
     <description>
