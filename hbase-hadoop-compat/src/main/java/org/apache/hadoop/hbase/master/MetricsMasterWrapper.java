@@ -18,6 +18,9 @@
 
 package org.apache.hadoop.hbase.master;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 /**
  * This is the interface that will expose information to hadoop1/hadoop2 implementations of the
  * MetricsMasterSource.
@@ -112,4 +115,14 @@ public interface MetricsMasterWrapper {
    */
   long getNumWALFiles();
 
+
+  /**
+   * Gets the space usage and limit for each table.
+   */
+  Map<String,Entry<Long,Long>> getTableSpaceUtilization();
+
+  /**
+   * Gets the space usage and limit for each namespace.
+   */
+  Map<String,Entry<Long,Long>> getNamespaceSpaceUtilization();
 }

@@ -120,7 +120,7 @@ public class TestQuotaObserverChoreWithMiniCluster {
 
     master = TEST_UTIL.getMiniHBaseCluster().getMaster();
     snapshotNotifier =
-        (SpaceQuotaSnapshotNotifierForTest) master.getSpaceQuotaViolationNotifier();
+        (SpaceQuotaSnapshotNotifierForTest) master.getSpaceQuotaSnapshotNotifier();
     snapshotNotifier.clearSnapshots();
     chore = master.getQuotaObserverChore();
     helper = new SpaceQuotaHelperForTests(TEST_UTIL, testName, COUNTER);

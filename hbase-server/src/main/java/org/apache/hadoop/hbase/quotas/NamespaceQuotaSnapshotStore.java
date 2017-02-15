@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.client.Connection;
@@ -35,9 +38,13 @@ import com.google.common.collect.Iterables;
  * {@link QuotaSnapshotStore} implementation for namespaces.
  */
 public class NamespaceQuotaSnapshotStore implements QuotaSnapshotStore<String> {
+  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+  private final ReadLock rlock = lock.readLock();
+  private final WriteLock wlock = lock.writeLock();
+
   private final Connection conn;
   private final QuotaObserverChore chore;
-  private final Map<HRegionInfo,Long> regionUsage;
+  private Map<HRegionInfo,Long> regionUsage;
 
   public NamespaceQuotaSnapshotStore(Connection conn, QuotaObserverChore chore, Map<HRegionInfo,Long> regionUsage) {
     this.conn = Objects.requireNonNull(conn);
@@ -69,30 +76,50 @@ public class NamespaceQuotaSnapshotStore implements QuotaSnapshotStore<String> {
 
   @Override
   public SpaceQuotaSnapshot getTargetState(String subject, SpaceQuota spaceQuota) {
-    final long sizeLimitInBytes = spaceQuota.getSoftLimit();
-    long sum = 0L;
-    for (Entry<HRegionInfo,Long> entry : filterBySubject(subject)) {
-      sum += entry.getValue();
+    rlock.lock();
+    try {
+      final long sizeLimitInBytes = spaceQuota.getSoftLimit();
+      long sum = 0L;
+      for (Entry<HRegionInfo,Long> entry : filterBySubject(subject)) {
+        sum += entry.getValue();
+      }
+      // Observance is defined as the size of the table being less than the limit
+      SpaceQuotaStatus status = sum <= sizeLimitInBytes ? SpaceQuotaStatus.notInViolation()
+          : new SpaceQuotaStatus(ProtobufUtil.toViolationPolicy(spaceQuota.getViolationPolicy()));
+      return new SpaceQuotaSnapshot(status, sum, sizeLimitInBytes);
+    } finally {
+      rlock.unlock();
     }
-    // Observance is defined as the size of the table being less than the limit
-    SpaceQuotaStatus status = sum <= sizeLimitInBytes ? SpaceQuotaStatus.notInViolation()
-        : new SpaceQuotaStatus(ProtobufUtil.toViolationPolicy(spaceQuota.getViolationPolicy()));
-    return new SpaceQuotaSnapshot(status, sum, sizeLimitInBytes);
   }
 
   @Override
   public Iterable<Entry<HRegionInfo,Long>> filterBySubject(final String namespace) {
-    return Iterables.filter(regionUsage.entrySet(), new Predicate<Entry<HRegionInfo,Long>>() {
-      @Override
-      public boolean apply(Entry<HRegionInfo,Long> input) {
-        return namespace.equals(input.getKey().getTable().getNamespaceAsString());
-      }
-    });
+    rlock.lock();
+    try {
+      return Iterables.filter(regionUsage.entrySet(), new Predicate<Entry<HRegionInfo,Long>>() {
+        @Override
+        public boolean apply(Entry<HRegionInfo,Long> input) {
+          return namespace.equals(input.getKey().getTable().getNamespaceAsString());
+        }
+      });
+    } finally {
+      rlock.unlock();
+    }
   }
 
   @Override
   public void setCurrentState(String namespace, SpaceQuotaSnapshot snapshot) {
     // Defer the "current state" to the chore
     this.chore.setNamespaceQuotaViolation(namespace, snapshot);
+  }
+
+  @Override
+  public void setRegionUsage(Map<HRegionInfo,Long> regionUsage) {
+    wlock.lock();
+    try {
+      this.regionUsage = Objects.requireNonNull(regionUsage);
+    } finally {
+      wlock.unlock();
+    }
   }
 }

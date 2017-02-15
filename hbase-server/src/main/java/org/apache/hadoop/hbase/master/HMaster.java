@@ -378,7 +378,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
 
   // it is assigned after 'initialized' guard set to true, so should be volatile
   private volatile MasterQuotaManager quotaManager;
-  private SpaceQuotaSnapshotNotifier spaceQuotaViolationNotifier;
+  private SpaceQuotaSnapshotNotifier spaceQuotaSnapshotNotifier;
   private QuotaObserverChore quotaObserverChore;
 
   private ProcedureExecutor<MasterProcedureEnv> procedureExecutor;
@@ -869,9 +869,12 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     configurationManager.registerObserver(this.balancer);
     initialized = true;
 
-    this.spaceQuotaViolationNotifier = createQuotaViolationNotifier();
+    status.setStatus("Starting quota manager");
     if (QuotaUtil.isQuotaEnabled(conf)) {
-      this.quotaObserverChore = new QuotaObserverChore(this);
+      // Create the quota snapshot notifier
+      spaceQuotaSnapshotNotifier = createQuotaSnapshotNotifier();
+      spaceQuotaSnapshotNotifier.initialize(this.clusterConnection);
+      this.quotaObserverChore = new QuotaObserverChore(this, getMasterMetrics());
       // Start the chore to read the region FS space reports and act on them
       getChoreService().scheduleChore(quotaObserverChore);
     }
@@ -1121,7 +1124,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
 	}
   }
 
-  SpaceQuotaSnapshotNotifier createQuotaViolationNotifier() {
+  SpaceQuotaSnapshotNotifier createQuotaSnapshotNotifier() {
     SpaceQuotaSnapshotNotifier notifier =
         SpaceQuotaSnapshotNotifierFactory.getInstance().create(getConfiguration());
     notifier.initialize(getConnection());
@@ -3358,7 +3361,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     return this.quotaObserverChore;
   }
 
-  public SpaceQuotaSnapshotNotifier getSpaceQuotaViolationNotifier() {
-    return this.spaceQuotaViolationNotifier;
+  public SpaceQuotaSnapshotNotifier getSpaceQuotaSnapshotNotifier() {
+    return this.spaceQuotaSnapshotNotifier;
   }
 }

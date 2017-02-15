@@ -143,3 +143,19 @@ message GetSpaceQuotaEnforcementsResponse {
   }
   repeated TableViolationPolicy violation_policies = 1;
 }
+
+message GetQuotaStatesRequest {
+}
+
+message GetQuotaStatesResponse {
+  message TableQuotaSnapshot {
+    optional TableName table_name = 1;
+    optional SpaceQuotaSnapshot snapshot = 2;
+  }
+  message NamespaceQuotaSnapshot {
+    optional string namespace = 1;
+    optional SpaceQuotaSnapshot snapshot = 2;
+  }
+  repeated TableQuotaSnapshot table_snapshots = 1;
+  repeated NamespaceQuotaSnapshot ns_snapshots = 2;
+}

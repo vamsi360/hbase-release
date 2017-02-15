@@ -179,6 +179,8 @@ import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.TruncateTableRequ
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.TruncateTableResponse;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.UnassignRegionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.UnassignRegionResponse;
+import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetQuotaStatesRequest;
+import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetQuotaStatesResponse;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaRegionSizesRequest;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaRegionSizesResponse;
 import org.apache.hadoop.hbase.regionserver.RegionServerStoppedException;
@@ -2120,6 +2122,12 @@ class ConnectionManager {
 	          throws ServiceException {
 	        return stub.getSpaceQuotaRegionSizes(controller, request);
 	      }
+
+        @Override
+        public GetQuotaStatesResponse getQuotaStates(RpcController controller,
+            GetQuotaStatesRequest request) throws ServiceException {
+          return stub.getQuotaStates(controller, request);
+        }
       };
     }
 

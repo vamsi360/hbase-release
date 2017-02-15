@@ -17,6 +17,7 @@
 package org.apache.hadoop.hbase.quotas;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -68,4 +69,11 @@ public interface QuotaSnapshotStore<T> {
    * Sets the current {@link ViolationState} for the <code>subject</code>.
    */
   void setCurrentState(T subject, SpaceQuotaSnapshot state);
+
+  /**
+   * Updates {@code this} with the latest snapshot of filesystem use by region.
+   *
+   * @param regionUsage A map of {@code HRegionInfo} objects to their filesystem usage in bytes
+   */
+  void setRegionUsage(Map<HRegionInfo,Long> regionUsage);
 }

@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.ipc.RpcControllerFactory;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService;
+import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetQuotaStatesResponse;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaEnforcementsResponse;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaRegionSizesResponse;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaSnapshotsResponse;
@@ -36,6 +37,9 @@ import com.google.protobuf.ServiceException;
 @InterfaceAudience.Private
 public class QuotaStatusCalls {
 
+  /**
+   * See {@link #getMasterRegionSizes(ClusterConnection, RpcControllerFactory, RpcRetryingCallerFactory, int)}
+   */
   public static GetSpaceQuotaRegionSizesResponse getMasterRegionSizes(
       ClusterConnection clusterConn, int timeout) throws IOException {
     RpcControllerFactory rpcController = clusterConn.getRpcControllerFactory();
@@ -62,6 +66,41 @@ public class QuotaStatusCalls {
     }
   }
 
+  /**
+   * See {@link #getMasterQuotaStates(ClusterConnection, RpcControllerFactory, RpcRetryingCallerFactory, int)}
+   */
+  public static GetQuotaStatesResponse getMasterQuotaStates(
+      ClusterConnection clusterConn, int timeout) throws IOException {
+    RpcControllerFactory rpcController = clusterConn.getRpcControllerFactory();
+    RpcRetryingCallerFactory rpcCaller = clusterConn.getRpcRetryingCallerFactory();
+    return getMasterQuotaStates(clusterConn, rpcController, rpcCaller, timeout);
+  }
+
+  /**
+   * Executes an RPC tot he HBase master to fetch its view on space quotas.
+   */
+  public static GetQuotaStatesResponse getMasterQuotaStates(
+      ClusterConnection conn, final RpcControllerFactory factory,
+      RpcRetryingCallerFactory rpcCaller, int timeout) throws IOException {
+    MasterCallable<GetQuotaStatesResponse> callable =
+        new MasterCallable<GetQuotaStatesResponse>(conn) {
+      @Override
+      public GetQuotaStatesResponse call(int callTimeout) throws Exception {
+        return master.getQuotaStates(
+            factory.newController(), RequestConverter.buildGetQuotaStatesRequest());
+      }
+    };
+    RpcRetryingCaller<GetQuotaStatesResponse> caller = rpcCaller.newCaller();
+    try {
+      return caller.callWithoutRetries(callable, timeout);
+    } finally {
+      callable.close();
+    }
+  }
+
+  /**
+   * See {@link #getRegionServerQuotaSnapshot(ClusterConnection, RpcControllerFactory, int, ServerName)}
+   */
   public static GetSpaceQuotaSnapshotsResponse getRegionServerQuotaSnapshot(
       ClusterConnection clusterConn, int timeout, ServerName sn) throws IOException {
     RpcControllerFactory rpcController = clusterConn.getRpcControllerFactory();
@@ -80,6 +119,9 @@ public class QuotaStatusCalls {
     }
   }
 
+  /**
+   * See {@link #getRegionServerSpaceQuotaEnforcements(ClusterConnection, RpcControllerFactory, int, ServerName)}
+   */
   public static GetSpaceQuotaEnforcementsResponse getRegionServerSpaceQuotaEnforcements(
       ClusterConnection clusterConn, int timeout, ServerName sn) throws IOException {
     RpcControllerFactory rpcController = clusterConn.getRpcControllerFactory();
