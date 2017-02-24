@@ -2717,6 +2717,9 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
     conf.setBoolean("mapreduce.reduce.speculative", false);
     ////
 
+    conf.setInt("mapreduce.map.memory.mb", 2048);
+    conf.setInt("mapreduce.reduce.memory.mb", 2048);
+
     // Allow the user to override FS URI for this map-reduce cluster to use.
     mrCluster = new MiniMRCluster(servers,
       FS_URI != null ? FS_URI : FileSystem.get(conf).getUri().toString(), 1,
