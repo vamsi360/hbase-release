@@ -98,6 +98,7 @@ public class TestBackupBase {
     TEST_UTIL = new HBaseTestingUtility();
     conf1 = TEST_UTIL.getConfiguration();
     conf1.set(HConstants.ZOOKEEPER_ZNODE_PARENT, "/1");
+    conf1.setBoolean(HConstants.BACKUP_ENABLE_KEY, true);
     if (secure) {
       // set the always on security provider
       UserProvider.setUserProviderForTesting(TEST_UTIL.getConfiguration(),
