@@ -141,7 +141,7 @@ public class TestMasterNoCluster {
    * @throws KeeperException
    * @throws InterruptedException
    */
-  @Test (timeout=30000)
+  @Test (timeout=90000)
   public void testFailover()
   throws IOException, KeeperException, InterruptedException, ServiceException {
     final long now = System.currentTimeMillis();
@@ -243,7 +243,7 @@ public class TestMasterNoCluster {
         // due to race with HMaster#assignMeta
         ZKAssign.transitionNodeClosed(zkw,
           HRegionInfo.FIRST_META_REGIONINFO, sn0, -1);
-        Threads.sleep(100);
+        Threads.sleep(500);
       }
       assertTrue(master.isInitialized());
     } finally {
