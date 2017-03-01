@@ -47,6 +47,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -174,12 +175,14 @@ public class TestMultiTableInputFormat {
     }
   }
 
+  @Ignore
   @Test
   public void testScanEmptyToEmpty() throws IOException, InterruptedException,
       ClassNotFoundException {
     testScan(null, null, null);
   }
   
+  @Ignore
   @Test
   public void testScanEmptyToAPP() throws IOException, InterruptedException,
       ClassNotFoundException {
@@ -192,6 +195,7 @@ public class TestMultiTableInputFormat {
     testScan("obb", "opp", "opo");
   }
 
+  @Ignore
   @Test
   public void testScanYZYToEmpty() throws IOException, InterruptedException,
       ClassNotFoundException {
