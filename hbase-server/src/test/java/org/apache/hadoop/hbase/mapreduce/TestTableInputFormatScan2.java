@@ -21,6 +21,7 @@ package org.apache.hadoop.hbase.mapreduce;
 import java.io.IOException;
 
 import org.apache.hadoop.hbase.testclassification.LargeTests;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -38,6 +39,7 @@ public class TestTableInputFormatScan2 extends TestTableInputFormatScanBase {
    * @throws ClassNotFoundException
    * @throws InterruptedException
    */
+  @Ignore
   @Test
   public void testScanOBBToOPP()
   throws IOException, InterruptedException, ClassNotFoundException {
@@ -51,6 +53,7 @@ public class TestTableInputFormatScan2 extends TestTableInputFormatScanBase {
    * @throws ClassNotFoundException
    * @throws InterruptedException
    */
+  @Ignore
   @Test
   public void testScanOBBToQPP()
   throws IOException, InterruptedException, ClassNotFoundException {
@@ -64,6 +67,7 @@ public class TestTableInputFormatScan2 extends TestTableInputFormatScanBase {
    * @throws ClassNotFoundException
    * @throws InterruptedException
    */
+  @Ignore
   @Test
   public void testScanOPPToEmpty()
   throws IOException, InterruptedException, ClassNotFoundException {
@@ -77,6 +81,7 @@ public class TestTableInputFormatScan2 extends TestTableInputFormatScanBase {
    * @throws ClassNotFoundException
    * @throws InterruptedException
    */
+  @Ignore
   @Test
   public void testScanYYXToEmpty()
   throws IOException, InterruptedException, ClassNotFoundException {
@@ -90,6 +95,7 @@ public class TestTableInputFormatScan2 extends TestTableInputFormatScanBase {
    * @throws ClassNotFoundException
    * @throws InterruptedException
    */
+  @Ignore
   @Test
   public void testScanYYYToEmpty()
   throws IOException, InterruptedException, ClassNotFoundException {
@@ -103,12 +109,14 @@ public class TestTableInputFormatScan2 extends TestTableInputFormatScanBase {
    * @throws ClassNotFoundException
    * @throws InterruptedException
    */
+  @Ignore
   @Test
   public void testScanYZYToEmpty()
   throws IOException, InterruptedException, ClassNotFoundException {
     testScan("yzy", null, "zzz");
   }
 
+  @Ignore
   @Test
   public void testScanFromConfiguration()
   throws IOException, InterruptedException, ClassNotFoundException {
