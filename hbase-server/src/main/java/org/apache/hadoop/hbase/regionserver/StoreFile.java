@@ -688,7 +688,7 @@ public class StoreFile {
       }
 
       if (!fs.exists(dir)) {
-        fs.mkdirs(dir);
+        HRegionFileSystem.mkdirs(fs, conf, dir);
       }
 
       if (filePath == null) {
