@@ -36,9 +36,11 @@ import java.util.TreeSet;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
+import org.apache.hadoop.hbase.backup.impl.BackupRestoreConstants;
 import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
@@ -65,6 +67,7 @@ public class TestBackupSystemTable {
 
   @BeforeClass
   public static void setUp() throws Exception {
+    conf.setBoolean(HConstants.BACKUP_ENABLE_KEY, true);
     cluster = UTIL.startMiniCluster(); 
     conn = UTIL.getConnection();
     waitForSystemTable();

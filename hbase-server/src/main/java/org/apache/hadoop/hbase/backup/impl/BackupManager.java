@@ -161,7 +161,7 @@ public class BackupManager implements Closeable {
   }
   
   
-  private static boolean isBackupEnabled(Configuration conf) {
+  public static boolean isBackupEnabled(Configuration conf) {
     return conf.getBoolean(HConstants.BACKUP_ENABLE_KEY, HConstants.BACKUP_ENABLE_DEFAULT);
   }
 

@@ -118,8 +118,7 @@ public class TestNamespace {
     //verify existence of system tables
     Set<TableName> systemTables = Sets.newHashSet(
         TableName.META_TABLE_NAME,
-        TableName.NAMESPACE_TABLE_NAME,
-        TableName.BACKUP_TABLE_NAME);
+        TableName.NAMESPACE_TABLE_NAME);
     HTableDescriptor[] descs =
         admin.listTableDescriptorsByNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE.getName());
     assertTrue(descs.length >= systemTables.size());

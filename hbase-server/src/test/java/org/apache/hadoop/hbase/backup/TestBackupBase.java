@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
+import org.apache.hadoop.hbase.backup.impl.BackupRestoreConstants;
 import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.BackupAdmin;
@@ -96,7 +97,8 @@ public class TestBackupBase {
     TEST_UTIL = new HBaseTestingUtility();
     conf1 = TEST_UTIL.getConfiguration();
     conf1.set(HConstants.ZOOKEEPER_ZNODE_PARENT, "/1");
-    // Set MultiWAL (with 2 default WAL files per RS)
+    conf1.setBoolean(HConstants.BACKUP_ENABLE_KEY, true);  
+  // Set MultiWAL (with 2 default WAL files per RS)
     //conf1.set(WAL_PROVIDER, "multiwal");
     TEST_UTIL.startMiniZKCluster();
     MiniZooKeeperCluster miniZK = TEST_UTIL.getZkCluster();
