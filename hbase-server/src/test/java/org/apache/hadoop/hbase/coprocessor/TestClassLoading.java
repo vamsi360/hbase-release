@@ -22,7 +22,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
-import org.apache.hadoop.hbase.backup.master.BackupController;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.regionserver.TestServerCustomProtocol;
@@ -69,7 +68,6 @@ public class TestClassLoading {
   private static Class<?> regionCoprocessor2 = TestServerCustomProtocol.PingHandler.class;
   private static Class<?> regionServerCoprocessor = SampleRegionWALObserver.class;
   private static Class<?> masterCoprocessor = BaseMasterObserver.class;
-  private static Class<?> backupCoprocessor = BackupController.class;
 
   private static final String[] regionServerSystemCoprocessors =
       new String[]{
@@ -533,7 +531,7 @@ public class TestClassLoading {
     // to master: verify that the master is reporting the correct set of
     // loaded coprocessors.
     final String loadedMasterCoprocessorsVerify =
-        "[" + backupCoprocessor.getSimpleName() + ", " + masterCoprocessor.getSimpleName() + "]";
+        "["+ masterCoprocessor.getSimpleName() + "]";
     String loadedMasterCoprocessors =
         java.util.Arrays.toString(
             TEST_UTIL.getHBaseCluster().getMaster().getMasterCoprocessors());

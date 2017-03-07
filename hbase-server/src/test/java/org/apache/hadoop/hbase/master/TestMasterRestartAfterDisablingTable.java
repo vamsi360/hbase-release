@@ -118,7 +118,7 @@ public class TestMasterRestartAfterDisablingTable {
     regions = HBaseTestingUtility.getAllOnlineRegions(cluster);
     assertEquals("The assigned regions were not onlined after master"
         + " switch except for the catalog and namespace tables.",
-          7, regions.size());
+          6, regions.size());
     assertTrue("The table should be in enabled state", cluster.getMaster()
         .getAssignmentManager().getTableStateManager()
         .isTableState(TableName.valueOf("tableRestart"), ZooKeeperProtos.Table.State.ENABLED));

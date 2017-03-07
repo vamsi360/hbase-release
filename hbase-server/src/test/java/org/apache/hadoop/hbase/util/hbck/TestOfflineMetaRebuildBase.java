@@ -45,7 +45,7 @@ public class TestOfflineMetaRebuildBase extends OfflineMetaRebuildTestCore {
     wipeOutMeta();
 
     // is meta really messed up?
-    assertEquals(2, scanMeta());
+    assertEquals(1, scanMeta());
     assertErrors(doFsck(conf, false),
         new ERROR_CODE[] {
             ERROR_CODE.NOT_IN_META_OR_DEPLOYED,
@@ -74,7 +74,7 @@ public class TestOfflineMetaRebuildBase extends OfflineMetaRebuildTestCore {
       LOG.info("No more RIT in ZK, now doing final test verification");
 
       // everything is good again.
-      assertEquals(6, scanMeta());
+      assertEquals(5, scanMeta());
       HTableDescriptor[] htbls = admin.listTables();
       LOG.info("Tables present after restart: " + Arrays.toString(htbls));
       assertEquals(1, htbls.length);

@@ -100,7 +100,7 @@ public class  TestRollingRestart {
     if (regions.size() != 2) {
       for (String oregion : regions) log("Region still online: " + oregion);
     }
-    assertEquals(3, regions.size());
+    assertEquals(2, regions.size());
     log("Enabling table\n");
     TEST_UTIL.getHBaseAdmin().enableTable(table);
     log("Waiting for no more RIT\n");
