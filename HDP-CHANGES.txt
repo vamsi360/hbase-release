@@ -109,6 +109,7 @@ HBASE-16985 TestClusterId failed due to wrong hbase rootdir
 HBASE-14635 Fix flaky test TestSnapshotCloneIndependence
 HBASE-16429 FSHLog: deadlock if rollWriter called when ring buffer filled with appends
 HBASE-17292 Add observer notification before bulk loaded hfile is moved to region directory
+HBASE-14148 Web UI Framable Page
 
 Following are the changes on top of Apache HBase 1.1.1
 
