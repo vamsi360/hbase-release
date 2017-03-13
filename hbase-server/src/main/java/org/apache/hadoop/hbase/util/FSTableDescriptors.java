@@ -657,7 +657,8 @@ public class FSTableDescriptors implements TableDescriptors {
         if (!fs.rename(tempPath, tableInfoDirPath)) {
           throw new IOException("Failed rename of " + tempPath + " to " + tableInfoDirPath);
         }
-        LOG.debug("Wrote descriptor into: " + tableInfoDirPath);
+        //LOG.debug("Wrote descriptor into: " + tableInfoDirPath);
+        LOG.info("Wrote descriptor into: " + tableInfoDirPath);
       } catch (IOException ioe) {
         // Presume clash of names or something; go around again.
         LOG.debug("Failed write and/or rename; retrying", ioe);

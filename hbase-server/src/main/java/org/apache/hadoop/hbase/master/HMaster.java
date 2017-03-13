@@ -3054,6 +3054,10 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
             descriptors.add(desc);
           }
         }
+        if (tableNameList.size() == 1) { // For debugging
+          LOG.info(getClientIdAuditPrefix() + " List Table Descriptor for the " + tableNameList.get(0)
+            + " table " + ((descriptors.size() == 1) ? "succeeds" : "fails"));
+        }
       }
 
       // Retains only those matched by regular expression.

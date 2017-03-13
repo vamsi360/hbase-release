@@ -99,6 +99,8 @@ public class CreateTableProcedure
   protected Flow executeFromState(final MasterProcedureEnv env, final CreateTableState state) {
     if (LOG.isTraceEnabled()) {
       LOG.trace(this + " execute state=" + state);
+    } else {
+      LOG.info(this + " execute state=" + state);
     }
     try {
       switch (state) {
