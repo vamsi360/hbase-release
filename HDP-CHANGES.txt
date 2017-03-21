@@ -212,3 +212,72 @@ HBASE-17409 Limit jsonp callback name to prevent xss
 HBASE-17424 Disable external entity parsing in RemoteAdmin
 HBASE-16270 Handle duplicate clearing of snapshot in region replicas (Robert Yokota)
 HBASE-15984 Handle premature EOF treatment of WALs in replication.
+
+HBASE-13393 - Optimize memstore flushing to avoid writing tag information to hfiles when no tags are present. (Ram)
+HBASE-13415 Procedure V2 - Use nonces for double submits from client (Stephen Yuan Jiang)
+HBASE-14417 Incremental backup and bulk loading
+HBASE-14694 Scan copy constructor doesn't handle allowPartialResults
+HBASE-14708 Use copy on write Map for region location cache
+HBASE-15703 Deadline scheduler needs to return to the client info about skipped calls, not just drop them
+HBASE-16008 A robust way deal with early termination of HBCK (Stephen Yuan Jiang)
+HBASE-16089 Add on FastPath for CoDel
+HBASE-16093 Fix splits failed before creating daughter regions leave meta inconsistent
+HBASE-16146 Remove thread local usage in Counter
+HBASE-16189 [Rolling Upgrade] 2.0 hfiles cannot be opened by 1.x servers (Ram)
+HBASE-16238 It's useless to catch SESSIONEXPIRED exception and retry in RecoverableZooKeeper (Allan Yang)
+HBASE-16430 Fix RegionServer Group's bug when moving multiple tables
+HBASE-16509 Add option to LoadIncrementalHFiles which allows skipping unmatched column families
+HBASE-16578 Mob data loss after mob compaction and normal compaction
+HBASE-16616 Rpc handlers stuck on ThreadLocalMap.expungeStaleEntry
+HBASE-16621 HBCK should have -fixHFileLinks (Janos Gub)
+HBASE-16630 Fragmentation in long running Bucket Cache
+HBASE-16646 Enhance LoadIncrementalHFiles API to accept store file paths as input
+HBASE-16649 Truncate table with splits preserved can cause both data loss and truncated data appeared again
+HBASE-16660 ArrayIndexOutOfBounds during the majorCompactionCheck in DateTieredCompaction
+HBASE-16672 Add option for bulk load to copy hfile(s) instead of renaming
+HBASE-16699 Overflows in AverageIntervalRateLimiter's refill() and getWaitInterval()
+HBASE-16732 Avoid possible NPE in MetaTableLocator
+HBASE-16773 AccessController should access local region if possible
+HBASE-16821 Enhance LoadIncrementalHFiles API to convey missing hfiles if any
+HBASE-16889 Proc-V2: verifyTables in the IntegrationTestDDLMasterFailover test after each table DDL is incorrect (Stephen Yuan Jiang)
+HBASE-16960 RegionServer hangs when aborting
+HBASE-16960 RegionServer hangs when aborting
+HBASE-16995 Build client Java API and client protobuf messages (Josh Elser)
+HBASE-16996 Implement storage/retrieval of filesystem-use quotas into quota table (Josh Elser)
+HBASE-16998 Implement Master-side analysis of region space reports
+HBASE-16999 Implement master and regionserver synchronization of quota state
+HBASE-17000 Implement computation of online region sizes and report to the Master
+HBASE-17001 Enforce quota violation policies in the RegionServer
+HBASE-17020 keylen in midkey() dont computed correctly
+HBASE-17022 TestMasterFailoverWithProcedures#testTruncateWithFailover fails constantly in branch-1.1
+HBASE-17023 Region left unassigned due to AM and SSH each thinking others would do the assignment work (Stephen Yuan Jiang)
+HBASE-17025 Add shell commands for space quotas
+HBASE-17032 CallQueueTooBigException and CallDroppedException should not be triggering PFFE
+HBASE-17037 Enhance LoadIncrementalHFiles API to convey loaded files
+HBASE-17044 Fix merge failed before creating merged region leaves meta inconsistent
+HBASE-17091 IntegrationTestZKAndFSPermissions failed with 'KeeperException'
+HBASE-17092 Both LoadIncrementalHFiles#doBulkLoad() methods should set return value
+HBASE-17118 StoreScanner leaked in KeyValueHeap (binlijin)
+HBASE-17123 Add postBulkLoadHFile variant that notifies the final paths for the hfiles
+HBASE-17149 Procedure V2 - Fix nonce submission to avoid unnecessary calling coprocessor multiple times (Matteo Bertozzi)
+HBASE-17187 DoNotRetryExceptions from coprocessors should bubble up to the application
+HBASE-17238 Wrong in-memory hbase:meta location causing SSH failure (Stephen Yuan jiang)
+HBASE-17259 API to remove space quotas on a table/namespace
+HBASE-17264 Processing RIT with offline state will always fail to open the first time (Allan Yang)
+HBASE-17265 Region left unassigned in master failover when region failed to open (Allan Yang)
+HBASE-17275 Assign timeout may cause region to be unassigned forever (Allan yang)
+HBASE-17276 Only log stacktraces for exceptions once for updates in a batch
+HBASE-17427 region_mover.rb may move region onto the same server
+HBASE-17428 Implement informational RPCs for space quotas
+HBASE-17435 Call to preCommitStoreFile() hook encounters SaslException in secure deployment
+HBASE-17437 Support specifying a WAL directory outside of the root directory
+HBASE-17460 enable_table_replication can not perform cyclic replication of a table (Janos Gub)
+HBASE-17516 Correctly handle case where table and NS quotas both apply
+HBASE-17525 Quota support for SecureBulkLoadEndpoint
+HBASE-17568 Addendum: Better handle stale/missing region size reports
+HBASE-17568 Better handle stale/missing region size reports
+HBASE-17597 TestMetaWithReplicas.testMetaTableReplicaAssignment is flaky
+HBASE-17648: HBase Table-level synchronization fails between two secured(kerberized) cluster
+HBASE-17682 Region stuck in merging_new state indefinitely
+HBASE-17710 HBase in standalone mode creates directories with 777 permission
+HBASE-17717 Explicitly use "sasl" ACL scheme for hbase superuser
