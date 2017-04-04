@@ -81,6 +81,10 @@ import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
 import com.google.protobuf.Service;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Coprocessor service for bulk loads in secure mode.
  * This coprocessor has to be installed as part of enabling
@@ -121,6 +125,7 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
 
   private final static FsPermission PERM_ALL_ACCESS = FsPermission.valueOf("-rwxrwxrwx");
   private final static FsPermission PERM_HIDDEN = FsPermission.valueOf("-rwx--x--x");
+  private final static String[] FsWithoutSupportPermission = {"s3", "s3a", "s3n", "wasb", "wasbs", "swift"};
 
   private SecureRandom random;
   private FileSystem fs;
@@ -141,11 +146,15 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
     conf = env.getConfiguration();
     baseStagingDir = SecureBulkLoadUtil.getBaseStagingDir(conf);
     this.userProvider = UserProvider.instantiate(conf);
+    Set<String> fsSet = new HashSet<String>(Arrays.asList(FsWithoutSupportPermission));
 
     try {
-      fs = FileSystem.get(conf);
-      fs.mkdirs(baseStagingDir, PERM_HIDDEN);
-      fs.setPermission(baseStagingDir, PERM_HIDDEN);
+      fs = baseStagingDir.getFileSystem(conf);
+      if (!fs.exists(baseStagingDir)) {
+        fs.mkdirs(baseStagingDir, PERM_HIDDEN);
+      } else {
+        fs.setPermission(baseStagingDir, PERM_HIDDEN);
+      }
       //no sticky bit in hadoop-1.0, making directory nonempty so it never gets erased
       fs.mkdirs(new Path(baseStagingDir,"DONOTERASE"), PERM_HIDDEN);
       FileStatus status = fs.getFileStatus(baseStagingDir);
@@ -153,7 +162,8 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
         throw new IllegalStateException("Failed to create staging directory");
       }
       LOG.debug("Permission for " + baseStagingDir + " is " + status.getPermission());
-      if(!status.getPermission().equals(PERM_HIDDEN)) {
+      String scheme = fs.getScheme().toLowerCase();
+      if (!fsSet.contains(scheme) && !status.getPermission().equals(PERM_HIDDEN)) {
         throw new IllegalStateException(
             "Directory already exists but permissions aren't set to '-rwx--x--x' ");
       }
