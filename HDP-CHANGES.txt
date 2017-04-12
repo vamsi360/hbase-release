@@ -3,6 +3,16 @@ HDP-2.5 is based on Apache HBase 1.1.2
 
 Following are the changes on top of Apache HBase 1.1.2
 
+HBASE-17287 Master becomes a zombie if filesystem object closes
+HBASE-14708 Use copy on write Map for region location cache
+HBASE-17682 Region stuck in merging_new state indefinitely
+HBASE-17020 keylen in midkey() dont computed correctly
+HBASE-17460 enable_table_replication can not perform cyclic replication of a table
+HBASE-16294 hbck reporting "No HDFS region dir found" for replicas
+HBASE-17717 Incorrect ZK ACL set for HBase superuser
+HBASE-16649 Truncate table with splits preserved can cause both data loss and truncated data appeared again
+HBASE-17648 HBase Table-level synchronization fails between two secured(kerberized) clusters
+HBASE-14798 NPE reporting server load causes regionserver abort; causes TestAcidGuarantee to fail
 HBASE-16430 Fix RegionServer Group's bug when moving multiple tables
 HBASE-14694 Scan copy constructor doesn't handle allowPartialResults
 HBASE-16621 HBCK should have -fixHFileLinks
