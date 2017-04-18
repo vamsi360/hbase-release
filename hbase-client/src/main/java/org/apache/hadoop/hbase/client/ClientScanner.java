@@ -22,6 +22,7 @@ import java.io.InterruptedIOException;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -187,6 +188,10 @@ public class ClientScanner extends AbstractClientScanner {
 
     protected long getTimestamp() {
       return lastNext;
+    }
+
+    protected long getMaxResultSize() {
+      return maxScannerResultSize;
     }
 
     // returns true if the passed region endKey
@@ -486,4 +491,9 @@ public class ClientScanner extends AbstractClientScanner {
       }
       closed = true;
     }
+
+   @VisibleForTesting
+   public int getCacheSize() {
+     return cache != null ? cache.size() : 0;
+   }
 }

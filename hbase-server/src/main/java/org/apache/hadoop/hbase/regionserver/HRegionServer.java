@@ -585,8 +585,8 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     this.nonceManager = isNoncesEnabled ? new ServerNonceManager(this.conf) : null;
 
     this.maxScannerResultSize = conf.getLong(
-      HConstants.HBASE_CLIENT_SCANNER_MAX_RESULT_SIZE_KEY,
-      HConstants.DEFAULT_HBASE_CLIENT_SCANNER_MAX_RESULT_SIZE);
+      HConstants.HBASE_SERVER_SCANNER_MAX_RESULT_SIZE_KEY,
+      HConstants.DEFAULT_HBASE_SERVER_SCANNER_MAX_RESULT_SIZE);
 
     this.numRegionsToReport = conf.getInt(
       "hbase.regionserver.numregionstoreport", 10);
@@ -3278,7 +3278,7 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
                 boolean stale = (region.getRegionInfo().getReplicaId() != 0);
                 while (i < rows) {
                   // Stop collecting results if maxScannerResultSize is set and we have exceeded it
-                  if ((maxScannerResultSize < Long.MAX_VALUE) &&
+                  if ((maxResultSize < Long.MAX_VALUE) &&
                       (currentScanResultSize >= maxResultSize)) {
                     break;
                   }
