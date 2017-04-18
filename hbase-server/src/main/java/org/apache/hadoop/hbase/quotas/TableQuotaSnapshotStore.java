@@ -56,7 +56,7 @@ public class TableQuotaSnapshotStore implements QuotaSnapshotStore<TableName> {
   @Override
   public SpaceQuota getSpaceQuota(TableName subject) throws IOException {
     Quotas quotas = getQuotaForTable(subject);
-    if (null != quotas && quotas.hasSpace()) {
+    if (quotas != null && quotas.hasSpace()) {
       return quotas.getSpace();
     }
     return null;
@@ -71,7 +71,7 @@ public class TableQuotaSnapshotStore implements QuotaSnapshotStore<TableName> {
   @Override
   public SpaceQuotaSnapshot getCurrentState(TableName table) {
     // Defer the "current state" to the chore
-    return chore.getTableQuotaViolation(table);
+    return chore.getTableQuotaSnapshot(table);
   }
 
   @Override

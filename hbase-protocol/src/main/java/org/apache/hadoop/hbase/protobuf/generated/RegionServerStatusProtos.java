@@ -8472,49 +8472,49 @@ public final class RegionServerStatusProtos {
   public interface RegionSpaceUseOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional .RegionInfo region = 1;
+    // optional .RegionInfo region_info = 1;
     /**
-     * <code>optional .RegionInfo region = 1;</code>
+     * <code>optional .RegionInfo region_info = 1;</code>
      *
      * <pre>
      * A region identifier
      * </pre>
      */
-    boolean hasRegion();
+    boolean hasRegionInfo();
     /**
-     * <code>optional .RegionInfo region = 1;</code>
+     * <code>optional .RegionInfo region_info = 1;</code>
      *
      * <pre>
      * A region identifier
      * </pre>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo getRegion();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo getRegionInfo();
     /**
-     * <code>optional .RegionInfo region = 1;</code>
+     * <code>optional .RegionInfo region_info = 1;</code>
      *
      * <pre>
      * A region identifier
      * </pre>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder getRegionOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder getRegionInfoOrBuilder();
 
-    // optional uint64 size = 2;
+    // optional uint64 region_size = 2;
     /**
-     * <code>optional uint64 size = 2;</code>
+     * <code>optional uint64 region_size = 2;</code>
      *
      * <pre>
      * The size in bytes of the region
      * </pre>
      */
-    boolean hasSize();
+    boolean hasRegionSize();
     /**
-     * <code>optional uint64 size = 2;</code>
+     * <code>optional uint64 region_size = 2;</code>
      *
      * <pre>
      * The size in bytes of the region
      * </pre>
      */
-    long getSize();
+    long getRegionSize();
   }
   /**
    * Protobuf type {@code RegionSpaceUse}
@@ -8570,19 +8570,19 @@ public final class RegionServerStatusProtos {
             case 10: {
               org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder subBuilder = null;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
-                subBuilder = region_.toBuilder();
+                subBuilder = regionInfo_.toBuilder();
               }
-              region_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.PARSER, extensionRegistry);
+              regionInfo_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.PARSER, extensionRegistry);
               if (subBuilder != null) {
-                subBuilder.mergeFrom(region_);
-                region_ = subBuilder.buildPartial();
+                subBuilder.mergeFrom(regionInfo_);
+                regionInfo_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000001;
               break;
             }
             case 16: {
               bitField0_ |= 0x00000002;
-              size_ = input.readUInt64();
+              regionSize_ = input.readUInt64();
               break;
             }
           }
@@ -8625,75 +8625,75 @@ public final class RegionServerStatusProtos {
     }
 
     private int bitField0_;
-    // optional .RegionInfo region = 1;
-    public static final int REGION_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo region_;
+    // optional .RegionInfo region_info = 1;
+    public static final int REGION_INFO_FIELD_NUMBER = 1;
+    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo regionInfo_;
     /**
-     * <code>optional .RegionInfo region = 1;</code>
+     * <code>optional .RegionInfo region_info = 1;</code>
      *
      * <pre>
      * A region identifier
      * </pre>
      */
-    public boolean hasRegion() {
+    public boolean hasRegionInfo() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional .RegionInfo region = 1;</code>
+     * <code>optional .RegionInfo region_info = 1;</code>
      *
      * <pre>
      * A region identifier
      * </pre>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo getRegion() {
-      return region_;
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo getRegionInfo() {
+      return regionInfo_;
     }
     /**
-     * <code>optional .RegionInfo region = 1;</code>
+     * <code>optional .RegionInfo region_info = 1;</code>
      *
      * <pre>
      * A region identifier
      * </pre>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder getRegionOrBuilder() {
-      return region_;
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder getRegionInfoOrBuilder() {
+      return regionInfo_;
     }
 
-    // optional uint64 size = 2;
-    public static final int SIZE_FIELD_NUMBER = 2;
-    private long size_;
+    // optional uint64 region_size = 2;
+    public static final int REGION_SIZE_FIELD_NUMBER = 2;
+    private long regionSize_;
     /**
-     * <code>optional uint64 size = 2;</code>
+     * <code>optional uint64 region_size = 2;</code>
      *
      * <pre>
      * The size in bytes of the region
      * </pre>
      */
-    public boolean hasSize() {
+    public boolean hasRegionSize() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional uint64 size = 2;</code>
+     * <code>optional uint64 region_size = 2;</code>
      *
      * <pre>
      * The size in bytes of the region
      * </pre>
      */
-    public long getSize() {
-      return size_;
+    public long getRegionSize() {
+      return regionSize_;
     }
 
     private void initFields() {
-      region_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
-      size_ = 0L;
+      regionInfo_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
+      regionSize_ = 0L;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized != -1) return isInitialized == 1;
 
-      if (hasRegion()) {
-        if (!getRegion().isInitialized()) {
+      if (hasRegionInfo()) {
+        if (!getRegionInfo().isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -8706,10 +8706,10 @@ public final class RegionServerStatusProtos {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, region_);
+        output.writeMessage(1, regionInfo_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeUInt64(2, size_);
+        output.writeUInt64(2, regionSize_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -8722,11 +8722,11 @@ public final class RegionServerStatusProtos {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, region_);
+          .computeMessageSize(1, regionInfo_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeUInt64Size(2, size_);
+          .computeUInt64Size(2, regionSize_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -8751,15 +8751,15 @@ public final class RegionServerStatusProtos {
       org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse other = (org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse) obj;
 
       boolean result = true;
-      result = result && (hasRegion() == other.hasRegion());
-      if (hasRegion()) {
-        result = result && getRegion()
-            .equals(other.getRegion());
+      result = result && (hasRegionInfo() == other.hasRegionInfo());
+      if (hasRegionInfo()) {
+        result = result && getRegionInfo()
+            .equals(other.getRegionInfo());
       }
-      result = result && (hasSize() == other.hasSize());
-      if (hasSize()) {
-        result = result && (getSize()
-            == other.getSize());
+      result = result && (hasRegionSize() == other.hasRegionSize());
+      if (hasRegionSize()) {
+        result = result && (getRegionSize()
+            == other.getRegionSize());
       }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
@@ -8774,13 +8774,13 @@ public final class RegionServerStatusProtos {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptorForType().hashCode();
-      if (hasRegion()) {
-        hash = (37 * hash) + REGION_FIELD_NUMBER;
-        hash = (53 * hash) + getRegion().hashCode();
+      if (hasRegionInfo()) {
+        hash = (37 * hash) + REGION_INFO_FIELD_NUMBER;
+        hash = (53 * hash) + getRegionInfo().hashCode();
       }
-      if (hasSize()) {
-        hash = (37 * hash) + SIZE_FIELD_NUMBER;
-        hash = (53 * hash) + hashLong(getSize());
+      if (hasRegionSize()) {
+        hash = (37 * hash) + REGION_SIZE_FIELD_NUMBER;
+        hash = (53 * hash) + hashLong(getRegionSize());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -8883,7 +8883,7 @@ public final class RegionServerStatusProtos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getRegionFieldBuilder();
+          getRegionInfoFieldBuilder();
         }
       }
       private static Builder create() {
@@ -8892,13 +8892,13 @@ public final class RegionServerStatusProtos {
 
       public Builder clear() {
         super.clear();
-        if (regionBuilder_ == null) {
-          region_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
+        if (regionInfoBuilder_ == null) {
+          regionInfo_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
         } else {
-          regionBuilder_.clear();
+          regionInfoBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000001);
-        size_ = 0L;
+        regionSize_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
@@ -8931,15 +8931,15 @@ public final class RegionServerStatusProtos {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        if (regionBuilder_ == null) {
-          result.region_ = region_;
+        if (regionInfoBuilder_ == null) {
+          result.regionInfo_ = regionInfo_;
         } else {
-          result.region_ = regionBuilder_.build();
+          result.regionInfo_ = regionInfoBuilder_.build();
         }
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.size_ = size_;
+        result.regionSize_ = regionSize_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -8956,19 +8956,19 @@ public final class RegionServerStatusProtos {
 
       public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse other) {
         if (other == org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionSpaceUse.getDefaultInstance()) return this;
-        if (other.hasRegion()) {
-          mergeRegion(other.getRegion());
+        if (other.hasRegionInfo()) {
+          mergeRegionInfo(other.getRegionInfo());
         }
-        if (other.hasSize()) {
-          setSize(other.getSize());
+        if (other.hasRegionSize()) {
+          setRegionSize(other.getRegionSize());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
-        if (hasRegion()) {
-          if (!getRegion().isInitialized()) {
+        if (hasRegionInfo()) {
+          if (!getRegionInfo().isInitialized()) {
             
             return false;
           }
@@ -8995,140 +8995,140 @@ public final class RegionServerStatusProtos {
       }
       private int bitField0_;
 
-      // optional .RegionInfo region = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo region_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
+      // optional .RegionInfo region_info = 1;
+      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo regionInfo_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder> regionBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder> regionInfoBuilder_;
       /**
-       * <code>optional .RegionInfo region = 1;</code>
+       * <code>optional .RegionInfo region_info = 1;</code>
        *
        * <pre>
        * A region identifier
        * </pre>
        */
-      public boolean hasRegion() {
+      public boolean hasRegionInfo() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional .RegionInfo region = 1;</code>
+       * <code>optional .RegionInfo region_info = 1;</code>
        *
        * <pre>
        * A region identifier
        * </pre>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo getRegion() {
-        if (regionBuilder_ == null) {
-          return region_;
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo getRegionInfo() {
+        if (regionInfoBuilder_ == null) {
+          return regionInfo_;
         } else {
-          return regionBuilder_.getMessage();
+          return regionInfoBuilder_.getMessage();
         }
       }
       /**
-       * <code>optional .RegionInfo region = 1;</code>
+       * <code>optional .RegionInfo region_info = 1;</code>
        *
        * <pre>
        * A region identifier
        * </pre>
        */
-      public Builder setRegion(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo value) {
-        if (regionBuilder_ == null) {
+      public Builder setRegionInfo(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo value) {
+        if (regionInfoBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          region_ = value;
+          regionInfo_ = value;
           onChanged();
         } else {
-          regionBuilder_.setMessage(value);
+          regionInfoBuilder_.setMessage(value);
         }
         bitField0_ |= 0x00000001;
         return this;
       }
       /**
-       * <code>optional .RegionInfo region = 1;</code>
+       * <code>optional .RegionInfo region_info = 1;</code>
        *
        * <pre>
        * A region identifier
        * </pre>
        */
-      public Builder setRegion(
+      public Builder setRegionInfo(
           org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder builderForValue) {
-        if (regionBuilder_ == null) {
-          region_ = builderForValue.build();
+        if (regionInfoBuilder_ == null) {
+          regionInfo_ = builderForValue.build();
           onChanged();
         } else {
-          regionBuilder_.setMessage(builderForValue.build());
+          regionInfoBuilder_.setMessage(builderForValue.build());
         }
         bitField0_ |= 0x00000001;
         return this;
       }
       /**
-       * <code>optional .RegionInfo region = 1;</code>
+       * <code>optional .RegionInfo region_info = 1;</code>
        *
        * <pre>
        * A region identifier
        * </pre>
        */
-      public Builder mergeRegion(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo value) {
-        if (regionBuilder_ == null) {
+      public Builder mergeRegionInfo(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo value) {
+        if (regionInfoBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              region_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance()) {
-            region_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.newBuilder(region_).mergeFrom(value).buildPartial();
+              regionInfo_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance()) {
+            regionInfo_ =
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.newBuilder(regionInfo_).mergeFrom(value).buildPartial();
           } else {
-            region_ = value;
+            regionInfo_ = value;
           }
           onChanged();
         } else {
-          regionBuilder_.mergeFrom(value);
+          regionInfoBuilder_.mergeFrom(value);
         }
         bitField0_ |= 0x00000001;
         return this;
       }
       /**
-       * <code>optional .RegionInfo region = 1;</code>
+       * <code>optional .RegionInfo region_info = 1;</code>
        *
        * <pre>
        * A region identifier
        * </pre>
        */
-      public Builder clearRegion() {
-        if (regionBuilder_ == null) {
-          region_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
+      public Builder clearRegionInfo() {
+        if (regionInfoBuilder_ == null) {
+          regionInfo_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.getDefaultInstance();
           onChanged();
         } else {
-          regionBuilder_.clear();
+          regionInfoBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
       /**
-       * <code>optional .RegionInfo region = 1;</code>
+       * <code>optional .RegionInfo region_info = 1;</code>
        *
        * <pre>
        * A region identifier
        * </pre>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder getRegionBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder getRegionInfoBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
-        return getRegionFieldBuilder().getBuilder();
+        return getRegionInfoFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .RegionInfo region = 1;</code>
+       * <code>optional .RegionInfo region_info = 1;</code>
        *
        * <pre>
        * A region identifier
        * </pre>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder getRegionOrBuilder() {
-        if (regionBuilder_ != null) {
-          return regionBuilder_.getMessageOrBuilder();
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder getRegionInfoOrBuilder() {
+        if (regionInfoBuilder_ != null) {
+          return regionInfoBuilder_.getMessageOrBuilder();
         } else {
-          return region_;
+          return regionInfo_;
         }
       }
       /**
-       * <code>optional .RegionInfo region = 1;</code>
+       * <code>optional .RegionInfo region_info = 1;</code>
        *
        * <pre>
        * A region identifier
@@ -9136,63 +9136,63 @@ public final class RegionServerStatusProtos {
        */
       private com.google.protobuf.SingleFieldBuilder<
           org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder> 
-          getRegionFieldBuilder() {
-        if (regionBuilder_ == null) {
-          regionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          getRegionInfoFieldBuilder() {
+        if (regionInfoBuilder_ == null) {
+          regionInfoBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfoOrBuilder>(
-                  region_,
+                  regionInfo_,
                   getParentForChildren(),
                   isClean());
-          region_ = null;
+          regionInfo_ = null;
         }
-        return regionBuilder_;
+        return regionInfoBuilder_;
       }
 
-      // optional uint64 size = 2;
-      private long size_ ;
+      // optional uint64 region_size = 2;
+      private long regionSize_ ;
       /**
-       * <code>optional uint64 size = 2;</code>
+       * <code>optional uint64 region_size = 2;</code>
        *
        * <pre>
        * The size in bytes of the region
        * </pre>
        */
-      public boolean hasSize() {
+      public boolean hasRegionSize() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional uint64 size = 2;</code>
+       * <code>optional uint64 region_size = 2;</code>
        *
        * <pre>
        * The size in bytes of the region
        * </pre>
        */
-      public long getSize() {
-        return size_;
+      public long getRegionSize() {
+        return regionSize_;
       }
       /**
-       * <code>optional uint64 size = 2;</code>
+       * <code>optional uint64 region_size = 2;</code>
        *
        * <pre>
        * The size in bytes of the region
        * </pre>
        */
-      public Builder setSize(long value) {
+      public Builder setRegionSize(long value) {
         bitField0_ |= 0x00000002;
-        size_ = value;
+        regionSize_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional uint64 size = 2;</code>
+       * <code>optional uint64 region_size = 2;</code>
        *
        * <pre>
        * The size in bytes of the region
        * </pre>
        */
-      public Builder clearSize() {
+      public Builder clearRegionSize() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        size_ = 0L;
+        regionSize_ = 0L;
         onChanged();
         return this;
       }
@@ -11036,27 +11036,27 @@ public final class RegionServerStatusProtos {
       "nsitionRequest\022\033\n\006server\030\001 \002(\0132\013.ServerN" +
       "ame\022*\n\ntransition\030\002 \003(\0132\026.RegionStateTra" +
       "nsition\"<\n#ReportRegionStateTransitionRe" +
-      "sponse\022\025\n\rerror_message\030\001 \001(\t\";\n\016RegionS",
-      "paceUse\022\033\n\006region\030\001 \001(\0132\013.RegionInfo\022\014\n\004" +
-      "size\030\002 \001(\004\"A\n\033RegionSpaceUseReportReques" +
-      "t\022\"\n\tspace_use\030\001 \003(\0132\017.RegionSpaceUse\"\036\n" +
-      "\034RegionSpaceUseReportResponse2\253\004\n\031Region" +
-      "ServerStatusService\022P\n\023RegionServerStart" +
-      "up\022\033.RegionServerStartupRequest\032\034.Region" +
-      "ServerStartupResponse\022M\n\022RegionServerRep" +
-      "ort\022\032.RegionServerReportRequest\032\033.Region" +
-      "ServerReportResponse\022M\n\022ReportRSFatalErr" +
-      "or\022\032.ReportRSFatalErrorRequest\032\033.ReportR",
-      "SFatalErrorResponse\022_\n\030GetLastFlushedSeq" +
-      "uenceId\022 .GetLastFlushedSequenceIdReques" +
-      "t\032!.GetLastFlushedSequenceIdResponse\022h\n\033" +
-      "ReportRegionStateTransition\022#.ReportRegi" +
-      "onStateTransitionRequest\032$.ReportRegionS" +
-      "tateTransitionResponse\022S\n\024ReportRegionSp" +
-      "aceUse\022\034.RegionSpaceUseReportRequest\032\035.R" +
-      "egionSpaceUseReportResponseBN\n*org.apach" +
-      "e.hadoop.hbase.protobuf.generatedB\030Regio" +
-      "nServerStatusProtosH\001\210\001\001\240\001\001"
+      "sponse\022\025\n\rerror_message\030\001 \001(\t\"G\n\016RegionS",
+      "paceUse\022 \n\013region_info\030\001 \001(\0132\013.RegionInf" +
+      "o\022\023\n\013region_size\030\002 \001(\004\"A\n\033RegionSpaceUse" +
+      "ReportRequest\022\"\n\tspace_use\030\001 \003(\0132\017.Regio" +
+      "nSpaceUse\"\036\n\034RegionSpaceUseReportRespons" +
+      "e2\253\004\n\031RegionServerStatusService\022P\n\023Regio" +
+      "nServerStartup\022\033.RegionServerStartupRequ" +
+      "est\032\034.RegionServerStartupResponse\022M\n\022Reg" +
+      "ionServerReport\022\032.RegionServerReportRequ" +
+      "est\032\033.RegionServerReportResponse\022M\n\022Repo" +
+      "rtRSFatalError\022\032.ReportRSFatalErrorReque",
+      "st\032\033.ReportRSFatalErrorResponse\022_\n\030GetLa" +
+      "stFlushedSequenceId\022 .GetLastFlushedSequ" +
+      "enceIdRequest\032!.GetLastFlushedSequenceId" +
+      "Response\022h\n\033ReportRegionStateTransition\022" +
+      "#.ReportRegionStateTransitionRequest\032$.R" +
+      "eportRegionStateTransitionResponse\022S\n\024Re" +
+      "portRegionSpaceUse\022\034.RegionSpaceUseRepor" +
+      "tRequest\032\035.RegionSpaceUseReportResponseB" +
+      "N\n*org.apache.hadoop.hbase.protobuf.gene" +
+      "ratedB\030RegionServerStatusProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -11134,7 +11134,7 @@ public final class RegionServerStatusProtos {
           internal_static_RegionSpaceUse_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_RegionSpaceUse_descriptor,
-              new java.lang.String[] { "Region", "Size", });
+              new java.lang.String[] { "RegionInfo", "RegionSize", });
           internal_static_RegionSpaceUseReportRequest_descriptor =
             getDescriptor().getMessageTypes().get(12);
           internal_static_RegionSpaceUseReportRequest_fieldAccessorTable = new

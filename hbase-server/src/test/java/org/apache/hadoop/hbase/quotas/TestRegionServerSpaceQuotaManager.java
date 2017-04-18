@@ -33,7 +33,7 @@ import org.apache.hadoop.hbase.quotas.policies.DisableTableViolationPolicyEnforc
 import org.apache.hadoop.hbase.quotas.policies.NoInsertsViolationPolicyEnforcement;
 import org.apache.hadoop.hbase.quotas.policies.NoWritesCompactionsViolationPolicyEnforcement;
 import org.apache.hadoop.hbase.quotas.policies.NoWritesViolationPolicyEnforcement;
-import org.apache.hadoop.hbase.quotas.policies.BulkLoadCheckingViolationPolicyEnforcement;
+import org.apache.hadoop.hbase.quotas.policies.DefaultViolationPolicyEnforcement;
 import org.apache.hadoop.hbase.regionserver.RegionServerServices;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.Before;
@@ -90,7 +90,8 @@ public class TestRegionServerSpaceQuotaManager {
     enforcements.put(disablePolicy.getTableName(), disablePolicy);
     expectedPolicies.put(disablePolicy.getTableName(), disableSnapshot);
 
-    enforcements.put(TableName.valueOf("no_policy"), new BulkLoadCheckingViolationPolicyEnforcement());
+    enforcements.put(
+        TableName.valueOf("no_policy"), new DefaultViolationPolicyEnforcement());
 
     Map<TableName, SpaceQuotaSnapshot> actualPolicies = quotaManager.getActivePoliciesAsMap();
     assertEquals(expectedPolicies, actualPolicies);

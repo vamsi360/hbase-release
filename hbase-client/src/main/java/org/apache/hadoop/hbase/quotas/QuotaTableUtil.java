@@ -90,6 +90,8 @@ public class QuotaTableUtil {
   protected static final byte[] QUOTA_QUALIFIER_SETTINGS = Bytes.toBytes("s");
   protected static final byte[] QUOTA_QUALIFIER_SETTINGS_PREFIX = Bytes.toBytes("s.");
   protected static final byte[] QUOTA_QUALIFIER_POLICY = Bytes.toBytes("p");
+  protected static final String QUOTA_POLICY_COLUMN =
+    Bytes.toString(QUOTA_FAMILY_USAGE) + ":" + Bytes.toString(QUOTA_QUALIFIER_POLICY);
   protected static final byte[] QUOTA_USER_ROW_KEY_PREFIX = Bytes.toBytes("u.");
   protected static final byte[] QUOTA_TABLE_ROW_KEY_PREFIX = Bytes.toBytes("t.");
   protected static final byte[] QUOTA_NAMESPACE_ROW_KEY_PREFIX = Bytes.toBytes("n.");
@@ -243,13 +245,14 @@ public class QuotaTableUtil {
   public static void extractQuotaSnapshot(
       Result result, Map<TableName,SpaceQuotaSnapshot> snapshots) {
     byte[] row = Objects.requireNonNull(result).getRow();
-    if (null == row) {
+    if (row == null) {
       throw new IllegalArgumentException("Provided result had a null row");
     }
     final TableName targetTableName = getTableFromRowKey(row);
     Cell c = result.getColumnLatestCell(QUOTA_FAMILY_USAGE, QUOTA_QUALIFIER_POLICY);
-    if (null == c) {
-      throw new IllegalArgumentException("Result did not contain the expected column.");
+    if (c == null) {
+      throw new IllegalArgumentException("Result did not contain the expected column "
+          + QUOTA_POLICY_COLUMN + ", " + result.toString());
     }
     ByteString buffer = HBaseZeroCopyByteString.wrap(
         c.getValueArray(), c.getValueOffset(), c.getValueLength());
@@ -358,16 +361,8 @@ public class QuotaTableUtil {
   }
 
   /**
-   * Creates a {@link Scan} which only returns violation policy records in the quota table.
-   */
-  public static Scan getScanForViolations() {
-    Scan s = new Scan();
-    s.addColumn(QUOTA_FAMILY_USAGE, QUOTA_QUALIFIER_POLICY);
-    return s;
-  }
-
-  /**
-   * Creates a {@link Put} to enable the given <code>policy</code> on the <code>table</code>.
+   * Creates a {@link Put} to store the given {@code snapshot} for the given {@code tableName} in
+   * the quota table.
    */
   public static Put putSpaceSnapshot(TableName tableName, SpaceQuotaSnapshot snapshot) {
     Put p = new Put(getTableRowKey(tableName));

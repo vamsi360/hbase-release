@@ -249,15 +249,15 @@ if ( fqtn != null ) {
     TableName tn = TableName.valueOf(fqtn);
     SpaceQuotaSnapshot masterSnapshot = null;
     Quotas quota = QuotaTableUtil.getTableQuota(master.getConnection(), tn);
-    if (null == quota || !quota.hasSpace()) {
+    if (quota == null || !quota.hasSpace()) {
       quota = QuotaTableUtil.getNamespaceQuota(master.getConnection(), tn.getNamespaceAsString());
-      if (null != quota) {
+      if (quota != null) {
         masterSnapshot = QuotaTableUtil.getCurrentSnapshot(master.getConnection(), tn.getNamespaceAsString());
       }
     } else {
       masterSnapshot = QuotaTableUtil.getCurrentSnapshot(master.getConnection(), tn);
     }
-    if (null != quota && quota.hasSpace()) {
+    if (quota != null && quota.hasSpace()) {
       SpaceQuota spaceQuota = quota.getSpace();
 %>
   <tr>
@@ -277,7 +277,7 @@ if ( fqtn != null ) {
           <td><%= spaceQuota.getViolationPolicy() %></td>
         </tr>
 <%
-      if (null != masterSnapshot) {
+      if (masterSnapshot != null) {
 %>
         <tr>
           <td>Usage</td>

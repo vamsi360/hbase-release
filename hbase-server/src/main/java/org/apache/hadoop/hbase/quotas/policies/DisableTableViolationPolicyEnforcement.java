@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.quotas.SpaceLimitingException;
 import org.apache.hadoop.hbase.quotas.SpaceViolationPolicy;
@@ -31,7 +32,8 @@ import org.apache.hadoop.hbase.quotas.SpaceViolationPolicyEnforcement;
  * A {@link SpaceViolationPolicyEnforcement} which disables the table. The enforcement
  * countepart to {@link SpaceViolationPolicy#DISABLE}.
  */
-public class DisableTableViolationPolicyEnforcement extends AbstractViolationPolicyEnforcement {
+@InterfaceAudience.Private
+public class DisableTableViolationPolicyEnforcement extends DefaultViolationPolicyEnforcement {
   private static final Log LOG = LogFactory.getLog(DisableTableViolationPolicyEnforcement.class);
 
   @Override

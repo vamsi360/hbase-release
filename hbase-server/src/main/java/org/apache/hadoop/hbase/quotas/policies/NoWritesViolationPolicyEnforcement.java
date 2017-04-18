@@ -16,6 +16,7 @@
  */
 package org.apache.hadoop.hbase.quotas.policies;
 
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Increment;
@@ -29,7 +30,8 @@ import org.apache.hadoop.hbase.quotas.SpaceViolationPolicyEnforcement;
  * A {@link SpaceViolationPolicyEnforcement} implementation which disables all writes flowing
  * into HBase. The enforcement counterpart to {@link SpaceViolationPolicy#NO_WRITES}.
  */
-public class NoWritesViolationPolicyEnforcement extends AbstractViolationPolicyEnforcement {
+@InterfaceAudience.Private
+public class NoWritesViolationPolicyEnforcement extends DefaultViolationPolicyEnforcement {
 
   @Override
   public void enable() {}

@@ -1913,8 +1913,9 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       // Check to see if this bulk load would exceed the space quota for this table
       if (QuotaUtil.isQuotaEnabled(getConfiguration())) {
         ActivePolicyEnforcement activeSpaceQuotas = getSpaceQuotaManager().getActiveEnforcements();
-        SpaceViolationPolicyEnforcement enforcement = activeSpaceQuotas.getPolicyEnforcement(region);
-        if (null != enforcement && enforcement.shouldCheckBulkLoads()) {
+        SpaceViolationPolicyEnforcement enforcement = activeSpaceQuotas.getPolicyEnforcement(
+            region);
+        if (enforcement != null) {
           // Bulk loads must still be atomic. We must enact all or none.
           List<String> filePaths = new ArrayList<>(request.getFamilyPathCount());
           for (FamilyPath familyPath : request.getFamilyPathList()) {
@@ -2751,7 +2752,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           regionServer.getRegionServerSpaceQuotaManager();
       final GetSpaceQuotaSnapshotsResponse.Builder builder =
           GetSpaceQuotaSnapshotsResponse.newBuilder();
-      if (null != manager) {
+      if (manager != null) {
         final Map<TableName,SpaceQuotaSnapshot> snapshots = manager.copyQuotaSnapshots();
         for (Map.Entry<TableName,SpaceQuotaSnapshot> snapshot : snapshots.entrySet()) {
           builder.addSnapshots(TableQuotaSnapshot.newBuilder()
@@ -2775,7 +2776,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           regionServer.getRegionServerSpaceQuotaManager();
       final GetSpaceQuotaEnforcementsResponse.Builder builder =
           GetSpaceQuotaEnforcementsResponse.newBuilder();
-      if (null != manager) {
+      if (manager != null) {
         ActivePolicyEnforcement enforcements = manager.getActiveEnforcements();
         for (Map.Entry<TableName,SpaceViolationPolicyEnforcement> enforcement
             : enforcements.getPolicies().entrySet()) {

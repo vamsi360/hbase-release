@@ -16,15 +16,11 @@
  */
 package org.apache.hadoop.hbase.quotas.policies;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.quotas.SpaceLimitingException;
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.quotas.SpaceQuotaSnapshot;
 import org.apache.hadoop.hbase.quotas.SpaceViolationPolicyEnforcement;
 import org.apache.hadoop.hbase.regionserver.RegionServerServices;
@@ -32,6 +28,8 @@ import org.apache.hadoop.hbase.regionserver.RegionServerServices;
 /**
  * Abstract implementation for {@link SpaceViolationPolicyEnforcement}.
  */
+@InterfaceAudience.Private
+@InterfaceStability.Evolving
 public abstract class AbstractViolationPolicyEnforcement
     implements SpaceViolationPolicyEnforcement {
 
@@ -65,7 +63,8 @@ public abstract class AbstractViolationPolicyEnforcement
   }
 
   @Override
-  public void initialize(RegionServerServices rss, TableName tableName, SpaceQuotaSnapshot snapshot) {
+  public void initialize(
+      RegionServerServices rss, TableName tableName, SpaceQuotaSnapshot snapshot) {
     setRegionServerServices(rss);
     setTableName(tableName);
     setQuotaSnapshot(snapshot);
@@ -74,39 +73,5 @@ public abstract class AbstractViolationPolicyEnforcement
   @Override
   public boolean areCompactionsDisabled() {
     return false;
-  }
-
-  @Override
-  public boolean shouldCheckBulkLoads() {
-    // Reference check. The singleton is used when no quota exists to check against
-    return SpaceQuotaSnapshot.getNoSuchSnapshot() != quotaSnapshot;
-  }
-
-  @Override
-  public void checkBulkLoad(FileSystem fs, List<String> paths) throws SpaceLimitingException {
-    long size = 0L;
-    for (String path : paths) {
-      size += addSingleFile(fs, path);
-      if (quotaSnapshot.getUsage() + size > quotaSnapshot.getLimit()) {
-        break;
-      }
-    }
-    if (quotaSnapshot.getUsage() + size > quotaSnapshot.getLimit()) {
-      throw new SpaceLimitingException(getPolicyName(), "Bulk load of " + paths
-          + " is disallowed because the file(s) exceed the limits of a space quota.");
-    }
-  }
-
-  private long addSingleFile(FileSystem fs, String path) throws SpaceLimitingException {
-    final FileStatus status;
-    try {
-      status = fs.getFileStatus(new Path(Objects.requireNonNull(path)));
-    } catch (IOException e) {
-      throw new SpaceLimitingException(getPolicyName(), "Could not verify length of file to bulk load", e);
-    }
-    if (!status.isFile()) {
-      throw new IllegalArgumentException(path + " is not a file.");
-    }
-    return status.getLen();
   }
 }

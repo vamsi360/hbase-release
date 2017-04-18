@@ -85,7 +85,7 @@ public class RegionServerSpaceQuotaManager {
   }
 
   public synchronized void stop() {
-    if (null != spaceQuotaRefresher) {
+    if (spaceQuotaRefresher != null) {
       spaceQuotaRefresher.cancel();
       spaceQuotaRefresher = null;
     }
@@ -125,7 +125,7 @@ public class RegionServerSpaceQuotaManager {
     final Map<TableName, SpaceQuotaSnapshot> policies = new HashMap<>();
     for (Entry<TableName, SpaceViolationPolicyEnforcement> entry : enforcements.entrySet()) {
       final SpaceQuotaSnapshot snapshot = entry.getValue().getQuotaSnapshot();
-      if (null != snapshot) {
+      if (snapshot != null) {
         policies.put(entry.getKey(), snapshot);
       }
     }
@@ -150,9 +150,10 @@ public class RegionServerSpaceQuotaManager {
     final SpaceViolationPolicyEnforcement enforcement = getFactory().create(
         getRegionServerServices(), tableName, snapshot);
     // "Enables" the policy
-    // TODO Should this synchronize on the actual table name instead of the map? That would allow
-    // policy enable/disable on different tables to happen concurrently. As written now, only one
-    // table will be allowed to transition at a time.
+    // HBASE-XXXX: Should this synchronize on the actual table name instead of the map? That would
+    // allow policy enable/disable on different tables to happen concurrently. As written now, only
+    // one table will be allowed to transition at a time. This is probably OK, but not sure if
+    // it would become a bottleneck at large clusters/number of tables.
     synchronized (enforcedPolicies) {
       try {
         enforcement.enable();
@@ -173,10 +174,9 @@ public class RegionServerSpaceQuotaManager {
       LOG.trace("Disabling violation policy enforcement on " + tableName);
     }
     // "Disables" the policy
-    // TODO Should this synchronize on the actual table name instead of the map?
     synchronized (enforcedPolicies) {
       SpaceViolationPolicyEnforcement enforcement = enforcedPolicies.remove(tableName);
-      if (null != enforcement) {
+      if (enforcement != null) {
         try {
           enforcement.disable();
         } catch (IOException e) {
@@ -197,7 +197,7 @@ public class RegionServerSpaceQuotaManager {
    */
   public boolean areCompactionsDisabled(TableName tableName) {
     SpaceViolationPolicyEnforcement enforcement = this.enforcedPolicies.get(Objects.requireNonNull(tableName));
-    if (null != enforcement) {
+    if (enforcement != null) {
       return enforcement.areCompactionsDisabled();
     }
     return false;

@@ -1283,8 +1283,8 @@ public class HRegionServer extends HasThread implements
    */
   RegionSpaceUse convertRegionSize(HRegionInfo regionInfo, Long sizeInBytes) {
     return RegionSpaceUse.newBuilder()
-        .setRegion(HRegionInfo.convert(Objects.requireNonNull(regionInfo)))
-        .setSize(Objects.requireNonNull(sizeInBytes))
+        .setRegionInfo(HRegionInfo.convert(Objects.requireNonNull(regionInfo)))
+        .setRegionSize(Objects.requireNonNull(sizeInBytes))
         .build();
   }
 

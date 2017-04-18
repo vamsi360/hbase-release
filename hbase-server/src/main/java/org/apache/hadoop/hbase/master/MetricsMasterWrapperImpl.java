@@ -136,7 +136,7 @@ public class MetricsMasterWrapperImpl implements MetricsMasterWrapper {
   @Override
   public Map<String,Entry<Long,Long>> getTableSpaceUtilization() {
     QuotaObserverChore quotaChore = master.getQuotaObserverChore();
-    if (null == quotaChore) {
+    if (quotaChore == null) {
       return Collections.emptyMap();
     }
     Map<TableName,SpaceQuotaSnapshot> tableSnapshots = quotaChore.getTableQuotaSnapshots();
@@ -150,7 +150,7 @@ public class MetricsMasterWrapperImpl implements MetricsMasterWrapper {
   @Override
   public Map<String,Entry<Long,Long>> getNamespaceSpaceUtilization() {
     QuotaObserverChore quotaChore = master.getQuotaObserverChore();
-    if (null == quotaChore) {
+    if (quotaChore == null) {
       return Collections.emptyMap();
     }
     Map<String,SpaceQuotaSnapshot> namespaceSnapshots = quotaChore.getNamespaceQuotaSnapshots();

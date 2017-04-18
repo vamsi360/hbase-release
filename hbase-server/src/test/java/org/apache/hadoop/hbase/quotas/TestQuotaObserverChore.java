@@ -71,7 +71,7 @@ public class TestQuotaObserverChore {
     }
 
     TableQuotaSnapshotStore store = new TableQuotaSnapshotStore(conn, chore, regionReports);
-    when(chore.getTableViolationStore()).thenReturn(store);
+    when(chore.getTableSnapshotStore()).thenReturn(store);
 
     assertEquals(numTable1Regions, Iterables.size(store.filterBySubject(tn1)));
     assertEquals(numTable2Regions, Iterables.size(store.filterBySubject(tn2)));

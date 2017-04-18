@@ -89,6 +89,11 @@ public class TestQuotaObserverChoreRegionReports {
 
     final String FAM1 = "f1";
     final HMaster master = TEST_UTIL.getMiniHBaseCluster().getMaster();
+    // Wait for the master to finish initialization.
+    while (master.getMasterQuotaManager() == null) {
+      LOG.debug("MasterQuotaManager is null, waiting...");
+      Thread.sleep(500);
+    }
     final MasterQuotaManager quotaManager = master.getMasterQuotaManager();
 
     // Create a table
@@ -165,7 +170,7 @@ public class TestQuotaObserverChoreRegionReports {
       @Override
       public boolean evaluate() throws Exception {
         SpaceQuotaSnapshot snapshot = getSnapshotForTable(conn, tn);
-        if (null == snapshot) {
+        if (snapshot == null) {
           return false;
         }
         return snapshot.getQuotaStatus().isInViolation();
@@ -183,7 +188,7 @@ public class TestQuotaObserverChoreRegionReports {
       @Override
       public boolean evaluate() throws Exception {
         SpaceQuotaSnapshot snapshot = getSnapshotForTable(conn, tn);
-        if (null == snapshot) {
+        if (snapshot == null) {
           return false;
         }
         return !snapshot.getQuotaStatus().isInViolation();
@@ -193,7 +198,7 @@ public class TestQuotaObserverChoreRegionReports {
     // The QuotaObserverChore's memory should also show it not in violation.
     final HMaster master = TEST_UTIL.getMiniHBaseCluster().getMaster();
     QuotaSnapshotStore<TableName> tableStore =
-        master.getQuotaObserverChore().getTableViolationStore();
+        master.getQuotaObserverChore().getTableSnapshotStore();
     SpaceQuotaSnapshot snapshot = tableStore.getCurrentState(tn);
     assertFalse("Quota should not be in violation", snapshot.getQuotaStatus().isInViolation());
   }

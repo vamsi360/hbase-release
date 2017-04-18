@@ -52,7 +52,7 @@ public class TestBulkLoadCheckingViolationPolicyEnforcement {
     fs = mock(FileSystem.class);
     rss = mock(RegionServerServices.class);
     tableName = TableName.valueOf("foo");
-    policy = new BulkLoadCheckingViolationPolicyEnforcement();
+    policy = new DefaultViolationPolicyEnforcement();
   }
   
   @Test

@@ -356,8 +356,8 @@ public class CompactSplitThread implements CompactionRequestor, PropagatingConfi
 
     final RegionServerSpaceQuotaManager spaceQuotaManager =
       this.server.getRegionServerSpaceQuotaManager();
-    if (null != spaceQuotaManager &&
-        spaceQuotaManager.areCompactionsDisabled(r.getTableDesc().getTableName())) {
+    if (spaceQuotaManager != null && spaceQuotaManager.areCompactionsDisabled(
+        r.getTableDesc().getTableName())) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Ignoring compaction request for " + r + " as an active space quota violation "
             + " policy disallows compactions.");

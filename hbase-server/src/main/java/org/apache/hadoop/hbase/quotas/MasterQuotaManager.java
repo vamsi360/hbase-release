@@ -12,6 +12,7 @@
 package org.apache.hadoop.hbase.quotas;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -55,6 +56,8 @@ import com.google.common.annotations.VisibleForTesting;
 @InterfaceStability.Evolving
 public class MasterQuotaManager implements RegionStateListener {
   private static final Log LOG = LogFactory.getLog(MasterQuotaManager.class);
+  private static final Map<HRegionInfo, Long> EMPTY_MAP = Collections.unmodifiableMap(
+      new HashMap<HRegionInfo, Long>());
 
   private final MasterServices masterServices;
   private NamedLock<String> namespaceLocks;
@@ -601,31 +604,31 @@ public class MasterQuotaManager implements RegionStateListener {
 
   @VisibleForTesting
   void initializeRegionSizes() {
-    assert null == regionSizes;
+    assert regionSizes == null;
     this.regionSizes = new ConcurrentHashMap<>();
   }
 
   public void addRegionSize(HRegionInfo hri, long size, long time) {
-    if (null == regionSizes) {
+    if (regionSizes == null) {
       return;
     }
     regionSizes.put(hri, new SizeSnapshot(size, time));
   }
 
   public Map<HRegionInfo, Long> snapshotRegionSizes() {
-    HashMap<HRegionInfo, Long> copy = new HashMap<>();
-    if (null == regionSizes) {
-      return copy;
+    if (regionSizes == null) {
+      return EMPTY_MAP;
     }
 
+    Map<HRegionInfo, Long> copy = new HashMap<>();
     for (Entry<HRegionInfo,SizeSnapshot> entry : regionSizes.entrySet()) {
       copy.put(entry.getKey(), entry.getValue().getSize());
     }
     return copy;
   }
 
-  public int pruneEntriesOlderThan(long timeToPruneBefore) {
-    if (null == regionSizes) {
+  int pruneEntriesOlderThan(long timeToPruneBefore) {
+    if (regionSizes == null) {
       return 0;
     }
     int numEntriesRemoved = 0;
