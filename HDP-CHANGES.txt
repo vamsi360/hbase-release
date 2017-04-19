@@ -281,3 +281,4 @@ HBASE-17648: HBase Table-level synchronization fails between two secured(kerberi
 HBASE-17682 Region stuck in merging_new state indefinitely
 HBASE-17710 HBase in standalone mode creates directories with 777 permission
 HBASE-17717 Explicitly use "sasl" ACL scheme for hbase superuser
+HBASE-17937 Memstore size becomes negative in case of expensive postPut/Delete Coprocessor call
