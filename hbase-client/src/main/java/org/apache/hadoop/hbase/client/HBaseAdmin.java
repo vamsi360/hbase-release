@@ -4879,9 +4879,12 @@ public class HBaseAdmin implements Admin {
         } catch (IOException e) {
           serverEx = e;
         }
+        long sleepTime = getPauseTime(tries++, getAdmin().pause);
         try {
-          Thread.sleep(getPauseTime(tries++, getAdmin().pause));
+          Thread.sleep(sleepTime);
         } catch (InterruptedException e) {
+          LOG.warn("Interrupted while waiting for table DDL operation.  maxPauseTime= "
+            + sleepTime + " for tries= " + (tries-1));
           callable.throwInterruptedException();
         }
       }
