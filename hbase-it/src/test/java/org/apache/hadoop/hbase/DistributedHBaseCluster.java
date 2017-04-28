@@ -136,13 +136,15 @@ public class DistributedHBaseCluster extends HBaseCluster {
     LOG.info("Waiting service:" + service + " to stop: " + serverName.getServerName());
     long start = System.currentTimeMillis();
 
+    String ret = "";
     while ((System.currentTimeMillis() - start) < timeout) {
-      if (!clusterManager.isRunning(service, serverName.getHostname(), serverName.getPort())) {
+      ret = clusterManager.isRunning(service, serverName.getHostname(), serverName.getPort());
+      if (!(ret.length() > 0)) {
         return;
       }
       Threads.sleep(1000);
     }
-    throw new IOException("did timeout waiting for service to stop:" + serverName);
+    throw new IOException("timeout waiting for service to stop:" + serverName + " " + ret);
   }
 
   @Override
@@ -254,8 +256,8 @@ public class DistributedHBaseCluster extends HBaseCluster {
       // If initial master is stopped, start it, before restoring the state.
       // It will come up as a backup master, if there is already an active master.
       try {
-        if (!clusterManager.isRunning(ServiceType.HBASE_MASTER,
-                initMaster.getHostname(), initMaster.getPort())) {
+        if (!(clusterManager.isRunning(ServiceType.HBASE_MASTER,
+                initMaster.getHostname(), initMaster.getPort()).length() > 0)) {
           LOG.info("Restoring cluster - starting initial active master at:"
                   + initMaster.getHostAndPort());
           startMaster(initMaster.getHostname(), initMaster.getPort());
@@ -284,9 +286,9 @@ public class DistributedHBaseCluster extends HBaseCluster {
       for (ServerName backup : initial.getBackupMasters()) {
         try {
           //these are not started in backup mode, but we should already have an active master
-          if (!clusterManager.isRunning(ServiceType.HBASE_MASTER,
+          if (!(clusterManager.isRunning(ServiceType.HBASE_MASTER,
                   backup.getHostname(),
-                  backup.getPort())) {
+                  backup.getPort()).length() > 0)) {
             LOG.info("Restoring cluster - starting initial backup master: "
                     + backup.getHostAndPort());
             startMaster(backup.getHostname(), backup.getPort());
@@ -311,7 +313,8 @@ public class DistributedHBaseCluster extends HBaseCluster {
 
       for (ServerName sn:toStart) {
         try {
-          if(!clusterManager.isRunning(ServiceType.HBASE_MASTER, sn.getHostname(), sn.getPort())) {
+          if(!(clusterManager.isRunning(ServiceType.HBASE_MASTER, sn.getHostname(), sn.getPort())
+              .length() > 0)) {
             LOG.info("Restoring cluster - starting initial backup master: " + sn.getHostAndPort());
             startMaster(sn.getHostname(), sn.getPort());
           }
@@ -322,7 +325,8 @@ public class DistributedHBaseCluster extends HBaseCluster {
 
       for (ServerName sn:toKill) {
         try {
-          if(clusterManager.isRunning(ServiceType.HBASE_MASTER, sn.getHostname(), sn.getPort())) {
+          if(clusterManager.isRunning(ServiceType.HBASE_MASTER, sn.getHostname(), sn.getPort())
+              .length() > 0) {
             LOG.info("Restoring cluster - stopping backup master: " + sn.getHostAndPort());
             stopMaster(sn);
           }
@@ -371,9 +375,9 @@ public class DistributedHBaseCluster extends HBaseCluster {
 
     for(ServerName sn:toStart) {
       try {
-        if (!clusterManager.isRunning(ServiceType.HBASE_REGIONSERVER,
+        if (!(clusterManager.isRunning(ServiceType.HBASE_REGIONSERVER,
                 sn.getHostname(),
-                sn.getPort())) {
+                sn.getPort()).length() > 0)) {
           LOG.info("Restoring cluster - starting initial region server: " + sn.getHostAndPort());
           startRegionServer(sn.getHostname(), sn.getPort());
         }
@@ -386,7 +390,7 @@ public class DistributedHBaseCluster extends HBaseCluster {
       try {
         if (clusterManager.isRunning(ServiceType.HBASE_REGIONSERVER,
                 sn.getHostname(),
-                sn.getPort())) {
+                sn.getPort()).length() > 0) {
           LOG.info("Restoring cluster - stopping initial region server: " + sn.getHostAndPort());
           stopRegionServer(sn);
         }

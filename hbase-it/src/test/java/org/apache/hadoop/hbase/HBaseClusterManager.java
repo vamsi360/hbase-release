@@ -275,10 +275,10 @@ public class HBaseClusterManager extends Configured implements ClusterManager {
   }
 
   @Override
-  public boolean isRunning(ServiceType service, String hostname, int port) throws IOException {
+  public String isRunning(ServiceType service, String hostname, int port) throws IOException {
     String ret = execWithRetries(hostname, getCommandProvider(service).isRunningCommand(service))
         .getSecond();
-    return ret.length() > 0;
+    return ret;
   }
 
   @Override

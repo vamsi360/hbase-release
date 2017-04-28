@@ -92,7 +92,7 @@ interface ClusterManager extends Configurable {
    * Returns whether the service is running on the remote host. This only checks whether the
    * service still has a pid.
    */
-  boolean isRunning(ServiceType service, String hostname, int port) throws IOException;
+  String isRunning(ServiceType service, String hostname, int port) throws IOException;
 
   /* TODO: further API ideas:
    *
