@@ -135,7 +135,7 @@ public class RESTApiClusterManager extends Configured implements ClusterManager 
   }
 
   @Override
-  public boolean isRunning(ServiceType service, String hostname, int port) throws IOException {
+  public String isRunning(ServiceType service, String hostname, int port) throws IOException {
     String serviceName = getServiceName(roleServiceType.get(service));
     String hostId = getHostId(hostname);
     String roleState = getRoleState(serviceName, service.toString(), hostId);
@@ -148,7 +148,8 @@ public class RESTApiClusterManager extends Configured implements ClusterManager 
       isRunning = true;
     }
 
-    return isRunning;
+    // return role state and health when service is running
+    return isRunning ? roleState + " " + healthSummary : "";
   }
 
   @Override
