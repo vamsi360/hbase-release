@@ -275,11 +275,14 @@ public class RSGroupAdminEndpoint extends RSGroupAdminService
     }
     done.run(builder.build());
   }
-
+  void assignTableToGroup(HTableDescriptor desc) throws IOException {
+    groupAdminServer.prepareRSGroupForTable(desc);
+  }
+  // Assign table to default RSGroup.
   @Override
   public void preCreateTable(ObserverContext<MasterCoprocessorEnvironment> ctx,
       HTableDescriptor desc, HRegionInfo[] regions) throws IOException {
-    groupAdminServer.prepareRSGroupForTable(desc);
+    assignTableToGroup(desc);
   }
 
   @Override
@@ -622,7 +625,7 @@ public class RSGroupAdminEndpoint extends RSGroupAdminService
   public void preCloneSnapshot(ObserverContext<MasterCoprocessorEnvironment> ctx,
                                SnapshotDescription snapshot, HTableDescriptor hTableDescriptor)
       throws IOException {
-
+    assignTableToGroup(hTableDescriptor);
   }
 
   @Override
