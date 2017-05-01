@@ -206,7 +206,7 @@ public class TestQuotaObserverChoreRegionReports {
   private SpaceQuotaSnapshot getSnapshotForTable(
       Connection conn, TableName tn) throws IOException {
     try (Table quotaTable = conn.getTable(QuotaUtil.QUOTA_TABLE_NAME);
-        ResultScanner scanner = quotaTable.getScanner(QuotaTableUtil.makeQuotaViolationScan())) {
+        ResultScanner scanner = quotaTable.getScanner(QuotaTableUtil.makeQuotaSnapshotScan())) {
       Map<TableName,SpaceQuotaSnapshot> activeViolations = new HashMap<>();
       for (Result result : scanner) {
         try {

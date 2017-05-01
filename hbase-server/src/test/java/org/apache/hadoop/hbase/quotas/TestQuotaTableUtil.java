@@ -230,7 +230,7 @@ public class TestQuotaTableUtil {
     final Map<TableName,SpaceQuotaSnapshot> actualPolicies = new HashMap<>();
     try (Table quotaTable = connection.getTable(QuotaUtil.QUOTA_TABLE_NAME)) {
       quotaTable.put(puts);
-      ResultScanner scanner = quotaTable.getScanner(QuotaTableUtil.makeQuotaViolationScan());
+      ResultScanner scanner = quotaTable.getScanner(QuotaTableUtil.makeQuotaSnapshotScan());
       for (Result r : scanner) {
         QuotaTableUtil.extractQuotaSnapshot(r, actualPolicies);
       }

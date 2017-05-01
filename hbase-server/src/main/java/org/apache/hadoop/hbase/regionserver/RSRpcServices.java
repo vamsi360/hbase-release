@@ -153,13 +153,10 @@ import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanResponse;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier.RegionSpecifierType;
-import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaEnforcementsRequest;
-import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaEnforcementsResponse;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaSnapshotsRequest;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaSnapshotsResponse;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaSnapshotsResponse.TableQuotaSnapshot;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceViolationPolicy;
-import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaEnforcementsResponse.TableViolationPolicy;
 import org.apache.hadoop.hbase.protobuf.generated.RPCProtos.RequestHeader;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.BulkLoadDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
@@ -2766,31 +2763,4 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       throw new ServiceException(e);
     }
   }
-
-  @Override
-  public GetSpaceQuotaEnforcementsResponse getSpaceQuotaEnforcements(
-      RpcController controller, GetSpaceQuotaEnforcementsRequest request)
-      throws ServiceException {
-    try {
-      final RegionServerSpaceQuotaManager manager =
-          regionServer.getRegionServerSpaceQuotaManager();
-      final GetSpaceQuotaEnforcementsResponse.Builder builder =
-          GetSpaceQuotaEnforcementsResponse.newBuilder();
-      if (manager != null) {
-        ActivePolicyEnforcement enforcements = manager.getActiveEnforcements();
-        for (Map.Entry<TableName,SpaceViolationPolicyEnforcement> enforcement
-            : enforcements.getPolicies().entrySet()) {
-          SpaceViolationPolicy pbPolicy = SpaceViolationPolicy.valueOf(
-              enforcement.getValue().getPolicyName());
-          builder.addViolationPolicies(TableViolationPolicy.newBuilder()
-              .setTableName(ProtobufUtil.toProtoTableName(enforcement.getKey()))
-              .setViolationPolicy(pbPolicy).build());
-        }
-      }
-      return builder.build();
-    } catch (Exception e) {
-      throw new ServiceException(e);
-    }
-  }
-
 }

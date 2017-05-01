@@ -140,7 +140,7 @@ public class SpaceQuotaRefresherChore extends ScheduledChore {
    */
   public Map<TableName, SpaceQuotaSnapshot> fetchSnapshotsFromQuotaTable() throws IOException {
     try (Table quotaTable = getConnection().getTable(QuotaUtil.QUOTA_TABLE_NAME);
-        ResultScanner scanner = quotaTable.getScanner(QuotaTableUtil.makeQuotaViolationScan())) {
+        ResultScanner scanner = quotaTable.getScanner(QuotaTableUtil.makeQuotaSnapshotScan())) {
       Map<TableName,SpaceQuotaSnapshot> activeViolations = new HashMap<>();
       for (Result result : scanner) {
         try {

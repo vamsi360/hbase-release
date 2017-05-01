@@ -25,7 +25,6 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetQuotaStatesResponse;
-import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaEnforcementsResponse;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaRegionSizesResponse;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetSpaceQuotaSnapshotsResponse;
 
@@ -114,27 +113,6 @@ public class QuotaStatusCalls {
     try {
       return admin.getSpaceQuotaSnapshots(
           factory.newController(), RequestConverter.buildGetSpaceQuotaSnapshotsRequest());
-    } catch (ServiceException se) {
-      throw ProtobufUtil.getRemoteException(se);
-    }
-  }
-
-  /**
-   * See {@link #getRegionServerSpaceQuotaEnforcements(ClusterConnection, RpcControllerFactory, int, ServerName)}
-   */
-  public static GetSpaceQuotaEnforcementsResponse getRegionServerSpaceQuotaEnforcements(
-      ClusterConnection clusterConn, int timeout, ServerName sn) throws IOException {
-    RpcControllerFactory rpcController = clusterConn.getRpcControllerFactory();
-    return getRegionServerSpaceQuotaEnforcements(clusterConn, rpcController, timeout, sn);
-  }
-
-  public static GetSpaceQuotaEnforcementsResponse getRegionServerSpaceQuotaEnforcements(
-      ClusterConnection conn, RpcControllerFactory factory,
-      int timeout, ServerName sn) throws IOException {
-    final AdminService.BlockingInterface admin = conn.getAdmin(sn);
-    try {
-      return admin.getSpaceQuotaEnforcements(
-          factory.newController(), RequestConverter.buildGetSpaceQuotaEnforcementsRequest());
     } catch (ServiceException se) {
       throw ProtobufUtil.getRemoteException(se);
     }
