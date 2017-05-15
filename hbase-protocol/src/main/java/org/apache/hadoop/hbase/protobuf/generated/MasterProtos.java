@@ -35299,11 +35299,11 @@ public final class MasterProtos {
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot();
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
   }
   /**
    * Protobuf type {@code SnapshotRequest}
@@ -35357,11 +35357,11 @@ public final class MasterProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder subBuilder = null;
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder subBuilder = null;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
                 subBuilder = snapshot_.toBuilder();
               }
-              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.PARSER, extensionRegistry);
+              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(snapshot_);
                 snapshot_ = subBuilder.buildPartial();
@@ -35411,7 +35411,7 @@ public final class MasterProtos {
     private int bitField0_;
     // required .SnapshotDescription snapshot = 1;
     public static final int SNAPSHOT_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_;
+    private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_;
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
@@ -35421,18 +35421,18 @@ public final class MasterProtos {
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
       return snapshot_;
     }
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
       return snapshot_;
     }
 
     private void initFields() {
-      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -35626,7 +35626,7 @@ public final class MasterProtos {
       public Builder clear() {
         super.clear();
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
         } else {
           snapshotBuilder_.clear();
         }
@@ -35722,9 +35722,9 @@ public final class MasterProtos {
       private int bitField0_;
 
       // required .SnapshotDescription snapshot = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
@@ -35734,7 +35734,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
         if (snapshotBuilder_ == null) {
           return snapshot_;
         } else {
@@ -35744,7 +35744,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -35761,7 +35761,7 @@ public final class MasterProtos {
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
       public Builder setSnapshot(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder builderForValue) {
         if (snapshotBuilder_ == null) {
           snapshot_ = builderForValue.build();
           onChanged();
@@ -35774,12 +35774,12 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance()) {
+              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance()) {
             snapshot_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
           } else {
             snapshot_ = value;
           }
@@ -35795,7 +35795,7 @@ public final class MasterProtos {
        */
       public Builder clearSnapshot() {
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
           onChanged();
         } else {
           snapshotBuilder_.clear();
@@ -35806,7 +35806,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder getSnapshotBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder getSnapshotBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getSnapshotFieldBuilder().getBuilder();
@@ -35814,7 +35814,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
         if (snapshotBuilder_ != null) {
           return snapshotBuilder_.getMessageOrBuilder();
         } else {
@@ -35825,11 +35825,11 @@ public final class MasterProtos {
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> 
           getSnapshotFieldBuilder() {
         if (snapshotBuilder_ == null) {
           snapshotBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder>(
                   snapshot_,
                   getParentForChildren(),
                   isClean());
@@ -36636,12 +36636,12 @@ public final class MasterProtos {
     /**
      * <code>repeated .SnapshotDescription snapshots = 1;</code>
      */
-    java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription> 
+    java.util.List<org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription> 
         getSnapshotsList();
     /**
      * <code>repeated .SnapshotDescription snapshots = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshots(int index);
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshots(int index);
     /**
      * <code>repeated .SnapshotDescription snapshots = 1;</code>
      */
@@ -36649,12 +36649,12 @@ public final class MasterProtos {
     /**
      * <code>repeated .SnapshotDescription snapshots = 1;</code>
      */
-    java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> 
+    java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> 
         getSnapshotsOrBuilderList();
     /**
      * <code>repeated .SnapshotDescription snapshots = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotsOrBuilder(
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotsOrBuilder(
         int index);
   }
   /**
@@ -36710,10 +36710,10 @@ public final class MasterProtos {
             }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                snapshots_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription>();
+                snapshots_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              snapshots_.add(input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.PARSER, extensionRegistry));
+              snapshots_.add(input.readMessage(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.PARSER, extensionRegistry));
               break;
             }
           }
@@ -36760,17 +36760,17 @@ public final class MasterProtos {
 
     // repeated .SnapshotDescription snapshots = 1;
     public static final int SNAPSHOTS_FIELD_NUMBER = 1;
-    private java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription> snapshots_;
+    private java.util.List<org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription> snapshots_;
     /**
      * <code>repeated .SnapshotDescription snapshots = 1;</code>
      */
-    public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription> getSnapshotsList() {
+    public java.util.List<org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription> getSnapshotsList() {
       return snapshots_;
     }
     /**
      * <code>repeated .SnapshotDescription snapshots = 1;</code>
      */
-    public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> 
+    public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> 
         getSnapshotsOrBuilderList() {
       return snapshots_;
     }
@@ -36783,13 +36783,13 @@ public final class MasterProtos {
     /**
      * <code>repeated .SnapshotDescription snapshots = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshots(int index) {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshots(int index) {
       return snapshots_.get(index);
     }
     /**
      * <code>repeated .SnapshotDescription snapshots = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotsOrBuilder(
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotsOrBuilder(
         int index) {
       return snapshots_.get(index);
     }
@@ -37100,22 +37100,22 @@ public final class MasterProtos {
       private int bitField0_;
 
       // repeated .SnapshotDescription snapshots = 1;
-      private java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription> snapshots_ =
+      private java.util.List<org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription> snapshots_ =
         java.util.Collections.emptyList();
       private void ensureSnapshotsIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          snapshots_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription>(snapshots_);
+          snapshots_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription>(snapshots_);
           bitField0_ |= 0x00000001;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> snapshotsBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> snapshotsBuilder_;
 
       /**
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
-      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription> getSnapshotsList() {
+      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription> getSnapshotsList() {
         if (snapshotsBuilder_ == null) {
           return java.util.Collections.unmodifiableList(snapshots_);
         } else {
@@ -37135,7 +37135,7 @@ public final class MasterProtos {
       /**
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshots(int index) {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshots(int index) {
         if (snapshotsBuilder_ == null) {
           return snapshots_.get(index);
         } else {
@@ -37146,7 +37146,7 @@ public final class MasterProtos {
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
       public Builder setSnapshots(
-          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+          int index, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -37163,7 +37163,7 @@ public final class MasterProtos {
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
       public Builder setSnapshots(
-          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder builderForValue) {
+          int index, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder builderForValue) {
         if (snapshotsBuilder_ == null) {
           ensureSnapshotsIsMutable();
           snapshots_.set(index, builderForValue.build());
@@ -37176,7 +37176,7 @@ public final class MasterProtos {
       /**
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
-      public Builder addSnapshots(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder addSnapshots(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -37193,7 +37193,7 @@ public final class MasterProtos {
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
       public Builder addSnapshots(
-          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+          int index, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotsBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -37210,7 +37210,7 @@ public final class MasterProtos {
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
       public Builder addSnapshots(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder builderForValue) {
         if (snapshotsBuilder_ == null) {
           ensureSnapshotsIsMutable();
           snapshots_.add(builderForValue.build());
@@ -37224,7 +37224,7 @@ public final class MasterProtos {
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
       public Builder addSnapshots(
-          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder builderForValue) {
+          int index, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder builderForValue) {
         if (snapshotsBuilder_ == null) {
           ensureSnapshotsIsMutable();
           snapshots_.add(index, builderForValue.build());
@@ -37238,7 +37238,7 @@ public final class MasterProtos {
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
       public Builder addAllSnapshots(
-          java.lang.Iterable<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription> values) {
+          java.lang.Iterable<? extends org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription> values) {
         if (snapshotsBuilder_ == null) {
           ensureSnapshotsIsMutable();
           super.addAll(values, snapshots_);
@@ -37277,14 +37277,14 @@ public final class MasterProtos {
       /**
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder getSnapshotsBuilder(
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder getSnapshotsBuilder(
           int index) {
         return getSnapshotsFieldBuilder().getBuilder(index);
       }
       /**
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotsOrBuilder(
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotsOrBuilder(
           int index) {
         if (snapshotsBuilder_ == null) {
           return snapshots_.get(index);  } else {
@@ -37294,7 +37294,7 @@ public final class MasterProtos {
       /**
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
-      public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> 
+      public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> 
            getSnapshotsOrBuilderList() {
         if (snapshotsBuilder_ != null) {
           return snapshotsBuilder_.getMessageOrBuilderList();
@@ -37305,31 +37305,31 @@ public final class MasterProtos {
       /**
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder addSnapshotsBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder addSnapshotsBuilder() {
         return getSnapshotsFieldBuilder().addBuilder(
-            org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance());
+            org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance());
       }
       /**
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder addSnapshotsBuilder(
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder addSnapshotsBuilder(
           int index) {
         return getSnapshotsFieldBuilder().addBuilder(
-            index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance());
+            index, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance());
       }
       /**
        * <code>repeated .SnapshotDescription snapshots = 1;</code>
        */
-      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder> 
+      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder> 
            getSnapshotsBuilderList() {
         return getSnapshotsFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> 
           getSnapshotsFieldBuilder() {
         if (snapshotsBuilder_ == null) {
           snapshotsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder>(
                   snapshots_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
@@ -37361,11 +37361,11 @@ public final class MasterProtos {
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot();
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
   }
   /**
    * Protobuf type {@code DeleteSnapshotRequest}
@@ -37419,11 +37419,11 @@ public final class MasterProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder subBuilder = null;
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder subBuilder = null;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
                 subBuilder = snapshot_.toBuilder();
               }
-              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.PARSER, extensionRegistry);
+              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(snapshot_);
                 snapshot_ = subBuilder.buildPartial();
@@ -37473,7 +37473,7 @@ public final class MasterProtos {
     private int bitField0_;
     // required .SnapshotDescription snapshot = 1;
     public static final int SNAPSHOT_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_;
+    private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_;
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
@@ -37483,18 +37483,18 @@ public final class MasterProtos {
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
       return snapshot_;
     }
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
       return snapshot_;
     }
 
     private void initFields() {
-      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -37688,7 +37688,7 @@ public final class MasterProtos {
       public Builder clear() {
         super.clear();
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
         } else {
           snapshotBuilder_.clear();
         }
@@ -37784,9 +37784,9 @@ public final class MasterProtos {
       private int bitField0_;
 
       // required .SnapshotDescription snapshot = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
@@ -37796,7 +37796,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
         if (snapshotBuilder_ == null) {
           return snapshot_;
         } else {
@@ -37806,7 +37806,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -37823,7 +37823,7 @@ public final class MasterProtos {
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
       public Builder setSnapshot(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder builderForValue) {
         if (snapshotBuilder_ == null) {
           snapshot_ = builderForValue.build();
           onChanged();
@@ -37836,12 +37836,12 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance()) {
+              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance()) {
             snapshot_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
           } else {
             snapshot_ = value;
           }
@@ -37857,7 +37857,7 @@ public final class MasterProtos {
        */
       public Builder clearSnapshot() {
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
           onChanged();
         } else {
           snapshotBuilder_.clear();
@@ -37868,7 +37868,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder getSnapshotBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder getSnapshotBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getSnapshotFieldBuilder().getBuilder();
@@ -37876,7 +37876,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
         if (snapshotBuilder_ != null) {
           return snapshotBuilder_.getMessageOrBuilder();
         } else {
@@ -37887,11 +37887,11 @@ public final class MasterProtos {
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> 
           getSnapshotFieldBuilder() {
         if (snapshotBuilder_ == null) {
           snapshotBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder>(
                   snapshot_,
                   getParentForChildren(),
                   isClean());
@@ -38260,11 +38260,21 @@ public final class MasterProtos {
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot();
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
+
+    // optional bool restoreACL = 2 [default = false];
+    /**
+     * <code>optional bool restoreACL = 2 [default = false];</code>
+     */
+    boolean hasRestoreACL();
+    /**
+     * <code>optional bool restoreACL = 2 [default = false];</code>
+     */
+    boolean getRestoreACL();
   }
   /**
    * Protobuf type {@code RestoreSnapshotRequest}
@@ -38318,16 +38328,21 @@ public final class MasterProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder subBuilder = null;
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder subBuilder = null;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
                 subBuilder = snapshot_.toBuilder();
               }
-              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.PARSER, extensionRegistry);
+              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(snapshot_);
                 snapshot_ = subBuilder.buildPartial();
               }
               bitField0_ |= 0x00000001;
+              break;
+            }
+            case 16: {
+              bitField0_ |= 0x00000002;
+              restoreACL_ = input.readBool();
               break;
             }
           }
@@ -38372,7 +38387,7 @@ public final class MasterProtos {
     private int bitField0_;
     // required .SnapshotDescription snapshot = 1;
     public static final int SNAPSHOT_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_;
+    private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_;
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
@@ -38382,18 +38397,35 @@ public final class MasterProtos {
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
       return snapshot_;
     }
     /**
      * <code>required .SnapshotDescription snapshot = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
       return snapshot_;
     }
 
+    // optional bool restoreACL = 2 [default = false];
+    public static final int RESTOREACL_FIELD_NUMBER = 2;
+    private boolean restoreACL_;
+    /**
+     * <code>optional bool restoreACL = 2 [default = false];</code>
+     */
+    public boolean hasRestoreACL() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional bool restoreACL = 2 [default = false];</code>
+     */
+    public boolean getRestoreACL() {
+      return restoreACL_;
+    }
+
     private void initFields() {
-      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
+      restoreACL_ = false;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -38418,6 +38450,9 @@ public final class MasterProtos {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeMessage(1, snapshot_);
       }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBool(2, restoreACL_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -38430,6 +38465,10 @@ public final class MasterProtos {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, snapshot_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBoolSize(2, restoreACL_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -38459,6 +38498,11 @@ public final class MasterProtos {
         result = result && getSnapshot()
             .equals(other.getSnapshot());
       }
+      result = result && (hasRestoreACL() == other.hasRestoreACL());
+      if (hasRestoreACL()) {
+        result = result && (getRestoreACL()
+            == other.getRestoreACL());
+      }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -38475,6 +38519,10 @@ public final class MasterProtos {
       if (hasSnapshot()) {
         hash = (37 * hash) + SNAPSHOT_FIELD_NUMBER;
         hash = (53 * hash) + getSnapshot().hashCode();
+      }
+      if (hasRestoreACL()) {
+        hash = (37 * hash) + RESTOREACL_FIELD_NUMBER;
+        hash = (53 * hash) + hashBoolean(getRestoreACL());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -38587,11 +38635,13 @@ public final class MasterProtos {
       public Builder clear() {
         super.clear();
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
         } else {
           snapshotBuilder_.clear();
         }
         bitField0_ = (bitField0_ & ~0x00000001);
+        restoreACL_ = false;
+        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -38628,6 +38678,10 @@ public final class MasterProtos {
         } else {
           result.snapshot_ = snapshotBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.restoreACL_ = restoreACL_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -38646,6 +38700,9 @@ public final class MasterProtos {
         if (other == org.apache.hadoop.hbase.protobuf.generated.MasterProtos.RestoreSnapshotRequest.getDefaultInstance()) return this;
         if (other.hasSnapshot()) {
           mergeSnapshot(other.getSnapshot());
+        }
+        if (other.hasRestoreACL()) {
+          setRestoreACL(other.getRestoreACL());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -38683,9 +38740,9 @@ public final class MasterProtos {
       private int bitField0_;
 
       // required .SnapshotDescription snapshot = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
@@ -38695,7 +38752,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
         if (snapshotBuilder_ == null) {
           return snapshot_;
         } else {
@@ -38705,7 +38762,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -38722,7 +38779,7 @@ public final class MasterProtos {
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
       public Builder setSnapshot(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder builderForValue) {
         if (snapshotBuilder_ == null) {
           snapshot_ = builderForValue.build();
           onChanged();
@@ -38735,12 +38792,12 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance()) {
+              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance()) {
             snapshot_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
           } else {
             snapshot_ = value;
           }
@@ -38756,7 +38813,7 @@ public final class MasterProtos {
        */
       public Builder clearSnapshot() {
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
           onChanged();
         } else {
           snapshotBuilder_.clear();
@@ -38767,7 +38824,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder getSnapshotBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder getSnapshotBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getSnapshotFieldBuilder().getBuilder();
@@ -38775,7 +38832,7 @@ public final class MasterProtos {
       /**
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
         if (snapshotBuilder_ != null) {
           return snapshotBuilder_.getMessageOrBuilder();
         } else {
@@ -38786,17 +38843,50 @@ public final class MasterProtos {
        * <code>required .SnapshotDescription snapshot = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> 
           getSnapshotFieldBuilder() {
         if (snapshotBuilder_ == null) {
           snapshotBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder>(
                   snapshot_,
                   getParentForChildren(),
                   isClean());
           snapshot_ = null;
         }
         return snapshotBuilder_;
+      }
+
+      // optional bool restoreACL = 2 [default = false];
+      private boolean restoreACL_ ;
+      /**
+       * <code>optional bool restoreACL = 2 [default = false];</code>
+       */
+      public boolean hasRestoreACL() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional bool restoreACL = 2 [default = false];</code>
+       */
+      public boolean getRestoreACL() {
+        return restoreACL_;
+      }
+      /**
+       * <code>optional bool restoreACL = 2 [default = false];</code>
+       */
+      public Builder setRestoreACL(boolean value) {
+        bitField0_ |= 0x00000002;
+        restoreACL_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool restoreACL = 2 [default = false];</code>
+       */
+      public Builder clearRestoreACL() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        restoreACL_ = false;
+        onChanged();
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:RestoreSnapshotRequest)
@@ -39159,11 +39249,11 @@ public final class MasterProtos {
     /**
      * <code>optional .SnapshotDescription snapshot = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot();
     /**
      * <code>optional .SnapshotDescription snapshot = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
   }
   /**
    * Protobuf type {@code IsSnapshotDoneRequest}
@@ -39222,11 +39312,11 @@ public final class MasterProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder subBuilder = null;
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder subBuilder = null;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
                 subBuilder = snapshot_.toBuilder();
               }
-              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.PARSER, extensionRegistry);
+              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(snapshot_);
                 snapshot_ = subBuilder.buildPartial();
@@ -39276,7 +39366,7 @@ public final class MasterProtos {
     private int bitField0_;
     // optional .SnapshotDescription snapshot = 1;
     public static final int SNAPSHOT_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_;
+    private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_;
     /**
      * <code>optional .SnapshotDescription snapshot = 1;</code>
      */
@@ -39286,18 +39376,18 @@ public final class MasterProtos {
     /**
      * <code>optional .SnapshotDescription snapshot = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
       return snapshot_;
     }
     /**
      * <code>optional .SnapshotDescription snapshot = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
       return snapshot_;
     }
 
     private void initFields() {
-      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -39494,7 +39584,7 @@ public final class MasterProtos {
       public Builder clear() {
         super.clear();
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
         } else {
           snapshotBuilder_.clear();
         }
@@ -39588,9 +39678,9 @@ public final class MasterProtos {
       private int bitField0_;
 
       // optional .SnapshotDescription snapshot = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
@@ -39600,7 +39690,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
         if (snapshotBuilder_ == null) {
           return snapshot_;
         } else {
@@ -39610,7 +39700,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
-      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -39627,7 +39717,7 @@ public final class MasterProtos {
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
       public Builder setSnapshot(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder builderForValue) {
         if (snapshotBuilder_ == null) {
           snapshot_ = builderForValue.build();
           onChanged();
@@ -39640,12 +39730,12 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
-      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance()) {
+              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance()) {
             snapshot_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
           } else {
             snapshot_ = value;
           }
@@ -39661,7 +39751,7 @@ public final class MasterProtos {
        */
       public Builder clearSnapshot() {
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
           onChanged();
         } else {
           snapshotBuilder_.clear();
@@ -39672,7 +39762,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder getSnapshotBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder getSnapshotBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getSnapshotFieldBuilder().getBuilder();
@@ -39680,7 +39770,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
         if (snapshotBuilder_ != null) {
           return snapshotBuilder_.getMessageOrBuilder();
         } else {
@@ -39691,11 +39781,11 @@ public final class MasterProtos {
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> 
           getSnapshotFieldBuilder() {
         if (snapshotBuilder_ == null) {
           snapshotBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder>(
                   snapshot_,
                   getParentForChildren(),
                   isClean());
@@ -39736,11 +39826,11 @@ public final class MasterProtos {
     /**
      * <code>optional .SnapshotDescription snapshot = 2;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot();
     /**
      * <code>optional .SnapshotDescription snapshot = 2;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
   }
   /**
    * Protobuf type {@code IsSnapshotDoneResponse}
@@ -39799,11 +39889,11 @@ public final class MasterProtos {
               break;
             }
             case 18: {
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder subBuilder = null;
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder subBuilder = null;
               if (((bitField0_ & 0x00000002) == 0x00000002)) {
                 subBuilder = snapshot_.toBuilder();
               }
-              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.PARSER, extensionRegistry);
+              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(snapshot_);
                 snapshot_ = subBuilder.buildPartial();
@@ -39869,7 +39959,7 @@ public final class MasterProtos {
 
     // optional .SnapshotDescription snapshot = 2;
     public static final int SNAPSHOT_FIELD_NUMBER = 2;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_;
+    private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_;
     /**
      * <code>optional .SnapshotDescription snapshot = 2;</code>
      */
@@ -39879,19 +39969,19 @@ public final class MasterProtos {
     /**
      * <code>optional .SnapshotDescription snapshot = 2;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
       return snapshot_;
     }
     /**
      * <code>optional .SnapshotDescription snapshot = 2;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
       return snapshot_;
     }
 
     private void initFields() {
       done_ = false;
-      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -40101,7 +40191,7 @@ public final class MasterProtos {
         done_ = false;
         bitField0_ = (bitField0_ & ~0x00000001);
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
         } else {
           snapshotBuilder_.clear();
         }
@@ -40235,9 +40325,9 @@ public final class MasterProtos {
       }
 
       // optional .SnapshotDescription snapshot = 2;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
       /**
        * <code>optional .SnapshotDescription snapshot = 2;</code>
        */
@@ -40247,7 +40337,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 2;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
         if (snapshotBuilder_ == null) {
           return snapshot_;
         } else {
@@ -40257,7 +40347,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 2;</code>
        */
-      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -40274,7 +40364,7 @@ public final class MasterProtos {
        * <code>optional .SnapshotDescription snapshot = 2;</code>
        */
       public Builder setSnapshot(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder builderForValue) {
         if (snapshotBuilder_ == null) {
           snapshot_ = builderForValue.build();
           onChanged();
@@ -40287,12 +40377,12 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 2;</code>
        */
-      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (((bitField0_ & 0x00000002) == 0x00000002) &&
-              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance()) {
+              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance()) {
             snapshot_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
           } else {
             snapshot_ = value;
           }
@@ -40308,7 +40398,7 @@ public final class MasterProtos {
        */
       public Builder clearSnapshot() {
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
           onChanged();
         } else {
           snapshotBuilder_.clear();
@@ -40319,7 +40409,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 2;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder getSnapshotBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder getSnapshotBuilder() {
         bitField0_ |= 0x00000002;
         onChanged();
         return getSnapshotFieldBuilder().getBuilder();
@@ -40327,7 +40417,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 2;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
         if (snapshotBuilder_ != null) {
           return snapshotBuilder_.getMessageOrBuilder();
         } else {
@@ -40338,11 +40428,11 @@ public final class MasterProtos {
        * <code>optional .SnapshotDescription snapshot = 2;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> 
           getSnapshotFieldBuilder() {
         if (snapshotBuilder_ == null) {
           snapshotBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder>(
                   snapshot_,
                   getParentForChildren(),
                   isClean());
@@ -40373,11 +40463,11 @@ public final class MasterProtos {
     /**
      * <code>optional .SnapshotDescription snapshot = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot();
     /**
      * <code>optional .SnapshotDescription snapshot = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder();
   }
   /**
    * Protobuf type {@code IsRestoreSnapshotDoneRequest}
@@ -40431,11 +40521,11 @@ public final class MasterProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder subBuilder = null;
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder subBuilder = null;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
                 subBuilder = snapshot_.toBuilder();
               }
-              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.PARSER, extensionRegistry);
+              snapshot_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(snapshot_);
                 snapshot_ = subBuilder.buildPartial();
@@ -40485,7 +40575,7 @@ public final class MasterProtos {
     private int bitField0_;
     // optional .SnapshotDescription snapshot = 1;
     public static final int SNAPSHOT_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_;
+    private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_;
     /**
      * <code>optional .SnapshotDescription snapshot = 1;</code>
      */
@@ -40495,18 +40585,18 @@ public final class MasterProtos {
     /**
      * <code>optional .SnapshotDescription snapshot = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
       return snapshot_;
     }
     /**
      * <code>optional .SnapshotDescription snapshot = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
       return snapshot_;
     }
 
     private void initFields() {
-      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -40698,7 +40788,7 @@ public final class MasterProtos {
       public Builder clear() {
         super.clear();
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
         } else {
           snapshotBuilder_.clear();
         }
@@ -40792,9 +40882,9 @@ public final class MasterProtos {
       private int bitField0_;
 
       // optional .SnapshotDescription snapshot = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> snapshotBuilder_;
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
@@ -40804,7 +40894,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription getSnapshot() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription getSnapshot() {
         if (snapshotBuilder_ == null) {
           return snapshot_;
         } else {
@@ -40814,7 +40904,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
-      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder setSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -40831,7 +40921,7 @@ public final class MasterProtos {
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
       public Builder setSnapshot(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder builderForValue) {
         if (snapshotBuilder_ == null) {
           snapshot_ = builderForValue.build();
           onChanged();
@@ -40844,12 +40934,12 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
-      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription value) {
+      public Builder mergeSnapshot(org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription value) {
         if (snapshotBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance()) {
+              snapshot_ != org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance()) {
             snapshot_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.newBuilder(snapshot_).mergeFrom(value).buildPartial();
           } else {
             snapshot_ = value;
           }
@@ -40865,7 +40955,7 @@ public final class MasterProtos {
        */
       public Builder clearSnapshot() {
         if (snapshotBuilder_ == null) {
-          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.getDefaultInstance();
+          snapshot_ = org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.getDefaultInstance();
           onChanged();
         } else {
           snapshotBuilder_.clear();
@@ -40876,7 +40966,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder getSnapshotBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder getSnapshotBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getSnapshotFieldBuilder().getBuilder();
@@ -40884,7 +40974,7 @@ public final class MasterProtos {
       /**
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder getSnapshotOrBuilder() {
         if (snapshotBuilder_ != null) {
           return snapshotBuilder_.getMessageOrBuilder();
         } else {
@@ -40895,11 +40985,11 @@ public final class MasterProtos {
        * <code>optional .SnapshotDescription snapshot = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder> 
           getSnapshotFieldBuilder() {
         if (snapshotBuilder_ == null) {
           snapshotBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptionOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription.Builder, org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescriptionOrBuilder>(
                   snapshot_,
                   getParentForChildren(),
                   isClean());
@@ -64020,287 +64110,288 @@ public final class MasterProtos {
       "\n\014Master.proto\032\013HBase.proto\032\014Backup.prot" +
       "o\032\014Client.proto\032\023ClusterStatus.proto\032\023Er" +
       "rorHandling.proto\032\017Procedure.proto\032\013Quot" +
-      "a.proto\"\212\001\n\020AddColumnRequest\022\036\n\ntable_na" +
-      "me\030\001 \002(\0132\n.TableName\022,\n\017column_families\030" +
-      "\002 \002(\0132\023.ColumnFamilySchema\022\026\n\013nonce_grou" +
-      "p\030\003 \001(\004:\0010\022\020\n\005nonce\030\004 \001(\004:\0010\"\023\n\021AddColum" +
-      "nResponse\"t\n\023DeleteColumnRequest\022\036\n\ntabl" +
-      "e_name\030\001 \002(\0132\n.TableName\022\023\n\013column_name\030" +
-      "\002 \002(\014\022\026\n\013nonce_group\030\003 \001(\004:\0010\022\020\n\005nonce\030\004",
-      " \001(\004:\0010\"\026\n\024DeleteColumnResponse\"\215\001\n\023Modi" +
-      "fyColumnRequest\022\036\n\ntable_name\030\001 \002(\0132\n.Ta" +
-      "bleName\022,\n\017column_families\030\002 \002(\0132\023.Colum" +
-      "nFamilySchema\022\026\n\013nonce_group\030\003 \001(\004:\0010\022\020\n" +
-      "\005nonce\030\004 \001(\004:\0010\"\026\n\024ModifyColumnResponse\"" +
-      "\\\n\021MoveRegionRequest\022 \n\006region\030\001 \002(\0132\020.R" +
-      "egionSpecifier\022%\n\020dest_server_name\030\002 \001(\013" +
-      "2\013.ServerName\"\024\n\022MoveRegionResponse\"\200\001\n\035" +
-      "DispatchMergingRegionsRequest\022\"\n\010region_" +
-      "a\030\001 \002(\0132\020.RegionSpecifier\022\"\n\010region_b\030\002 ",
-      "\002(\0132\020.RegionSpecifier\022\027\n\010forcible\030\003 \001(\010:" +
-      "\005false\" \n\036DispatchMergingRegionsResponse" +
-      "\"7\n\023AssignRegionRequest\022 \n\006region\030\001 \002(\0132" +
-      "\020.RegionSpecifier\"\026\n\024AssignRegionRespons" +
-      "e\"O\n\025UnassignRegionRequest\022 \n\006region\030\001 \002" +
-      "(\0132\020.RegionSpecifier\022\024\n\005force\030\002 \001(\010:\005fal" +
-      "se\"\030\n\026UnassignRegionResponse\"8\n\024OfflineR" +
-      "egionRequest\022 \n\006region\030\001 \002(\0132\020.RegionSpe" +
-      "cifier\"\027\n\025OfflineRegionResponse\"v\n\022Creat" +
-      "eTableRequest\022\"\n\014table_schema\030\001 \002(\0132\014.Ta",
-      "bleSchema\022\022\n\nsplit_keys\030\002 \003(\014\022\026\n\013nonce_g" +
-      "roup\030\003 \001(\004:\0010\022\020\n\005nonce\030\004 \001(\004:\0010\"&\n\023Creat" +
-      "eTableResponse\022\017\n\007proc_id\030\001 \001(\004\"^\n\022Delet" +
-      "eTableRequest\022\036\n\ntable_name\030\001 \002(\0132\n.Tabl" +
-      "eName\022\026\n\013nonce_group\030\002 \001(\004:\0010\022\020\n\005nonce\030\003" +
-      " \001(\004:\0010\"&\n\023DeleteTableResponse\022\017\n\007proc_i" +
-      "d\030\001 \001(\004\"~\n\024TruncateTableRequest\022\035\n\ttable" +
-      "Name\030\001 \002(\0132\n.TableName\022\035\n\016preserveSplits" +
-      "\030\002 \001(\010:\005false\022\026\n\013nonce_group\030\003 \001(\004:\0010\022\020\n" +
-      "\005nonce\030\004 \001(\004:\0010\"\027\n\025TruncateTableResponse",
-      "\"^\n\022EnableTableRequest\022\036\n\ntable_name\030\001 \002" +
-      "(\0132\n.TableName\022\026\n\013nonce_group\030\002 \001(\004:\0010\022\020" +
-      "\n\005nonce\030\003 \001(\004:\0010\"&\n\023EnableTableResponse\022" +
-      "\017\n\007proc_id\030\001 \001(\004\"_\n\023DisableTableRequest\022" +
-      "\036\n\ntable_name\030\001 \002(\0132\n.TableName\022\026\n\013nonce" +
-      "_group\030\002 \001(\004:\0010\022\020\n\005nonce\030\003 \001(\004:\0010\"\'\n\024Dis" +
-      "ableTableResponse\022\017\n\007proc_id\030\001 \001(\004\"\202\001\n\022M" +
-      "odifyTableRequest\022\036\n\ntable_name\030\001 \002(\0132\n." +
-      "TableName\022\"\n\014table_schema\030\002 \002(\0132\014.TableS" +
-      "chema\022\026\n\013nonce_group\030\003 \001(\004:\0010\022\020\n\005nonce\030\004",
-      " \001(\004:\0010\"\025\n\023ModifyTableResponse\"K\n\026Create" +
-      "NamespaceRequest\0221\n\023namespaceDescriptor\030" +
-      "\001 \002(\0132\024.NamespaceDescriptor\"\031\n\027CreateNam" +
-      "espaceResponse\"/\n\026DeleteNamespaceRequest" +
-      "\022\025\n\rnamespaceName\030\001 \002(\t\"\031\n\027DeleteNamespa" +
-      "ceResponse\"K\n\026ModifyNamespaceRequest\0221\n\023" +
-      "namespaceDescriptor\030\001 \002(\0132\024.NamespaceDes" +
-      "criptor\"\031\n\027ModifyNamespaceResponse\"6\n\035Ge" +
-      "tNamespaceDescriptorRequest\022\025\n\rnamespace" +
-      "Name\030\001 \002(\t\"S\n\036GetNamespaceDescriptorResp",
-      "onse\0221\n\023namespaceDescriptor\030\001 \002(\0132\024.Name" +
-      "spaceDescriptor\"!\n\037ListNamespaceDescript" +
-      "orsRequest\"U\n ListNamespaceDescriptorsRe" +
-      "sponse\0221\n\023namespaceDescriptor\030\001 \003(\0132\024.Na" +
-      "mespaceDescriptor\"?\n&ListTableDescriptor" +
-      "sByNamespaceRequest\022\025\n\rnamespaceName\030\001 \002" +
-      "(\t\"L\n\'ListTableDescriptorsByNamespaceRes" +
-      "ponse\022!\n\013tableSchema\030\001 \003(\0132\014.TableSchema" +
-      "\"9\n ListTableNamesByNamespaceRequest\022\025\n\r" +
-      "namespaceName\030\001 \002(\t\"B\n!ListTableNamesByN",
-      "amespaceResponse\022\035\n\ttableName\030\001 \003(\0132\n.Ta" +
-      "bleName\"\021\n\017ShutdownRequest\"\022\n\020ShutdownRe" +
-      "sponse\"\023\n\021StopMasterRequest\"\024\n\022StopMaste" +
-      "rResponse\"\034\n\032IsInMaintenanceModeRequest\"" +
-      "8\n\033IsInMaintenanceModeResponse\022\031\n\021inMain" +
-      "tenanceMode\030\001 \002(\010\"\037\n\016BalanceRequest\022\r\n\005f" +
-      "orce\030\001 \001(\010\"\'\n\017BalanceResponse\022\024\n\014balance" +
-      "r_ran\030\001 \002(\010\"<\n\031SetBalancerRunningRequest" +
-      "\022\n\n\002on\030\001 \002(\010\022\023\n\013synchronous\030\002 \001(\010\"8\n\032Set" +
-      "BalancerRunningResponse\022\032\n\022prev_balance_",
-      "value\030\001 \001(\010\"\032\n\030IsBalancerEnabledRequest\"" +
-      ",\n\031IsBalancerEnabledResponse\022\017\n\007enabled\030" +
-      "\001 \002(\010\"n\n\035SetSplitOrMergeEnabledRequest\022\017" +
-      "\n\007enabled\030\001 \002(\010\022\023\n\013synchronous\030\002 \001(\010\022\'\n\014" +
-      "switch_types\030\003 \003(\0162\021.MasterSwitchType\"4\n" +
-      "\036SetSplitOrMergeEnabledResponse\022\022\n\nprev_" +
-      "value\030\001 \003(\010\"F\n\034IsSplitOrMergeEnabledRequ" +
-      "est\022&\n\013switch_type\030\001 \002(\0162\021.MasterSwitchT" +
-      "ype\"0\n\035IsSplitOrMergeEnabledResponse\022\017\n\007" +
-      "enabled\030\001 \002(\010\"\022\n\020NormalizeRequest\"+\n\021Nor",
-      "malizeResponse\022\026\n\016normalizer_ran\030\001 \002(\010\")" +
-      "\n\033SetNormalizerRunningRequest\022\n\n\002on\030\001 \002(" +
-      "\010\"=\n\034SetNormalizerRunningResponse\022\035\n\025pre" +
-      "v_normalizer_value\030\001 \001(\010\"\034\n\032IsNormalizer" +
-      "EnabledRequest\".\n\033IsNormalizerEnabledRes" +
-      "ponse\022\017\n\007enabled\030\001 \002(\010\"\027\n\025RunCatalogScan" +
-      "Request\"-\n\026RunCatalogScanResponse\022\023\n\013sca" +
-      "n_result\030\001 \001(\005\"-\n\033EnableCatalogJanitorRe" +
-      "quest\022\016\n\006enable\030\001 \002(\010\"2\n\034EnableCatalogJa" +
-      "nitorResponse\022\022\n\nprev_value\030\001 \001(\010\" \n\036IsC",
-      "atalogJanitorEnabledRequest\"0\n\037IsCatalog" +
-      "JanitorEnabledResponse\022\r\n\005value\030\001 \002(\010\"9\n" +
-      "\017SnapshotRequest\022&\n\010snapshot\030\001 \002(\0132\024.Sna" +
-      "pshotDescription\",\n\020SnapshotResponse\022\030\n\020" +
-      "expected_timeout\030\001 \002(\003\"\036\n\034GetCompletedSn" +
-      "apshotsRequest\"H\n\035GetCompletedSnapshotsR" +
-      "esponse\022\'\n\tsnapshots\030\001 \003(\0132\024.SnapshotDes" +
-      "cription\"?\n\025DeleteSnapshotRequest\022&\n\010sna" +
-      "pshot\030\001 \002(\0132\024.SnapshotDescription\"\030\n\026Del" +
-      "eteSnapshotResponse\"@\n\026RestoreSnapshotRe",
-      "quest\022&\n\010snapshot\030\001 \002(\0132\024.SnapshotDescri" +
-      "ption\"\031\n\027RestoreSnapshotResponse\"?\n\025IsSn" +
-      "apshotDoneRequest\022&\n\010snapshot\030\001 \001(\0132\024.Sn" +
-      "apshotDescription\"U\n\026IsSnapshotDoneRespo" +
-      "nse\022\023\n\004done\030\001 \001(\010:\005false\022&\n\010snapshot\030\002 \001" +
-      "(\0132\024.SnapshotDescription\"F\n\034IsRestoreSna" +
-      "pshotDoneRequest\022&\n\010snapshot\030\001 \001(\0132\024.Sna" +
-      "pshotDescription\"4\n\035IsRestoreSnapshotDon" +
-      "eResponse\022\023\n\004done\030\001 \001(\010:\005false\"=\n\033GetSch" +
-      "emaAlterStatusRequest\022\036\n\ntable_name\030\001 \002(",
-      "\0132\n.TableName\"T\n\034GetSchemaAlterStatusRes" +
-      "ponse\022\035\n\025yet_to_update_regions\030\001 \001(\r\022\025\n\r" +
-      "total_regions\030\002 \001(\r\"\202\001\n\032GetTableDescript" +
-      "orsRequest\022\037\n\013table_names\030\001 \003(\0132\n.TableN" +
-      "ame\022\r\n\005regex\030\002 \001(\t\022!\n\022include_sys_tables" +
-      "\030\003 \001(\010:\005false\022\021\n\tnamespace\030\004 \001(\t\"A\n\033GetT" +
-      "ableDescriptorsResponse\022\"\n\014table_schema\030" +
-      "\001 \003(\0132\014.TableSchema\"[\n\024GetTableNamesRequ" +
-      "est\022\r\n\005regex\030\001 \001(\t\022!\n\022include_sys_tables" +
-      "\030\002 \001(\010:\005false\022\021\n\tnamespace\030\003 \001(\t\"8\n\025GetT",
-      "ableNamesResponse\022\037\n\013table_names\030\001 \003(\0132\n" +
-      ".TableName\"\031\n\027GetClusterStatusRequest\"B\n" +
-      "\030GetClusterStatusResponse\022&\n\016cluster_sta" +
-      "tus\030\001 \002(\0132\016.ClusterStatus\"\030\n\026IsMasterRun" +
-      "ningRequest\"4\n\027IsMasterRunningResponse\022\031" +
-      "\n\021is_master_running\030\001 \002(\010\"@\n\024ExecProcedu" +
-      "reRequest\022(\n\tprocedure\030\001 \002(\0132\025.Procedure" +
-      "Description\"F\n\025ExecProcedureResponse\022\030\n\020" +
-      "expected_timeout\030\001 \001(\003\022\023\n\013return_data\030\002 " +
-      "\001(\014\"B\n\026IsProcedureDoneRequest\022(\n\tprocedu",
-      "re\030\001 \001(\0132\025.ProcedureDescription\"W\n\027IsPro" +
-      "cedureDoneResponse\022\023\n\004done\030\001 \001(\010:\005false\022" +
-      "\'\n\010snapshot\030\002 \001(\0132\025.ProcedureDescription" +
-      "\",\n\031GetProcedureResultRequest\022\017\n\007proc_id" +
-      "\030\001 \002(\004\"\347\001\n\032GetProcedureResultResponse\0220\n" +
-      "\005state\030\001 \002(\0162!.GetProcedureResultRespons" +
-      "e.State\022\022\n\nstart_time\030\002 \001(\004\022\023\n\013last_upda" +
-      "te\030\003 \001(\004\022\016\n\006result\030\004 \001(\014\022+\n\texception\030\005 " +
-      "\001(\0132\030.ForeignExceptionMessage\"1\n\005State\022\r" +
-      "\n\tNOT_FOUND\020\000\022\013\n\007RUNNING\020\001\022\014\n\010FINISHED\020\002",
-      "\"P\n\025AbortProcedureRequest\022\017\n\007proc_id\030\001 \002" +
-      "(\004\022&\n\030may_interrupt_if_running\030\002 \001(\010:\004tr" +
-      "ue\"6\n\026AbortProcedureResponse\022\034\n\024is_proce" +
-      "dure_aborted\030\001 \002(\010\"\027\n\025ListProceduresRequ" +
-      "est\"7\n\026ListProceduresResponse\022\035\n\tprocedu" +
-      "re\030\001 \003(\0132\n.Procedure\"\344\001\n\017SetQuotaRequest" +
-      "\022\021\n\tuser_name\030\001 \001(\t\022\022\n\nuser_group\030\002 \001(\t\022" +
-      "\021\n\tnamespace\030\003 \001(\t\022\036\n\ntable_name\030\004 \001(\0132\n" +
-      ".TableName\022\022\n\nremove_all\030\005 \001(\010\022\026\n\016bypass" +
-      "_globals\030\006 \001(\010\022\"\n\010throttle\030\007 \001(\0132\020.Throt",
-      "tleRequest\022\'\n\013space_limit\030\010 \001(\0132\022.SpaceL" +
-      "imitRequest\"\022\n\020SetQuotaResponse\"A\n\037Major" +
-      "CompactionTimestampRequest\022\036\n\ntable_name" +
-      "\030\001 \002(\0132\n.TableName\"L\n(MajorCompactionTim" +
-      "estampForRegionRequest\022 \n\006region\030\001 \002(\0132\020" +
-      ".RegionSpecifier\"@\n MajorCompactionTimes" +
-      "tampResponse\022\034\n\024compaction_timestamp\030\001 \002" +
-      "(\003\"\211\001\n\023BackupTablesRequest\022\031\n\004type\030\001 \002(\016" +
-      "2\013.BackupType\022\032\n\006tables\030\002 \003(\0132\n.TableNam" +
-      "e\022\027\n\017target_root_dir\030\003 \002(\t\022\017\n\007workers\030\004 ",
-      "\001(\003\022\021\n\tbandwidth\030\005 \001(\003\":\n\024BackupTablesRe" +
-      "sponse\022\017\n\007proc_id\030\001 \001(\004\022\021\n\tbackup_id\030\002 \001" +
-      "(\t*(\n\020MasterSwitchType\022\t\n\005SPLIT\020\000\022\t\n\005MER" +
-      "GE\020\0012\360!\n\rMasterService\022S\n\024GetSchemaAlter" +
-      "Status\022\034.GetSchemaAlterStatusRequest\032\035.G" +
-      "etSchemaAlterStatusResponse\022P\n\023GetTableD" +
-      "escriptors\022\033.GetTableDescriptorsRequest\032" +
-      "\034.GetTableDescriptorsResponse\022>\n\rGetTabl" +
-      "eNames\022\025.GetTableNamesRequest\032\026.GetTable" +
-      "NamesResponse\022G\n\020GetClusterStatus\022\030.GetC",
-      "lusterStatusRequest\032\031.GetClusterStatusRe" +
-      "sponse\022D\n\017IsMasterRunning\022\027.IsMasterRunn" +
-      "ingRequest\032\030.IsMasterRunningResponse\0222\n\t" +
-      "AddColumn\022\021.AddColumnRequest\032\022.AddColumn" +
-      "Response\022;\n\014DeleteColumn\022\024.DeleteColumnR" +
-      "equest\032\025.DeleteColumnResponse\022;\n\014ModifyC" +
-      "olumn\022\024.ModifyColumnRequest\032\025.ModifyColu" +
-      "mnResponse\0225\n\nMoveRegion\022\022.MoveRegionReq" +
-      "uest\032\023.MoveRegionResponse\022Y\n\026DispatchMer" +
-      "gingRegions\022\036.DispatchMergingRegionsRequ",
-      "est\032\037.DispatchMergingRegionsResponse\022;\n\014" +
-      "AssignRegion\022\024.AssignRegionRequest\032\025.Ass" +
-      "ignRegionResponse\022A\n\016UnassignRegion\022\026.Un" +
-      "assignRegionRequest\032\027.UnassignRegionResp" +
-      "onse\022>\n\rOfflineRegion\022\025.OfflineRegionReq" +
-      "uest\032\026.OfflineRegionResponse\0228\n\013DeleteTa" +
-      "ble\022\023.DeleteTableRequest\032\024.DeleteTableRe" +
-      "sponse\022>\n\rtruncateTable\022\025.TruncateTableR" +
-      "equest\032\026.TruncateTableResponse\0228\n\013Enable" +
-      "Table\022\023.EnableTableRequest\032\024.EnableTable",
-      "Response\022;\n\014DisableTable\022\024.DisableTableR" +
-      "equest\032\025.DisableTableResponse\0228\n\013ModifyT" +
-      "able\022\023.ModifyTableRequest\032\024.ModifyTableR" +
-      "esponse\0228\n\013CreateTable\022\023.CreateTableRequ" +
-      "est\032\024.CreateTableResponse\022/\n\010Shutdown\022\020." +
-      "ShutdownRequest\032\021.ShutdownResponse\0225\n\nSt" +
-      "opMaster\022\022.StopMasterRequest\032\023.StopMaste" +
-      "rResponse\022V\n\031IsMasterInMaintenanceMode\022\033" +
-      ".IsInMaintenanceModeRequest\032\034.IsInMainte" +
-      "nanceModeResponse\022,\n\007Balance\022\017.BalanceRe",
-      "quest\032\020.BalanceResponse\022M\n\022SetBalancerRu" +
-      "nning\022\032.SetBalancerRunningRequest\032\033.SetB" +
-      "alancerRunningResponse\022J\n\021IsBalancerEnab" +
-      "led\022\031.IsBalancerEnabledRequest\032\032.IsBalan" +
-      "cerEnabledResponse\022Y\n\026SetSplitOrMergeEna" +
-      "bled\022\036.SetSplitOrMergeEnabledRequest\032\037.S" +
-      "etSplitOrMergeEnabledResponse\022V\n\025IsSplit" +
-      "OrMergeEnabled\022\035.IsSplitOrMergeEnabledRe" +
-      "quest\032\036.IsSplitOrMergeEnabledResponse\0222\n" +
-      "\tNormalize\022\021.NormalizeRequest\032\022.Normaliz",
-      "eResponse\022S\n\024SetNormalizerRunning\022\034.SetN" +
-      "ormalizerRunningRequest\032\035.SetNormalizerR" +
-      "unningResponse\022P\n\023IsNormalizerEnabled\022\033." +
-      "IsNormalizerEnabledRequest\032\034.IsNormalize" +
-      "rEnabledResponse\022A\n\016RunCatalogScan\022\026.Run" +
-      "CatalogScanRequest\032\027.RunCatalogScanRespo" +
-      "nse\022S\n\024EnableCatalogJanitor\022\034.EnableCata" +
-      "logJanitorRequest\032\035.EnableCatalogJanitor" +
-      "Response\022\\\n\027IsCatalogJanitorEnabled\022\037.Is" +
-      "CatalogJanitorEnabledRequest\032 .IsCatalog",
-      "JanitorEnabledResponse\022L\n\021ExecMasterServ" +
-      "ice\022\032.CoprocessorServiceRequest\032\033.Coproc" +
-      "essorServiceResponse\022/\n\010Snapshot\022\020.Snaps" +
-      "hotRequest\032\021.SnapshotResponse\022V\n\025GetComp" +
-      "letedSnapshots\022\035.GetCompletedSnapshotsRe" +
-      "quest\032\036.GetCompletedSnapshotsResponse\022A\n" +
-      "\016DeleteSnapshot\022\026.DeleteSnapshotRequest\032" +
-      "\027.DeleteSnapshotResponse\022A\n\016IsSnapshotDo" +
-      "ne\022\026.IsSnapshotDoneRequest\032\027.IsSnapshotD" +
-      "oneResponse\022D\n\017RestoreSnapshot\022\027.Restore",
-      "SnapshotRequest\032\030.RestoreSnapshotRespons" +
-      "e\022V\n\025IsRestoreSnapshotDone\022\035.IsRestoreSn" +
-      "apshotDoneRequest\032\036.IsRestoreSnapshotDon" +
-      "eResponse\022>\n\rExecProcedure\022\025.ExecProcedu" +
-      "reRequest\032\026.ExecProcedureResponse\022E\n\024Exe" +
-      "cProcedureWithRet\022\025.ExecProcedureRequest" +
-      "\032\026.ExecProcedureResponse\022D\n\017IsProcedureD" +
-      "one\022\027.IsProcedureDoneRequest\032\030.IsProcedu" +
-      "reDoneResponse\022D\n\017ModifyNamespace\022\027.Modi" +
-      "fyNamespaceRequest\032\030.ModifyNamespaceResp",
-      "onse\022D\n\017CreateNamespace\022\027.CreateNamespac" +
-      "eRequest\032\030.CreateNamespaceResponse\022D\n\017De" +
-      "leteNamespace\022\027.DeleteNamespaceRequest\032\030" +
-      ".DeleteNamespaceResponse\022Y\n\026GetNamespace" +
-      "Descriptor\022\036.GetNamespaceDescriptorReque" +
-      "st\032\037.GetNamespaceDescriptorResponse\022_\n\030L" +
-      "istNamespaceDescriptors\022 .ListNamespaceD" +
-      "escriptorsRequest\032!.ListNamespaceDescrip" +
-      "torsResponse\022t\n\037ListTableDescriptorsByNa" +
-      "mespace\022\'.ListTableDescriptorsByNamespac",
-      "eRequest\032(.ListTableDescriptorsByNamespa" +
-      "ceResponse\022b\n\031ListTableNamesByNamespace\022" +
-      "!.ListTableNamesByNamespaceRequest\032\".Lis" +
-      "tTableNamesByNamespaceResponse\022/\n\010SetQuo" +
-      "ta\022\020.SetQuotaRequest\032\021.SetQuotaResponse\022" +
-      "f\n\037getLastMajorCompactionTimestamp\022 .Maj" +
-      "orCompactionTimestampRequest\032!.MajorComp" +
-      "actionTimestampResponse\022x\n(getLastMajorC" +
-      "ompactionTimestampForRegion\022).MajorCompa" +
-      "ctionTimestampForRegionRequest\032!.MajorCo",
-      "mpactionTimestampResponse\022M\n\022getProcedur" +
-      "eResult\022\032.GetProcedureResultRequest\032\033.Ge" +
-      "tProcedureResultResponse\022A\n\016AbortProcedu" +
-      "re\022\026.AbortProcedureRequest\032\027.AbortProced" +
-      "ureResponse\022A\n\016ListProcedures\022\026.ListProc" +
-      "eduresRequest\032\027.ListProceduresResponse\022;" +
-      "\n\014backupTables\022\024.BackupTablesRequest\032\025.B" +
-      "ackupTablesResponse\022_\n\030GetSpaceQuotaRegi" +
-      "onSizes\022 .GetSpaceQuotaRegionSizesReques" +
-      "t\032!.GetSpaceQuotaRegionSizesResponse\022A\n\016",
-      "GetQuotaStates\022\026.GetQuotaStatesRequest\032\027" +
-      ".GetQuotaStatesResponseBB\n*org.apache.ha" +
-      "doop.hbase.protobuf.generatedB\014MasterPro" +
-      "tosH\001\210\001\001\240\001\001"
+      "a.proto\032\016Snapshot.proto\"\212\001\n\020AddColumnReq" +
+      "uest\022\036\n\ntable_name\030\001 \002(\0132\n.TableName\022,\n\017" +
+      "column_families\030\002 \002(\0132\023.ColumnFamilySche" +
+      "ma\022\026\n\013nonce_group\030\003 \001(\004:\0010\022\020\n\005nonce\030\004 \001(" +
+      "\004:\0010\"\023\n\021AddColumnResponse\"t\n\023DeleteColum" +
+      "nRequest\022\036\n\ntable_name\030\001 \002(\0132\n.TableName" +
+      "\022\023\n\013column_name\030\002 \002(\014\022\026\n\013nonce_group\030\003 \001",
+      "(\004:\0010\022\020\n\005nonce\030\004 \001(\004:\0010\"\026\n\024DeleteColumnR" +
+      "esponse\"\215\001\n\023ModifyColumnRequest\022\036\n\ntable" +
+      "_name\030\001 \002(\0132\n.TableName\022,\n\017column_famili" +
+      "es\030\002 \002(\0132\023.ColumnFamilySchema\022\026\n\013nonce_g" +
+      "roup\030\003 \001(\004:\0010\022\020\n\005nonce\030\004 \001(\004:\0010\"\026\n\024Modif" +
+      "yColumnResponse\"\\\n\021MoveRegionRequest\022 \n\006" +
+      "region\030\001 \002(\0132\020.RegionSpecifier\022%\n\020dest_s" +
+      "erver_name\030\002 \001(\0132\013.ServerName\"\024\n\022MoveReg" +
+      "ionResponse\"\200\001\n\035DispatchMergingRegionsRe" +
+      "quest\022\"\n\010region_a\030\001 \002(\0132\020.RegionSpecifie",
+      "r\022\"\n\010region_b\030\002 \002(\0132\020.RegionSpecifier\022\027\n" +
+      "\010forcible\030\003 \001(\010:\005false\" \n\036DispatchMergin" +
+      "gRegionsResponse\"7\n\023AssignRegionRequest\022" +
+      " \n\006region\030\001 \002(\0132\020.RegionSpecifier\"\026\n\024Ass" +
+      "ignRegionResponse\"O\n\025UnassignRegionReque" +
+      "st\022 \n\006region\030\001 \002(\0132\020.RegionSpecifier\022\024\n\005" +
+      "force\030\002 \001(\010:\005false\"\030\n\026UnassignRegionResp" +
+      "onse\"8\n\024OfflineRegionRequest\022 \n\006region\030\001" +
+      " \002(\0132\020.RegionSpecifier\"\027\n\025OfflineRegionR" +
+      "esponse\"v\n\022CreateTableRequest\022\"\n\014table_s",
+      "chema\030\001 \002(\0132\014.TableSchema\022\022\n\nsplit_keys\030" +
+      "\002 \003(\014\022\026\n\013nonce_group\030\003 \001(\004:\0010\022\020\n\005nonce\030\004" +
+      " \001(\004:\0010\"&\n\023CreateTableResponse\022\017\n\007proc_i" +
+      "d\030\001 \001(\004\"^\n\022DeleteTableRequest\022\036\n\ntable_n" +
+      "ame\030\001 \002(\0132\n.TableName\022\026\n\013nonce_group\030\002 \001" +
+      "(\004:\0010\022\020\n\005nonce\030\003 \001(\004:\0010\"&\n\023DeleteTableRe" +
+      "sponse\022\017\n\007proc_id\030\001 \001(\004\"~\n\024TruncateTable" +
+      "Request\022\035\n\ttableName\030\001 \002(\0132\n.TableName\022\035" +
+      "\n\016preserveSplits\030\002 \001(\010:\005false\022\026\n\013nonce_g" +
+      "roup\030\003 \001(\004:\0010\022\020\n\005nonce\030\004 \001(\004:\0010\"\027\n\025Trunc",
+      "ateTableResponse\"^\n\022EnableTableRequest\022\036" +
+      "\n\ntable_name\030\001 \002(\0132\n.TableName\022\026\n\013nonce_" +
+      "group\030\002 \001(\004:\0010\022\020\n\005nonce\030\003 \001(\004:\0010\"&\n\023Enab" +
+      "leTableResponse\022\017\n\007proc_id\030\001 \001(\004\"_\n\023Disa" +
+      "bleTableRequest\022\036\n\ntable_name\030\001 \002(\0132\n.Ta" +
+      "bleName\022\026\n\013nonce_group\030\002 \001(\004:\0010\022\020\n\005nonce" +
+      "\030\003 \001(\004:\0010\"\'\n\024DisableTableResponse\022\017\n\007pro" +
+      "c_id\030\001 \001(\004\"\202\001\n\022ModifyTableRequest\022\036\n\ntab" +
+      "le_name\030\001 \002(\0132\n.TableName\022\"\n\014table_schem" +
+      "a\030\002 \002(\0132\014.TableSchema\022\026\n\013nonce_group\030\003 \001",
+      "(\004:\0010\022\020\n\005nonce\030\004 \001(\004:\0010\"\025\n\023ModifyTableRe" +
+      "sponse\"K\n\026CreateNamespaceRequest\0221\n\023name" +
+      "spaceDescriptor\030\001 \002(\0132\024.NamespaceDescrip" +
+      "tor\"\031\n\027CreateNamespaceResponse\"/\n\026Delete" +
+      "NamespaceRequest\022\025\n\rnamespaceName\030\001 \002(\t\"" +
+      "\031\n\027DeleteNamespaceResponse\"K\n\026ModifyName" +
+      "spaceRequest\0221\n\023namespaceDescriptor\030\001 \002(" +
+      "\0132\024.NamespaceDescriptor\"\031\n\027ModifyNamespa" +
+      "ceResponse\"6\n\035GetNamespaceDescriptorRequ" +
+      "est\022\025\n\rnamespaceName\030\001 \002(\t\"S\n\036GetNamespa",
+      "ceDescriptorResponse\0221\n\023namespaceDescrip" +
+      "tor\030\001 \002(\0132\024.NamespaceDescriptor\"!\n\037ListN" +
+      "amespaceDescriptorsRequest\"U\n ListNamesp" +
+      "aceDescriptorsResponse\0221\n\023namespaceDescr" +
+      "iptor\030\001 \003(\0132\024.NamespaceDescriptor\"?\n&Lis" +
+      "tTableDescriptorsByNamespaceRequest\022\025\n\rn" +
+      "amespaceName\030\001 \002(\t\"L\n\'ListTableDescripto" +
+      "rsByNamespaceResponse\022!\n\013tableSchema\030\001 \003" +
+      "(\0132\014.TableSchema\"9\n ListTableNamesByName" +
+      "spaceRequest\022\025\n\rnamespaceName\030\001 \002(\t\"B\n!L",
+      "istTableNamesByNamespaceResponse\022\035\n\ttabl" +
+      "eName\030\001 \003(\0132\n.TableName\"\021\n\017ShutdownReque" +
+      "st\"\022\n\020ShutdownResponse\"\023\n\021StopMasterRequ" +
+      "est\"\024\n\022StopMasterResponse\"\034\n\032IsInMainten" +
+      "anceModeRequest\"8\n\033IsInMaintenanceModeRe" +
+      "sponse\022\031\n\021inMaintenanceMode\030\001 \002(\010\"\037\n\016Bal" +
+      "anceRequest\022\r\n\005force\030\001 \001(\010\"\'\n\017BalanceRes" +
+      "ponse\022\024\n\014balancer_ran\030\001 \002(\010\"<\n\031SetBalanc" +
+      "erRunningRequest\022\n\n\002on\030\001 \002(\010\022\023\n\013synchron" +
+      "ous\030\002 \001(\010\"8\n\032SetBalancerRunningResponse\022",
+      "\032\n\022prev_balance_value\030\001 \001(\010\"\032\n\030IsBalance" +
+      "rEnabledRequest\",\n\031IsBalancerEnabledResp" +
+      "onse\022\017\n\007enabled\030\001 \002(\010\"n\n\035SetSplitOrMerge" +
+      "EnabledRequest\022\017\n\007enabled\030\001 \002(\010\022\023\n\013synch" +
+      "ronous\030\002 \001(\010\022\'\n\014switch_types\030\003 \003(\0162\021.Mas" +
+      "terSwitchType\"4\n\036SetSplitOrMergeEnabledR" +
+      "esponse\022\022\n\nprev_value\030\001 \003(\010\"F\n\034IsSplitOr" +
+      "MergeEnabledRequest\022&\n\013switch_type\030\001 \002(\016" +
+      "2\021.MasterSwitchType\"0\n\035IsSplitOrMergeEna" +
+      "bledResponse\022\017\n\007enabled\030\001 \002(\010\"\022\n\020Normali",
+      "zeRequest\"+\n\021NormalizeResponse\022\026\n\016normal" +
+      "izer_ran\030\001 \002(\010\")\n\033SetNormalizerRunningRe" +
+      "quest\022\n\n\002on\030\001 \002(\010\"=\n\034SetNormalizerRunnin" +
+      "gResponse\022\035\n\025prev_normalizer_value\030\001 \001(\010" +
+      "\"\034\n\032IsNormalizerEnabledRequest\".\n\033IsNorm" +
+      "alizerEnabledResponse\022\017\n\007enabled\030\001 \002(\010\"\027" +
+      "\n\025RunCatalogScanRequest\"-\n\026RunCatalogSca" +
+      "nResponse\022\023\n\013scan_result\030\001 \001(\005\"-\n\033Enable" +
+      "CatalogJanitorRequest\022\016\n\006enable\030\001 \002(\010\"2\n" +
+      "\034EnableCatalogJanitorResponse\022\022\n\nprev_va",
+      "lue\030\001 \001(\010\" \n\036IsCatalogJanitorEnabledRequ" +
+      "est\"0\n\037IsCatalogJanitorEnabledResponse\022\r" +
+      "\n\005value\030\001 \002(\010\"9\n\017SnapshotRequest\022&\n\010snap" +
+      "shot\030\001 \002(\0132\024.SnapshotDescription\",\n\020Snap" +
+      "shotResponse\022\030\n\020expected_timeout\030\001 \002(\003\"\036" +
+      "\n\034GetCompletedSnapshotsRequest\"H\n\035GetCom" +
+      "pletedSnapshotsResponse\022\'\n\tsnapshots\030\001 \003" +
+      "(\0132\024.SnapshotDescription\"?\n\025DeleteSnapsh" +
+      "otRequest\022&\n\010snapshot\030\001 \002(\0132\024.SnapshotDe" +
+      "scription\"\030\n\026DeleteSnapshotResponse\"[\n\026R",
+      "estoreSnapshotRequest\022&\n\010snapshot\030\001 \002(\0132" +
+      "\024.SnapshotDescription\022\031\n\nrestoreACL\030\002 \001(" +
+      "\010:\005false\"\031\n\027RestoreSnapshotResponse\"?\n\025I" +
+      "sSnapshotDoneRequest\022&\n\010snapshot\030\001 \001(\0132\024" +
+      ".SnapshotDescription\"U\n\026IsSnapshotDoneRe" +
+      "sponse\022\023\n\004done\030\001 \001(\010:\005false\022&\n\010snapshot\030" +
+      "\002 \001(\0132\024.SnapshotDescription\"F\n\034IsRestore" +
+      "SnapshotDoneRequest\022&\n\010snapshot\030\001 \001(\0132\024." +
+      "SnapshotDescription\"4\n\035IsRestoreSnapshot" +
+      "DoneResponse\022\023\n\004done\030\001 \001(\010:\005false\"=\n\033Get",
+      "SchemaAlterStatusRequest\022\036\n\ntable_name\030\001" +
+      " \002(\0132\n.TableName\"T\n\034GetSchemaAlterStatus" +
+      "Response\022\035\n\025yet_to_update_regions\030\001 \001(\r\022" +
+      "\025\n\rtotal_regions\030\002 \001(\r\"\202\001\n\032GetTableDescr" +
+      "iptorsRequest\022\037\n\013table_names\030\001 \003(\0132\n.Tab" +
+      "leName\022\r\n\005regex\030\002 \001(\t\022!\n\022include_sys_tab" +
+      "les\030\003 \001(\010:\005false\022\021\n\tnamespace\030\004 \001(\t\"A\n\033G" +
+      "etTableDescriptorsResponse\022\"\n\014table_sche" +
+      "ma\030\001 \003(\0132\014.TableSchema\"[\n\024GetTableNamesR" +
+      "equest\022\r\n\005regex\030\001 \001(\t\022!\n\022include_sys_tab",
+      "les\030\002 \001(\010:\005false\022\021\n\tnamespace\030\003 \001(\t\"8\n\025G" +
+      "etTableNamesResponse\022\037\n\013table_names\030\001 \003(" +
+      "\0132\n.TableName\"\031\n\027GetClusterStatusRequest" +
+      "\"B\n\030GetClusterStatusResponse\022&\n\016cluster_" +
+      "status\030\001 \002(\0132\016.ClusterStatus\"\030\n\026IsMaster" +
+      "RunningRequest\"4\n\027IsMasterRunningRespons" +
+      "e\022\031\n\021is_master_running\030\001 \002(\010\"@\n\024ExecProc" +
+      "edureRequest\022(\n\tprocedure\030\001 \002(\0132\025.Proced" +
+      "ureDescription\"F\n\025ExecProcedureResponse\022" +
+      "\030\n\020expected_timeout\030\001 \001(\003\022\023\n\013return_data",
+      "\030\002 \001(\014\"B\n\026IsProcedureDoneRequest\022(\n\tproc" +
+      "edure\030\001 \001(\0132\025.ProcedureDescription\"W\n\027Is" +
+      "ProcedureDoneResponse\022\023\n\004done\030\001 \001(\010:\005fal" +
+      "se\022\'\n\010snapshot\030\002 \001(\0132\025.ProcedureDescript" +
+      "ion\",\n\031GetProcedureResultRequest\022\017\n\007proc" +
+      "_id\030\001 \002(\004\"\347\001\n\032GetProcedureResultResponse" +
+      "\0220\n\005state\030\001 \002(\0162!.GetProcedureResultResp" +
+      "onse.State\022\022\n\nstart_time\030\002 \001(\004\022\023\n\013last_u" +
+      "pdate\030\003 \001(\004\022\016\n\006result\030\004 \001(\014\022+\n\texception" +
+      "\030\005 \001(\0132\030.ForeignExceptionMessage\"1\n\005Stat",
+      "e\022\r\n\tNOT_FOUND\020\000\022\013\n\007RUNNING\020\001\022\014\n\010FINISHE" +
+      "D\020\002\"P\n\025AbortProcedureRequest\022\017\n\007proc_id\030" +
+      "\001 \002(\004\022&\n\030may_interrupt_if_running\030\002 \001(\010:" +
+      "\004true\"6\n\026AbortProcedureResponse\022\034\n\024is_pr" +
+      "ocedure_aborted\030\001 \002(\010\"\027\n\025ListProceduresR" +
+      "equest\"7\n\026ListProceduresResponse\022\035\n\tproc" +
+      "edure\030\001 \003(\0132\n.Procedure\"\344\001\n\017SetQuotaRequ" +
+      "est\022\021\n\tuser_name\030\001 \001(\t\022\022\n\nuser_group\030\002 \001" +
+      "(\t\022\021\n\tnamespace\030\003 \001(\t\022\036\n\ntable_name\030\004 \001(" +
+      "\0132\n.TableName\022\022\n\nremove_all\030\005 \001(\010\022\026\n\016byp",
+      "ass_globals\030\006 \001(\010\022\"\n\010throttle\030\007 \001(\0132\020.Th" +
+      "rottleRequest\022\'\n\013space_limit\030\010 \001(\0132\022.Spa" +
+      "ceLimitRequest\"\022\n\020SetQuotaResponse\"A\n\037Ma" +
+      "jorCompactionTimestampRequest\022\036\n\ntable_n" +
+      "ame\030\001 \002(\0132\n.TableName\"L\n(MajorCompaction" +
+      "TimestampForRegionRequest\022 \n\006region\030\001 \002(" +
+      "\0132\020.RegionSpecifier\"@\n MajorCompactionTi" +
+      "mestampResponse\022\034\n\024compaction_timestamp\030" +
+      "\001 \002(\003\"\211\001\n\023BackupTablesRequest\022\031\n\004type\030\001 " +
+      "\002(\0162\013.BackupType\022\032\n\006tables\030\002 \003(\0132\n.Table",
+      "Name\022\027\n\017target_root_dir\030\003 \002(\t\022\017\n\007workers" +
+      "\030\004 \001(\003\022\021\n\tbandwidth\030\005 \001(\003\":\n\024BackupTable" +
+      "sResponse\022\017\n\007proc_id\030\001 \001(\004\022\021\n\tbackup_id\030" +
+      "\002 \001(\t*(\n\020MasterSwitchType\022\t\n\005SPLIT\020\000\022\t\n\005" +
+      "MERGE\020\0012\360!\n\rMasterService\022S\n\024GetSchemaAl" +
+      "terStatus\022\034.GetSchemaAlterStatusRequest\032" +
+      "\035.GetSchemaAlterStatusResponse\022P\n\023GetTab" +
+      "leDescriptors\022\033.GetTableDescriptorsReque" +
+      "st\032\034.GetTableDescriptorsResponse\022>\n\rGetT" +
+      "ableNames\022\025.GetTableNamesRequest\032\026.GetTa",
+      "bleNamesResponse\022G\n\020GetClusterStatus\022\030.G" +
+      "etClusterStatusRequest\032\031.GetClusterStatu" +
+      "sResponse\022D\n\017IsMasterRunning\022\027.IsMasterR" +
+      "unningRequest\032\030.IsMasterRunningResponse\022" +
+      "2\n\tAddColumn\022\021.AddColumnRequest\032\022.AddCol" +
+      "umnResponse\022;\n\014DeleteColumn\022\024.DeleteColu" +
+      "mnRequest\032\025.DeleteColumnResponse\022;\n\014Modi" +
+      "fyColumn\022\024.ModifyColumnRequest\032\025.ModifyC" +
+      "olumnResponse\0225\n\nMoveRegion\022\022.MoveRegion" +
+      "Request\032\023.MoveRegionResponse\022Y\n\026Dispatch",
+      "MergingRegions\022\036.DispatchMergingRegionsR" +
+      "equest\032\037.DispatchMergingRegionsResponse\022" +
+      ";\n\014AssignRegion\022\024.AssignRegionRequest\032\025." +
+      "AssignRegionResponse\022A\n\016UnassignRegion\022\026" +
+      ".UnassignRegionRequest\032\027.UnassignRegionR" +
+      "esponse\022>\n\rOfflineRegion\022\025.OfflineRegion" +
+      "Request\032\026.OfflineRegionResponse\0228\n\013Delet" +
+      "eTable\022\023.DeleteTableRequest\032\024.DeleteTabl" +
+      "eResponse\022>\n\rtruncateTable\022\025.TruncateTab" +
+      "leRequest\032\026.TruncateTableResponse\0228\n\013Ena",
+      "bleTable\022\023.EnableTableRequest\032\024.EnableTa" +
+      "bleResponse\022;\n\014DisableTable\022\024.DisableTab" +
+      "leRequest\032\025.DisableTableResponse\0228\n\013Modi" +
+      "fyTable\022\023.ModifyTableRequest\032\024.ModifyTab" +
+      "leResponse\0228\n\013CreateTable\022\023.CreateTableR" +
+      "equest\032\024.CreateTableResponse\022/\n\010Shutdown" +
+      "\022\020.ShutdownRequest\032\021.ShutdownResponse\0225\n" +
+      "\nStopMaster\022\022.StopMasterRequest\032\023.StopMa" +
+      "sterResponse\022V\n\031IsMasterInMaintenanceMod" +
+      "e\022\033.IsInMaintenanceModeRequest\032\034.IsInMai",
+      "ntenanceModeResponse\022,\n\007Balance\022\017.Balanc" +
+      "eRequest\032\020.BalanceResponse\022M\n\022SetBalance" +
+      "rRunning\022\032.SetBalancerRunningRequest\032\033.S" +
+      "etBalancerRunningResponse\022J\n\021IsBalancerE" +
+      "nabled\022\031.IsBalancerEnabledRequest\032\032.IsBa" +
+      "lancerEnabledResponse\022Y\n\026SetSplitOrMerge" +
+      "Enabled\022\036.SetSplitOrMergeEnabledRequest\032" +
+      "\037.SetSplitOrMergeEnabledResponse\022V\n\025IsSp" +
+      "litOrMergeEnabled\022\035.IsSplitOrMergeEnable" +
+      "dRequest\032\036.IsSplitOrMergeEnabledResponse",
+      "\0222\n\tNormalize\022\021.NormalizeRequest\032\022.Norma" +
+      "lizeResponse\022S\n\024SetNormalizerRunning\022\034.S" +
+      "etNormalizerRunningRequest\032\035.SetNormaliz" +
+      "erRunningResponse\022P\n\023IsNormalizerEnabled" +
+      "\022\033.IsNormalizerEnabledRequest\032\034.IsNormal" +
+      "izerEnabledResponse\022A\n\016RunCatalogScan\022\026." +
+      "RunCatalogScanRequest\032\027.RunCatalogScanRe" +
+      "sponse\022S\n\024EnableCatalogJanitor\022\034.EnableC" +
+      "atalogJanitorRequest\032\035.EnableCatalogJani" +
+      "torResponse\022\\\n\027IsCatalogJanitorEnabled\022\037",
+      ".IsCatalogJanitorEnabledRequest\032 .IsCata" +
+      "logJanitorEnabledResponse\022L\n\021ExecMasterS" +
+      "ervice\022\032.CoprocessorServiceRequest\032\033.Cop" +
+      "rocessorServiceResponse\022/\n\010Snapshot\022\020.Sn" +
+      "apshotRequest\032\021.SnapshotResponse\022V\n\025GetC" +
+      "ompletedSnapshots\022\035.GetCompletedSnapshot" +
+      "sRequest\032\036.GetCompletedSnapshotsResponse" +
+      "\022A\n\016DeleteSnapshot\022\026.DeleteSnapshotReque" +
+      "st\032\027.DeleteSnapshotResponse\022A\n\016IsSnapsho" +
+      "tDone\022\026.IsSnapshotDoneRequest\032\027.IsSnapsh",
+      "otDoneResponse\022D\n\017RestoreSnapshot\022\027.Rest" +
+      "oreSnapshotRequest\032\030.RestoreSnapshotResp" +
+      "onse\022V\n\025IsRestoreSnapshotDone\022\035.IsRestor" +
+      "eSnapshotDoneRequest\032\036.IsRestoreSnapshot" +
+      "DoneResponse\022>\n\rExecProcedure\022\025.ExecProc" +
+      "edureRequest\032\026.ExecProcedureResponse\022E\n\024" +
+      "ExecProcedureWithRet\022\025.ExecProcedureRequ" +
+      "est\032\026.ExecProcedureResponse\022D\n\017IsProcedu" +
+      "reDone\022\027.IsProcedureDoneRequest\032\030.IsProc" +
+      "edureDoneResponse\022D\n\017ModifyNamespace\022\027.M",
+      "odifyNamespaceRequest\032\030.ModifyNamespaceR" +
+      "esponse\022D\n\017CreateNamespace\022\027.CreateNames" +
+      "paceRequest\032\030.CreateNamespaceResponse\022D\n" +
+      "\017DeleteNamespace\022\027.DeleteNamespaceReques" +
+      "t\032\030.DeleteNamespaceResponse\022Y\n\026GetNamesp" +
+      "aceDescriptor\022\036.GetNamespaceDescriptorRe" +
+      "quest\032\037.GetNamespaceDescriptorResponse\022_" +
+      "\n\030ListNamespaceDescriptors\022 .ListNamespa" +
+      "ceDescriptorsRequest\032!.ListNamespaceDesc" +
+      "riptorsResponse\022t\n\037ListTableDescriptorsB",
+      "yNamespace\022\'.ListTableDescriptorsByNames" +
+      "paceRequest\032(.ListTableDescriptorsByName" +
+      "spaceResponse\022b\n\031ListTableNamesByNamespa" +
+      "ce\022!.ListTableNamesByNamespaceRequest\032\"." +
+      "ListTableNamesByNamespaceResponse\022/\n\010Set" +
+      "Quota\022\020.SetQuotaRequest\032\021.SetQuotaRespon" +
+      "se\022f\n\037getLastMajorCompactionTimestamp\022 ." +
+      "MajorCompactionTimestampRequest\032!.MajorC" +
+      "ompactionTimestampResponse\022x\n(getLastMaj" +
+      "orCompactionTimestampForRegion\022).MajorCo",
+      "mpactionTimestampForRegionRequest\032!.Majo" +
+      "rCompactionTimestampResponse\022M\n\022getProce" +
+      "dureResult\022\032.GetProcedureResultRequest\032\033" +
+      ".GetProcedureResultResponse\022A\n\016AbortProc" +
+      "edure\022\026.AbortProcedureRequest\032\027.AbortPro" +
+      "cedureResponse\022A\n\016ListProcedures\022\026.ListP" +
+      "roceduresRequest\032\027.ListProceduresRespons" +
+      "e\022;\n\014backupTables\022\024.BackupTablesRequest\032" +
+      "\025.BackupTablesResponse\022_\n\030GetSpaceQuotaR" +
+      "egionSizes\022 .GetSpaceQuotaRegionSizesReq",
+      "uest\032!.GetSpaceQuotaRegionSizesResponse\022" +
+      "A\n\016GetQuotaStates\022\026.GetQuotaStatesReques" +
+      "t\032\027.GetQuotaStatesResponseBB\n*org.apache" +
+      ".hadoop.hbase.protobuf.generatedB\014Master" +
+      "ProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -64768,7 +64859,7 @@ public final class MasterProtos {
           internal_static_RestoreSnapshotRequest_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_RestoreSnapshotRequest_descriptor,
-              new java.lang.String[] { "Snapshot", });
+              new java.lang.String[] { "Snapshot", "RestoreACL", });
           internal_static_RestoreSnapshotResponse_descriptor =
             getDescriptor().getMessageTypes().get(77);
           internal_static_RestoreSnapshotResponse_fieldAccessorTable = new
@@ -64974,6 +65065,7 @@ public final class MasterProtos {
           org.apache.hadoop.hbase.protobuf.generated.ErrorHandlingProtos.getDescriptor(),
           org.apache.hadoop.hbase.protobuf.generated.ProcedureProtos.getDescriptor(),
           org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.getDescriptor(),
+          org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.getDescriptor(),
         }, assigner);
   }
 

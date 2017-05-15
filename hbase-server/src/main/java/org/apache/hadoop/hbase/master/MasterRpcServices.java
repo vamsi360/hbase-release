@@ -66,7 +66,6 @@ import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.RegionStor
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NameStringPair;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ProcedureDescription;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier.RegionSpecifierType;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AbortProcedureRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AbortProcedureResponse;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AddColumnRequest;
@@ -198,6 +197,7 @@ import org.apache.hadoop.hbase.quotas.MasterQuotaManager;
 import org.apache.hadoop.hbase.quotas.QuotaObserverChore;
 import org.apache.hadoop.hbase.quotas.QuotaUtil;
 import org.apache.hadoop.hbase.quotas.SpaceQuotaSnapshot;
+import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.regionserver.RSRpcServices;
 import org.apache.hadoop.hbase.security.AccessDeniedException;
 import org.apache.hadoop.hbase.security.User;
@@ -1325,7 +1325,8 @@ public class MasterRpcServices extends RSRpcServices
       master.getNamespaceDescriptor(dstTable.getNamespaceAsString());
 
       SnapshotDescription reqSnapshot = request.getSnapshot();
-      master.snapshotManager.restoreSnapshot(reqSnapshot);
+      master.snapshotManager.restoreSnapshot(reqSnapshot,
+        request.hasRestoreACL() && request.getRestoreACL());
       return RestoreSnapshotResponse.newBuilder().build();
     } catch (ForeignException e) {
       throw new ServiceException(e.getCause());

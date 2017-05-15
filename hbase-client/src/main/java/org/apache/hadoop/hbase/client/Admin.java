@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
+import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
 import org.apache.hadoop.hbase.quotas.QuotaRetriever;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
@@ -1119,7 +1120,7 @@ public interface Admin extends Abortable, Closeable {
    */
   void snapshot(final String snapshotName,
       final TableName tableName,
-      HBaseProtos.SnapshotDescription.Type type) throws IOException, SnapshotCreationException,
+      SnapshotDescription.Type type) throws IOException, SnapshotCreationException,
       IllegalArgumentException;
 
   /**
@@ -1140,7 +1141,8 @@ public interface Admin extends Abortable, Closeable {
    * @throws SnapshotCreationException if snapshot failed to be taken
    * @throws IllegalArgumentException if the snapshot request is formatted incorrectly
    */
-  void snapshot(HBaseProtos.SnapshotDescription snapshot)
+  @Deprecated
+  void snapshot(SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException, IllegalArgumentException;
 
   /**
@@ -1153,7 +1155,8 @@ public interface Admin extends Abortable, Closeable {
    * @throws SnapshotCreationException if snapshot creation failed
    * @throws IllegalArgumentException if the snapshot request is formatted incorrectly
    */
-  MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot)
+  @Deprecated
+  MasterProtos.SnapshotResponse takeSnapshotAsync(SnapshotDescription snapshot)
       throws IOException, SnapshotCreationException;
 
   /**
@@ -1172,7 +1175,8 @@ public interface Admin extends Abortable, Closeable {
    * @throws org.apache.hadoop.hbase.snapshot.UnknownSnapshotException if the requested snapshot is
    * unknown
    */
-  boolean isSnapshotFinished(final HBaseProtos.SnapshotDescription snapshot)
+  @Deprecated
+  boolean isSnapshotFinished(final SnapshotDescription snapshot)
       throws IOException, HBaseSnapshotException, UnknownSnapshotException;
 
   /**
@@ -1239,6 +1243,23 @@ public interface Admin extends Abortable, Closeable {
       throws IOException, RestoreSnapshotException;
 
   /**
+   * Restore the specified snapshot on the original table. (The table must be disabled) If
+   * 'takeFailSafeSnapshot' is set to true, a snapshot of the current table is taken before
+   * executing the restore operation. In case of restore failure, the failsafe snapshot will be
+   * restored. If the restore completes without problem the failsafe snapshot is deleted. The
+   * failsafe snapshot name is configurable by using the property
+   * "hbase.snapshot.restore.failsafe.name".
+   * @param snapshotName name of the snapshot to restore
+   * @param takeFailSafeSnapshot true if the failsafe snapshot should be taken
+   * @param restoreAcl true to restore acl of snapshot into table.
+   * @throws IOException if a remote or network exception occurs
+   * @throws RestoreSnapshotException if snapshot failed to be restored
+   * @throws IllegalArgumentException if the restore request is formatted incorrectly
+   */
+  void restoreSnapshot(final String snapshotName, boolean takeFailSafeSnapshot, boolean restoreAcl)
+      throws IOException, RestoreSnapshotException;
+
+  /**
    * Create a new table by cloning the snapshot content.
    *
    * @param snapshotName name of the snapshot to be cloned
@@ -1262,6 +1283,19 @@ public interface Admin extends Abortable, Closeable {
    * @throws IllegalArgumentException if the specified table has not a valid name
    */
   void cloneSnapshot(final String snapshotName, final TableName tableName)
+      throws IOException, TableExistsException, RestoreSnapshotException;
+
+  /**
+   * Create a new table by cloning the snapshot content.
+   * @param snapshotName name of the snapshot to be cloned
+   * @param tableName name of the table where the snapshot will be restored
+   * @param restoreAcl true to restore acl of snapshot into newly created table
+   * @throws IOException if a remote or network exception occurs
+   * @throws TableExistsException if table to be created already exists
+   * @throws RestoreSnapshotException if snapshot failed to be cloned
+   * @throws IllegalArgumentException if the specified table has not a valid name
+   */
+  void cloneSnapshot(final String snapshotName, final TableName tableName, final boolean restoreAcl)
       throws IOException, TableExistsException, RestoreSnapshotException;
 
   /**
@@ -1311,7 +1345,8 @@ public interface Admin extends Abortable, Closeable {
    * @return a list of snapshot descriptors for completed snapshots
    * @throws IOException if a network error occurs
    */
-  List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException;
+  @Deprecated
+  List<SnapshotDescription> listSnapshots() throws IOException;
 
   /**
    * List all the completed snapshots matching the given regular expression.
@@ -1320,7 +1355,8 @@ public interface Admin extends Abortable, Closeable {
    * @return - returns a List of SnapshotDescription
    * @throws IOException if a remote or network exception occurs
    */
-  List<HBaseProtos.SnapshotDescription> listSnapshots(String regex) throws IOException;
+  @Deprecated
+  List<SnapshotDescription> listSnapshots(String regex) throws IOException;
 
   /**
    * List all the completed snapshots matching the given pattern.
@@ -1329,7 +1365,8 @@ public interface Admin extends Abortable, Closeable {
    * @return - returns a List of SnapshotDescription
    * @throws IOException if a remote or network exception occurs
    */
-  List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException;
+  @Deprecated
+  List<SnapshotDescription> listSnapshots(Pattern pattern) throws IOException;
 
   /**
    * Delete an existing snapshot.
