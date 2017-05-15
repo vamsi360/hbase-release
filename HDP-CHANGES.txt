@@ -282,3 +282,9 @@ HBASE-17682 Region stuck in merging_new state indefinitely
 HBASE-17710 HBase in standalone mode creates directories with 777 permission
 HBASE-17717 Explicitly use "sasl" ACL scheme for hbase superuser
 HBASE-17937 Memstore size becomes negative in case of expensive postPut/Delete Coprocessor call
+HBASE-17287 Master becomes a zombie if filesystem object closes
+HBASE-17785 RSGroupBasedLoadBalancer fails to assign new table regions when cloning snapshot (Andrew)
+HBASE-17779 disable_table_replication returns misleading message and does not turn off replication (Janos Gub)
+HBASE-17501 guard against NPE while reading FileTrailer and HFileBlock
+HBASE-17861 Regionserver down when checking the permission of staging dir if hbase.rootdir is on S3
+HBASE-18036 Data locality is not maintained after cluster restart or SSH (Stephen Yuan Jiang)
