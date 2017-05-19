@@ -78,6 +78,8 @@ module HBaseConstants
   NONE = 'NONE'
   VALUE = 'VALUE'
   POLICY = 'POLICY'
+  FORMATTER = 'FORMATTER'
+  FORMATTER_CLASS = 'FORMATTER_CLASS'
 
   # Load constants from hbase java API
   def self.promote_constants(constants)

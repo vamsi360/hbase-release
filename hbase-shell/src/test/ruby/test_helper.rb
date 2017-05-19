@@ -41,15 +41,20 @@ module Hbase
     require 'hbase/hbase'
     require 'shell'
     require 'shell/formatter'
+    require 'stringio'
 
     def setup_hbase
       formatter = ::Shell::Formatter::Console.new
       hbase = ::Hbase::Hbase.new($TEST_CLUSTER.getConfiguration)
       @shell = ::Shell::Shell.new(hbase, formatter)
     end
-    
+
     def shutdown
       @shell.hbase.shutdown
+    end
+
+    def command(command, *args)
+      @shell.command(command, *args)
     end
 
     def table(table)
@@ -124,6 +129,17 @@ module Hbase
         admin.delete_all_snapshot(".*")
       rescue => e
         puts "IGNORING DELETE ALL SNAPSHOT ERROR: #{e}"
+      end
+    end
+
+    def capture_stdout
+      begin
+        old_stdout = $stdout
+        $stdout = StringIO.new('','w')
+        yield
+        $stdout.string
+      ensure
+        $stdout = old_stdout
       end
     end
   end

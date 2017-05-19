@@ -288,3 +288,4 @@ HBASE-17779 disable_table_replication returns misleading message and does not tu
 HBASE-17501 guard against NPE while reading FileTrailer and HFileBlock
 HBASE-17861 Regionserver down when checking the permission of staging dir if hbase.rootdir is on S3
 HBASE-18036 Data locality is not maintained after cluster restart or SSH (Stephen Yuan Jiang)
+HBASE-18067 Allow default FORMATTER for shell put/get commands
