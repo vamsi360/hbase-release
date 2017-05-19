@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
@@ -131,10 +132,12 @@ public class TestHTableDescriptor {
   String legalTableNames[] = { "foo", "with-dash_under.dot", "_under_start_ok",
       "with-dash.with_underscore", "02-01-2012.my_table_01-02", "xyz._mytable_", "9_9_0.table_02"
       , "dot1.dot2.table", "new.-mytable", "with-dash.with.dot", "legal..t2", "legal..legal.t2",
-      "trailingdots..", "trailing.dots...", "ns:mytable", "ns:_mytable_", "ns:my_table_01-02"};
+      "trailingdots..", "trailing.dots...", "ns:mytable", "ns:_mytable_", "ns:my_table_01-02",
+      "汉", "汉:字", "_字_", "foo:字", "foo.字", "字.foo"};
   String illegalTableNames[] = { ".dot_start_illegal", "-dash_start_illegal", "spaces not ok",
       "-dash-.start_illegal", "new.table with space", "01 .table", "ns:-illegaldash",
-      "new:.illegaldot", "new:illegalcolon1:", "new:illegalcolon1:2"};
+      "new:.illegaldot", "new:illegalcolon1:", "new:illegalcolon1:2", String.valueOf((char)130),
+      String.valueOf((char)5), String.valueOf((char)65530)};
 
   @Test
   public void testLegalHTableNames() {
@@ -156,11 +159,33 @@ public class TestHTableDescriptor {
   }
 
   @Test
+  public void testLegalHTableNamesRegexWithBytes() {
+    for (String tn : legalTableNames) {
+      // valueOf(String) hits a different code-path than valueOf(byte[])
+      TableName tName = TableName.valueOf(Bytes.toBytes(tn));
+      assertTrue("Testing: '" + tn + "'", Pattern.matches(TableName.VALID_USER_TABLE_REGEX,
+          tName.getNameAsString()));
+    }
+  }
+
+  @Test
   public void testLegalHTableNamesRegex() {
     for (String tn : legalTableNames) {
       TableName tName = TableName.valueOf(tn);
       assertTrue("Testing: '" + tn + "'", Pattern.matches(TableName.VALID_USER_TABLE_REGEX,
           tName.getNameAsString()));
+    }
+  }
+
+  @Test
+  public void testIllegalZooKeeperName() {
+    for (String name : Arrays.asList("zookeeper", "ns:zookeeper", "zookeeper:table")) {
+      try {
+        TableName.isLegalFullyQualifiedTableName(Bytes.toBytes(name));
+        fail("invalid tablename " + name + " should have failed");
+      } catch (Exception e) {
+        // expected
+      }
     }
   }
 

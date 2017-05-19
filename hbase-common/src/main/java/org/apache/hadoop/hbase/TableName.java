@@ -24,6 +24,7 @@ import org.apache.hadoop.hbase.KeyValue.KVComparator;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -68,10 +69,10 @@ public final class TableName implements Comparable<TableName> {
   // in default namespace
   //Allows only letters, digits and '_'
   public static final String VALID_NAMESPACE_REGEX =
-      "(?:[a-zA-Z_0-9]+)";
+      "(?:[_\\p{Digit}\\p{IsAlphabetic}]+)";
   //Allows only letters, digits, '_', '-' and '.'
   public static final String VALID_TABLE_QUALIFIER_REGEX =
-      "(?:[a-zA-Z_0-9][a-zA-Z_0-9-.]*)";
+      "(?:[_\\p{Digit}\\p{IsAlphabetic}][-_.\\p{Digit}\\p{IsAlphabetic}]*)";
   //Concatenation of NAMESPACE_REGEX and TABLE_QUALIFIER_REGEX,
   //with NAMESPACE_DELIM as delimiter
   public static final String VALID_USER_TABLE_REGEX =
@@ -93,6 +94,8 @@ public final class TableName implements Comparable<TableName> {
   public static final String OLD_META_STR = ".META.";
   public static final String OLD_ROOT_STR = "-ROOT-";
 
+  /** One globally disallowed name */
+  public static final String DISALLOWED_TABLE_NAME = "zookeeper";
 
 
   /**
@@ -119,14 +122,14 @@ public final class TableName implements Comparable<TableName> {
    * @return Returns passed <code>tableName</code> param
    * @throws IllegalArgumentException if passed a tableName is null or
    * is made of other than 'word' characters or underscores: i.e.
-   * <code>[a-zA-Z_0-9.-:]</code>. The ':' is used to delimit the namespace
+   * <code>[\p{IsAlphabetic}\p{Digit}.-:]</code>. The ':' is used to delimit the namespace
    * from the table name and can be used for nothing else.
    *
    * Namespace names can only contain 'word' characters
-   * <code>[a-zA-Z_0-9]</code> or '_'
+   * <code>[\p{IsAlphabetic}\p{Digit}]</code> or '_'
    *
    * Qualifier names can only contain 'word' characters
-   * <code>[a-zA-Z_0-9]</code> or '_', '.' or '-'.
+   * <code>[\p{IsAlphabetic}\p{Digit}]</code> or '_', '.' or '-'.
    * The name may not start with '.' or '-'.
    *
    * Valid fully qualified table names:
@@ -162,7 +165,7 @@ public final class TableName implements Comparable<TableName> {
 
   /**
    * Qualifier names can only contain 'word' characters
-   * <code>[a-zA-Z_0-9]</code> or '_', '.' or '-'.
+   * <code>[\p{IsAlphabetic}\p{Digit}]</code> or '_', '.' or '-'.
    * The name may not start with '.' or '-'.
    *
    * @param qualifierName byte array containing the qualifier name
@@ -187,24 +190,33 @@ public final class TableName implements Comparable<TableName> {
       throw new IllegalArgumentException("Illegal first character <" + qualifierName[start] +
                                          "> at 0. " + (isSnapshot ? "Snapshot" : "User-space table") +
                                          " qualifiers can only start with 'alphanumeric " +
-                                         "characters': i.e. [a-zA-Z_0-9]: " +
+                                         "characters' from any language: " +
                                          Bytes.toString(qualifierName, start, end));
     }
-    for (int i = start; i < end; i++) {
-      if (Character.isLetterOrDigit(qualifierName[i]) ||
-          qualifierName[i] == '_' ||
-          qualifierName[i] == '-' ||
-          qualifierName[i] == '.') {
+    // Treat the bytes as UTF-8
+    String qualifierString = new String(
+    qualifierName, start, (end - start), StandardCharsets.UTF_8);
+    if (qualifierString.equals(DISALLOWED_TABLE_NAME)) {
+      // Per https://zookeeper.apache.org/doc/r3.4.10/zookeeperProgrammers.html#ch_zkDataModel
+      // A znode named "zookeeper" is disallowed by zookeeper.
+      throw new IllegalArgumentException("Tables may not be named '" + DISALLOWED_TABLE_NAME + "'");
+    }
+    for (int i = 0; i < qualifierString.length(); i++) {
+      // Treat the string as a char-array as some characters may be multi-byte
+      char c = qualifierString.charAt(i);
+      // Check for letter, digit, underscore, hyphen, or period, and allowed by ZK.
+      // ZooKeeper also has limitations, but Character.isAlphabetic omits those all
+      //   See https://zookeeper.apache.org/doc/r3.4.10/zookeeperProgrammers.html#ch_zkDataModel
+      if (Character.isAlphabetic(c) || Character.isDigit(c) || c == '_' || c == '-' || c == '.') {
         continue;
       }
-      throw new IllegalArgumentException("Illegal character code:" + qualifierName[i] +
-                                         ", <" + (char) qualifierName[i] + "> at " + i +
-                                         ". " + (isSnapshot ? "Snapshot" : "User-space table") +
-                                         " qualifiers can only contain " +
-                                         "'alphanumeric characters': i.e. [a-zA-Z_0-9-.]: " +
-                                         Bytes.toString(qualifierName, start, end));
+      throw new IllegalArgumentException("Illegal character code:" + (int) c + ", <" + c + "> at " +
+          i + ". " + (isSnapshot ? "Snapshot" : "User-space table") +
+          " qualifiers may only contain 'alphanumeric characters' and digits: " +
+          qualifierString);
     }
   }
+
   public static void isLegalNamespaceName(byte[] namespaceName) {
     isLegalNamespaceName(namespaceName, 0, namespaceName.length);
   }
@@ -218,14 +230,23 @@ public final class TableName implements Comparable<TableName> {
     if(end - start < 1) {
       throw new IllegalArgumentException("Namespace name must not be empty");
     }
-    for (int i = start; i < end; i++) {
-      if (Character.isLetterOrDigit(namespaceName[i])|| namespaceName[i] == '_') {
+    String nsString = new String(namespaceName, start, (end - start), StandardCharsets.UTF_8);
+    if (nsString.equals(DISALLOWED_TABLE_NAME)) {
+      // Per https://zookeeper.apache.org/doc/r3.4.10/zookeeperProgrammers.html#ch_zkDataModel
+      // A znode named "zookeeper" is disallowed by zookeeper.
+      throw new IllegalArgumentException("Tables may not be named '" + DISALLOWED_TABLE_NAME + "'");
+    }
+    for (int i = 0; i < nsString.length(); i++) {
+      // Treat the string as a char-array as some characters may be multi-byte
+      char c = nsString.charAt(i);
+      // ZooKeeper also has limitations, but Character.isAlphabetic omits those all
+      //   See https://zookeeper.apache.org/doc/r3.4.10/zookeeperProgrammers.html#ch_zkDataModel
+      if (Character.isAlphabetic(c) || Character.isDigit(c)|| c == '_') {
         continue;
       }
-      throw new IllegalArgumentException("Illegal character <" + namespaceName[i] +
-        "> at " + i + ". Namespaces can only contain " +
-        "'alphanumeric characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(namespaceName,
-          start, end));
+      throw new IllegalArgumentException("Illegal character <" + c +
+        "> at " + i + ". Namespaces may only contain " +
+        "'alphanumeric characters' from any language and digits: " + nsString);
     }
   }
 
@@ -415,18 +436,20 @@ public final class TableName implements Comparable<TableName> {
       }
     }
 
-    int namespaceDelimIndex = com.google.common.primitives.Bytes.lastIndexOf(fullName,
-        (byte) NAMESPACE_DELIM);
+    final int namespaceDelimIndex = Bytes.toString(fullName).lastIndexOf(NAMESPACE_DELIM);
 
     if (namespaceDelimIndex < 0) {
       return createTableNameIfNecessary(
           ByteBuffer.wrap(NamespaceDescriptor.DEFAULT_NAMESPACE_NAME),
           ByteBuffer.wrap(fullName));
     } else {
+      final String fullNameStr = Bytes.toString(fullName);
+      // indexOf is by character, not byte (consider multi-byte characters)
+      String ns = fullNameStr.substring(0, namespaceDelimIndex);
+      String qualifier = fullNameStr.substring(namespaceDelimIndex + 1);
       return createTableNameIfNecessary(
-          ByteBuffer.wrap(fullName, 0, namespaceDelimIndex),
-          ByteBuffer.wrap(fullName, namespaceDelimIndex + 1,
-              fullName.length - (namespaceDelimIndex + 1)));
+          ByteBuffer.wrap(Bytes.toBytes(ns)),
+          ByteBuffer.wrap(Bytes.toBytes(qualifier)));
     }
   }
 
@@ -442,18 +465,19 @@ public final class TableName implements Comparable<TableName> {
       }
     }
 
-    int namespaceDelimIndex = name.indexOf(NAMESPACE_DELIM);
-    byte[] nameB = Bytes.toBytes(name);
+    final int namespaceDelimIndex = name.indexOf(NAMESPACE_DELIM);
 
     if (namespaceDelimIndex < 0) {
       return createTableNameIfNecessary(
           ByteBuffer.wrap(NamespaceDescriptor.DEFAULT_NAMESPACE_NAME),
-          ByteBuffer.wrap(nameB));
+          ByteBuffer.wrap(Bytes.toBytes(name)));
     } else {
+      // indexOf is by character, not byte (consider multi-byte characters)
+      String ns = name.substring(0, namespaceDelimIndex);
+      String qualifier = name.substring(namespaceDelimIndex + 1);
       return createTableNameIfNecessary(
-          ByteBuffer.wrap(nameB, 0, namespaceDelimIndex),
-          ByteBuffer.wrap(nameB, namespaceDelimIndex + 1,
-              nameB.length - (namespaceDelimIndex + 1)));
+          ByteBuffer.wrap(Bytes.toBytes(ns)),
+          ByteBuffer.wrap(Bytes.toBytes(qualifier)));
     }
   }
 
