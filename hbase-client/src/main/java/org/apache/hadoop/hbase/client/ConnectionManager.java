@@ -555,7 +555,8 @@ class ConnectionManager {
   static class HConnectionImplementation implements ClusterConnection, Closeable {
     static final Log LOG = LogFactory.getLog(HConnectionImplementation.class);
     private final long pause;
-    private final boolean useMetaReplicas;
+    private boolean useMetaReplicas;
+    private final int metaReplicaCallTimeoutScanInMicroSecond;
     private final int numTries;
     final int rpcTimeout;
     private NonceGenerator nonceGenerator = null;
@@ -682,6 +683,9 @@ class ConnectionManager {
           HConstants.DEFAULT_HBASE_CLIENT_PAUSE);
       this.useMetaReplicas = conf.getBoolean(HConstants.USE_META_REPLICAS,
           HConstants.DEFAULT_USE_META_REPLICAS);
+      this.metaReplicaCallTimeoutScanInMicroSecond =
+          connectionConfig.getMetaReplicaCallTimeoutMicroSecondScan();
+
       this.numTries = connectionConfig.getRetriesNumber();
       this.rpcTimeout = conf.getInt(
           HConstants.HBASE_RPC_TIMEOUT_KEY,
@@ -701,6 +705,14 @@ class ConnectionManager {
       this.interceptor = (new RetryingCallerInterceptorFactory(conf)).build();
       this.rpcCallerFactory = RpcRetryingCallerFactory.instantiate(conf, interceptor, this.stats);
       this.backoffPolicy = ClientBackoffPolicyFactory.create(conf);
+    }
+
+    /**
+     * @param useMetaReplicas
+     */
+    @VisibleForTesting
+    void setUseMetaReplicas(final boolean useMetaReplicas) {
+      this.useMetaReplicas = useMetaReplicas;
     }
 
     @Override
@@ -1255,7 +1267,7 @@ class ConnectionManager {
           ReversedClientScanner rcs = null;
           try {
             rcs = new ClientSmallReversedScanner(conf, s, TableName.META_TABLE_NAME, this,
-              rpcCallerFactory, rpcControllerFactory, getMetaLookupPool(), 0);
+              rpcCallerFactory, rpcControllerFactory, getMetaLookupPool(), metaReplicaCallTimeoutScanInMicroSecond);
             regionInfoRow = rcs.next();
           } finally {
             if (rcs != null) {
