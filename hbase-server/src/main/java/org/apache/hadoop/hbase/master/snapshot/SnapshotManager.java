@@ -766,7 +766,7 @@ public class SnapshotManager extends MasterProcedureManager implements Stoppable
   
   private void checkAndUpdateNamespaceQuota(SnapshotManifest manifest, TableName tableName)
       throws IOException {
-    if (this.master.getMasterQuotaManager().isQuotaEnabled()) {
+    if (this.master.getMasterQuotaManager().isQuotaInitialized()) {
       this.master.getMasterQuotaManager().checkNamespaceTableAndRegionQuota(tableName,
         manifest.getRegionManifestsMap().size());
     }
@@ -774,7 +774,7 @@ public class SnapshotManager extends MasterProcedureManager implements Stoppable
 
   private void checkAndUpdateNamespaceRegionQuota(SnapshotManifest manifest, TableName tableName)
       throws IOException {
-    if (this.master.getMasterQuotaManager().isQuotaEnabled()) {
+    if (this.master.getMasterQuotaManager().isQuotaInitialized()) {
       this.master.getMasterQuotaManager().checkAndUpdateNamespaceRegionQuota(tableName,
         manifest.getRegionManifestsMap().size());
     }

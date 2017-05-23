@@ -43,6 +43,7 @@ import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceQuota;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.Throttle;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.ThrottleRequest;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.TimedQuota;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -63,7 +64,7 @@ public class MasterQuotaManager implements RegionStateListener {
   private NamedLock<String> namespaceLocks;
   private NamedLock<TableName> tableLocks;
   private NamedLock<String> userLocks;
-  private boolean enabled = false;
+  private boolean initialized = false;
   private NamespaceAuditor namespaceQuotaManager;
   private ConcurrentHashMap<HRegionInfo, SizeSnapshot> regionSizes;
 
@@ -93,14 +94,14 @@ public class MasterQuotaManager implements RegionStateListener {
 
     namespaceQuotaManager = new NamespaceAuditor(masterServices);
     namespaceQuotaManager.start();
-    enabled = true;
+    initialized = true;
   }
 
   public void stop() {
   }
 
-  public boolean isQuotaEnabled() {
-    return enabled && namespaceQuotaManager.isInitialized();
+  public boolean isQuotaInitialized() {
+    return initialized && namespaceQuotaManager.isInitialized();
   }
 
   /*
@@ -298,13 +299,13 @@ public class MasterQuotaManager implements RegionStateListener {
   }
 
   public void setNamespaceQuota(NamespaceDescriptor desc) throws IOException {
-    if (enabled) {
+    if (initialized) {
       this.namespaceQuotaManager.addNamespace(desc);
     }
   }
 
   public void removeNamespaceQuota(String namespace) throws IOException {
-    if (enabled) {
+    if (initialized) {
       this.namespaceQuotaManager.deleteNamespace(namespace);
     }
   }
@@ -339,25 +340,25 @@ public class MasterQuotaManager implements RegionStateListener {
   }
 
   public void checkNamespaceTableAndRegionQuota(TableName tName, int regions) throws IOException {
-    if (enabled) {
+    if (initialized) {
       namespaceQuotaManager.checkQuotaToCreateTable(tName, regions);
     }
   }
   
   public void checkAndUpdateNamespaceRegionQuota(TableName tName, int regions) throws IOException {
-    if (enabled) {
+    if (initialized) {
       namespaceQuotaManager.checkQuotaToUpdateRegion(tName, regions);
     }
   }
 
   public void onRegionMerged(HRegionInfo hri) throws IOException {
-    if (enabled) {
+    if (initialized) {
       namespaceQuotaManager.updateQuotaForRegionMerge(hri);
     }
   }
 
   public void onRegionSplit(HRegionInfo hri) throws IOException {
-    if (enabled) {
+    if (initialized) {
       namespaceQuotaManager.checkQuotaToSplitRegion(hri);
     }
   }
@@ -368,7 +369,7 @@ public class MasterQuotaManager implements RegionStateListener {
    * @throws IOException Signals that an I/O exception has occurred.
    */
   public void removeTableFromNamespaceQuota(TableName tName) throws IOException {
-    if (enabled) {
+    if (initialized) {
       namespaceQuotaManager.removeFromNamespaceUsage(tName);
     }
   }
@@ -511,8 +512,25 @@ public class MasterQuotaManager implements RegionStateListener {
    */
 
   private void checkQuotaSupport() throws IOException {
-    if (!enabled) {
-      throw new DoNotRetryIOException(new UnsupportedOperationException("quota support disabled"));
+    if (!QuotaUtil.isQuotaEnabled(masterServices.getConfiguration())) {
+      throw new DoNotRetryIOException(
+        new UnsupportedOperationException("quota support disabled"));
+    }
+    if (!initialized) {
+      long maxWaitTime = masterServices.getConfiguration().getLong(
+        "hbase.master.wait.for.quota.manager.init", 30000); // default is 30 seconds.
+      long startTime = EnvironmentEdgeManager.currentTime();
+      do {
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          LOG.warn("Interrupted while waiting for Quota Manager to be initialized.");
+          break;
+        }
+      } while (!initialized && (EnvironmentEdgeManager.currentTime() - startTime) < maxWaitTime);
+      if (!initialized) {
+        throw new IOException("Quota manager is uninitialized, please retry later.");
+      }
     }
   }
 
@@ -555,7 +573,7 @@ public class MasterQuotaManager implements RegionStateListener {
 
   @Override
   public void onRegionSplitReverted(HRegionInfo hri) throws IOException {
-    if (enabled) {
+    if (initialized) {
       this.namespaceQuotaManager.removeRegionFromNamespaceUsage(hri);
     }
   }

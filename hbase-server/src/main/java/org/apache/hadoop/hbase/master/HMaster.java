@@ -2308,7 +2308,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     // permissions) we'll do the check here instead of in the coprocessor.
     MasterQuotaManager quotaManager = getMasterQuotaManager();
     if (quotaManager != null) {
-      if (quotaManager.isQuotaEnabled()) {
+      if (quotaManager.isQuotaInitialized()) {
         Quotas quotaForTable = QuotaUtil.getTableQuota(getConnection(), tableName);
         if (quotaForTable != null && quotaForTable.hasSpace()) {
           SpaceViolationPolicy policy = quotaForTable.getSpace().getViolationPolicy();

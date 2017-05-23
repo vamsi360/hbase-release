@@ -30,6 +30,8 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.master.HMaster;
+import org.apache.hadoop.hbase.namespace.TestNamespaceAuditor;
+import org.apache.hadoop.hbase.quotas.QuotaUtil;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
@@ -61,9 +63,11 @@ public class TestSimpleRegionNormalizerOnCluster {
   public static void beforeAllTests() throws Exception {
     // we will retry operations when PleaseHoldException is thrown
     TEST_UTIL.getConfiguration().setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 3);
+    TEST_UTIL.getConfiguration().setBoolean(QuotaUtil.QUOTA_CONF_KEY, true);
 
     // Start a cluster of two regionservers.
     TEST_UTIL.startMiniCluster(1);
+    TestNamespaceAuditor.waitForQuotaInitialize(TEST_UTIL);
     admin = TEST_UTIL.getHBaseAdmin();
   }
 

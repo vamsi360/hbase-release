@@ -108,7 +108,7 @@ public class TestNamespaceAuditor {
     conf.setClass("hbase.coprocessor.regionserver.classes", CPRegionServerObserver.class,
       RegionServerObserver.class);
     UTIL.startMiniCluster(1, 1);
-    waitForQuotaEnabled();
+    waitForQuotaInitialize(UTIL);
     ADMIN = UTIL.getHBaseAdmin();
   }
 
@@ -128,8 +128,8 @@ public class TestNamespaceAuditor {
         ADMIN.deleteNamespace(ns.getName());
       }
     }
-    assertTrue("Quota manager not enabled", UTIL.getHBaseCluster().getMaster()
-        .getMasterQuotaManager().isQuotaEnabled());
+    assertTrue("Quota manager not initialized", UTIL.getHBaseCluster().getMaster()
+        .getMasterQuotaManager().isQuotaInitialized());
   }
 
   @Test(timeout = 60000)
@@ -625,16 +625,16 @@ public class TestNamespaceAuditor {
         .getTables().size(), after.getTables().size());
   }
 
-  private static void waitForQuotaEnabled() throws Exception {
-    UTIL.waitFor(60000, new Waiter.Predicate<Exception>() {
+  public static void waitForQuotaInitialize(final HBaseTestingUtility util) throws Exception {
+    util.waitFor(60000, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
-        HMaster master = UTIL.getHBaseCluster().getMaster();
+        HMaster master = util.getHBaseCluster().getMaster();
         if (master == null) {
           return false;
         }
         MasterQuotaManager quotaManager = master.getMasterQuotaManager();
-        return quotaManager != null && quotaManager.isQuotaEnabled();
+        return quotaManager != null && quotaManager.isQuotaInitialized();
       }
     });
   }
@@ -643,7 +643,7 @@ public class TestNamespaceAuditor {
     UTIL.getHBaseCluster().getMaster(0).stop("Stopping to start again");
     UTIL.getHBaseCluster().waitOnMaster(0);
     UTIL.getHBaseCluster().startMaster();
-    waitForQuotaEnabled();
+    waitForQuotaInitialize(UTIL);
   }
 
   private NamespaceAuditor getQuotaManager() {
