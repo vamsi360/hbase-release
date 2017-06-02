@@ -78,7 +78,7 @@ public class TestReplicaWithCluster {
   public static class SlowMeCopro extends BaseRegionObserver {
     static final AtomicLong sleepTime = new AtomicLong(0);
     static final AtomicReference<CountDownLatch> cdl =
-        new AtomicReference<CountDownLatch>(new CountDownLatch(0));
+            new AtomicReference<CountDownLatch>(new CountDownLatch(0));
 
     public SlowMeCopro() {
     }
@@ -113,7 +113,7 @@ public class TestReplicaWithCluster {
   public static void beforeClass() throws Exception {
     // enable store file refreshing
     HTU.getConfiguration().setInt(
-        StorefileRefresherChore.REGIONSERVER_STOREFILE_REFRESH_PERIOD, REFRESH_PERIOD);
+            StorefileRefresherChore.REGIONSERVER_STOREFILE_REFRESH_PERIOD, REFRESH_PERIOD);
 
     HTU.getConfiguration().setFloat("hbase.regionserver.logroll.multiplier", 0.0001f);
     HTU.getConfiguration().setInt("replication.source.size.capacity", 10240);
@@ -133,7 +133,7 @@ public class TestReplicaWithCluster {
     HTU.shutdownMiniCluster();
   }
 
-  @Test (timeout=30000)
+  @Test(timeout = 30000)
   public void testCreateDeleteTable() throws IOException {
     // Create table then get the single region for our new table.
     HTableDescriptor hdt = HTU.createTableDescriptor("testCreateDeleteTable");
@@ -166,7 +166,7 @@ public class TestReplicaWithCluster {
     HTU.deleteTable(hdt.getTableName());
   }
 
-  @Test (timeout=120000)
+  @Test(timeout = 120000)
   public void testChangeTable() throws Exception {
     HTableDescriptor hdt = HTU.createTableDescriptor("testChangeTable");
     hdt.setRegionReplication(NB_SERVERS);
@@ -191,7 +191,7 @@ public class TestReplicaWithCluster {
     HTU.getHBaseAdmin().enableTable(hdt.getTableName());
     HTableDescriptor nHdt = HTU.getHBaseAdmin().getTableDescriptor(hdt.getTableName());
     Assert.assertEquals("fams=" + Arrays.toString(nHdt.getColumnFamilies()),
-        bHdt.getColumnFamilies().length + 1, nHdt.getColumnFamilies().length);
+            bHdt.getColumnFamilies().length + 1, nHdt.getColumnFamilies().length);
 
     p = new Put(row);
     p.add(row, row, row);
@@ -214,9 +214,9 @@ public class TestReplicaWithCluster {
 
     HTU.getHBaseCluster().stopMaster(0);
     Admin admin = new HBaseAdmin(HTU.getConfiguration());
-    nHdt =admin.getTableDescriptor(hdt.getTableName());
+    nHdt = admin.getTableDescriptor(hdt.getTableName());
     Assert.assertEquals("fams=" + Arrays.toString(nHdt.getColumnFamilies()),
-        bHdt.getColumnFamilies().length + 1, nHdt.getColumnFamilies().length);
+            bHdt.getColumnFamilies().length + 1, nHdt.getColumnFamilies().length);
 
     admin.disableTable(hdt.getTableName());
     admin.deleteTable(hdt.getTableName());
@@ -225,7 +225,7 @@ public class TestReplicaWithCluster {
   }
 
   @SuppressWarnings("deprecation")
-  @Test (timeout=300000)
+  @Test(timeout = 300000)
   public void testReplicaAndReplication() throws Exception {
     HTableDescriptor hdt = HTU.createTableDescriptor("testReplicaAndReplication");
     hdt.setRegionReplication(NB_SERVERS);
@@ -269,12 +269,13 @@ public class TestReplicaWithCluster {
           g.setConsistency(Consistency.TIMELINE);
           Result r = table.get(g);
           Assert.assertTrue(r.isStale());
-          return  !r.isEmpty();
+          return !r.isEmpty();
         } finally {
           SlowMeCopro.cdl.get().countDown();
           SlowMeCopro.sleepTime.set(0);
         }
-      }});
+      }
+    });
     table.close();
     LOG.info("stale get on the first cluster done. Now for the second.");
 
@@ -288,12 +289,13 @@ public class TestReplicaWithCluster {
           g.setConsistency(Consistency.TIMELINE);
           Result r = table2.get(g);
           Assert.assertTrue(r.isStale());
-          return  !r.isEmpty();
+          return !r.isEmpty();
         } finally {
           SlowMeCopro.cdl.get().countDown();
           SlowMeCopro.sleepTime.set(0);
         }
-      }});
+      }
+    });
     table2.close();
 
     HTU.getHBaseAdmin().disableTable(hdt.getTableName());
@@ -306,7 +308,7 @@ public class TestReplicaWithCluster {
     // the minicluster has negative impact of deleting all HConnections in JVM.
   }
 
-  @Test (timeout=30000)
+  @Test(timeout = 30000)
   public void testBulkLoad() throws IOException {
     // Create table then get the single region for our new table.
     LOG.debug("Creating test table");
@@ -320,12 +322,12 @@ public class TestReplicaWithCluster {
     Path dir = HTU.getDataTestDirOnTestFS("testBulkLoad");
     final int numRows = 10;
     final byte[] qual = Bytes.toBytes("qual");
-    final byte[] val  = Bytes.toBytes("val");
+    final byte[] val = Bytes.toBytes("val");
     final List<Pair<byte[], String>> famPaths = new ArrayList<Pair<byte[], String>>();
     for (HColumnDescriptor col : hdt.getColumnFamilies()) {
       Path hfile = new Path(dir, col.getNameAsString());
       TestHRegionServerBulkLoad.createHFile(HTU.getTestFileSystem(), hfile, col.getName(),
-        qual, val, numRows);
+              qual, val, numRows);
       famPaths.add(new Pair<byte[], String>(col.getName(), hfile.toString()));
     }
 
@@ -334,20 +336,20 @@ public class TestReplicaWithCluster {
     @SuppressWarnings("deprecation")
     final HConnection conn = HTU.getHBaseAdmin().getConnection();
     RegionServerCallable<Void> callable = new RegionServerCallable<Void>(
-      conn, hdt.getTableName(), TestHRegionServerBulkLoad.rowkey(0)) {
-        @Override
-        public Void call(int timeout) throws Exception {
-          LOG.debug("Going to connect to server " + getLocation() + " for row "
-            + Bytes.toStringBinary(getRow()));
-          byte[] regionName = getLocation().getRegionInfo().getRegionName();
-          BulkLoadHFileRequest request =
-            RequestConverter.buildBulkLoadHFileRequest(famPaths, regionName, true);
-          getStub().bulkLoadHFile(null, request);
-          return null;
-        }
-      };
+            conn, hdt.getTableName(), TestHRegionServerBulkLoad.rowkey(0)) {
+      @Override
+      public Void call(int timeout) throws Exception {
+        LOG.debug("Going to connect to server " + getLocation() + " for row "
+                + Bytes.toStringBinary(getRow()));
+        byte[] regionName = getLocation().getRegionInfo().getRegionName();
+        BulkLoadHFileRequest request =
+                RequestConverter.buildBulkLoadHFileRequest(famPaths, regionName, true);
+        getStub().bulkLoadHFile(null, request);
+        return null;
+      }
+    };
     RpcRetryingCallerFactory factory = new RpcRetryingCallerFactory(HTU.getConfiguration());
-    RpcRetryingCaller<Void> caller = factory.<Void> newCaller();
+    RpcRetryingCaller<Void> caller = factory.<Void>newCaller();
     caller.callWithRetries(callable, 10000);
 
     // verify we can read them from the primary
