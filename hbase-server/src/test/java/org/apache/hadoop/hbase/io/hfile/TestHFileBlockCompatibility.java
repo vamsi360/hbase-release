@@ -198,7 +198,7 @@ public class TestHFileBlockCompatibility {
                            .build();
         HFileBlock.FSReader hbr =
           new HFileBlock.FSReaderImpl(new FSDataInputStreamWrapper(is), totalSize, fs, path, meta);
-        HFileBlock b = hbr.readBlockData(0, -1, -1, pread);
+        HFileBlock b = hbr.readBlockData(0, -1, -1, pread, false);
         is.close();
 
         b.sanityCheck();
@@ -212,12 +212,12 @@ public class TestHFileBlockCompatibility {
           hbr = new HFileBlock.FSReaderImpl(new FSDataInputStreamWrapper(is), totalSize, fs, path,
               meta);
           b = hbr.readBlockData(0, 2173 + HConstants.HFILEBLOCK_HEADER_SIZE_NO_CHECKSUM +
-                                b.totalChecksumBytes(), -1, pread);
+                                b.totalChecksumBytes(), -1, pread, false);
           assertEquals(expected, b);
           int wrongCompressedSize = 2172;
           try {
             b = hbr.readBlockData(0, wrongCompressedSize
-                + HConstants.HFILEBLOCK_HEADER_SIZE_NO_CHECKSUM, -1, pread);
+                + HConstants.HFILEBLOCK_HEADER_SIZE_NO_CHECKSUM, -1, pread, false);
             fail("Exception expected");
           } catch (IOException ex) {
             String expectedPrefix = "On-disk size without header provided is "
@@ -299,7 +299,7 @@ public class TestHFileBlockCompatibility {
           HFileBlock b;
           int pos = 0;
           for (int blockId = 0; blockId < numBlocks; ++blockId) {
-            b = hbr.readBlockData(pos, -1, -1, pread);
+            b = hbr.readBlockData(pos, -1, -1, pread, false);
             b.sanityCheck();
             if (meta.isCompressedOrEncrypted()) {
               assertFalse(b.isUnpacked());

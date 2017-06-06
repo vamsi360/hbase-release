@@ -178,7 +178,7 @@ public class TestHFileBlockIndex {
 
       missCount += 1;
       prevBlock = realReader.readBlockData(offset, onDiskSize,
-          -1, pread);
+          -1, pread, false);
       prevOffset = offset;
       prevOnDiskSize = onDiskSize;
       prevPread = pread;

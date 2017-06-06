@@ -1813,7 +1813,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
 
   /**
    * Create a table.
-   * @param tableName
+   * @param tableNam
    * @param families
    * @param splitRows
    * @return An HTable instance for the created table.

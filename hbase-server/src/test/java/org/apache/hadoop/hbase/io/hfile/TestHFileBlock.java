@@ -317,9 +317,9 @@ public class TestHFileBlock {
         .withIncludesTags(includesTag)
         .withCompression(algo).build();
         HFileBlock.FSReader hbr = new HFileBlock.FSReaderImpl(is, totalSize, meta);
-        HFileBlock b = hbr.readBlockData(0, -1, -1, pread);
+        HFileBlock b = hbr.readBlockData(0, -1, -1, pread, false);
         is.close();
-        assertEquals(0, HFile.getChecksumFailuresCount());
+        assertEquals(0, HFile.getAndResetChecksumFailuresCount());
 
         b.sanityCheck();
         assertEquals(4936, b.getUncompressedSizeWithoutHeader());
@@ -331,12 +331,12 @@ public class TestHFileBlock {
           is = fs.open(path);
           hbr = new HFileBlock.FSReaderImpl(is, totalSize, meta);
           b = hbr.readBlockData(0, 2173 + HConstants.HFILEBLOCK_HEADER_SIZE +
-                                b.totalChecksumBytes(), -1, pread);
+                                b.totalChecksumBytes(), -1, pread, false);
           assertEquals(expected, b);
           int wrongCompressedSize = 2172;
           try {
             b = hbr.readBlockData(0, wrongCompressedSize
-                + HConstants.HFILEBLOCK_HEADER_SIZE, -1, pread);
+                + HConstants.HFILEBLOCK_HEADER_SIZE, -1, pread, false);
             fail("Exception expected");
           } catch (IOException ex) {
             String expectedPrefix = "On-disk size without header provided is "
@@ -421,7 +421,7 @@ public class TestHFileBlock {
           HFileBlock blockFromHFile, blockUnpacked;
           int pos = 0;
           for (int blockId = 0; blockId < numBlocks; ++blockId) {
-            blockFromHFile = hbr.readBlockData(pos, -1, -1, pread);
+            blockFromHFile = hbr.readBlockData(pos, -1, -1, pread, false);
             assertEquals(0, HFile.getChecksumFailuresCount());
             blockFromHFile.sanityCheck();
             pos += blockFromHFile.getOnDiskSizeWithHeader();
@@ -555,7 +555,7 @@ public class TestHFileBlock {
             if (detailedLogging) {
               LOG.info("Reading block #" + i + " at offset " + curOffset);
             }
-            HFileBlock b = hbr.readBlockData(curOffset, -1, -1, pread);
+            HFileBlock b = hbr.readBlockData(curOffset, -1, -1, pread, false);
             if (detailedLogging) {
               LOG.info("Block #" + i + ": " + b);
             }
@@ -570,7 +570,7 @@ public class TestHFileBlock {
             // Now re-load this block knowing the on-disk size. This tests a
             // different branch in the loader.
             HFileBlock b2 = hbr.readBlockData(curOffset,
-                b.getOnDiskSizeWithHeader(), -1, pread);
+                b.getOnDiskSizeWithHeader(), -1, pread, false);
             b2.sanityCheck();
 
             assertEquals(b.getBlockType(), b2.getBlockType());
@@ -585,7 +585,7 @@ public class TestHFileBlock {
             assertEquals(b.getBytesPerChecksum(), b2.getBytesPerChecksum());
             assertEquals(b.getOnDiskDataSizeWithHeader(),
                          b2.getOnDiskDataSizeWithHeader());
-            assertEquals(0, HFile.getChecksumFailuresCount());
+            assertEquals(0, HFile.getAndResetChecksumFailuresCount());
 
             curOffset += b.getOnDiskSizeWithHeader();
 
@@ -679,7 +679,7 @@ public class TestHFileBlock {
         HFileBlock b;
         try {
           long onDiskSizeArg = withOnDiskSize ? expectedSize : -1;
-          b = hbr.readBlockData(offset, onDiskSizeArg, -1, pread);
+          b = hbr.readBlockData(offset, onDiskSizeArg, -1, pread, false);
         } catch (IOException ex) {
           LOG.error("Error in client " + clientId + " trying to read block at "
               + offset + ", pread=" + pread + ", withOnDiskSize=" +

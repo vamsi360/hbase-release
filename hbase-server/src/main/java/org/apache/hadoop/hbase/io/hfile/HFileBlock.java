@@ -28,6 +28,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.Path;
@@ -85,6 +87,7 @@ import com.google.common.base.Preconditions;
  */
 @InterfaceAudience.Private
 public class HFileBlock implements Cacheable {
+  private static final Log LOG = LogFactory.getLog(HFileBlock.class);
 
   /**
    * On a checksum failure on a Reader, these many suceeding read
@@ -1050,8 +1053,10 @@ public class HFileBlock implements Cacheable {
     protected void finishBlockAndWriteHeaderAndData(DataOutputStream out)
       throws IOException {
       ensureBlockReady();
+      long startTime = System.currentTimeMillis();
       out.write(onDiskBytesWithHeader);
       out.write(onDiskChecksum);
+      HFile.updateWriteLatency(System.currentTimeMillis() - startTime);
     }
 
     /**
@@ -1277,7 +1282,7 @@ public class HFileBlock implements Cacheable {
      * @return the newly read block
      */
     HFileBlock readBlockData(long offset, long onDiskSize,
-        int uncompressedSize, boolean pread) throws IOException;
+        int uncompressedSize, boolean pread, boolean updateMetrics) throws IOException;
 
     /**
      * Creates a block iterator over the given portion of the {@link HFile}.
@@ -1355,7 +1360,7 @@ public class HFileBlock implements Cacheable {
         public HFileBlock nextBlock() throws IOException {
           if (offset >= endOffset)
             return null;
-          HFileBlock b = readBlockData(offset, length, -1, false);
+          HFileBlock b = readBlockData(offset, length, -1, false, false);
           offset += b.getOnDiskSizeWithHeader();
           length = b.getNextBlockOnDiskSizeWithHeader();
           return b.unpack(fileContext, owner);
@@ -1406,7 +1411,7 @@ public class HFileBlock implements Cacheable {
         // Seek + read. Better for scanning.
         try {
           HFileUtil.seekOnMultipleSources(istream, fileOffset);
-
+          // TODO: do we need seek time latencies?
           long realOffset = istream.getPos();
           if (realOffset != fileOffset) {
             throw new IOException("Tried to seek to " + fileOffset + " to "
@@ -1496,7 +1501,7 @@ public class HFileBlock implements Cacheable {
      */
     @Override
     public HFileBlock readBlockData(long offset, long onDiskSizeWithHeaderL,
-        int uncompressedSize, boolean pread)
+        int uncompressedSize, boolean pread, boolean updateMetrics)
     throws IOException {
 
       // get a copy of the current state of whether to validate
@@ -1510,7 +1515,7 @@ public class HFileBlock implements Cacheable {
       HFileBlock blk = readBlockDataInternal(is, offset,
                          onDiskSizeWithHeaderL,
                          uncompressedSize, pread,
-                         doVerificationThruHBaseChecksum);
+                         doVerificationThruHBaseChecksum, updateMetrics);
       if (blk == null) {
         HFile.LOG.warn("HBase checksum verification failed for file " +
                        pathName + " at offset " +
@@ -1538,7 +1543,7 @@ public class HFileBlock implements Cacheable {
         doVerificationThruHBaseChecksum = false;
         blk = readBlockDataInternal(is, offset, onDiskSizeWithHeaderL,
                                     uncompressedSize, pread,
-                                    doVerificationThruHBaseChecksum);
+                                    doVerificationThruHBaseChecksum, updateMetrics);
         if (blk != null) {
           HFile.LOG.warn("HDFS checksum verification suceeded for file " +
                          pathName + " at offset " +
@@ -1579,7 +1584,7 @@ public class HFileBlock implements Cacheable {
      */
     private HFileBlock readBlockDataInternal(FSDataInputStream is, long offset,
         long onDiskSizeWithHeaderL, int uncompressedSize, boolean pread,
-        boolean verifyChecksum)
+        boolean verifyChecksum, boolean updateMetrics)
     throws IOException {
       if (offset < 0) {
         throw new IOException("Invalid offset=" + offset + " trying to read "
@@ -1620,6 +1625,7 @@ public class HFileBlock implements Cacheable {
       int nextBlockOnDiskSize = 0;
       byte[] onDiskBlock = null;
 
+      long startTime = System.currentTimeMillis();
       HFileBlock b = null;
       if (onDiskSizeWithHeader > 0) {
         // We know the total on-disk size. Read the entire block into memory,
@@ -1707,12 +1713,21 @@ public class HFileBlock implements Cacheable {
         return null;             // checksum mismatch
       }
 
+      long duration = System.currentTimeMillis() - startTime;
+      if (updateMetrics) {
+        HFile.updateReadLatency(duration, pread);
+      }
+
       // The onDiskBlock will become the headerAndDataBuffer for this block.
       // If nextBlockOnDiskSizeWithHeader is not zero, the onDiskBlock already
       // contains the header of next block, so no need to set next
       // block's header in it.
       b = new HFileBlock(ByteBuffer.wrap(onDiskBlock, 0, onDiskSizeWithHeader),
         this.fileContext.isUseHBaseChecksum());
+
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Read " + b + " in " + duration + " ns");
+      }
 
       b.nextBlockOnDiskSizeWithHeader = nextBlockOnDiskSize;
 
