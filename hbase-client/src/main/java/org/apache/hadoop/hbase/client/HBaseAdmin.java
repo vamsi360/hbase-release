@@ -4403,7 +4403,7 @@ public class HBaseAdmin implements Admin {
   private <V> V executeCallable(MasterCallable<V> callable) throws IOException {
     RpcRetryingCaller<V> caller = rpcCallerFactory.newCaller();
     try {
-      return caller.callWithRetries(callable, operationTimeout);
+      return executeCallable(callable, rpcCallerFactory, operationTimeout, rpcTimeout);
     } finally {
       callable.close();
     }
@@ -4414,7 +4414,7 @@ public class HBaseAdmin implements Admin {
       throws IOException {
     RpcRetryingCaller<V> caller = rpcCallerFactory.newCaller(rpcTimeout);
     try {
-      return caller.callWithRetries(callable, rpcTimeout);
+      return caller.callWithRetries(callable, operationTimeout);
     } finally {
       callable.close();
     }
