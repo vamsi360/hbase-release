@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -102,6 +103,7 @@ import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.PairOfSameType;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.util.Triple;
+import org.apache.hadoop.hbase.util.VersionInfo;
 import org.apache.hadoop.hbase.wal.DefaultWALProvider;
 import org.apache.hadoop.hbase.zookeeper.MetaTableLocator;
 import org.apache.hadoop.hbase.zookeeper.ZKAssign;
@@ -263,6 +265,8 @@ public class AssignmentManager extends ZooKeeperListener {
   public enum ServerHostRegion {
     NOT_HOSTING_REGION, HOSTING_REGION, UNKNOWN,
   }
+
+  private final Object checkIfShouldMoveSystemRegionLock = new Object();
 
   /**
    * Constructs a new assignment manager.
@@ -1067,12 +1071,8 @@ public class AssignmentManager extends ZooKeeperListener {
             if (regionState != null) {
               // When there are more than one region server a new RS is selected as the
               // destination and the same is updated in the regionplan. (HBASE-5546)
-              try {
-                getRegionPlan(regionState.getRegion(), sn, true);
-                new ClosedRegionHandler(server, this, regionState.getRegion()).process();
-              } catch (HBaseIOException e) {
-                LOG.warn("Failed to get region plan", e);
-              }
+              getRegionPlan(regionState.getRegion(), sn, true);
+              new ClosedRegionHandler(server, this, regionState.getRegion()).process();
             }
           }
           break;
@@ -2396,6 +2396,36 @@ public class AssignmentManager extends ZooKeeperListener {
   }
 
   /**
+   * Get a list of servers that this region can not assign to.
+   * For system table, we must assign them to a server with highest version.
+   * RS will report to master before register on zk, and only when RS have registered on zk we can
+   * know the version. So in fact we will never assign a system region to a RS without registering on zk.
+   */
+  public List<ServerName> getExcludedServersForSystemTable() {
+    List<Pair<ServerName, String>> serverList = new ArrayList<>();
+    for (ServerName s : serverManager.getOnlineServersList()) {
+      serverList.add(new Pair<>(s, server.getRegionServerVersion(s)));
+    }
+    if (serverList.isEmpty()) {
+      return new ArrayList<>();
+    }
+    String highestVersion = Collections.max(serverList, new Comparator<Pair<ServerName, String>>() {
+      @Override
+      public int compare(Pair<ServerName, String> o1, Pair<ServerName, String> o2) {
+        return VersionInfo.compareVersion(o1.getSecond(), o2.getSecond());
+      }
+    }).getSecond();
+    List<ServerName> res = new ArrayList<>();
+    for (Pair<ServerName, String> pair : serverList) {
+      if (!pair.getSecond().equals(highestVersion)) {
+        res.add(pair.getFirst());
+      }
+    }
+    return res;
+  }
+
+
+  /**
    * @param region the region to assign
    * @return Plan for passed <code>region</code> (If none currently, it creates one or
    * if no servers to assign, it returns null).
@@ -2415,11 +2445,18 @@ public class AssignmentManager extends ZooKeeperListener {
    * if no servers to assign, it returns null).
    */
   private RegionPlan getRegionPlan(final HRegionInfo region,
-      final ServerName serverToExclude, final boolean forceNewPlan) throws HBaseIOException {
+      final ServerName serverToExclude, final boolean forceNewPlan) {
     // Pickup existing plan or make a new one
     final String encodedName = region.getEncodedName();
+    List<ServerName> exclude = new ArrayList<>();
+    if (region.isSystemTable()) {
+      exclude.addAll(getExcludedServersForSystemTable());
+    }
+    if (serverToExclude !=null) {
+      exclude.add(serverToExclude);
+    }
     final List<ServerName> destServers =
-      serverManager.createDestinationServersList(serverToExclude);
+      serverManager.createDestinationServersList(exclude);
 
     if (destServers.isEmpty()){
       LOG.warn("Can't move " + encodedName +
@@ -2452,9 +2489,8 @@ public class AssignmentManager extends ZooKeeperListener {
       ServerName destination = null;
       try {
         destination = balancer.randomAssignment(region, destServers);
-      } catch (IOException ex) {
-        LOG.warn("Failed to create new plan.",ex);
-        return null;
+      } catch (HBaseIOException e) {
+        LOG.warn(e);
       }
       if (destination == null) {
         LOG.warn("Can't find a destination for " + encodedName);
@@ -2495,6 +2531,47 @@ public class AssignmentManager extends ZooKeeperListener {
       Thread.currentThread().interrupt();
     }
   }
+
+  /**
+   * Start a new thread to check if there are region servers whose versions are higher than others.
+   * If so, move all system table regions to RS with the highest version to keep compatibility.
+   * The reason is, RS in new version may not be able to access RS in old version when there are
+   * some incompatible changes.
+   */
+  public void checkIfShouldMoveSystemRegionAsync() {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          synchronized (checkIfShouldMoveSystemRegionLock) {
+            // RS register on ZK after reports startup on master
+            List<HRegionInfo> regionsShouldMove = new ArrayList<>();
+            for (ServerName server : getExcludedServersForSystemTable()) {
+              regionsShouldMove.addAll(getCarryingSystemTables(server));
+            }
+            if (!regionsShouldMove.isEmpty()) {
+              List<RegionPlan> plans = new ArrayList<>();
+              for (HRegionInfo regionInfo : regionsShouldMove) {
+                RegionPlan plan = getRegionPlan(regionInfo, true);
+                if (regionInfo.isMetaRegion()) {
+                  // Must move meta region first.
+                  balance(plan);
+                } else {
+                  plans.add(plan);
+                }
+              }
+              for (RegionPlan plan : plans) {
+                balance(plan);
+              }
+            }
+          }
+        } catch (Throwable t) {
+          LOG.error(t);
+        }
+      }
+    }).start();
+  }
+
 
   /**
    * Unassigns the specified region.
@@ -3431,6 +3508,20 @@ public class AssignmentManager extends ZooKeeperListener {
     return isCarryingRegion(serverName, metaHri);
   }
 
+  private List<HRegionInfo> getCarryingSystemTables(ServerName serverName) {
+    Set<HRegionInfo> regions = this.getRegionStates().getServerRegions(serverName);
+    if (regions == null) {
+      return new ArrayList<>();
+    }
+    List<HRegionInfo> list = new ArrayList<>();
+    for (HRegionInfo region : regions) {
+      if (region.isSystemTable()) {
+        list.add(region);
+      }
+    }
+    return list;
+  }
+
   /**
    * Check if the shutdown server carries the specific region.
    * We have a bunch of places that store region location
@@ -3711,11 +3802,7 @@ public class AssignmentManager extends ZooKeeperListener {
          regionStates.updateRegionState(hri, RegionState.State.CLOSED);
         // This below has to do w/ online enable/disable of a table
         removeClosedRegion(hri);
-        try {
-          getRegionPlan(hri, sn, true);
-        } catch (HBaseIOException e) {
-          LOG.warn("Failed to get region plan", e);
-        }
+        getRegionPlan(hri, sn, true);
         invokeAssign(hri, false);
       }
     }

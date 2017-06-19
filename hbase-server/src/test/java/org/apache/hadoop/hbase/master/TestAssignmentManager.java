@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -879,7 +880,7 @@ public class TestAssignmentManager {
       List<ServerName> serverList = new ArrayList<ServerName>(2);
       serverList.add(SERVERNAME_B);
       Mockito.when(
-          this.serverManager.createDestinationServersList(SERVERNAME_A))
+          this.serverManager.createDestinationServersList(Arrays.asList(SERVERNAME_A)))
           .thenReturn(serverList);
       am.nodeDataChanged(path);
       // here we are waiting until the random assignment in the load balancer is

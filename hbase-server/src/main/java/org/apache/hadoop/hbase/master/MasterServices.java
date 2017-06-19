@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import org.apache.hadoop.hbase.backup.BackupType;
+import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -402,4 +403,8 @@ public interface MasterServices extends Server {
   public LoadBalancer getLoadBalancer();
 
   public TableStateManager getTableStateManager();
+
+  public String getRegionServerVersion(final ServerName sn);
+
+  public void checkIfShouldMoveSystemRegionAsync();
 }
