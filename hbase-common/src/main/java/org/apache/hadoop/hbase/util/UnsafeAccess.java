@@ -59,14 +59,21 @@ public final class UnsafeAccess {
 
     if(theUnsafe != null){
       BYTE_ARRAY_BASE_OFFSET = theUnsafe.arrayBaseOffset(byte[].class);
-      try {
-        // Using java.nio.Bits#unaligned() to check for unaligned-access capability
-        Class<?> clazz = Class.forName("java.nio.Bits");
-        Method m = clazz.getDeclaredMethod("unaligned");
-        m.setAccessible(true);
-        unaligned = (boolean) m.invoke(null);
-      } catch (Exception e) {
-        unaligned = false;
+      String arch = System.getProperty("os.arch");
+      if ("ppc64".equals(arch) || "ppc64le".equals(arch)) {
+        // java.nio.Bits.unaligned() wrongly returns false on ppc (JDK-8165231),
+        unaligned = true;
+      }
+      else {
+        try {
+          // Using java.nio.Bits#unaligned() to check for unaligned-access capability
+          Class<?> clazz = Class.forName("java.nio.Bits");
+          Method m = clazz.getDeclaredMethod("unaligned");
+          m.setAccessible(true);
+          unaligned = (boolean) m.invoke(null);
+        } catch (Exception e) {
+          unaligned = false;
+        }
       }
     } else{
       BYTE_ARRAY_BASE_OFFSET = -1;
