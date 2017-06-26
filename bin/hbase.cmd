@@ -41,7 +41,7 @@
 @rem   JRUBY_HOME       JRuby path: $JRUBY_HOME\lib\jruby.jar should exist.
 @rem                    Defaults to the jar packaged with HBase.
 @rem
-@rem   JRUBY_OPTS       Extra options (eg '--1.9') passed to the hbase shell.
+@rem   JRUBY_OPTS       Extra options (eg '--1.9') passed to hbase.
 @rem                    Empty by default.
 @rem   HBASE_SHELL_OPTS Extra options passed to the hbase shell.
 @rem                    Empty by default.
@@ -262,6 +262,37 @@ if defined service_entry (
   )
 )
 
+@rem for jruby
+@rem (1) for the commands which need jruby (see jruby-commands defined below)
+@rem     A. when JRUBY_HOME is defined
+@rem        CLASSPATH and HBASE_OPTS are updated according to JRUBY_HOME defined
+@rem     B. when JRUBY_HOME is not defined
+@rem        add jruby packaged with HBase to CLASSPATH
+@rem (2) for other commands, do nothing
+
+@rem check if the commmand needs jruby
+set jruby-commands=shell org.jruby.Main
+for %%i in ( %jruby-commands% ) do (
+  if "%hbase-command%"=="%%i" set jruby-needed=true
+)
+
+@rem the command needs jruby
+if defined jruby-needed (
+  @rem JRUBY_HOME is defined
+  if defined JRUBY_HOME (
+    set CLASSPATH=%JRUBY_HOME%\lib\jruby.jar;%CLASSPATH%
+    set HBASE_OPTS=%HBASE_OPTS% -Djruby.home="%JRUBY_HOME%" -Djruby.lib="%JRUBY_HOME%\lib"
+  )
+
+  @rem JRUBY_HOME is not defined
+  if not defined JRUBY_HOME (
+    @rem add jruby packaged with HBase to CLASSPATH
+    set JRUBY_PACKAGED_WITH_HBASE=%HBASE_HOME%\lib\ruby\*
+    if defined jruby-needed (
+      set CLASSPATH=!JRUBY_PACKAGED_WITH_HBASE!;!CLASSPATH!
+    )
+  )
+)
 
 @rem Have JVM dump heap if we run out of memory.  Files will be 'launch directory'
 @rem and are named like the following: java_pid21612.hprof. Apparently it does not
@@ -307,11 +338,6 @@ endlocal
 goto :eof
 
 :shell
-  rem eg export JRUBY_HOME=/usr/local/share/jruby
-  if defined JRUBY_HOME (
-    set CLASSPATH=%CLASSPATH%;%JRUBY_HOME%\lib\jruby.jar
-    set HBASE_OPTS=%HBASE_OPTS% -Djruby.home="%JRUBY_HOME%" -Djruby.lib="%JRUBY_HOME%\lib"
-  )
   rem find the hbase ruby sources
   if exist "%HBASE_HOME%\lib\ruby" (
     set HBASE_OPTS=%HBASE_OPTS% -Dhbase.ruby.sources="%HBASE_HOME%\lib\ruby"
