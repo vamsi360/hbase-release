@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
 import org.apache.hadoop.hbase.mapred.TableOutputFormat
+import org.apache.hadoop.hbase.spark.Logging
 import org.apache.hadoop.hbase.spark.datasources._
 import org.apache.hadoop.hbase.types._
 import org.apache.hadoop.hbase.util.{Bytes, PositionedByteRange, SimplePositionedMutableByteRange}
@@ -32,7 +33,6 @@ import org.apache.hadoop.hbase.HColumnDescriptor
 import org.apache.hadoop.hbase.TableName
 import org.apache.hadoop.hbase.CellUtil
 import org.apache.hadoop.mapred.JobConf
-import org.apache.spark.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.datasources.hbase.{Utils, Field, HBaseTableCatalog}
 import org.apache.spark.sql.{DataFrame, SaveMode, Row, SQLContext}

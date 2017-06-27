@@ -25,6 +25,8 @@ import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
 import org.apache.spark.api.java.function.{FlatMapFunction, Function, VoidFunction}
 import org.apache.spark.streaming.api.java.JavaDStream
 
+import java.lang.Iterable
+
 import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
 
@@ -103,10 +105,14 @@ class JavaHBaseContext(@transient jsc: JavaSparkContext,
                           f: FlatMapFunction[(java.util.Iterator[T],
                             Connection), R]): JavaRDD[R] = {
 
-    def fn = (it: Iterator[T], conn: Connection) =>
-      asScalaIterator(
-        f.call((asJavaIterator(it), conn)).iterator()
-      )
+    def fn = (it: Iterator[T], conn: Connection) => {
+      val iter = f.call(asJavaIterator(it), conn)
+      if (iter.isInstanceOf[Iterable[R]]) {
+        asScalaIterator(iter.asInstanceOf[Iterable[R]].iterator())
+      } else {
+        asScalaIterator(iter)
+      }
+    }
 
     JavaRDD.fromRDD(hbaseContext.mapPartitions(javaRdd.rdd,
       (iterator: Iterator[T], connection: Connection) =>

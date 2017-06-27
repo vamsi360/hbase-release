@@ -69,7 +69,6 @@ public class TestJavaHBaseContext implements Serializable {
   @Before
   public void setUp() {
     jsc = new JavaSparkContext("local", "JavaHBaseContextSuite");
-    jsc.addJar("spark.jar");
 
     File tempDir = Files.createTempDir();
     tempDir.deleteOnExit();

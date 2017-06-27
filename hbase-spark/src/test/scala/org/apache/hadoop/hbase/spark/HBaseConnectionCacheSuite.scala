@@ -24,7 +24,7 @@ import org.apache.hadoop.hbase.client.{BufferedMutator, Table, RegionLocator,
   Connection, BufferedMutatorParams, Admin}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.TableName
-import org.apache.spark.Logging
+import org.apache.hadoop.hbase.spark.Logging
 import org.scalatest.FunSuite
 
 case class HBaseConnectionKeyMocker (confId: Int) extends HBaseConnectionKey (null) {
