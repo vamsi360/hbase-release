@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.FilterBase;
+import org.apache.hadoop.hbase.filter.Filter.ReturnCode;
 import org.apache.hadoop.hbase.spark.datasources.BytesEncoder;
 import org.apache.hadoop.hbase.spark.datasources.JavaBytesEncoder;
 import org.apache.hadoop.hbase.spark.protobuf.generated.SparkFilterProtos;
