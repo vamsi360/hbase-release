@@ -71,6 +71,12 @@ public final class UnsafeAccess {
           Method m = clazz.getDeclaredMethod("unaligned");
           m.setAccessible(true);
           unaligned = (boolean) m.invoke(null);
+
+          //Handle the issue fixed in JDK for unaligned value returned.
+          //see this JIRA for more detail <a>https://bugs.openjdk.java.net/browse/JDK-8165231<a>
+          if (System.getProperty("os.arch").equalsIgnoreCase("ppc64le")) {
+            unaligned = true;
+          }
         } catch (Exception e) {
           unaligned = false;
         }
