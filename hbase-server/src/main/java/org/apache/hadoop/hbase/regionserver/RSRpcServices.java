@@ -18,6 +18,7 @@
  */
 package org.apache.hadoop.hbase.regionserver;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
@@ -76,6 +77,7 @@ import org.apache.hadoop.hbase.exceptions.OutOfOrderScannerNextException;
 import org.apache.hadoop.hbase.exceptions.ScannerResetException;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.io.hfile.CorruptHFileException;
 import org.apache.hadoop.hbase.ipc.HBaseRPCErrorHandler;
 import org.apache.hadoop.hbase.ipc.PayloadCarryingRpcController;
 import org.apache.hadoop.hbase.ipc.PriorityFunction;
@@ -2592,6 +2594,12 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           // the client. See ClientScanner code to see how it deals with these special exceptions.
           if (e instanceof DoNotRetryIOException) {
             throw e;
+          }
+
+          // If it is a CorruptHFileException or a FileNotFoundException, throw the
+          // DoNotRetryIOException. This can avoid the retry in ClientScanner.
+          if (e instanceof CorruptHFileException || e instanceof FileNotFoundException) {
+            throw new DoNotRetryIOException(e);
           }
 
           // We closed the scanner already. Instead of throwing the IOException, and client
