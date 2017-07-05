@@ -895,4 +895,51 @@ public class MobUtils {
     }
     HFileArchiver.archiveStoreFiles(conf, fs, mobRegionInfo, mobFamilyDir, family, storeFileList);
   }
+  /**
+   * Creates a mob ref delete marker.
+   * @param cell The current delete marker.
+   * @return A delete marker with the ref tag.
+   */
+  public static Cell createMobRefDeleteMarker(Cell cell) {
+    List<Tag> refTag = new ArrayList<Tag>();
+    refTag.add(MobConstants.MOB_REF_TAG);
+    List<Tag> tags = Tag.carryForwardTags(refTag, cell);
+    KeyValue reference = new KeyValue(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength(),
+        cell.getFamilyArray(), cell.getFamilyOffset(), cell.getFamilyLength(),
+        cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength(),
+        cell.getTimestamp(), KeyValue.Type.codeToType(cell.getTypeByte()), cell.getValueArray(),
+        cell.getValueOffset(), cell.getValueLength(), tags);
+    reference.setSequenceId(cell.getSequenceId());
+    return reference;
+  }
+
+  /**
+   * Checks if the mob file is expired.
+   * @param column The descriptor of the current column family.
+   * @param current The current time.
+   * @param fileDate The date string parsed from the mob file name.
+   * @return True if the mob file is expired.
+   */
+  public static boolean isMobFileExpired(HColumnDescriptor column, long current, String fileDate) {
+    if (column.getMinVersions() > 0) {
+      return false;
+    }
+    long timeToLive = column.getTimeToLive();
+    if (Integer.MAX_VALUE == timeToLive) {
+      return false;
+    }
+
+    Date expireDate = new Date(current - timeToLive * 1000);
+    expireDate = new Date(expireDate.getYear(), expireDate.getMonth(), expireDate.getDate());
+    try {
+      Date date = parseDate(fileDate);
+      if (date.getTime() < expireDate.getTime()) {
+        return true;
+      }
+    } catch (ParseException e) {
+      LOG.warn("Failed to parse the date " + fileDate, e);
+      return false;
+    }
+    return false;
+  }
 }
