@@ -73,6 +73,7 @@ import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hbase.regionserver.StoreFileScanner;
 import org.apache.hadoop.hbase.regionserver.StoreScanner;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.Pair;
 
 /**
@@ -331,6 +332,12 @@ public class PartitionedMobCompactor extends MobCompactor {
    */
   private List<Path> compactMobFilePartition(PartitionedMobCompactionRequest request,
     CompactionPartition partition, List<StoreFile> delFiles, Table table) throws IOException {
+    if (MobUtils.isMobFileExpired(column, EnvironmentEdgeManager.currentTime(),
+        partition.getPartitionId().getDate())) {
+      // If the files in the partition are expired, do not compact them and directly
+      // return an empty list.
+      return Collections.emptyList();
+    }
     List<Path> newFiles = new ArrayList<Path>();
     List<FileStatus> files = partition.listFiles();
     int offset = 0;
