@@ -448,38 +448,6 @@ public class MobUtils {
     reference.setSequenceId(cell.getSequenceId());
     return reference;
   }
-  /**
-   * Creates a mob reference KeyValue.
-   * The value of the mob reference KeyValue is mobCellValueSize + mobFileName.
-   * @param cell The original Cell.
-   * @param fileName The mob file name where the mob reference KeyValue is written.
-   * @param tableNameTag The tag of the current table name. It's very important in
-   *                        cloning the snapshot.
-   * @return The mob reference KeyValue.
-   */
-  public static KeyValue createMobRefKeyValue(Cell cell, byte[] fileName, Tag tableNameTag) {
-    // Append the tags to the KeyValue.
-    // The key is same, the value is the filename of the mob file
-    List<Tag> tags = new ArrayList<Tag>();
-    // Add the ref tag as the 1st one.
-    tags.add(MobConstants.MOB_REF_TAG);
-    // Add the tag of the source table name, this table is where this mob file is flushed
-    // from.
-    // It's very useful in cloning the snapshot. When reading from the cloning table, we need to
-    // find the original mob files by this table name. For details please see cloning
-    // snapshot for mob files.
-    tags.add(tableNameTag);
-    // Add the existing tags.
-    tags.addAll(Tag.asList(cell.getTagsArray(), cell.getTagsOffset(), cell.getTagsLength()));
-    int valueLength = cell.getValueLength();
-    byte[] refValue = Bytes.add(Bytes.toBytes(valueLength), fileName);
-    KeyValue reference = new KeyValue(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength(),
-        cell.getFamilyArray(), cell.getFamilyOffset(), cell.getFamilyLength(),
-        cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength(),
-        cell.getTimestamp(), KeyValue.Type.Put, refValue, 0, refValue.length, tags);
-    reference.setSequenceId(cell.getSequenceId());
-    return reference;
-  }
 
   /**
    * Creates a writer for the mob file in temp directory.

@@ -185,7 +185,7 @@ public class DefaultMobStoreFlusher extends DefaultStoreFlusher {
 
               // append the tags to the KeyValue.
               // The key is same, the value is the filename of the mob file
-              KeyValue reference = MobUtils.createMobRefKeyValue(c, fileName, tableNameTag);
+              Cell reference = MobUtils.createMobRefCell(c, fileName, tableNameTag);
               writer.append(reference);
             }
           }

@@ -159,7 +159,7 @@ public class MemStoreWrapper {
       .toString()));
     long updatedCount = 0;
     while (null != (cell = scanner.next())) {
-      KeyValue reference = MobUtils.createMobRefKeyValue(cell, referenceValue, tableNameTag);
+      Cell reference = MobUtils.createMobRefCell(cell, referenceValue, tableNameTag);
       Put put =
           new Put(reference.getRowArray(), reference.getRowOffset(), reference.getRowLength());
       put.add(reference);

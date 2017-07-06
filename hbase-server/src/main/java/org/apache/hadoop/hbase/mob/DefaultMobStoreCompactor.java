@@ -251,7 +251,7 @@ public class DefaultMobStoreCompactor extends DefaultCompactor {
             mobCells++;
             // append the original keyValue in the mob file.
             mobFileWriter.append(c);
-            KeyValue reference = MobUtils.createMobRefKeyValue(c, fileName, tableNameTag);
+            Cell reference = MobUtils.createMobRefCell(c, fileName, tableNameTag);
             // write the cell whose value is the path of a mob file to the store file.
             writer.append(reference);
             cellsCountCompactedToMob++;
