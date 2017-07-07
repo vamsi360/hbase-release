@@ -1243,7 +1243,7 @@
     <jamon.plugin.version>2.4.1</jamon.plugin.version>
     <findbugs-annotations>1.3.9-1</findbugs-annotations>
     <javadoc.version>2.9</javadoc.version>
-    <asciidoctor.plugin.version>1.5.3</asciidoctor.plugin.version>
+    <asciidoctor.plugin.version>1.5.5</asciidoctor.plugin.version>
     <!-- General Packaging -->
     <package.prefix>/usr</package.prefix>
     <package.conf.dir>/etc/hbase</package.conf.dir>
