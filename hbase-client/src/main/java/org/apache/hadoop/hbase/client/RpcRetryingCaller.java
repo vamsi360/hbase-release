@@ -63,23 +63,21 @@ public class RpcRetryingCaller<T> {
 
   private final long pause;
   private final int retries;
-  private final int rpcTimeout;// timeout for each rpc request
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
   private final RetryingCallerInterceptor interceptor;
   private final RetryingCallerInterceptorContext context;
 
   public RpcRetryingCaller(long pause, int retries, int startLogErrorsCnt) {
-    this(pause, retries, RetryingCallerInterceptorFactory.NO_OP_INTERCEPTOR, startLogErrorsCnt, 0);
+    this(pause, retries, RetryingCallerInterceptorFactory.NO_OP_INTERCEPTOR, startLogErrorsCnt);
   }
 
   public RpcRetryingCaller(long pause, int retries,
-      RetryingCallerInterceptor interceptor, int startLogErrorsCnt, int rpcTimeout) {
+      RetryingCallerInterceptor interceptor, int startLogErrorsCnt) {
     this.pause = pause;
     this.retries = retries;
     this.interceptor = interceptor;
     context = interceptor.createEmptyContext();
     this.startLogErrorsCnt = startLogErrorsCnt;
-    this.rpcTimeout = rpcTimeout;
   }
 
   private int getRemainingTime(int callTimeout) {
@@ -97,14 +95,6 @@ public class RpcRetryingCaller<T> {
       }
       return remainingTime;
     }
-  }
-
-  private int getTimeout(int callTimeout){
-    int timeout = getRemainingTime(callTimeout);
-    if (timeout <= 0 || rpcTimeout > 0 && rpcTimeout < timeout){
-      timeout = rpcTimeout;
-    }
-    return timeout;
   }
 
   public void cancel(){
@@ -133,7 +123,7 @@ public class RpcRetryingCaller<T> {
       try {
         callable.prepare(tries != 0); // if called with false, check table status on ZK
         interceptor.intercept(context.prepare(callable, tries));
-        return callable.call(getTimeout(callTimeout));
+        return callable.call(getRemainingTime(callTimeout));
       } catch (PreemptiveFastFailException e) {
         throw e;
       } catch (Throwable t) {

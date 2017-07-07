@@ -221,7 +221,6 @@ public class HBaseAdmin implements Admin {
   private boolean cleanupConnectionOnClose = false; // close the connection in close()
   private boolean closed = false;
   private int operationTimeout;
-  private int rpcTimeout;
 
   private RpcRetryingCallerFactory rpcCallerFactory;
   private RpcControllerFactory rpcControllerFactory;
@@ -280,8 +279,6 @@ public class HBaseAdmin implements Admin {
         "hbase.client.retries.longer.multiplier", 10);
     this.operationTimeout = this.conf.getInt(HConstants.HBASE_CLIENT_OPERATION_TIMEOUT,
         HConstants.DEFAULT_HBASE_CLIENT_OPERATION_TIMEOUT);
-    this.rpcTimeout = this.conf.getInt(HConstants.HBASE_RPC_TIMEOUT_KEY,
-        HConstants.DEFAULT_HBASE_RPC_TIMEOUT);
     this.syncWaitTimeout = this.conf.getInt(
       "hbase.client.sync.wait.timeout.msec", 10 * 60000); // 10min
     this.backupWaitTimeout = this.conf.getInt(
@@ -552,12 +549,12 @@ public class HBaseAdmin implements Admin {
   @Override
   public HTableDescriptor getTableDescriptor(final TableName tableName) throws IOException {
      return getTableDescriptor(tableName, getConnection(), rpcCallerFactory, rpcControllerFactory,
-       operationTimeout, rpcTimeout);
+       operationTimeout);
   }
 
   static HTableDescriptor getTableDescriptor(final TableName tableName, HConnection connection,
       RpcRetryingCallerFactory rpcCallerFactory, final RpcControllerFactory rpcControllerFactory,
-      int operationTimeout, int rpcTimeout) throws IOException {
+      int operationTimeout) throws IOException {
       if (tableName == null) return null;
       HTableDescriptor htd = executeCallable(new MasterCallable<HTableDescriptor>(connection) {
         @Override
@@ -574,7 +571,7 @@ public class HBaseAdmin implements Admin {
           }
           return null;
         }
-      }, rpcCallerFactory, operationTimeout, rpcTimeout);
+      }, rpcCallerFactory, operationTimeout);
       if (htd != null) {
         return htd;
       }
@@ -2730,7 +2727,7 @@ public class HBaseAdmin implements Admin {
             userRequest.getWorkers(), userRequest.getBandwidth());
           return master.backupTables(null, request);
         }
-      });
+      }, backupWaitTimeout);
     return new TableBackupFuture(this, TableName.BACKUP_TABLE_NAME, response);
   }
 
@@ -4403,18 +4400,16 @@ public class HBaseAdmin implements Admin {
   private <V> V executeCallable(MasterCallable<V> callable) throws IOException {
     RpcRetryingCaller<V> caller = rpcCallerFactory.newCaller();
     try {
-      return executeCallable(callable, rpcCallerFactory, operationTimeout, rpcTimeout);
+      return caller.callWithRetries(callable, operationTimeout);
     } finally {
       callable.close();
     }
   }
 
-  private static <C extends RetryingCallable<V> & Closeable, V> V executeCallable(C callable,
-             RpcRetryingCallerFactory rpcCallerFactory, int operationTimeout, int rpcTimeout)
-      throws IOException {
-    RpcRetryingCaller<V> caller = rpcCallerFactory.newCaller(rpcTimeout);
+  private <V> V executeCallable(MasterCallable<V> callable, long timeout) throws IOException {
+    RpcRetryingCaller<V> caller = rpcCallerFactory.newCaller();
     try {
-      return caller.callWithRetries(callable, operationTimeout);
+      return caller.callWithRetries(callable, (int) timeout);
     } finally {
       callable.close();
     }
