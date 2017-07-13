@@ -14,24 +14,16 @@
 #python
 *.pyc
 
-# CMake Generated Files
-CMakeCache.txt
-CMakeFiles
-cmake_install.CMakeCache
-cmake_install.cmake
-install_manifest.txt
-CTestTestfile.cmake
-build
-Testing
+# Buck
+buck-out
+.buckd
 
 
+*.swp
 
 # Thirdparty dirs
+third-party/*
+/gcc-debug/
 
-thirdparty/glog-*
-thirdparty/gtest-*
-thirdparty/gtest
-thirdparty/protobuf-*
-thirdparty/libevent-*
-thirdparty/libev-*
-thirdparty/installed
+# Generated files
+utils/version.h
