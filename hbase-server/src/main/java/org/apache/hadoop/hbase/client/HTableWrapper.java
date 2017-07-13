@@ -365,4 +365,5 @@ public class HTableWrapper implements HTableInterface {
       CompareOp compareOp, byte[] value, RowMutations rm) throws IOException {
     return table.checkAndMutate(row, family, qualifier, compareOp, value, rm);
   }
+
 }

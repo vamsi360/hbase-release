@@ -857,4 +857,5 @@ public class RemoteHTable implements Table {
       CompareOp compareOp, byte[] value, RowMutations rm) throws IOException {
     throw new UnsupportedOperationException("checkAndMutate not implemented");
   }
+
 }

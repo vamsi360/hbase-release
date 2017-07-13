@@ -595,4 +595,5 @@ public interface Table extends Closeable {
    */
   boolean checkAndMutate(byte[] row, byte[] family, byte[] qualifier,
       CompareFilter.CompareOp compareOp, byte[] value, RowMutations mutation) throws IOException;
+
 }
