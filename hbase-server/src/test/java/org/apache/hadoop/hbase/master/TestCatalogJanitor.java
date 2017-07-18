@@ -536,6 +536,11 @@ public class TestCatalogJanitor {
     }
 
     @Override
+    public boolean isNamespaceManagerInitialized() {
+      return false;
+    }
+
+    @Override
     public boolean isInMaintenanceMode() {
       return false;
     }
