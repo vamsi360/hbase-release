@@ -218,6 +218,10 @@ public class TestMasterNoCluster {
           return null;
         }
       }
+
+      @Override
+      void initNamespace() {
+      }
     };
     master.start();
 
@@ -294,6 +298,10 @@ public class TestMasterNoCluster {
         } catch (IOException e) {
           return null;
         }
+      }
+
+      @Override
+      void initNamespace() {
       }
     };
     master.start();

@@ -302,11 +302,6 @@ public interface MasterServices extends Server {
   boolean isInitialized();
 
   /**
-   * @return true if master is initialized with namespace ready
-   */
-  boolean isNamespaceManagerInitialized();
-
-  /**
    * Create a new namespace
    * @param descriptor descriptor which describes the new namespace
    * @throws IOException

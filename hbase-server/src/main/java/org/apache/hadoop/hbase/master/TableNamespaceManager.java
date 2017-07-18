@@ -56,7 +56,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 
 /**
@@ -79,8 +78,7 @@ public class TableNamespaceManager {
   public static final String KEY_MAX_TABLES = "hbase.namespace.quota.maxtables";
 
   static final String NS_INIT_TIMEOUT = "hbase.master.namespace.init.timeout";
-  static final int DEFAULT_NS_INIT_TIMEOUT = 1800000; // default is 30 minutes
-  private static final int WAIT_MESSAGE_TO_PRINTOUT = 300000; // print out message every 5 minutes
+  static final int DEFAULT_NS_INIT_TIMEOUT = 300000;
 
   public TableNamespaceManager(MasterServices masterServices) {
     this.masterServices = masterServices;
@@ -99,18 +97,12 @@ public class TableNamespaceManager {
       // If timed out, we will move ahead without initializing it.
       // So that it should be initialized later on lazily.
       long startTime = EnvironmentEdgeManager.currentTime();
-      long msgCount = 0;
-	  long waitTime;
       int timeout = conf.getInt(NS_INIT_TIMEOUT, DEFAULT_NS_INIT_TIMEOUT);
       while (!isTableAssigned()) {
-        waitTime = EnvironmentEdgeManager.currentTime() - startTime;
-    	if (waitTime > timeout) {
+        if (EnvironmentEdgeManager.currentTime() - startTime + 100 > timeout) {
           // We can't do anything if ns is not online.
           throw new IOException("Timedout " + timeout + "ms waiting for namespace table to " +
             "be assigned");
-        } else if (waitTime > msgCount * WAIT_MESSAGE_TO_PRINTOUT) {
-          LOG.info("Waiting for namespace table to be online. Time waited = " + waitTime + " ms.");
-          msgCount++;
         }
         Thread.sleep(100);
       }
@@ -122,11 +114,6 @@ public class TableNamespaceManager {
     isTableAvailableAndInitialized();
   }
 
-  @VisibleForTesting
-  public boolean isTableNamespaceManagerStarted() {
-    return initialized;
-  }
-  
   private synchronized Table getNamespaceTable() throws IOException {
     if (!isTableAvailableAndInitialized()) {
       throw new IOException(this.getClass().getName() + " isn't ready to serve");

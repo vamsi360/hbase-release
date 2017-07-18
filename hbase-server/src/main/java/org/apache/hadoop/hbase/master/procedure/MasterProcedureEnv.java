@@ -125,8 +125,4 @@ public class MasterProcedureEnv {
   public boolean isInitialized() {
     return master.isInitialized();
   }
-
-  public boolean isNamespaceManagerInitialized() {
-	return master.isNamespaceManagerInitialized();
-  }
 }
