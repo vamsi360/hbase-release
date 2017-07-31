@@ -186,6 +186,7 @@ public class IntegrationTestZKAndFSPermissions extends AbstractHBaseTool {
       // the znode is deleted. Probably it was a temporary znode (like RIT).
       return;
     }
+    String[] superUsers = superUser == null ? null : superUser.split(",");
 
     LOG.info("Checking ACLs for znode znode:" + znode + " acls:" + acls);
 
@@ -199,7 +200,7 @@ public class IntegrationTestZKAndFSPermissions extends AbstractHBaseTool {
         assertTrue(expectedWorldReadable);
         // assert that anyone can only read
         assertEquals(perms, Perms.READ);
-      } else if (superUser != null && new Id("sasl", superUser).equals(id)) {
+      } else if (superUsers != null && ZooKeeperWatcher.isSuperUserId(superUsers, id)) {
         // assert that super user has all the permissions
         assertEquals(perms, Perms.ALL);
       } else if (new Id("sasl", masterPrincipal).equals(id)) {
