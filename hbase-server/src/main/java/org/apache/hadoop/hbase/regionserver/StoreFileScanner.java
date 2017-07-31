@@ -50,7 +50,6 @@ public class StoreFileScanner implements KeyValueScanner {
   private final StoreFile.Reader reader;
   private final HFileScanner hfs;
   private Cell cur = null;
-  private boolean closed = false;
 
   private boolean realSeekDone;
   private boolean delayedReseek;
@@ -247,9 +246,6 @@ public class StoreFileScanner implements KeyValueScanner {
   public void close() {
     // Nothing to close on HFileScanner?
     cur = null;
-    if (closed) return;
-    closed = true;
-    this.hfs.close();
   }
 
   /**
