@@ -291,3 +291,26 @@ HBASE-18036 Data locality is not maintained after cluster restart or SSH (Stephe
 HBASE-18067 Allow default FORMATTER for shell put/get commands
 HBASE-18075 Support non-latin table names and namespaces
 HBASE-18005 read replica: handle the case that region server hosting both primary replica and meta region is down
+
+HBASE-17922 Clean TestRegionServerHostname for hadoop3.
+HBASE-16488 Starting namespace and quota services in master startup asynchronizely (Stephen Yuan Jiang)
+HBASE-15645 hbase.rpc.timeout is not used in operations of HTable
+HBASE-16420 Fix source incompatibility of Table interface (Phil Yang)
+HBASE-13706 CoprocessorClassLoader should not exempt Hive classes
+HBASE-17547 TableCatelog doesn't support multiple columns from Single Column family
+HBASE-14734 Prevent BindException when setting up MiniKdc. Port for kdc service gets selected in the constructor, but we bind to it later in MiniKdc.start()-->MiniKdc.initKDCServer() --> KdcServer.start(). In meantime, some other service can capture the port which results in BindException. The solution here is to catch the exception and retry.
+HBASE-15177 Reduce garbage created under high load
+HBASE-14492 Increase REST server header buffer size from 8k to 64k (Huaxiang Sun)
+BUG-83262 Add hbase-native-client/third-party/BUCK
+BUG-83262 Backport c++ native client to HDP-2.6
+HBASE-18358 Backport HBASE-18099 'FlushSnapshotSubprocedure should wait for concurrent Region#flush() to finish'
+HBASE-16345 RpcRetryingCallerWithReadReplicas#call() should catch some RegionServer Exceptions
+HBASE-16841 Data loss in MOB files after cloning a snapshot and deleting that snapshot
+HBASE-18312 Ineffective handling of FileNotFoundException in FileLink.tryOpen()
+HBASE-16767 Mob compaction needs to clean up files - addendum removes createMobRefKeyValue()
+HBASE-16812 Clean up the locks in MOB
+HBASE-17095 The ClientSimpleScanner keeps retrying if the hfile is corrupt or cannot found
+HBASE-17241 Avoid compacting already compacted mob files with _del files
+HBASE-17005 Improve log message in MobFileCache
+HBASE-16767 Mob compaction needs to clean up files in /hbase/mobdir/.tmp
+HBASE-14425 In Secure Zookeeper cluster superuser will not have sufficient permission if multiple values are configured in hbase.superuser (Pankaj Kumar)
