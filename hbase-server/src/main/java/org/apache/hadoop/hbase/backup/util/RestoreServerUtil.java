@@ -44,7 +44,6 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.io.HFileLink;
-import org.apache.hadoop.hbase.io.hfile.CacheConfig;
 import org.apache.hadoop.hbase.io.hfile.HFile;
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
@@ -588,7 +587,7 @@ public class RestoreServerUtil {
               || HFileLink.isHFileLink(hfile.getName())) {
             continue;
           }
-          HFile.Reader reader = HFile.createReader(fs, hfile, new CacheConfig(conf), conf);
+          HFile.Reader reader = HFile.createReader(fs, hfile, conf);
           final byte[] first, last;
           try {
             reader.loadFileInfo();
