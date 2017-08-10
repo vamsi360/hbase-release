@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Random;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,13 +38,15 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
-import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.Tag;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.io.hfile.HFile.Reader;
 import org.apache.hadoop.hbase.io.hfile.HFile.Writer;
+import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Writable;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 /**
@@ -61,6 +64,7 @@ public class TestHFile extends HBaseTestCase {
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   private static String ROOT_DIR =
     TEST_UTIL.getDataTestDir("TestHFile").toString();
+  private static final int NUM_VALID_KEY_TYPES = KeyValue.Type.values().length - 2;
   private final int minBlockSize = 512;
   private static String localFormatter = "%010d";
   private static CacheConfig cacheConf = null;
@@ -228,7 +232,7 @@ public class TestHFile extends HBaseTestCase {
 
   /**
    * test none codecs
-   * @param useTags 
+   * @param useTags
    */
   void basicWithSomeCodec(String codec, boolean useTags) throws IOException {
     if (useTags) {
@@ -295,12 +299,12 @@ public class TestHFile extends HBaseTestCase {
       writer.appendMetaBlock("HFileMeta" + i, new Writable() {
         private int val;
         public Writable setVal(int val) { this.val = val; return this; }
-        
+
         @Override
         public void write(DataOutput out) throws IOException {
           out.write(("something to test" + val).getBytes());
         }
-        
+
         @Override
         public void readFields(DataInput in) throws IOException { }
       }.setVal(i));
@@ -314,7 +318,7 @@ public class TestHFile extends HBaseTestCase {
   private void readNumMetablocks(Reader reader, int n) throws IOException {
     for (int i = 0; i < n; i++) {
       ByteBuffer actual = reader.getMetaBlock("HFileMeta" + i, false);
-      ByteBuffer expected = 
+      ByteBuffer expected =
         ByteBuffer.wrap(("something to test" + i).getBytes());
       assertEquals("failed to match metadata",
         Bytes.toStringBinary(expected), Bytes.toStringBinary(actual));
@@ -359,7 +363,7 @@ public class TestHFile extends HBaseTestCase {
 
   public void testNullMetaBlocks() throws Exception {
     if (cacheConf == null) cacheConf = new CacheConfig(conf);
-    for (Compression.Algorithm compressAlgo : 
+    for (Compression.Algorithm compressAlgo :
         HBaseTestingUtility.COMPRESSION_ALGORITHMS) {
       Path mFile = new Path(ROOT_DIR, "nometa_" + compressAlgo + ".hfile");
       FSDataOutputStream fout = createFSOutput(mFile);
@@ -388,6 +392,64 @@ public class TestHFile extends HBaseTestCase {
     assertTrue(Compression.Algorithm.NONE.ordinal() == 2);
     assertTrue(Compression.Algorithm.SNAPPY.ordinal() == 3);
     assertTrue(Compression.Algorithm.LZ4.ordinal() == 4);
+  }
+
+  @Test
+  public void testReaderWithoutBlockCache() throws Exception {
+    Path path = writeStoreFile();
+    try {
+      readStoreFile(path);
+    } catch (Exception e) {
+      // fail test
+      assertTrue(false);
+    }
+  }
+
+  private void readStoreFile(Path storeFilePath) throws Exception {
+    // Open the file reader with block cache disabled.
+    HFile.Reader reader = HFile.createReader(fs, storeFilePath, conf);
+    long offset = 0;
+    while (offset < reader.getTrailer().getLoadOnOpenDataOffset()) {
+      HFileBlock block = reader.readBlock(offset, -1, false, true, false, true, null, null);
+      offset += block.getOnDiskSizeWithHeader();
+    }
+  }
+
+  private Path writeStoreFile() throws IOException {
+    Path storeFileParentDir = new Path(TEST_UTIL.getDataTestDir(), "TestHFile");
+    HFileContext meta = new HFileContextBuilder().withBlockSize(64 * 1024).build();
+    StoreFile.Writer sfw =
+        new StoreFile.WriterBuilder(conf, cacheConf, fs).withOutputDir(storeFileParentDir)
+            .withFileContext(meta).build();
+
+    final int rowLen = 32;
+    Random RNG = new Random();
+    for (int i = 0; i < 1000; ++i) {
+      byte[] k = RandomKeyValueUtil.randomOrderedKey(RNG, i);
+      byte[] v = RandomKeyValueUtil.randomValue(RNG);
+      int cfLen = RNG.nextInt(k.length - rowLen + 1);
+      KeyValue kv =
+          new KeyValue(k, 0, rowLen, k, rowLen, cfLen, k, rowLen + cfLen,
+              k.length - rowLen - cfLen, RNG.nextLong(), generateKeyType(RNG), v, 0, v.length);
+      sfw.append(kv);
+    }
+
+    sfw.close();
+    return sfw.getPath();
+  }
+
+  public static KeyValue.Type generateKeyType(Random rand) {
+    if (rand.nextBoolean()) {
+      // Let's make half of KVs puts.
+      return KeyValue.Type.Put;
+    } else {
+      KeyValue.Type keyType = KeyValue.Type.values()[1 + rand.nextInt(NUM_VALID_KEY_TYPES)];
+      if (keyType == KeyValue.Type.Minimum || keyType == KeyValue.Type.Maximum) {
+        throw new RuntimeException("Generated an invalid key type: " + keyType + ". "
+            + "Probably the layout of KeyValue.Type has changed.");
+      }
+      return keyType;
+    }
   }
 
 }
