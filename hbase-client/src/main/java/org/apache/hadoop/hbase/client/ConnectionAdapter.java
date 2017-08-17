@@ -487,4 +487,9 @@ abstract class ConnectionAdapter implements ClusterConnection {
   public RpcControllerFactory getRpcControllerFactory() {
     return wrappedConnection.getRpcControllerFactory();
   }
+
+  @Override
+  public boolean hasCellBlockSupport() {
+    return wrappedConnection.hasCellBlockSupport();
+  }
 }

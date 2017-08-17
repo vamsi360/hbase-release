@@ -385,6 +385,11 @@ public class TestAsyncProcess {
         byte[] row, boolean useCache, boolean retry, int replicaId) throws IOException {
       return new RegionLocations(loc1);
     }
+
+    @Override
+    public boolean hasCellBlockSupport() {
+      return false;
+    }
   }
 
   /**

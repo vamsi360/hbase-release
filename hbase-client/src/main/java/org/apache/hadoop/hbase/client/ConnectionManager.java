@@ -2649,6 +2649,11 @@ class ConnectionManager {
     public RpcControllerFactory getRpcControllerFactory() {
       return this.rpcControllerFactory;
     }
+
+    @Override
+    public boolean hasCellBlockSupport() {
+      return this.rpcClient.hasCellBlockSupport();
+    }
   }
 
   /**
