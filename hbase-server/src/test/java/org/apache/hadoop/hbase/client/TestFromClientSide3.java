@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,6 +33,8 @@ import java.util.Random;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -136,6 +139,66 @@ public class TestFromClientSide3 {
           server, regName, FAMILY).size() == sfCount) {
         Thread.sleep(40);
       }
+    }
+  }
+
+  private static List<Cell> toList(ResultScanner scanner) {
+    try {
+      List<Cell> cells = new ArrayList<>();
+      for (Result r : scanner) {
+        cells.addAll(r.listCells());
+      }
+      return cells;
+    } finally {
+      scanner.close();
+    }
+  }
+
+  @Test
+  public void testScanAfterDeletingSpecifiedRow() throws IOException {
+    TableName tableName = TableName.valueOf("testScanAfterDeletingSpecifiedRow");
+    HTableDescriptor desc = new HTableDescriptor(tableName)
+            .addFamily(new HColumnDescriptor(FAMILY));
+    TEST_UTIL.getHBaseAdmin().createTable(desc);
+    byte[] row = Bytes.toBytes("SpecifiedRow");
+    byte[] value0 = Bytes.toBytes("value_0");
+    byte[] value1 = Bytes.toBytes("value_1");
+    try (Table t = TEST_UTIL.getConnection().getTable(tableName)) {
+      Put put = new Put(row);
+      put.addColumn(FAMILY, QUALIFIER, VALUE);
+      t.put(put);
+      Delete d = new Delete(row);
+      t.delete(d);
+      put = new Put(row);
+      put.addColumn(FAMILY, null, value0);
+      t.put(put);
+      put = new Put(row);
+      put.addColumn(FAMILY, null, value1);
+      t.put(put);
+      List<Cell> cells = toList(t.getScanner(new Scan()));
+      assertEquals(1, cells.size());
+      assertEquals("value_1", Bytes.toString(CellUtil.cloneValue(cells.get(0))));
+
+      cells = toList(t.getScanner(new Scan().addFamily(FAMILY)));
+      assertEquals(1, cells.size());
+      assertEquals("value_1", Bytes.toString(CellUtil.cloneValue(cells.get(0))));
+
+      cells = toList(t.getScanner(new Scan().addColumn(FAMILY, QUALIFIER)));
+      assertEquals(0, cells.size());
+
+      TEST_UTIL.getHBaseAdmin().flush(tableName);
+      cells = toList(t.getScanner(new Scan()));
+      assertEquals(1, cells.size());
+      assertEquals("value_1", Bytes.toString(CellUtil.cloneValue(cells.get(0))));
+
+      cells = toList(t.getScanner(new Scan().addFamily(FAMILY)));
+      assertEquals(1, cells.size());
+      assertEquals("value_1", Bytes.toString(CellUtil.cloneValue(cells.get(0))));
+
+      cells = toList(t.getScanner(new Scan().addColumn(FAMILY, QUALIFIER)));
+      assertEquals(0, cells.size());
+    } finally {
+      TEST_UTIL.deleteTable(tableName);
     }
   }
 
