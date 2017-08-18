@@ -23,7 +23,6 @@ import java.nio.ByteBuffer;
 import java.util.zip.Checksum;
 
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ChecksumType;
@@ -98,7 +97,7 @@ public class ChecksumUtil {
    * The header is extracted from the specified HFileBlock while the
    * data-to-be-verified is extracted from 'data'.
    */
-  static boolean validateBlockChecksum(Path path, HFileBlock block, 
+  static boolean validateBlockChecksum(String pathName, HFileBlock block, 
     byte[] data, int hdrSize) throws IOException {
 
     // If this is an older version of the block that does not have
@@ -154,7 +153,7 @@ public class ChecksumUtil {
 
       int storedChecksum = Bytes.toInt(data, cksumOffset);
       if (storedChecksum != (int)checksumObject.getValue()) {
-        String msg = "File " + path +
+        String msg = "File " + pathName +
                      " Stored checksum value of " + storedChecksum +
                      " at offset " + cksumOffset +
                      " does not match computed checksum " +
