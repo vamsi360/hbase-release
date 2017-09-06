@@ -28,12 +28,10 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import com.google.common.collect.ListMultimap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
@@ -55,14 +53,11 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mob.MobUtils;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.monitoring.TaskMonitor;
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotRegionManifest;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
-import org.apache.hadoop.hbase.security.access.AccessControlClient;
-import org.apache.hadoop.hbase.security.access.TablePermission;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.ModifyRegionUtils;
@@ -681,7 +676,7 @@ public class RestoreSnapshotHelper {
    * </pre></blockquote>
    * @param familyDir destination directory for the store file
    * @param regionInfo destination region info for the table
-   * @param storeFile reference file name
+   * @param hfileName reference file name
    */
   private void restoreReferenceFile(final Path familyDir, final HRegionInfo regionInfo,
       final SnapshotRegionManifest.StoreFile storeFile) throws IOException {
@@ -838,27 +833,6 @@ public class RestoreSnapshotHelper {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Restored table dir:" + restoreDir);
       FSUtils.logFileSystemState(fs, restoreDir, LOG);
-    }
-  }
-
-  public static void restoreSnapshotACL(SnapshotDescription snapshot, TableName newTableName,
-      Configuration conf) throws IOException {
-    if (snapshot.hasUsersAndPermissions() && snapshot.getUsersAndPermissions() != null) {
-      LOG.info("Restore snapshot acl to table. snapshot: " + snapshot + ", table: " + newTableName);
-      ListMultimap<String, TablePermission> perms =
-          ProtobufUtil.toUserTablePermissions(snapshot.getUsersAndPermissions());
-      try {
-        for (Entry<String, TablePermission> e : perms.entries()) {
-          String user = e.getKey();
-          TablePermission perm = e.getValue();
-          perm.setTableName(newTableName);
-          AccessControlClient.grant(conf, perm.getTableName(), user, perm.getFamily(),
-            perm.getQualifier(), perm.getActions());
-        }
-      } catch (Throwable e) {
-        throw new IOException("Grant acl into newly creatd table failed. snapshot: " + snapshot
-            + ", table: " + newTableName, e);
-      }
     }
   }
 }

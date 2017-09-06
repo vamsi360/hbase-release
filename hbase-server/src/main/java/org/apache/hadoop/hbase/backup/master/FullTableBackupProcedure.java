@@ -61,8 +61,7 @@ import org.apache.hadoop.hbase.protobuf.generated.BackupProtos;
 import org.apache.hadoop.hbase.protobuf.generated.BackupProtos.FullTableBackupState;
 import org.apache.hadoop.hbase.protobuf.generated.BackupProtos.ServerTimestamp;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
-import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos;
-import org.apache.hadoop.hbase.protobuf.generated.SnapshotProtos.SnapshotDescription;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
@@ -156,8 +155,8 @@ public class FullTableBackupProcedure
         continue;
       }
       LOG.debug("Trying to delete snapshot: " + snapshotName);
-      SnapshotProtos.SnapshotDescription.Builder builder =
-          SnapshotProtos.SnapshotDescription.newBuilder();
+      HBaseProtos.SnapshotDescription.Builder builder =
+          HBaseProtos.SnapshotDescription.newBuilder();
       builder.setName(snapshotName);
       try {
         env.getMasterServices().getSnapshotManager().deleteSnapshot(builder.build());
@@ -470,10 +469,10 @@ public class FullTableBackupProcedure
   static SnapshotDescription wrapSnapshotDescription(TableName tableName, String snapshotName) {
     // Mock a SnapshotDescription from backupInfo to call SnapshotManager function,
     // Name it in the format "snapshot_<timestamp>_<table>"
-    SnapshotProtos.SnapshotDescription.Builder builder = SnapshotProtos.SnapshotDescription.newBuilder();
+    HBaseProtos.SnapshotDescription.Builder builder = HBaseProtos.SnapshotDescription.newBuilder();
     builder.setTable(tableName.getNameAsString());
     builder.setName(snapshotName);
-    SnapshotProtos.SnapshotDescription backupSnapshot = builder.build();
+    HBaseProtos.SnapshotDescription backupSnapshot = builder.build();
 
     LOG.debug("Wrapped a SnapshotDescription " + backupSnapshot.getName()
       + " from backupInfo to request snapshot for backup.");
@@ -556,7 +555,7 @@ public class FullTableBackupProcedure
           for (TableName tableName : tableList) {
             String snapshotName = "snapshot_" + Long.toString(EnvironmentEdgeManager.currentTime())
                 + "_" + tableName.getNamespaceAsString() + "_" + tableName.getQualifierAsString();
-            SnapshotProtos.SnapshotDescription backupSnapshot;
+            HBaseProtos.SnapshotDescription backupSnapshot;
 
             // wrap a SnapshotDescription for offline/online snapshot
             backupSnapshot = wrapSnapshotDescription(tableName,snapshotName);
