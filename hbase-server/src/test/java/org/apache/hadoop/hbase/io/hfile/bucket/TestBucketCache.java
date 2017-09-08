@@ -219,4 +219,13 @@ public class TestBucketCache {
     assertTrue(cache.getCurrentSize() > 0L);
     assertTrue("We should have a block!", cache.iterator().hasNext());
   }
+
+  @Test
+  public void testOffsetProducesPositiveOutput() {
+    //This number is picked because it produces negative output if the values isn't ensured to be positive.
+    //See HBASE-18757 for more information.
+    long testValue = 549888460800L;
+    BucketCache.BucketEntry bucketEntry = new BucketCache.BucketEntry(testValue, 10, 10L, true);
+    assertEquals(testValue, bucketEntry.offset());
+  }
 }
