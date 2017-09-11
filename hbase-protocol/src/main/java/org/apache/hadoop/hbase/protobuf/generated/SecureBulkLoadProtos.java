@@ -74,16 +74,6 @@ public final class SecureBulkLoadProtos {
      */
     com.google.protobuf.ByteString
         getBulkTokenBytes();
-
-    // optional bool copy_files = 5;
-    /**
-     * <code>optional bool copy_files = 5;</code>
-     */
-    boolean hasCopyFiles();
-    /**
-     * <code>optional bool copy_files = 5;</code>
-     */
-    boolean getCopyFiles();
   }
   /**
    * Protobuf type {@code SecureBulkLoadHFilesRequest}
@@ -165,11 +155,6 @@ public final class SecureBulkLoadProtos {
             case 34: {
               bitField0_ |= 0x00000004;
               bulkToken_ = input.readBytes();
-              break;
-            }
-            case 40: {
-              bitField0_ |= 0x00000008;
-              copyFiles_ = input.readBool();
               break;
             }
           }
@@ -332,28 +317,11 @@ public final class SecureBulkLoadProtos {
       }
     }
 
-    // optional bool copy_files = 5;
-    public static final int COPY_FILES_FIELD_NUMBER = 5;
-    private boolean copyFiles_;
-    /**
-     * <code>optional bool copy_files = 5;</code>
-     */
-    public boolean hasCopyFiles() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
-    }
-    /**
-     * <code>optional bool copy_files = 5;</code>
-     */
-    public boolean getCopyFiles() {
-      return copyFiles_;
-    }
-
     private void initFields() {
       familyPath_ = java.util.Collections.emptyList();
       assignSeqNum_ = false;
       fsToken_ = org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos.DelegationToken.getDefaultInstance();
       bulkToken_ = "";
-      copyFiles_ = false;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -393,9 +361,6 @@ public final class SecureBulkLoadProtos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeBytes(4, getBulkTokenBytes());
       }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeBool(5, copyFiles_);
-      }
       getUnknownFields().writeTo(output);
     }
 
@@ -420,10 +385,6 @@ public final class SecureBulkLoadProtos {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(4, getBulkTokenBytes());
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(5, copyFiles_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -465,11 +426,6 @@ public final class SecureBulkLoadProtos {
         result = result && getBulkToken()
             .equals(other.getBulkToken());
       }
-      result = result && (hasCopyFiles() == other.hasCopyFiles());
-      if (hasCopyFiles()) {
-        result = result && (getCopyFiles()
-            == other.getCopyFiles());
-      }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -498,10 +454,6 @@ public final class SecureBulkLoadProtos {
       if (hasBulkToken()) {
         hash = (37 * hash) + BULK_TOKEN_FIELD_NUMBER;
         hash = (53 * hash) + getBulkToken().hashCode();
-      }
-      if (hasCopyFiles()) {
-        hash = (37 * hash) + COPY_FILES_FIELD_NUMBER;
-        hash = (53 * hash) + hashBoolean(getCopyFiles());
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       memoizedHashCode = hash;
@@ -630,8 +582,6 @@ public final class SecureBulkLoadProtos {
         bitField0_ = (bitField0_ & ~0x00000004);
         bulkToken_ = "";
         bitField0_ = (bitField0_ & ~0x00000008);
-        copyFiles_ = false;
-        bitField0_ = (bitField0_ & ~0x00000010);
         return this;
       }
 
@@ -685,10 +635,6 @@ public final class SecureBulkLoadProtos {
           to_bitField0_ |= 0x00000004;
         }
         result.bulkToken_ = bulkToken_;
-        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
-          to_bitField0_ |= 0x00000008;
-        }
-        result.copyFiles_ = copyFiles_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -741,9 +687,6 @@ public final class SecureBulkLoadProtos {
           bitField0_ |= 0x00000008;
           bulkToken_ = other.bulkToken_;
           onChanged();
-        }
-        if (other.hasCopyFiles()) {
-          setCopyFiles(other.getCopyFiles());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1246,39 +1189,6 @@ public final class SecureBulkLoadProtos {
   }
   bitField0_ |= 0x00000008;
         bulkToken_ = value;
-        onChanged();
-        return this;
-      }
-
-      // optional bool copy_files = 5;
-      private boolean copyFiles_ ;
-      /**
-       * <code>optional bool copy_files = 5;</code>
-       */
-      public boolean hasCopyFiles() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
-      }
-      /**
-       * <code>optional bool copy_files = 5;</code>
-       */
-      public boolean getCopyFiles() {
-        return copyFiles_;
-      }
-      /**
-       * <code>optional bool copy_files = 5;</code>
-       */
-      public Builder setCopyFiles(boolean value) {
-        bitField0_ |= 0x00000010;
-        copyFiles_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional bool copy_files = 5;</code>
-       */
-      public Builder clearCopyFiles() {
-        bitField0_ = (bitField0_ & ~0x00000010);
-        copyFiles_ = false;
         onChanged();
         return this;
       }
@@ -4948,27 +4858,27 @@ public final class SecureBulkLoadProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\024SecureBulkLoad.proto\032\013HBase.proto\032\014Cli" +
-      "ent.proto\"\270\001\n\033SecureBulkLoadHFilesReques" +
+      "ent.proto\"\244\001\n\033SecureBulkLoadHFilesReques" +
       "t\0225\n\013family_path\030\001 \003(\0132 .BulkLoadHFileRe" +
       "quest.FamilyPath\022\026\n\016assign_seq_num\030\002 \001(\010" +
       "\022\"\n\010fs_token\030\003 \002(\0132\020.DelegationToken\022\022\n\n" +
-      "bulk_token\030\004 \002(\t\022\022\n\ncopy_files\030\005 \001(\010\".\n\034" +
-      "SecureBulkLoadHFilesResponse\022\016\n\006loaded\030\001" +
-      " \002(\010\"V\n\017DelegationToken\022\022\n\nidentifier\030\001 " +
-      "\001(\014\022\020\n\010password\030\002 \001(\014\022\014\n\004kind\030\003 \001(\t\022\017\n\007s" +
-      "ervice\030\004 \001(\t\"8\n\026PrepareBulkLoadRequest\022\036",
-      "\n\ntable_name\030\001 \002(\0132\n.TableName\"-\n\027Prepar" +
-      "eBulkLoadResponse\022\022\n\nbulk_token\030\001 \002(\t\",\n" +
-      "\026CleanupBulkLoadRequest\022\022\n\nbulk_token\030\001 " +
-      "\002(\t\"\031\n\027CleanupBulkLoadResponse2\370\001\n\025Secur" +
-      "eBulkLoadService\022D\n\017PrepareBulkLoad\022\027.Pr" +
-      "epareBulkLoadRequest\032\030.PrepareBulkLoadRe" +
-      "sponse\022S\n\024SecureBulkLoadHFiles\022\034.SecureB" +
-      "ulkLoadHFilesRequest\032\035.SecureBulkLoadHFi" +
-      "lesResponse\022D\n\017CleanupBulkLoad\022\027.Cleanup" +
-      "BulkLoadRequest\032\030.CleanupBulkLoadRespons",
-      "eBJ\n*org.apache.hadoop.hbase.protobuf.ge" +
-      "neratedB\024SecureBulkLoadProtosH\001\210\001\001\240\001\001"
+      "bulk_token\030\004 \002(\t\".\n\034SecureBulkLoadHFiles" +
+      "Response\022\016\n\006loaded\030\001 \002(\010\"V\n\017DelegationTo" +
+      "ken\022\022\n\nidentifier\030\001 \001(\014\022\020\n\010password\030\002 \001(" +
+      "\014\022\014\n\004kind\030\003 \001(\t\022\017\n\007service\030\004 \001(\t\"8\n\026Prep" +
+      "areBulkLoadRequest\022\036\n\ntable_name\030\001 \002(\0132\n",
+      ".TableName\"-\n\027PrepareBulkLoadResponse\022\022\n" +
+      "\nbulk_token\030\001 \002(\t\",\n\026CleanupBulkLoadRequ" +
+      "est\022\022\n\nbulk_token\030\001 \002(\t\"\031\n\027CleanupBulkLo" +
+      "adResponse2\370\001\n\025SecureBulkLoadService\022D\n\017" +
+      "PrepareBulkLoad\022\027.PrepareBulkLoadRequest" +
+      "\032\030.PrepareBulkLoadResponse\022S\n\024SecureBulk" +
+      "LoadHFiles\022\034.SecureBulkLoadHFilesRequest" +
+      "\032\035.SecureBulkLoadHFilesResponse\022D\n\017Clean" +
+      "upBulkLoad\022\027.CleanupBulkLoadRequest\032\030.Cl" +
+      "eanupBulkLoadResponseBJ\n*org.apache.hado",
+      "op.hbase.protobuf.generatedB\024SecureBulkL" +
+      "oadProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -4980,7 +4890,7 @@ public final class SecureBulkLoadProtos {
           internal_static_SecureBulkLoadHFilesRequest_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_SecureBulkLoadHFilesRequest_descriptor,
-              new java.lang.String[] { "FamilyPath", "AssignSeqNum", "FsToken", "BulkToken", "CopyFiles", });
+              new java.lang.String[] { "FamilyPath", "AssignSeqNum", "FsToken", "BulkToken", });
           internal_static_SecureBulkLoadHFilesResponse_descriptor =
             getDescriptor().getMessageTypes().get(1);
           internal_static_SecureBulkLoadHFilesResponse_fieldAccessorTable = new

@@ -1856,8 +1856,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       }
       boolean loaded = false;
       if (!bypass) {
-        loaded = region.bulkLoadHFiles(familyPaths, request.getAssignSeqNum(), null,
-            request.getCopyFile());
+        loaded = region.bulkLoadHFiles(familyPaths, request.getAssignSeqNum(), null);
       }
       if (region.getCoprocessorHost() != null) {
         loaded = region.getCoprocessorHost().postBulkLoadHFile(familyPaths, loaded);

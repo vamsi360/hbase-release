@@ -278,8 +278,8 @@ public class TestLoadIncrementalHFilesSplitRecovery {
       LoadIncrementalHFiles lih = new LoadIncrementalHFiles(util.getConfiguration()) {
         @Override
         protected List<LoadQueueItem> tryAtomicRegionLoad(final Connection conn,
-            TableName tableName, final byte[] first, Collection<LoadQueueItem> lqis,
-            boolean copyFile) throws IOException {
+            TableName tableName, final byte[] first, Collection<LoadQueueItem> lqis)
+                throws IOException {
           int i = attmptedCalls.incrementAndGet();
           if (i == 1) {
             Connection errConn = null;
@@ -290,10 +290,10 @@ public class TestLoadIncrementalHFilesSplitRecovery {
               throw new RuntimeException("mocking cruft, should never happen");
             }
             failedCalls.incrementAndGet();
-            return super.tryAtomicRegionLoad((HConnection)errConn, tableName, first, lqis,copyFile);
+            return super.tryAtomicRegionLoad((HConnection)errConn, tableName, first, lqis);
           }
 
-          return super.tryAtomicRegionLoad((HConnection)conn, tableName, first, lqis, copyFile);
+          return super.tryAtomicRegionLoad((HConnection)conn, tableName, first, lqis);
         }
       };
       try {
@@ -354,14 +354,13 @@ public class TestLoadIncrementalHFilesSplitRecovery {
         @Override
         protected void bulkLoadPhase(final Table htable, final Connection conn,
             ExecutorService pool, Deque<LoadQueueItem> queue,
-            final Multimap<ByteBuffer, LoadQueueItem> regionGroups, boolean copyFile)
-                throws IOException {
+            final Multimap<ByteBuffer, LoadQueueItem> regionGroups) throws IOException {
           int i = attemptedCalls.incrementAndGet();
           if (i == 1) {
             // On first attempt force a split.
             forceSplit(table);
           }
-          super.bulkLoadPhase(htable, conn, pool, queue, regionGroups, copyFile);
+          super.bulkLoadPhase(htable, conn, pool, queue, regionGroups);
         }
       };
 
