@@ -122,6 +122,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     = "hbase.mapreduce.bulkload.max.hfiles.perRegion.perFamily";
   private static final String ASSIGN_SEQ_IDS = "hbase.mapreduce.bulkload.assign.sequenceNumbers";
   public final static String CREATE_TABLE_CONF_KEY = "create.table";
+  public final static String ALWAYS_COPY_FILES = "always.copy.files";
 
   // We use a '.' prefix which is ignored when walking directory trees
   // above. It is invalid family name.
@@ -326,7 +327,8 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
         admin = conn.getAdmin();
       }
       try (RegionLocator rl = conn.getRegionLocator(t.getName())) {
-        doBulkLoad(hfofDir, admin, t, rl);
+        boolean copyFiles = getConf().getBoolean(ALWAYS_COPY_FILES, false);
+        doBulkLoad(hfofDir, admin, t, rl, copyFiles);
       }
     } finally {
       if (admin != null) admin.close();
@@ -344,10 +346,11 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
    * @param hfofDir the directory that was provided as the output path
    * of a job using HFileOutputFormat
    * @param table the table to load into
+   * @param copyFile always copy hfiles if true
    * @throws TableNotFoundException if table does not yet exist
    */
   public void doBulkLoad(Path hfofDir, final Admin admin, Table table,
-      RegionLocator regionLocator) throws TableNotFoundException, IOException  {
+      RegionLocator regionLocator, boolean copyFile) throws TableNotFoundException, IOException  {
 
     if (!admin.isTableAvailable(regionLocator.getName())) {
       throw new TableNotFoundException("Table " + table.getName() + "is not currently available.");
@@ -360,31 +363,6 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     Deque<LoadQueueItem> queue = new LinkedList<LoadQueueItem>();
     try {
       prepareHFileQueue(hfofDir, table, queue);
-      /*
-      discoverLoadQueue(queue, hfofDir);
-      // check whether there is invalid family name in HFiles to be bulkloaded
-      Collection<HColumnDescriptor> families = table.getTableDescriptor().getFamilies();
-      ArrayList<String> familyNames = new ArrayList<String>(families.size());
-      for (HColumnDescriptor family : families) {
-        familyNames.add(family.getNameAsString());
-      }
-      ArrayList<String> unmatchedFamilies = new ArrayList<String>();
-      Iterator<LoadQueueItem> queueIter = queue.iterator();
-      while (queueIter.hasNext()) {
-        LoadQueueItem lqi = queueIter.next();
-        String familyNameInHFile = Bytes.toString(lqi.family);
-        if (!familyNames.contains(familyNameInHFile)) {
-          unmatchedFamilies.add(familyNameInHFile);
-        }
-      }
-      if (unmatchedFamilies.size() > 0) {
-        String msg =
-            "Unmatched family names found: unmatched family names in HFiles to be bulkloaded: "
-                + unmatchedFamilies + "; valid family names of table "
-                + table.getName() + " are: " + familyNames;
-        LOG.error(msg);
-        throw new IOException(msg);
-      } */
       int count = 0;
 
       if (queue.isEmpty()) {
@@ -428,7 +406,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
             + " hfiles to one family of one region");
         }
 
-        bulkLoadPhase(table, admin.getConnection(), pool, queue, regionGroups);
+        bulkLoadPhase(table, admin.getConnection(), pool, queue, regionGroups, copyFile);
 
         // NOTE: The next iteration's split / group could happen in parallel to
         // atomic bulkloads assuming that there are splits and no merges, and
@@ -525,12 +503,29 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
    */
   public void loadHFileQueue(final Table table, final Connection conn, Deque<LoadQueueItem> queue,
       Pair<byte[][], byte[][]> startEndKeys) throws IOException {
+    loadHFileQueue(table, conn, queue, startEndKeys, false);
+  }
+
+  /**
+   * Used by the replication sink to load the hfiles from the source cluster. It does the following,
+   * <ol>
+   * <li>LoadIncrementalHFiles#groupOrSplitPhase(Table, ExecutorService, Deque, Pair)}</li>
+   * <li>LoadIncrementalHFiles#bulkLoadPhase(Table, Connection, ExecutorService, Deque, Multimap)
+   * </li>
+   * </ol>
+   * @param table Table to which these hfiles should be loaded to
+   * @param conn Connection to use
+   * @param queue {@link LoadQueueItem} has hfiles yet to be loaded
+   * @param startEndKeys starting and ending row keys of the region
+   */
+  public void loadHFileQueue(final Table table, final Connection conn, Deque<LoadQueueItem> queue,
+      Pair<byte[][], byte[][]> startEndKeys, boolean copyFile) throws IOException {
     ExecutorService pool = null;
     try {
       pool = createExecutorService();
       Multimap<ByteBuffer, LoadQueueItem> regionGroups =
           groupOrSplitPhase(table, pool, queue, startEndKeys);
-      bulkLoadPhase(table, conn, pool, queue, regionGroups);
+      bulkLoadPhase(table, conn, pool, queue, regionGroups, copyFile);
     } finally {
       if (pool != null) {
         pool.shutdown();
@@ -545,10 +540,11 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
    */
   protected void bulkLoadPhase(final Table table, final Connection conn,
       ExecutorService pool, Deque<LoadQueueItem> queue,
-      final Multimap<ByteBuffer, LoadQueueItem> regionGroups) throws IOException {
+      final Multimap<ByteBuffer, LoadQueueItem> regionGroups, final boolean copyFile)
+          throws IOException {
     // atomically bulk load the groups.
     Set<Future<List<LoadQueueItem>>> loadingFutures = new HashSet<Future<List<LoadQueueItem>>>();
-    for (Entry<ByteBuffer, ? extends Collection<LoadQueueItem>> e: regionGroups.asMap().entrySet()) {
+    for (Entry<ByteBuffer, ? extends Collection<LoadQueueItem>> e: regionGroups.asMap().entrySet()){
       final byte[] first = e.getKey().array();
       final Collection<LoadQueueItem> lqis =  e.getValue();
 
@@ -556,7 +552,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
         @Override
         public List<LoadQueueItem> call() throws Exception {
           List<LoadQueueItem> toRetry =
-              tryAtomicRegionLoad(conn, table.getName(), first, lqis);
+              tryAtomicRegionLoad(conn, table.getName(), first, lqis, copyFile);
           return toRetry;
         }
       };
@@ -703,6 +699,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     try {
       tmpDir = item.hfilePath.getParent();
       if (tmpDir.getName().equals(TMP_DIR)) {
+        LOG.info("Deleting " + item.hfilePath);
         fs.delete(item.hfilePath, false);
       }
     } catch (IOException e) {
@@ -812,7 +809,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
   protected List<LoadQueueItem> tryAtomicRegionLoad(final HConnection conn,
       final byte [] tableName, final byte[] first, Collection<LoadQueueItem> lqis)
   throws IOException {
-    return tryAtomicRegionLoad(conn, TableName.valueOf(tableName), first, lqis);
+    return tryAtomicRegionLoad(conn, TableName.valueOf(tableName), first, lqis, false);
   }
 
   /**
@@ -829,8 +826,8 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
    * failure
    */
   protected List<LoadQueueItem> tryAtomicRegionLoad(final Connection conn,
-      final TableName tableName, final byte[] first, final Collection<LoadQueueItem> lqis)
-  throws IOException {
+      final TableName tableName, final byte[] first, final Collection<LoadQueueItem> lqis,
+      final boolean copyFile) throws IOException {
     final List<Pair<byte[], String>> famPaths =
       new ArrayList<Pair<byte[], String>>(lqis.size());
     for (LoadQueueItem lqi : lqis) {
@@ -854,7 +851,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
             try (Table table = conn.getTable(getTableName())) {
               secureClient = new SecureBulkLoadClient(table);
               success = secureClient.bulkLoadHFiles(famPaths, fsDelegationToken.getUserToken(),
-                bulkToken, getLocation().getRegionInfo().getStartKey());
+                bulkToken, getLocation().getRegionInfo().getStartKey(), copyFile);
             }
           }
           return success;

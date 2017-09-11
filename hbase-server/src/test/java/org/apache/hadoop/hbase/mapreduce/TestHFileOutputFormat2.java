@@ -1069,7 +1069,7 @@ public class TestHFileOutputFormat2  {
       runIncrementalPELoad(conf, table.getTableDescriptor(), regionLocator, testDir);
 
       // Perform the actual load
-      new LoadIncrementalHFiles(conf).doBulkLoad(testDir, admin, table, regionLocator);
+      new LoadIncrementalHFiles(conf).doBulkLoad(testDir, admin, table, regionLocator, false);
 
       // Ensure data shows up
       int expectedRows = NMapInputFormat.getNumMapTasks(conf) * ROWSPERSPLIT;
