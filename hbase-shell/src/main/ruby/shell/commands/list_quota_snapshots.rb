@@ -44,6 +44,7 @@ EOF
       end
 
       def command(args = {})
+        start = Time.now
         # All arguments may be nil
         desired_table = args[TABLE]
         desired_namespace = args[NAMESPACE]
