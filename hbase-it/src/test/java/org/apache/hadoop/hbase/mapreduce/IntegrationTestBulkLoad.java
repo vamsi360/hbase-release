@@ -300,7 +300,7 @@ public class IntegrationTestBulkLoad extends IntegrationTestBase {
       LoadIncrementalHFiles loader = new LoadIncrementalHFiles(conf);
 
       // Load the HFiles in.
-      loader.doBulkLoad(p, admin, table, regionLocator);
+      loader.doBulkLoad(p, admin, table, regionLocator, false);
     }
 
     // Delete the files.
