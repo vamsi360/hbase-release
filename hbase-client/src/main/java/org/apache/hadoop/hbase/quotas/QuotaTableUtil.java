@@ -44,6 +44,7 @@ import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.TableProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.GetQuotaStatesResponse;
@@ -440,7 +441,7 @@ public class QuotaTableUtil {
     }
     ClusterConnection clusterConn = (ClusterConnection) conn;
     GetQuotaStatesResponse resp = QuotaStatusCalls.getMasterQuotaStates(clusterConn, 0);
-    HBaseProtos.TableName protoTableName = ProtobufUtil.toProtoTableName(tn);
+    TableProtos.TableName protoTableName = ProtobufUtil.toProtoTableName(tn);
     for (GetQuotaStatesResponse.TableQuotaSnapshot tableSnapshot : resp.getTableSnapshotsList()) {
       if (protoTableName.equals(tableSnapshot.getTableName())) {
         return SpaceQuotaSnapshot.toSpaceQuotaSnapshot(tableSnapshot.getSnapshot());

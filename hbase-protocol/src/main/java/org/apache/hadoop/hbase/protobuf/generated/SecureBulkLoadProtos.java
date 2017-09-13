@@ -2607,11 +2607,11 @@ public final class SecureBulkLoadProtos {
     /**
      * <code>required .TableName table_name = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTableName();
+    org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName getTableName();
     /**
      * <code>required .TableName table_name = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTableNameOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder getTableNameOrBuilder();
   }
   /**
    * Protobuf type {@code PrepareBulkLoadRequest}
@@ -2665,11 +2665,11 @@ public final class SecureBulkLoadProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder subBuilder = null;
+              org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder subBuilder = null;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
                 subBuilder = tableName_.toBuilder();
               }
-              tableName_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.PARSER, extensionRegistry);
+              tableName_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(tableName_);
                 tableName_ = subBuilder.buildPartial();
@@ -2719,7 +2719,7 @@ public final class SecureBulkLoadProtos {
     private int bitField0_;
     // required .TableName table_name = 1;
     public static final int TABLE_NAME_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName tableName_;
+    private org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName tableName_;
     /**
      * <code>required .TableName table_name = 1;</code>
      */
@@ -2729,18 +2729,18 @@ public final class SecureBulkLoadProtos {
     /**
      * <code>required .TableName table_name = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTableName() {
+    public org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName getTableName() {
       return tableName_;
     }
     /**
      * <code>required .TableName table_name = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTableNameOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder getTableNameOrBuilder() {
       return tableName_;
     }
 
     private void initFields() {
-      tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
+      tableName_ = org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -2934,7 +2934,7 @@ public final class SecureBulkLoadProtos {
       public Builder clear() {
         super.clear();
         if (tableNameBuilder_ == null) {
-          tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
+          tableName_ = org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.getDefaultInstance();
         } else {
           tableNameBuilder_.clear();
         }
@@ -3030,9 +3030,9 @@ public final class SecureBulkLoadProtos {
       private int bitField0_;
 
       // required .TableName table_name = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName tableName_ = org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> tableNameBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder> tableNameBuilder_;
       /**
        * <code>required .TableName table_name = 1;</code>
        */
@@ -3042,7 +3042,7 @@ public final class SecureBulkLoadProtos {
       /**
        * <code>required .TableName table_name = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTableName() {
+      public org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName getTableName() {
         if (tableNameBuilder_ == null) {
           return tableName_;
         } else {
@@ -3052,7 +3052,7 @@ public final class SecureBulkLoadProtos {
       /**
        * <code>required .TableName table_name = 1;</code>
        */
-      public Builder setTableName(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName value) {
+      public Builder setTableName(org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName value) {
         if (tableNameBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -3069,7 +3069,7 @@ public final class SecureBulkLoadProtos {
        * <code>required .TableName table_name = 1;</code>
        */
       public Builder setTableName(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder builderForValue) {
         if (tableNameBuilder_ == null) {
           tableName_ = builderForValue.build();
           onChanged();
@@ -3082,12 +3082,12 @@ public final class SecureBulkLoadProtos {
       /**
        * <code>required .TableName table_name = 1;</code>
        */
-      public Builder mergeTableName(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName value) {
+      public Builder mergeTableName(org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName value) {
         if (tableNameBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              tableName_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance()) {
+              tableName_ != org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.getDefaultInstance()) {
             tableName_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.newBuilder(tableName_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.newBuilder(tableName_).mergeFrom(value).buildPartial();
           } else {
             tableName_ = value;
           }
@@ -3103,7 +3103,7 @@ public final class SecureBulkLoadProtos {
        */
       public Builder clearTableName() {
         if (tableNameBuilder_ == null) {
-          tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
+          tableName_ = org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.getDefaultInstance();
           onChanged();
         } else {
           tableNameBuilder_.clear();
@@ -3114,7 +3114,7 @@ public final class SecureBulkLoadProtos {
       /**
        * <code>required .TableName table_name = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder getTableNameBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder getTableNameBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getTableNameFieldBuilder().getBuilder();
@@ -3122,7 +3122,7 @@ public final class SecureBulkLoadProtos {
       /**
        * <code>required .TableName table_name = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTableNameOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder getTableNameOrBuilder() {
         if (tableNameBuilder_ != null) {
           return tableNameBuilder_.getMessageOrBuilder();
         } else {
@@ -3133,11 +3133,11 @@ public final class SecureBulkLoadProtos {
        * <code>required .TableName table_name = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder> 
           getTableNameFieldBuilder() {
         if (tableNameBuilder_ == null) {
           tableNameBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder>(
                   tableName_,
                   getParentForChildren(),
                   isClean());
@@ -4948,27 +4948,28 @@ public final class SecureBulkLoadProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\024SecureBulkLoad.proto\032\013HBase.proto\032\014Cli" +
-      "ent.proto\"\270\001\n\033SecureBulkLoadHFilesReques" +
-      "t\0225\n\013family_path\030\001 \003(\0132 .BulkLoadHFileRe" +
-      "quest.FamilyPath\022\026\n\016assign_seq_num\030\002 \001(\010" +
-      "\022\"\n\010fs_token\030\003 \002(\0132\020.DelegationToken\022\022\n\n" +
-      "bulk_token\030\004 \002(\t\022\022\n\ncopy_files\030\005 \001(\010\".\n\034" +
-      "SecureBulkLoadHFilesResponse\022\016\n\006loaded\030\001" +
-      " \002(\010\"V\n\017DelegationToken\022\022\n\nidentifier\030\001 " +
-      "\001(\014\022\020\n\010password\030\002 \001(\014\022\014\n\004kind\030\003 \001(\t\022\017\n\007s" +
-      "ervice\030\004 \001(\t\"8\n\026PrepareBulkLoadRequest\022\036",
-      "\n\ntable_name\030\001 \002(\0132\n.TableName\"-\n\027Prepar" +
-      "eBulkLoadResponse\022\022\n\nbulk_token\030\001 \002(\t\",\n" +
-      "\026CleanupBulkLoadRequest\022\022\n\nbulk_token\030\001 " +
-      "\002(\t\"\031\n\027CleanupBulkLoadResponse2\370\001\n\025Secur" +
-      "eBulkLoadService\022D\n\017PrepareBulkLoad\022\027.Pr" +
-      "epareBulkLoadRequest\032\030.PrepareBulkLoadRe" +
-      "sponse\022S\n\024SecureBulkLoadHFiles\022\034.SecureB" +
-      "ulkLoadHFilesRequest\032\035.SecureBulkLoadHFi" +
-      "lesResponse\022D\n\017CleanupBulkLoad\022\027.Cleanup" +
-      "BulkLoadRequest\032\030.CleanupBulkLoadRespons",
-      "eBJ\n*org.apache.hadoop.hbase.protobuf.ge" +
-      "neratedB\024SecureBulkLoadProtosH\001\210\001\001\240\001\001"
+      "ent.proto\032\013Table.proto\"\270\001\n\033SecureBulkLoa" +
+      "dHFilesRequest\0225\n\013family_path\030\001 \003(\0132 .Bu" +
+      "lkLoadHFileRequest.FamilyPath\022\026\n\016assign_" +
+      "seq_num\030\002 \001(\010\022\"\n\010fs_token\030\003 \002(\0132\020.Delega" +
+      "tionToken\022\022\n\nbulk_token\030\004 \002(\t\022\022\n\ncopy_fi" +
+      "les\030\005 \001(\010\".\n\034SecureBulkLoadHFilesRespons" +
+      "e\022\016\n\006loaded\030\001 \002(\010\"V\n\017DelegationToken\022\022\n\n" +
+      "identifier\030\001 \001(\014\022\020\n\010password\030\002 \001(\014\022\014\n\004ki" +
+      "nd\030\003 \001(\t\022\017\n\007service\030\004 \001(\t\"8\n\026PrepareBulk",
+      "LoadRequest\022\036\n\ntable_name\030\001 \002(\0132\n.TableN" +
+      "ame\"-\n\027PrepareBulkLoadResponse\022\022\n\nbulk_t" +
+      "oken\030\001 \002(\t\",\n\026CleanupBulkLoadRequest\022\022\n\n" +
+      "bulk_token\030\001 \002(\t\"\031\n\027CleanupBulkLoadRespo" +
+      "nse2\370\001\n\025SecureBulkLoadService\022D\n\017Prepare" +
+      "BulkLoad\022\027.PrepareBulkLoadRequest\032\030.Prep" +
+      "areBulkLoadResponse\022S\n\024SecureBulkLoadHFi" +
+      "les\022\034.SecureBulkLoadHFilesRequest\032\035.Secu" +
+      "reBulkLoadHFilesResponse\022D\n\017CleanupBulkL" +
+      "oad\022\027.CleanupBulkLoadRequest\032\030.CleanupBu",
+      "lkLoadResponseBJ\n*org.apache.hadoop.hbas" +
+      "e.protobuf.generatedB\024SecureBulkLoadProt" +
+      "osH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -5025,6 +5026,7 @@ public final class SecureBulkLoadProtos {
         new com.google.protobuf.Descriptors.FileDescriptor[] {
           org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.getDescriptor(),
           org.apache.hadoop.hbase.protobuf.generated.ClientProtos.getDescriptor(),
+          org.apache.hadoop.hbase.protobuf.generated.TableProtos.getDescriptor(),
         }, assigner);
   }
 

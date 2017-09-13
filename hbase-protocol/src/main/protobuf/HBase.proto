@@ -23,15 +23,9 @@ option java_outer_classname = "HBaseProtos";
 option java_generate_equals_and_hash = true;
 option optimize_for = SPEED;
 
+import "AccessControl.proto";
+import "Table.proto";
 import "Cell.proto";
-
-/**
- * Table Name
- */
-message TableName {
-  required bytes namespace = 1;
-  required bytes qualifier = 2;
-}
 
 /**
  * Table Schema
@@ -165,6 +159,7 @@ message SnapshotDescription {
   optional Type type = 4 [default = FLUSH];
   optional int32 version = 5;
   optional string owner = 6;
+  optional UsersAndPermissions users_and_permissions = 7;
 }
 
 /**

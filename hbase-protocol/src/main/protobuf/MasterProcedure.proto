@@ -23,6 +23,7 @@ option optimize_for = SPEED;
 
 import "HBase.proto";
 import "RPC.proto";
+import "Table.proto";
 
 // ============================================================================
 //  WARNING - Compatibility rules

@@ -8077,11 +8077,11 @@ public final class ZooKeeperProtos {
     /**
      * <code>optional .TableName table_name = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTableName();
+    org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName getTableName();
     /**
      * <code>optional .TableName table_name = 1;</code>
      */
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTableNameOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder getTableNameOrBuilder();
 
     // optional .ServerName lock_owner = 2;
     /**
@@ -8199,11 +8199,11 @@ public final class ZooKeeperProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder subBuilder = null;
+              org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder subBuilder = null;
               if (((bitField0_ & 0x00000001) == 0x00000001)) {
                 subBuilder = tableName_.toBuilder();
               }
-              tableName_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.PARSER, extensionRegistry);
+              tableName_ = input.readMessage(org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.PARSER, extensionRegistry);
               if (subBuilder != null) {
                 subBuilder.mergeFrom(tableName_);
                 tableName_ = subBuilder.buildPartial();
@@ -8286,7 +8286,7 @@ public final class ZooKeeperProtos {
     private int bitField0_;
     // optional .TableName table_name = 1;
     public static final int TABLE_NAME_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName tableName_;
+    private org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName tableName_;
     /**
      * <code>optional .TableName table_name = 1;</code>
      */
@@ -8296,13 +8296,13 @@ public final class ZooKeeperProtos {
     /**
      * <code>optional .TableName table_name = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTableName() {
+    public org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName getTableName() {
       return tableName_;
     }
     /**
      * <code>optional .TableName table_name = 1;</code>
      */
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTableNameOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder getTableNameOrBuilder() {
       return tableName_;
     }
 
@@ -8420,7 +8420,7 @@ public final class ZooKeeperProtos {
     }
 
     private void initFields() {
-      tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
+      tableName_ = org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.getDefaultInstance();
       lockOwner_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.getDefaultInstance();
       threadId_ = 0L;
       isShared_ = false;
@@ -8709,7 +8709,7 @@ public final class ZooKeeperProtos {
       public Builder clear() {
         super.clear();
         if (tableNameBuilder_ == null) {
-          tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
+          tableName_ = org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.getDefaultInstance();
         } else {
           tableNameBuilder_.clear();
         }
@@ -8864,9 +8864,9 @@ public final class ZooKeeperProtos {
       private int bitField0_;
 
       // optional .TableName table_name = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName tableName_ = org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> tableNameBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder> tableNameBuilder_;
       /**
        * <code>optional .TableName table_name = 1;</code>
        */
@@ -8876,7 +8876,7 @@ public final class ZooKeeperProtos {
       /**
        * <code>optional .TableName table_name = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTableName() {
+      public org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName getTableName() {
         if (tableNameBuilder_ == null) {
           return tableName_;
         } else {
@@ -8886,7 +8886,7 @@ public final class ZooKeeperProtos {
       /**
        * <code>optional .TableName table_name = 1;</code>
        */
-      public Builder setTableName(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName value) {
+      public Builder setTableName(org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName value) {
         if (tableNameBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -8903,7 +8903,7 @@ public final class ZooKeeperProtos {
        * <code>optional .TableName table_name = 1;</code>
        */
       public Builder setTableName(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder builderForValue) {
         if (tableNameBuilder_ == null) {
           tableName_ = builderForValue.build();
           onChanged();
@@ -8916,12 +8916,12 @@ public final class ZooKeeperProtos {
       /**
        * <code>optional .TableName table_name = 1;</code>
        */
-      public Builder mergeTableName(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName value) {
+      public Builder mergeTableName(org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName value) {
         if (tableNameBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              tableName_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance()) {
+              tableName_ != org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.getDefaultInstance()) {
             tableName_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.newBuilder(tableName_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.newBuilder(tableName_).mergeFrom(value).buildPartial();
           } else {
             tableName_ = value;
           }
@@ -8937,7 +8937,7 @@ public final class ZooKeeperProtos {
        */
       public Builder clearTableName() {
         if (tableNameBuilder_ == null) {
-          tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
+          tableName_ = org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.getDefaultInstance();
           onChanged();
         } else {
           tableNameBuilder_.clear();
@@ -8948,7 +8948,7 @@ public final class ZooKeeperProtos {
       /**
        * <code>optional .TableName table_name = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder getTableNameBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder getTableNameBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getTableNameFieldBuilder().getBuilder();
@@ -8956,7 +8956,7 @@ public final class ZooKeeperProtos {
       /**
        * <code>optional .TableName table_name = 1;</code>
        */
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTableNameOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder getTableNameOrBuilder() {
         if (tableNameBuilder_ != null) {
           return tableNameBuilder_.getMessageOrBuilder();
         } else {
@@ -8967,11 +8967,11 @@ public final class ZooKeeperProtos {
        * <code>optional .TableName table_name = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder> 
           getTableNameFieldBuilder() {
         if (tableNameBuilder_ == null) {
           tableNameBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.TableProtos.TableNameOrBuilder>(
                   tableName_,
                   getParentForChildren(),
                   isClean());
@@ -9795,40 +9795,40 @@ public final class ZooKeeperProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\017ZooKeeper.proto\032\013HBase.proto\032\023ClusterS" +
-      "tatus.proto\"g\n\020MetaRegionServer\022\033\n\006serve" +
-      "r\030\001 \002(\0132\013.ServerName\022\023\n\013rpc_version\030\002 \001(" +
-      "\r\022!\n\005state\030\003 \001(\0162\022.RegionState.State\"M\n\006" +
-      "Master\022\033\n\006master\030\001 \002(\0132\013.ServerName\022\023\n\013r" +
-      "pc_version\030\002 \001(\r\022\021\n\tinfo_port\030\003 \001(\r\"\037\n\tC" +
-      "lusterUp\022\022\n\nstart_date\030\001 \002(\t\"\210\001\n\020RegionT" +
-      "ransition\022\027\n\017event_type_code\030\001 \002(\r\022\023\n\013re" +
-      "gion_name\030\002 \002(\014\022\023\n\013create_time\030\003 \002(\004\022 \n\013" +
-      "server_name\030\004 \002(\0132\013.ServerName\022\017\n\007payloa",
-      "d\030\005 \001(\014\"\214\002\n\014SplitLogTask\022\"\n\005state\030\001 \002(\0162" +
-      "\023.SplitLogTask.State\022 \n\013server_name\030\002 \002(" +
-      "\0132\013.ServerName\0221\n\004mode\030\003 \001(\0162\032.SplitLogT" +
-      "ask.RecoveryMode:\007UNKNOWN\"C\n\005State\022\016\n\nUN" +
-      "ASSIGNED\020\000\022\t\n\005OWNED\020\001\022\014\n\010RESIGNED\020\002\022\010\n\004D" +
-      "ONE\020\003\022\007\n\003ERR\020\004\">\n\014RecoveryMode\022\013\n\007UNKNOW" +
-      "N\020\000\022\021\n\rLOG_SPLITTING\020\001\022\016\n\nLOG_REPLAY\020\002\"n" +
-      "\n\005Table\022$\n\005state\030\001 \002(\0162\014.Table.State:\007EN" +
-      "ABLED\"?\n\005State\022\013\n\007ENABLED\020\000\022\014\n\010DISABLED\020" +
-      "\001\022\r\n\tDISABLING\020\002\022\014\n\010ENABLING\020\003\"\215\001\n\017Repli",
-      "cationPeer\022\022\n\nclusterkey\030\001 \002(\t\022\037\n\027replic" +
-      "ationEndpointImpl\030\002 \001(\t\022\035\n\004data\030\003 \003(\0132\017." +
-      "BytesBytesPair\022&\n\rconfiguration\030\004 \003(\0132\017." +
-      "NameStringPair\"^\n\020ReplicationState\022&\n\005st" +
-      "ate\030\001 \002(\0162\027.ReplicationState.State\"\"\n\005St" +
-      "ate\022\013\n\007ENABLED\020\000\022\014\n\010DISABLED\020\001\"+\n\027Replic" +
-      "ationHLogPosition\022\020\n\010position\030\001 \002(\003\"%\n\017R" +
-      "eplicationLock\022\022\n\nlock_owner\030\001 \002(\t\"\230\001\n\tT" +
-      "ableLock\022\036\n\ntable_name\030\001 \001(\0132\n.TableName" +
-      "\022\037\n\nlock_owner\030\002 \001(\0132\013.ServerName\022\021\n\tthr",
-      "ead_id\030\003 \001(\003\022\021\n\tis_shared\030\004 \001(\010\022\017\n\007purpo" +
-      "se\030\005 \001(\t\022\023\n\013create_time\030\006 \001(\003\"\036\n\013SwitchS" +
-      "tate\022\017\n\007enabled\030\001 \001(\010BE\n*org.apache.hado" +
-      "op.hbase.protobuf.generatedB\017ZooKeeperPr" +
-      "otosH\001\210\001\001\240\001\001"
+      "tatus.proto\032\013Table.proto\"g\n\020MetaRegionSe" +
+      "rver\022\033\n\006server\030\001 \002(\0132\013.ServerName\022\023\n\013rpc" +
+      "_version\030\002 \001(\r\022!\n\005state\030\003 \001(\0162\022.RegionSt" +
+      "ate.State\"M\n\006Master\022\033\n\006master\030\001 \002(\0132\013.Se" +
+      "rverName\022\023\n\013rpc_version\030\002 \001(\r\022\021\n\tinfo_po" +
+      "rt\030\003 \001(\r\"\037\n\tClusterUp\022\022\n\nstart_date\030\001 \002(" +
+      "\t\"\210\001\n\020RegionTransition\022\027\n\017event_type_cod" +
+      "e\030\001 \002(\r\022\023\n\013region_name\030\002 \002(\014\022\023\n\013create_t" +
+      "ime\030\003 \002(\004\022 \n\013server_name\030\004 \002(\0132\013.ServerN",
+      "ame\022\017\n\007payload\030\005 \001(\014\"\214\002\n\014SplitLogTask\022\"\n" +
+      "\005state\030\001 \002(\0162\023.SplitLogTask.State\022 \n\013ser" +
+      "ver_name\030\002 \002(\0132\013.ServerName\0221\n\004mode\030\003 \001(" +
+      "\0162\032.SplitLogTask.RecoveryMode:\007UNKNOWN\"C" +
+      "\n\005State\022\016\n\nUNASSIGNED\020\000\022\t\n\005OWNED\020\001\022\014\n\010RE" +
+      "SIGNED\020\002\022\010\n\004DONE\020\003\022\007\n\003ERR\020\004\">\n\014RecoveryM" +
+      "ode\022\013\n\007UNKNOWN\020\000\022\021\n\rLOG_SPLITTING\020\001\022\016\n\nL" +
+      "OG_REPLAY\020\002\"n\n\005Table\022$\n\005state\030\001 \002(\0162\014.Ta" +
+      "ble.State:\007ENABLED\"?\n\005State\022\013\n\007ENABLED\020\000" +
+      "\022\014\n\010DISABLED\020\001\022\r\n\tDISABLING\020\002\022\014\n\010ENABLIN",
+      "G\020\003\"\215\001\n\017ReplicationPeer\022\022\n\nclusterkey\030\001 " +
+      "\002(\t\022\037\n\027replicationEndpointImpl\030\002 \001(\t\022\035\n\004" +
+      "data\030\003 \003(\0132\017.BytesBytesPair\022&\n\rconfigura" +
+      "tion\030\004 \003(\0132\017.NameStringPair\"^\n\020Replicati" +
+      "onState\022&\n\005state\030\001 \002(\0162\027.ReplicationStat" +
+      "e.State\"\"\n\005State\022\013\n\007ENABLED\020\000\022\014\n\010DISABLE" +
+      "D\020\001\"+\n\027ReplicationHLogPosition\022\020\n\010positi" +
+      "on\030\001 \002(\003\"%\n\017ReplicationLock\022\022\n\nlock_owne" +
+      "r\030\001 \002(\t\"\230\001\n\tTableLock\022\036\n\ntable_name\030\001 \001(" +
+      "\0132\n.TableName\022\037\n\nlock_owner\030\002 \001(\0132\013.Serv",
+      "erName\022\021\n\tthread_id\030\003 \001(\003\022\021\n\tis_shared\030\004" +
+      " \001(\010\022\017\n\007purpose\030\005 \001(\t\022\023\n\013create_time\030\006 \001" +
+      "(\003\"\036\n\013SwitchState\022\017\n\007enabled\030\001 \001(\010BE\n*or" +
+      "g.apache.hadoop.hbase.protobuf.generated" +
+      "B\017ZooKeeperProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -9915,6 +9915,7 @@ public final class ZooKeeperProtos {
         new com.google.protobuf.Descriptors.FileDescriptor[] {
           org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.getDescriptor(),
           org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.getDescriptor(),
+          org.apache.hadoop.hbase.protobuf.generated.TableProtos.getDescriptor(),
         }, assigner);
   }
 

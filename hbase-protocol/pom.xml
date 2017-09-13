@@ -191,6 +191,7 @@
                           <include>RSGroup.proto</include>
                           <include>RSGroupAdmin.proto</include>
                           <include>SecureBulkLoad.proto</include>
+                          <include>Table.proto</include>
                           <include>Tracing.proto</include>
                           <include>VisibilityLabels.proto</include>
                           <include>WAL.proto</include>

@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.BackupProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
+import org.apache.hadoop.hbase.protobuf.generated.TableProtos;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -98,9 +99,9 @@ public class BackupManifest {
       String rootDir = im.getRootDir();
       long startTs = im.getStartTs();
       long completeTs = im.getCompleteTs();
-      List<HBaseProtos.TableName> tableListList = im.getTableListList();
+      List<TableProtos.TableName> tableListList = im.getTableListList();
       List<TableName> tableList = new ArrayList<TableName>();
-      for(HBaseProtos.TableName tn : tableListList) {
+      for(TableProtos.TableName tn : tableListList) {
         tableList.add(ProtobufUtil.toTableName(tn));
       }
       
@@ -414,8 +415,8 @@ public class BackupManifest {
 
   private void loadTableList(BackupProtos.BackupManifest proto) {
     this.tableList = new ArrayList<TableName>();
-    List<HBaseProtos.TableName> list = proto.getTableListList();
-    for (HBaseProtos.TableName name: list) {
+    List<TableProtos.TableName> list = proto.getTableListList();
+    for (TableProtos.TableName name: list) {
       this.tableList.add(ProtobufUtil.toTableName(name));
     }
   }

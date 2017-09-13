@@ -54,6 +54,7 @@ import org.apache.hadoop.hbase.master.procedure.MasterProcedureEnv;
 import org.apache.hadoop.hbase.procedure2.ProcedureExecutor;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
+import org.apache.hadoop.hbase.protobuf.generated.TableProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.Quotas;
@@ -183,7 +184,7 @@ public class RSGroupAdminEndpoint extends RSGroupAdminService
       MoveTablesResponse.Builder builder =
           MoveTablesResponse.newBuilder();
       Set<TableName> tables = new HashSet<TableName>(request.getTableNameList().size());
-      for(HBaseProtos.TableName tableName: request.getTableNameList()) {
+      for(TableProtos.TableName tableName: request.getTableNameList()) {
         tables.add(ProtobufUtil.toTableName(tableName));
       }
       groupAdminServer.moveTables(tables, request.getTargetGroup());

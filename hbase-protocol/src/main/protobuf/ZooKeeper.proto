@@ -27,6 +27,7 @@ option optimize_for = SPEED;
 
 import "HBase.proto";
 import "ClusterStatus.proto";
+import "Table.proto";
 
 /**
  * Content of the meta-region-server znode.

@@ -63,6 +63,7 @@ import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.CompactRegionRespo
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.GetRegionInfoRequest;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.GetRegionInfoResponse;
 import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.RegionStoreSequenceIds;
+import org.apache.hadoop.hbase.protobuf.generated.TableProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NameStringPair;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ProcedureDescription;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier.RegionSpecifierType;
@@ -907,7 +908,7 @@ public class MasterRpcServices extends RSRpcServices
       List<TableName> tableNameList = null;
       if (req.getTableNamesCount() > 0) {
         tableNameList = new ArrayList<TableName>(req.getTableNamesCount());
-        for (HBaseProtos.TableName tableNamePB: req.getTableNamesList()) {
+        for (TableProtos.TableName tableNamePB: req.getTableNamesList()) {
           tableNameList.add(ProtobufUtil.toTableName(tableNamePB));
         }
       }
@@ -1155,7 +1156,7 @@ public class MasterRpcServices extends RSRpcServices
     try {
       BackupTablesResponse.Builder response = BackupTablesResponse.newBuilder();
       List<TableName> tablesList = new ArrayList<>(request.getTablesList().size());
-      for (HBaseProtos.TableName table : request.getTablesList()) {
+      for (TableProtos.TableName table : request.getTablesList()) {
         tablesList.add(ProtobufUtil.toTableName(table));
       }
       Pair<Long, String> pair = master.backupTables(
@@ -1325,7 +1326,8 @@ public class MasterRpcServices extends RSRpcServices
       master.getNamespaceDescriptor(dstTable.getNamespaceAsString());
 
       SnapshotDescription reqSnapshot = request.getSnapshot();
-      master.snapshotManager.restoreSnapshot(reqSnapshot);
+      master.snapshotManager.restoreSnapshot(reqSnapshot,
+        request.hasRestoreACL() && request.getRestoreACL());
       return RestoreSnapshotResponse.newBuilder().build();
     } catch (ForeignException e) {
       throw new ServiceException(e.getCause());

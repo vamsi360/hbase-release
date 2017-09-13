@@ -126,6 +126,7 @@ import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos;
 import org.apache.hadoop.hbase.protobuf.generated.ClusterStatusProtos.RegionLoad;
 import org.apache.hadoop.hbase.protobuf.generated.ComparatorProtos;
 import org.apache.hadoop.hbase.protobuf.generated.FilterProtos;
+import org.apache.hadoop.hbase.protobuf.generated.TableProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NameBytesPair;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionInfo;
@@ -2754,18 +2755,18 @@ public final class ProtobufUtil {
         ", type=" + proto.getMutateType().toString();
   }
 
-  public static TableName toTableName(HBaseProtos.TableName tableNamePB) {
+  public static TableName toTableName(TableProtos.TableName tableNamePB) {
     return TableName.valueOf(tableNamePB.getNamespace().asReadOnlyByteBuffer(),
         tableNamePB.getQualifier().asReadOnlyByteBuffer());
   }
 
-  public static HBaseProtos.TableName toProtoTableName(TableName tableName) {
-    return HBaseProtos.TableName.newBuilder()
+  public static TableProtos.TableName toProtoTableName(TableName tableName) {
+    return TableProtos.TableName.newBuilder()
         .setNamespace(ByteStringer.wrap(tableName.getNamespace()))
         .setQualifier(ByteStringer.wrap(tableName.getQualifier())).build();
   }
 
-  public static TableName[] getTableNameArray(List<HBaseProtos.TableName> tableNamesList) {
+  public static TableName[] getTableNameArray(List<TableProtos.TableName> tableNamesList) {
     if (tableNamesList == null) {
       return new TableName[0];
     }
@@ -3321,15 +3322,15 @@ public final class ProtobufUtil {
     for(HBaseProtos.ServerName el: proto.getServersList()) {
       RSGroupInfo.addServer(HostAndPort.fromParts(el.getHostName(), el.getPort()));
     }
-    for(HBaseProtos.TableName pTableName: proto.getTablesList()) {
+    for(TableProtos.TableName pTableName: proto.getTablesList()) {
       RSGroupInfo.addTable(ProtobufUtil.toTableName(pTableName));
     }
     return RSGroupInfo;
   }
 
   public static RSGroupProtos.RSGroupInfo toProtoGroupInfo(RSGroupInfo pojo) {
-    List<HBaseProtos.TableName> tables =
-        new ArrayList<HBaseProtos.TableName>(pojo.getTables().size());
+    List<TableProtos.TableName> tables =
+        new ArrayList<TableProtos.TableName>(pojo.getTables().size());
     for(TableName arg: pojo.getTables()) {
       tables.add(ProtobufUtil.toProtoTableName(arg));
     }

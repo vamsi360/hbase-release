@@ -63,6 +63,7 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
   private final static String NAME = "Master CloneSnapshotHandler";
 
   private final SnapshotDescription snapshot;
+  private final boolean restoreAcl;
 
   private final ForeignExceptionDispatcher monitor;
   private final MetricsSnapshot metricsSnapshot = new MetricsSnapshot();
@@ -73,12 +74,14 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
   private volatile boolean stopped = false;
 
   public CloneSnapshotHandler(final MasterServices masterServices,
-      final SnapshotDescription snapshot, final HTableDescriptor hTableDescriptor) {
+      final SnapshotDescription snapshot, final HTableDescriptor hTableDescriptor,
+      final boolean restoreAcl) {
     super(masterServices, masterServices.getMasterFileSystem(), hTableDescriptor,
       masterServices.getConfiguration(), null, masterServices);
 
     // Snapshot information
     this.snapshot = snapshot;
+    this.restoreAcl = restoreAcl;
 
     // Monitor
     this.monitor = new ForeignExceptionDispatcher();
@@ -117,6 +120,13 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
           "A clone should not have regions to restore");
       Preconditions.checkArgument(!metaChanges.hasRegionsToRemove(),
           "A clone should not have regions to remove");
+
+      // Clone acl of snapshot into newly created table.
+      if (restoreAcl && snapshot.hasUsersAndPermissions()
+          && snapshot.getUsersAndPermissions() != null
+          && SnapshotDescriptionUtils.isSecurityAvailable(conf)) {
+        RestoreSnapshotHelper.restoreSnapshotACL(snapshot, tableName, conf);
+      }
 
       // At this point the clone is complete. Next step is enabling the table.
       String msg = "Clone snapshot="+ snapshot.getName() +" on table=" + tableName + " completed!";

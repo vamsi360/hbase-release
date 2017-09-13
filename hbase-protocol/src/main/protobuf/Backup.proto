@@ -26,6 +26,7 @@ option java_generate_equals_and_hash = true;
 option optimize_for = SPEED;
 
 import "HBase.proto";
+import "Table.proto";
 
 enum FullTableBackupState {
   PRE_SNAPSHOT_TABLE = 1;

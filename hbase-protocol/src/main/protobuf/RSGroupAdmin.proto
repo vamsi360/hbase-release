@@ -26,6 +26,7 @@ option optimize_for = SPEED;
 
 import "HBase.proto";
 import "RSGroup.proto";
+import "Table.proto";
 
 /** Group level protobufs */
 

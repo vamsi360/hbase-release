@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.hbase.snapshot;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
@@ -77,6 +76,8 @@ public class TestSnapshotDescriptionUtils {
       fail("Snapshot was considered valid without a table name");
     } catch (IllegalArgumentException e) {
       LOG.debug("Correctly failed when snapshot doesn't have a tablename");
+    } catch (IOException e) {
+      LOG.debug("Correctly failed when saving acl into snapshot");
     }
   }
 

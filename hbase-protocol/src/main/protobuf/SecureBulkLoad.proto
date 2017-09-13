@@ -24,6 +24,7 @@ option optimize_for = SPEED;
 
 import 'HBase.proto';
 import 'Client.proto';
+import 'Table.proto';
 
 message SecureBulkLoadHFilesRequest {
   repeated BulkLoadHFileRequest.FamilyPath family_path = 1;
