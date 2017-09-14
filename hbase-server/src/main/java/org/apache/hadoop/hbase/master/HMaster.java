@@ -867,6 +867,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     status.markComplete("Initialization successful");
     LOG.info("Master has completed initialization");
     configurationManager.registerObserver(this.balancer);
+    //configurationManager.registerObserver(this.hfileCleaner);
     initialized = true;
 
     this.spaceQuotaViolationNotifier = createQuotaViolationNotifier();
