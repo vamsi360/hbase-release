@@ -63,6 +63,15 @@ EOF
         formatter.footer(start, count)
       end
 
+      def get_policy(status)
+        # Unwrap the violation policy if it exists
+        if status.isInViolation
+          status.getPolicy.name
+        else
+          'None'
+        end
+      end
+
       def accept?(table_name, desired_table=nil, desired_namespace=nil)
         # Check the table name if given one
         if desired_table and table_name.getQualifierAsString() != desired_table
