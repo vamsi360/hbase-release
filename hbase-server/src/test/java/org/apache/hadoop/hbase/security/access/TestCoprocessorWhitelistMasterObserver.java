@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -37,6 +38,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -108,7 +110,7 @@ public class TestCoprocessorWhitelistMasterObserver extends SecureTestUtil {
     UTIL.waitUntilAllRegionsAssigned(TEST_TABLE);
     Connection connection = ConnectionFactory.createConnection(conf);
     Table t = connection.getTable(TEST_TABLE);
-    HTableDescriptor htd = t.getTableDescriptor();
+    HTableDescriptor htd = new HTableDescriptor(t.getTableDescriptor());
     htd.addCoprocessor("net.clayb.hbase.coprocessor.NotWhitelisted",
       new Path(coprocessorPath),
       Coprocessor.PRIORITY_USER, null);
@@ -155,7 +157,7 @@ public class TestCoprocessorWhitelistMasterObserver extends SecureTestUtil {
     // coprocessor file
     admin.disableTable(TEST_TABLE);
     Table t = connection.getTable(TEST_TABLE);
-    HTableDescriptor htd = t.getTableDescriptor();
+    HTableDescriptor htd = new HTableDescriptor(t.getTableDescriptor());
     htd.addCoprocessor("net.clayb.hbase.coprocessor.Whitelisted",
       new Path(coprocessorPath),
       Coprocessor.PRIORITY_USER, null);
@@ -300,6 +302,9 @@ public class TestCoprocessorWhitelistMasterObserver extends SecureTestUtil {
       admin.listTables("^" + TEST_TABLE.getNameAsString() + "$"));
   }
 
+
+  public static class TestRegionObserver extends BaseRegionObserver {}
+
   /**
    * Test a table creation including a coprocessor path
    * which is on the classpath
@@ -320,7 +325,7 @@ public class TestCoprocessorWhitelistMasterObserver extends SecureTestUtil {
     HTableDescriptor htd = new HTableDescriptor(TEST_TABLE);
     HColumnDescriptor hcd = new HColumnDescriptor(TEST_FAMILY);
     htd.addFamily(hcd);
-    htd.addCoprocessor("org.apache.hadoop.hbase.coprocessor.BaseRegionObserver");
+    htd.addCoprocessor(TestRegionObserver.class.getName());
     Connection connection = ConnectionFactory.createConnection(conf);
     Admin admin = connection.getAdmin();
     LOG.info("Creating Table");
