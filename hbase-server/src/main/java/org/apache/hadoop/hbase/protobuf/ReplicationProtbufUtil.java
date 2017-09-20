@@ -33,11 +33,11 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.io.SizedCellScanner;
 import org.apache.hadoop.hbase.ipc.HBaseRpcController;
 import org.apache.hadoop.hbase.ipc.HBaseRpcControllerImpl;
-import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
+import org.apache.hadoop.hbase.wal.WALEdit;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.UnsafeByteOperations;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.AdminService;
@@ -109,7 +109,7 @@ public class ReplicationProtbufUtil {
     for (Entry entry: entries) {
       entryBuilder.clear();
       // TODO: this duplicates a lot in WALKey#getBuilder
-      WALProtos.WALKey.Builder keyBuilder = entryBuilder.getKeyBuilder();
+      WALProtos.WALEdit.Builder keyBuilder = entryBuilder.getEditBuilder();
       WALKey key = entry.getKey();
       keyBuilder.setEncodedRegionName(
           UnsafeByteOperations.unsafeWrap(encodedRegionName == null

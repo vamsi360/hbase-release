@@ -21,10 +21,10 @@
 -->
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>hbase</artifactId>
+    <artifactId>hbase-build-configuration</artifactId>
     <groupId>org.apache.hbase</groupId>
-    <version>2.0.0-alpha3-SNAPSHOT</version>
-    <relativePath>..</relativePath>
+    <version>2.0.0-alpha3</version>
+    <relativePath>../hbase-build-configuration</relativePath>
   </parent>
   <artifactId>hbase-server</artifactId>
   <name>Apache HBase - Server</name>
@@ -360,10 +360,6 @@
       <artifactId>hbase-common</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-annotations</artifactId>
-    </dependency>
-    <dependency>
       <!--Needed by the visiblity tags and acl CPEP things
            in here in hbase-server (that should be out in hbase-endpoints
            or integrated). -->
@@ -419,12 +415,18 @@
     </dependency>
     <!-- resource bundle only needed at build time -->
     <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase-resource-bundle</artifactId>
+      <version>${project.version}</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
     </dependency>
     <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>
@@ -493,6 +495,13 @@
       <groupId>org.glassfish.web</groupId>
       <artifactId>javax.servlet.jsp</artifactId>
     </dependency>
+    <!-- Specifically needed for jetty-jsp, included
+         to bypass version scanning that hits a bad repo
+         see HBASE-18831 -->
+    <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>javax.el</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
       <artifactId>jackson-core-asl</artifactId>
@@ -543,7 +552,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
-      <artifactId>commons-math</artifactId>
+      <artifactId>commons-math3</artifactId>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>

@@ -52,7 +52,7 @@ import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.ScannerContext;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.StoreScanner;
-import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.testclassification.ClientTests;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -255,15 +255,8 @@ public class TestAvoidCellReferencesIntoShippedBlocks {
   public static class CompactorRegionObserver implements RegionObserver {
     @Override
     public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c,
-        Store store, List<? extends KeyValueScanner> scanners, ScanType scanType,
-        long earliestPutTs, InternalScanner s) throws IOException {
-      return createCompactorScanner(store, scanners, scanType, earliestPutTs);
-    }
-
-    @Override
-    public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c,
-        Store store, List<? extends KeyValueScanner> scanners, ScanType scanType,
-        long earliestPutTs, InternalScanner s, CompactionRequest request) throws IOException {
+        Store store, List<? extends KeyValueScanner> scanners, ScanType scanType, long earliestPutTs,
+        InternalScanner s, CompactionLifeCycleTracker request, long readPoint) throws IOException {
       return createCompactorScanner(store, scanners, scanType, earliestPutTs);
     }
 

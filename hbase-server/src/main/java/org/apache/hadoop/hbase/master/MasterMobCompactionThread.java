@@ -32,11 +32,11 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.master.locking.LockManager;
-import org.apache.hadoop.hbase.master.locking.LockProcedure;
 import org.apache.hadoop.hbase.mob.MobUtils;
+import org.apache.hadoop.hbase.procedure2.LockType;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 
 /**
@@ -120,7 +120,7 @@ public class MasterMobCompactionThread {
     public void run() {
       // These locks are on dummy table names, and only used for compaction/mob file cleaning.
       final LockManager.MasterLock lock = master.getLockManager().createMasterLock(
-          MobUtils.getTableLockName(tableName), LockProcedure.LockType.EXCLUSIVE,
+          MobUtils.getTableLockName(tableName), LockType.EXCLUSIVE,
           this.getClass().getName() + ": mob compaction");
       try {
         for (ColumnFamilyDescriptor hcd : hcds) {

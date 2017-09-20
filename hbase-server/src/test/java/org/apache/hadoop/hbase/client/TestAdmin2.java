@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ClusterStatus.Option;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -44,8 +46,6 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
-import org.apache.hadoop.hbase.NotServingRegionException;
-import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
@@ -683,9 +683,15 @@ public class TestAdmin2 {
   }
 
   @Test(timeout = 300000)
-  public void testListProcedures() throws Exception {
-    ProcedureInfo[] procList = admin.listProcedures();
-    assertTrue(procList.length >= 0);
+  public void testGetProcedures() throws Exception {
+    String procList = admin.getProcedures();
+    assertTrue(procList.startsWith("["));
+  }
+
+  @Test(timeout = 300000)
+  public void testGetLocks() throws Exception {
+    String lockList = admin.getLocks();
+    assertTrue(lockList.startsWith("["));
   }
 
   /*
@@ -697,7 +703,8 @@ public class TestAdmin2 {
     assertTrue(drainingServers.isEmpty());
 
     // Drain all region servers.
-    Collection<ServerName> clusterServers = admin.getClusterStatus().getServers();
+    Collection<ServerName> clusterServers =
+        admin.getClusterStatus(EnumSet.of(Option.LIVE_SERVERS)).getServers();
     drainingServers = new ArrayList<>();
     for (ServerName server : clusterServers) {
       drainingServers.add(server);

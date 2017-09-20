@@ -56,8 +56,8 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.servlet.http.HttpServlet;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -84,7 +84,7 @@ import org.apache.hadoop.hbase.TableDescriptors;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.YouAreDeadException;
 import org.apache.hadoop.hbase.ZNodeClearer;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionUtils;
@@ -127,6 +127,7 @@ import org.apache.hadoop.hbase.quotas.QuotaUtil;
 import org.apache.hadoop.hbase.quotas.RegionServerRpcQuotaManager;
 import org.apache.hadoop.hbase.quotas.RegionServerSpaceQuotaManager;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionConfiguration;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionProgress;
 import org.apache.hadoop.hbase.regionserver.handler.CloseMetaHandler;
 import org.apache.hadoop.hbase.regionserver.handler.CloseRegionHandler;
@@ -140,6 +141,9 @@ import org.apache.hadoop.hbase.replication.regionserver.ReplicationLoad;
 import org.apache.hadoop.hbase.security.Superusers;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.UserProvider;
+import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
+import org.apache.hadoop.hbase.shaded.com.google.common.base.Preconditions;
+import org.apache.hadoop.hbase.shaded.com.google.common.collect.Maps;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.BlockingRpcChannel;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.RpcController;
 import org.apache.hadoop.hbase.shaded.com.google.protobuf.ServiceException;
@@ -209,10 +213,6 @@ import org.apache.hadoop.util.StringUtils;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.data.Stat;
-
-import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
-import org.apache.hadoop.hbase.shaded.com.google.common.base.Preconditions;
-import org.apache.hadoop.hbase.shaded.com.google.common.collect.Maps;
 
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
@@ -1586,7 +1586,7 @@ public class HRegionServer extends HasThread implements
       // Save it in a file, this will allow to see if we crash
       ZNodeClearer.writeMyEphemeralNodeOnDisk(getMyEphemeralNodePath());
 
-      this.walFactory = setupWALAndReplication();
+      setupWALAndReplication();
       // Init in here rather than in constructor after thread name has been set
       this.metricsRegionServer = new MetricsRegionServer(new MetricsRegionServerWrapperImpl(this));
       this.metricsTable = new MetricsTable(new MetricsTableWrapperAggregateImpl(this));
@@ -1686,7 +1686,7 @@ public class HRegionServer extends HasThread implements
     int totalStaticBloomSizeKB = 0;
     long totalCompactingKVs = 0;
     long currentCompactedKVs = 0;
-    List<Store> storeList = r.getStores();
+    List<? extends Store> storeList = r.getStores();
     stores += storeList.size();
     for (Store store : storeList) {
       storefiles += store.getStorefilesCount();
@@ -1772,27 +1772,32 @@ public class HRegionServer extends HasThread implements
     @Override
     protected void chore() {
       for (Region r : this.instance.onlineRegions.values()) {
-        if (r == null)
+        if (r == null) {
           continue;
-        for (Store s : r.getStores()) {
+        }
+        HRegion hr = (HRegion) r;
+        for (HStore s : hr.stores.values()) {
           try {
             long multiplier = s.getCompactionCheckMultiplier();
             assert multiplier > 0;
-            if (iteration % multiplier != 0) continue;
+            if (iteration % multiplier != 0) {
+              continue;
+            }
             if (s.needsCompaction()) {
               // Queue a compaction. Will recognize if major is needed.
-              this.instance.compactSplitThread.requestSystemCompaction(r, s, getName()
-                  + " requests compaction");
+              this.instance.compactSplitThread.requestSystemCompaction(hr, s,
+                getName() + " requests compaction");
             } else if (s.isMajorCompaction()) {
               s.triggerMajorCompaction();
-              if (majorCompactPriority == DEFAULT_PRIORITY
-                  || majorCompactPriority > ((HRegion)r).getCompactPriority()) {
-                this.instance.compactSplitThread.requestCompaction(r, s, getName()
-                    + " requests major compaction; use default priority", null);
+              if (majorCompactPriority == DEFAULT_PRIORITY ||
+                  majorCompactPriority > hr.getCompactPriority()) {
+                this.instance.compactSplitThread.requestCompaction(hr, s,
+                  getName() + " requests major compaction; use default priority", Store.NO_PRIORITY,
+                  CompactionLifeCycleTracker.DUMMY, null);
               } else {
-                this.instance.compactSplitThread.requestCompaction(r, s, getName()
-                    + " requests major compaction; use configured priority",
-                  this.majorCompactPriority, null, null);
+                this.instance.compactSplitThread.requestCompaction(hr, s,
+                  getName() + " requests major compaction; use configured priority",
+                  this.majorCompactPriority, CompactionLifeCycleTracker.DUMMY, null);
               }
             }
           } catch (IOException e) {
@@ -1850,13 +1855,12 @@ public class HRegionServer extends HasThread implements
   /**
    * Setup WAL log and replication if enabled.
    * Replication setup is done in here because it wants to be hooked up to WAL.
-   * @return A WAL instance.
    * @throws IOException
    */
-  private WALFactory setupWALAndReplication() throws IOException {
+  private void setupWALAndReplication() throws IOException {
     // TODO Replication make assumptions here based on the default filesystem impl
-    final Path oldLogDir = new Path(walRootDir, HConstants.HREGION_OLDLOGDIR_NAME);
-    final String logName = AbstractFSWALProvider.getWALDirectoryName(this.serverName.toString());
+    Path oldLogDir = new Path(walRootDir, HConstants.HREGION_OLDLOGDIR_NAME);
+    String logName = AbstractFSWALProvider.getWALDirectoryName(this.serverName.toString());
 
     Path logDir = new Path(walRootDir, logName);
     if (LOG.isDebugEnabled()) LOG.debug("logDir=" + logDir);
@@ -1870,7 +1874,7 @@ public class HRegionServer extends HasThread implements
     createNewReplicationInstance(conf, this, this.walFs, logDir, oldLogDir);
 
     // listeners the wal factory will add to wals it creates.
-    final List<WALActionsListener> listeners = new ArrayList<>();
+    List<WALActionsListener> listeners = new ArrayList<>();
     listeners.add(new MetricsWAL());
     if (this.replicationSourceHandler != null &&
         this.replicationSourceHandler.getWALActionsListener() != null) {
@@ -1878,7 +1882,21 @@ public class HRegionServer extends HasThread implements
       listeners.add(this.replicationSourceHandler.getWALActionsListener());
     }
 
-    return new WALFactory(conf, listeners, serverName.toString());
+    // There is a cyclic dependency between ReplicationSourceHandler and WALFactory.
+    // We use WALActionsListener to get the newly rolled WALs, so we need to get the
+    // WALActionsListeners from ReplicationSourceHandler before constructing WALFactory. And then
+    // ReplicationSourceHandler need to use WALFactory get the length of the wal file being written.
+    // So we here we need to construct WALFactory first, and then pass it to the initialize method
+    // of ReplicationSourceHandler.
+    WALFactory factory = new WALFactory(conf, listeners, serverName.toString());
+    this.walFactory = factory;
+    if (this.replicationSourceHandler != null) {
+      this.replicationSourceHandler.initialize(this, walFs, logDir, oldLogDir, factory);
+    }
+    if (this.replicationSinkHandler != null &&
+        this.replicationSinkHandler != this.replicationSourceHandler) {
+      this.replicationSinkHandler.initialize(this, walFs, logDir, oldLogDir, factory);
+    }
   }
 
   public MetricsRegionServer getRegionServerMetrics() {
@@ -2146,15 +2164,14 @@ public class HRegionServer extends HasThread implements
   @Override
   public void postOpenDeployTasks(final PostOpenDeployContext context)
       throws KeeperException, IOException {
-    Region r = context.getRegion();
+    HRegion r = (HRegion) context.getRegion();
     long masterSystemTime = context.getMasterSystemTime();
-    Preconditions.checkArgument(r instanceof HRegion, "r must be an HRegion");
     rpcServices.checkOpen();
     LOG.info("Post open deploy tasks for " + r.getRegionInfo().getRegionNameAsString());
     // Do checks to see if we need to compact (references or too many files)
-    for (Store s : r.getStores()) {
+    for (HStore s : r.stores.values()) {
       if (s.hasReferences() || s.needsCompaction()) {
-       this.compactSplitThread.requestSystemCompaction(r, s, "Opening Region");
+        this.compactSplitThread.requestSystemCompaction(r, s, "Opening Region");
       }
     }
     long openSeqNum = r.getOpenSeqNum();
@@ -2863,11 +2880,6 @@ public class HRegionServer extends HasThread implements
     return serverName;
   }
 
-  @Override
-  public CompactionRequestor getCompactionRequester() {
-    return this.compactSplitThread;
-  }
-
   public RegionServerCoprocessorHost getRegionServerCoprocessorHost(){
     return this.rsHost;
   }
@@ -2899,7 +2911,7 @@ public class HRegionServer extends HasThread implements
   /**
    * Load the replication service objects, if any
    */
-  static private void createNewReplicationInstance(Configuration conf,
+  private static void createNewReplicationInstance(Configuration conf,
     HRegionServer server, FileSystem walFs, Path walDir, Path oldWALDir) throws IOException{
 
     if ((server instanceof HMaster) && (!LoadBalancer.isTablesOnMaster(conf) ||
@@ -2909,47 +2921,41 @@ public class HRegionServer extends HasThread implements
 
     // read in the name of the source replication class from the config file.
     String sourceClassname = conf.get(HConstants.REPLICATION_SOURCE_SERVICE_CLASSNAME,
-                               HConstants.REPLICATION_SERVICE_CLASSNAME_DEFAULT);
+      HConstants.REPLICATION_SERVICE_CLASSNAME_DEFAULT);
 
     // read in the name of the sink replication class from the config file.
     String sinkClassname = conf.get(HConstants.REPLICATION_SINK_SERVICE_CLASSNAME,
-                             HConstants.REPLICATION_SERVICE_CLASSNAME_DEFAULT);
+      HConstants.REPLICATION_SERVICE_CLASSNAME_DEFAULT);
 
     // If both the sink and the source class names are the same, then instantiate
     // only one object.
     if (sourceClassname.equals(sinkClassname)) {
-      server.replicationSourceHandler = (ReplicationSourceService)
-                                         newReplicationInstance(sourceClassname,
-                                         conf, server, walFs, walDir, oldWALDir);
-      server.replicationSinkHandler = (ReplicationSinkService)
-                                         server.replicationSourceHandler;
+      server.replicationSourceHandler =
+          (ReplicationSourceService) newReplicationInstance(sourceClassname, conf, server, walFs,
+            walDir, oldWALDir);
+      server.replicationSinkHandler = (ReplicationSinkService) server.replicationSourceHandler;
     } else {
-      server.replicationSourceHandler = (ReplicationSourceService)
-                                         newReplicationInstance(sourceClassname,
-                                         conf, server, walFs, walDir, oldWALDir);
-      server.replicationSinkHandler = (ReplicationSinkService)
-                                         newReplicationInstance(sinkClassname,
-                                         conf, server, walFs, walDir, oldWALDir);
+      server.replicationSourceHandler =
+          (ReplicationSourceService) newReplicationInstance(sourceClassname, conf, server, walFs,
+            walDir, oldWALDir);
+      server.replicationSinkHandler = (ReplicationSinkService) newReplicationInstance(sinkClassname,
+        conf, server, walFs, walDir, oldWALDir);
     }
   }
 
-  static private ReplicationService newReplicationInstance(String classname,
-    Configuration conf, HRegionServer server, FileSystem walFs, Path logDir,
-    Path oldLogDir) throws IOException{
-
-    Class<?> clazz = null;
+  private static ReplicationService newReplicationInstance(String classname, Configuration conf,
+      HRegionServer server, FileSystem walFs, Path logDir, Path oldLogDir) throws IOException {
+    Class<? extends ReplicationService> clazz = null;
     try {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-      clazz = Class.forName(classname, true, classLoader);
+      clazz = Class.forName(classname, true, classLoader).asSubclass(ReplicationService.class);
     } catch (java.lang.ClassNotFoundException nfe) {
       throw new IOException("Could not find class for " + classname);
     }
 
-    // create an instance of the replication object.
-    ReplicationService service = (ReplicationService)
-                              ReflectionUtils.newInstance(clazz, conf);
-    service.initialize(server, walFs, logDir, oldLogDir);
-    return service;
+    // create an instance of the replication object, but do not initialize it here as we need to use
+    // WALFactory when initializing.
+    return ReflectionUtils.newInstance(clazz, conf);
   }
 
   /**

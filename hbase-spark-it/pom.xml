@@ -21,10 +21,10 @@
 -->
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>hbase</artifactId>
+    <artifactId>hbase-build-configuration</artifactId>
     <groupId>org.apache.hbase</groupId>
-    <version>2.0.0-alpha3-SNAPSHOT</version>
-    <relativePath>..</relativePath>
+    <version>2.0.0-alpha3</version>
+    <relativePath>../hbase-build-configuration</relativePath>
   </parent>
 
   <artifactId>hbase-spark-it</artifactId>
@@ -213,16 +213,6 @@
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-it</artifactId>
       <type>test-jar</type>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-hadoop-compat</artifactId>
-        <exclusions>
-          <exclusion>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-          </exclusion>
-        </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hbase</groupId>

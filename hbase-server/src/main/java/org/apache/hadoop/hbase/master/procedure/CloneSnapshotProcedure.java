@@ -19,8 +19,6 @@
 package org.apache.hadoop.hbase.master.procedure;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -36,7 +34,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.MetaTableAccessor;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.errorhandling.ForeignException;
@@ -47,6 +45,7 @@ import org.apache.hadoop.hbase.master.MetricsSnapshot;
 import org.apache.hadoop.hbase.master.procedure.CreateTableProcedure.CreateHdfsRegions;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.monitoring.TaskMonitor;
+import org.apache.hadoop.hbase.procedure2.ProcedureStateSerializer;
 import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProcedureProtos;
@@ -244,8 +243,9 @@ public class CloneSnapshotProcedure
   }
 
   @Override
-  public void serializeStateData(final OutputStream stream) throws IOException {
-    super.serializeStateData(stream);
+  protected void serializeStateData(ProcedureStateSerializer serializer)
+      throws IOException {
+    super.serializeStateData(serializer);
 
     MasterProcedureProtos.CloneSnapshotStateData.Builder cloneSnapshotMsg =
       MasterProcedureProtos.CloneSnapshotStateData.newBuilder()
@@ -271,15 +271,16 @@ public class CloneSnapshotProcedure
         cloneSnapshotMsg.addParentToChildRegionsPairList(parentToChildrenPair);
       }
     }
-    cloneSnapshotMsg.build().writeDelimitedTo(stream);
+    serializer.serialize(cloneSnapshotMsg.build());
   }
 
   @Override
-  public void deserializeStateData(final InputStream stream) throws IOException {
-    super.deserializeStateData(stream);
+  protected void deserializeStateData(ProcedureStateSerializer serializer)
+      throws IOException {
+    super.deserializeStateData(serializer);
 
     MasterProcedureProtos.CloneSnapshotStateData cloneSnapshotMsg =
-      MasterProcedureProtos.CloneSnapshotStateData.parseDelimitedFrom(stream);
+        serializer.deserialize(MasterProcedureProtos.CloneSnapshotStateData.class);
     setUser(MasterProcedureUtil.toUserInfo(cloneSnapshotMsg.getUserInfo()));
     snapshot = cloneSnapshotMsg.getSnapshot();
     tableDescriptor = ProtobufUtil.toTableDescriptor(cloneSnapshotMsg.getTableSchema());

@@ -28,18 +28,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MetaMutationAnnotation;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
-import org.apache.hadoop.hbase.client.ImmutableHColumnDescriptor;
-import org.apache.hadoop.hbase.client.ImmutableHTableDescriptor;
 import org.apache.hadoop.hbase.client.MasterSwitchType;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.TableDescriptor;
@@ -54,7 +49,9 @@ import org.apache.hadoop.hbase.master.locking.LockProcedure;
 import org.apache.hadoop.hbase.master.procedure.MasterProcedureEnv;
 import org.apache.hadoop.hbase.metrics.MetricRegistry;
 import org.apache.hadoop.hbase.net.Address;
-import org.apache.hadoop.hbase.procedure2.LockInfo;
+import org.apache.hadoop.hbase.procedure2.LockType;
+import org.apache.hadoop.hbase.procedure2.LockedResource;
+import org.apache.hadoop.hbase.procedure2.Procedure;
 import org.apache.hadoop.hbase.procedure2.ProcedureExecutor;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.security.User;
@@ -274,7 +271,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preCreateTableHandler(ctx, toImmutableHTableDescriptor(htd), regions);
         oserver.preCreateTableAction(ctx, htd, regions);
       }
     });
@@ -286,7 +282,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postCreateTableHandler(ctx, toImmutableHTableDescriptor(htd), regions);
         oserver.postCompletedCreateTableAction(ctx, htd, regions);
       }
     });
@@ -317,7 +312,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preDeleteTableHandler(ctx, tableName);
         oserver.preDeleteTableAction(ctx, tableName);
       }
     });
@@ -329,7 +323,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postDeleteTableHandler(ctx, tableName);
         oserver.postCompletedDeleteTableAction(ctx, tableName);
       }
     });
@@ -360,7 +353,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preTruncateTableHandler(ctx, tableName);
         oserver.preTruncateTableAction(ctx, tableName);
       }
     });
@@ -372,7 +364,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postTruncateTableHandler(ctx, tableName);
         oserver.postCompletedTruncateTableAction(ctx, tableName);
       }
     });
@@ -407,7 +398,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preModifyTableHandler(ctx, tableName, toImmutableHTableDescriptor(htd));
         oserver.preModifyTableAction(ctx, tableName, htd);
       }
     });
@@ -420,7 +410,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postModifyTableHandler(ctx, tableName, toImmutableHTableDescriptor(htd));
         oserver.postCompletedModifyTableAction(ctx, tableName, htd);
       }
     });
@@ -432,7 +421,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preAddColumn(ctx, tableName, toImmutableHColumnDescriptor(columnFamily));
         oserver.preAddColumnFamily(ctx, tableName, columnFamily);
       }
     });
@@ -444,7 +432,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postAddColumn(ctx, tableName, toImmutableHColumnDescriptor(columnFamily));
         oserver.postAddColumnFamily(ctx, tableName, columnFamily);
       }
     });
@@ -459,7 +446,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preAddColumnHandler(ctx, tableName, toImmutableHColumnDescriptor(columnFamily));
         oserver.preAddColumnFamilyAction(ctx, tableName, columnFamily);
       }
     });
@@ -474,7 +460,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postAddColumnHandler(ctx, tableName, toImmutableHColumnDescriptor(columnFamily));
         oserver.postCompletedAddColumnFamilyAction(ctx, tableName, columnFamily);
       }
     });
@@ -486,7 +471,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preModifyColumn(ctx, tableName, toImmutableHColumnDescriptor(columnFamily));
         oserver.preModifyColumnFamily(ctx, tableName, columnFamily);
       }
     });
@@ -498,7 +482,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postModifyColumn(ctx, tableName, toImmutableHColumnDescriptor(columnFamily));
         oserver.postModifyColumnFamily(ctx, tableName, columnFamily);
       }
     });
@@ -512,7 +495,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preModifyColumnHandler(ctx, tableName, toImmutableHColumnDescriptor(columnFamily));
         oserver.preModifyColumnFamilyAction(ctx, tableName, columnFamily);
       }
     });
@@ -526,7 +508,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postModifyColumnHandler(ctx, tableName, toImmutableHColumnDescriptor(columnFamily));
         oserver.postCompletedModifyColumnFamilyAction(ctx, tableName, columnFamily);
       }
     });
@@ -538,7 +519,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preDeleteColumn(ctx, tableName, columnFamily);
         oserver.preDeleteColumnFamily(ctx, tableName, columnFamily);
       }
     });
@@ -550,7 +530,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postDeleteColumn(ctx, tableName, columnFamily);
         oserver.postDeleteColumnFamily(ctx, tableName, columnFamily);
       }
     });
@@ -565,7 +544,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preDeleteColumnHandler(ctx, tableName, columnFamily);
         oserver.preDeleteColumnFamilyAction(ctx, tableName, columnFamily);
       }
     });
@@ -577,7 +555,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postDeleteColumnHandler(ctx, tableName, columnFamily);
         oserver.postCompletedDeleteColumnFamilyAction(ctx, tableName, columnFamily);
       }
     });
@@ -608,7 +585,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preEnableTableHandler(ctx, tableName);
         oserver.preEnableTableAction(ctx, tableName);
       }
     });
@@ -620,7 +596,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postEnableTableHandler(ctx, tableName);
         oserver.postCompletedEnableTableAction(ctx, tableName);
       }
     });
@@ -651,7 +626,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preDisableTableHandler(ctx, tableName);
         oserver.preDisableTableAction(ctx, tableName);
       }
     });
@@ -663,7 +637,6 @@ public class MasterCoprocessorHost
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postDisableTableHandler(ctx, tableName);
         oserver.postCompletedDisableTableAction(ctx, tableName);
       }
     });
@@ -691,42 +664,42 @@ public class MasterCoprocessorHost
     });
   }
 
-  public boolean preListProcedures() throws IOException {
+  public boolean preGetProcedures() throws IOException {
     return execOperation(coprocessors.isEmpty() ? null : new CoprocessorOperation() {
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preListProcedures(ctx);
+        oserver.preGetProcedures(ctx);
       }
     });
   }
 
-  public void postListProcedures(final List<ProcedureInfo> procInfoList) throws IOException {
+  public void postGetProcedures(final List<Procedure<?>> procInfoList) throws IOException {
     execOperation(coprocessors.isEmpty() ? null : new CoprocessorOperation() {
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postListProcedures(ctx, procInfoList);
+        oserver.postGetProcedures(ctx, procInfoList);
       }
     });
   }
 
-  public boolean preListLocks() throws IOException {
+  public boolean preGetLocks() throws IOException {
     return execOperation(coprocessors.isEmpty() ? null : new CoprocessorOperation() {
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preListLocks(ctx);
+        oserver.preGetLocks(ctx);
       }
     });
   }
 
-  public void postListLocks(final List<LockInfo> lockInfoList) throws IOException {
+  public void postGetLocks(final List<LockedResource> lockedResources) throws IOException {
     execOperation(coprocessors.isEmpty() ? null : new CoprocessorOperation() {
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postListLocks(ctx, lockInfoList);
+        oserver.postGetLocks(ctx, lockedResources);
       }
     });
   }
@@ -1837,7 +1810,7 @@ public class MasterCoprocessorHost
   }
 
   public void preRequestLock(String namespace, TableName tableName, HRegionInfo[] regionInfos,
-      LockProcedure.LockType type, String description) throws IOException {
+      LockType type, String description) throws IOException {
     execOperation(coprocessors.isEmpty() ? null : new CoprocessorOperation() {
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
@@ -1848,7 +1821,7 @@ public class MasterCoprocessorHost
   }
 
   public void postRequestLock(String namespace, TableName tableName, HRegionInfo[] regionInfos,
-      LockProcedure.LockType type, String description) throws IOException {
+      LockType type, String description) throws IOException {
     execOperation(coprocessors.isEmpty() ? null : new CoprocessorOperation() {
       @Override
       public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
@@ -1878,11 +1851,43 @@ public class MasterCoprocessorHost
     });
   }
 
-  private static ImmutableHTableDescriptor toImmutableHTableDescriptor(TableDescriptor desc) {
-    return new ImmutableHTableDescriptor(desc);
+  public void preListDeadServers() throws IOException {
+    execOperation(coprocessors.isEmpty() ? null : new CoprocessorOperation() {
+      @Override
+      public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
+              throws IOException {
+        oserver.preListDeadServers(ctx);
+      }
+    });
   }
 
-  private static ImmutableHColumnDescriptor toImmutableHColumnDescriptor(ColumnFamilyDescriptor desc) {
-    return new ImmutableHColumnDescriptor(desc);
+  public void postListDeadServers() throws IOException {
+    execOperation(coprocessors.isEmpty() ? null : new CoprocessorOperation() {
+      @Override
+      public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
+              throws IOException {
+        oserver.postListDeadServers(ctx);
+      }
+    });
+  }
+
+  public void preClearDeadServers() throws IOException {
+    execOperation(coprocessors.isEmpty() ? null : new CoprocessorOperation() {
+      @Override
+      public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
+              throws IOException {
+        oserver.preClearDeadServers(ctx);
+      }
+    });
+  }
+
+  public void postClearDeadServers() throws IOException {
+    execOperation(coprocessors.isEmpty() ? null : new CoprocessorOperation() {
+      @Override
+      public void call(MasterObserver oserver, ObserverContext<MasterCoprocessorEnvironment> ctx)
+              throws IOException {
+        oserver.postClearDeadServers(ctx);
+      }
+    });
   }
 }

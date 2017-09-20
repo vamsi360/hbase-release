@@ -20,7 +20,7 @@ package org.apache.hadoop.hbase.client;
 import java.util.Map;
 
 import org.apache.hadoop.hbase.shaded.com.google.common.collect.Maps;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
@@ -35,6 +35,9 @@ import org.apache.hadoop.hbase.shaded.com.google.common.collect.ArrayListMultima
 import org.apache.hadoop.hbase.shaded.com.google.common.collect.ListMultimap;
 import org.apache.hadoop.hbase.util.Bytes;
 
+/**
+ * Base class for HBase read operations; e.g. Scan and Get.
+ */
 @InterfaceAudience.Public
 public abstract class Query extends OperationWithAttributes {
   private static final String ISOLATION_LEVEL = "_isolationlevel_";

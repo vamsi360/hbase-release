@@ -28,7 +28,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
@@ -244,7 +244,7 @@ public final class HConstants {
   public static final String ZK_SESSION_TIMEOUT = "zookeeper.session.timeout";
 
   /** Default value for ZooKeeper session timeout */
-  public static final int DEFAULT_ZK_SESSION_TIMEOUT = 180 * 1000;
+  public static final int DEFAULT_ZK_SESSION_TIMEOUT = 90 * 1000;
 
   /** Parameter name for port region server listens on. */
   public static final String REGIONSERVER_PORT = "hbase.regionserver.port";
@@ -435,14 +435,6 @@ public final class HConstants {
   // and meta regions always need to be on-line, this ensures that they will
   // be the first to be reassigned if the server(s) they are being served by
   // should go down.
-
-
-  /**
-   * The hbase:meta table's name.
-   * @deprecated For upgrades of 0.94 to 0.96
-   */
-  @Deprecated  // for compat from 0.94 -> 0.96.
-  public static final byte[] META_TABLE_NAME = TableName.META_TABLE_NAME.getName();
 
   public static final String BASE_NAMESPACE_DIR = "data";
 
@@ -798,7 +790,7 @@ public final class HConstants {
   /**
    * Default value of {@link #HBASE_CLIENT_RETRIES_NUMBER}.
    */
-  public static final int DEFAULT_HBASE_CLIENT_RETRIES_NUMBER = 31;
+  public static final int DEFAULT_HBASE_CLIENT_RETRIES_NUMBER = 35;
 
   /**
    * Parameter name to set the default scanner caching for all clients.
@@ -1356,7 +1348,7 @@ public final class HConstants {
 
   public static final String SNAPSHOT_RESTORE_TAKE_FAILSAFE_SNAPSHOT =
       "hbase.snapshot.restore.take.failsafe.snapshot";
-  public static final boolean DEFAULT_SNAPSHOT_RESTORE_TAKE_FAILSAFE_SNAPSHOT = false;
+  public static final boolean DEFAULT_SNAPSHOT_RESTORE_TAKE_FAILSAFE_SNAPSHOT = true;
 
   public static final String SNAPSHOT_RESTORE_FAILSAFE_NAME =
       "hbase.snapshot.restore.failsafe.name";

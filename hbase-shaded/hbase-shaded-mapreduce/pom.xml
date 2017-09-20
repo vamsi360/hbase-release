@@ -24,7 +24,7 @@
     <parent>
         <artifactId>hbase-shaded</artifactId>
         <groupId>org.apache.hbase</groupId>
-        <version>2.0.0-alpha3-SNAPSHOT</version>
+        <version>2.0.0-alpha3</version>
         <relativePath>..</relativePath>
     </parent>
     <artifactId>hbase-shaded-mapreduce</artifactId>
@@ -43,6 +43,20 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
                     <skipAssembly>true</skipAssembly>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <!--Include the Driver class as the 'main'.
+                                 Executing the jar will then show a list of the basic MR jobs.
+                                 -->
+                            <mainClass>org/apache/hadoop/hbase/mapreduce/Driver</mainClass>
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>
@@ -84,6 +98,18 @@
               </exclusion>
               <!-- Jetty not used by our MR support -->
               <exclusion>
+                <groupId>javax.servlet</groupId>
+                <artifactId>javax.servlet-api</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-http</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-security</artifactId>
+              </exclusion>
+              <exclusion>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-server</artifactId>
               </exclusion>
@@ -104,8 +130,16 @@
                 <artifactId>jetty-jsp</artifactId>
               </exclusion>
               <exclusion>
+                <groupId>org.glassfish</groupId>
+                <artifactId>javax.el</artifactId>
+              </exclusion>
+              <exclusion>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-webapp</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.glassfish.web</groupId>
+                <artifactId>javax.servlet.jsp</artifactId>
               </exclusion>
               <exclusion>
                 <groupId>org.glassfish.jersey.containers</groupId>

@@ -50,6 +50,7 @@ import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.regionserver.ChunkCreator;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
+import org.apache.hadoop.hbase.regionserver.HStore;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.KeyValueScanner;
 import org.apache.hadoop.hbase.regionserver.MemStoreLABImpl;
@@ -61,6 +62,8 @@ import org.apache.hadoop.hbase.regionserver.ScannerContext;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.StoreScanner;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionContext;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.regionserver.throttle.ThroughputController;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.testclassification.CoprocessorTests;
@@ -139,7 +142,8 @@ public class TestRegionObserverScannerOpenHook {
 
     @Override
     public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c,
-        Store store, List<KeyValueScanner> scanners, InternalScanner s) throws IOException {
+        Store store, List<KeyValueScanner> scanners, InternalScanner s, long readPoint)
+        throws IOException {
       scanners.forEach(KeyValueScanner::close);
       return NO_DATA;
     }
@@ -153,7 +157,8 @@ public class TestRegionObserverScannerOpenHook {
     @Override
     public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c,
         Store store, List<? extends KeyValueScanner> scanners, ScanType scanType,
-        long earliestPutTs, InternalScanner s) throws IOException {
+        long earliestPutTs, InternalScanner s, CompactionLifeCycleTracker tracker, long readPoint)
+        throws IOException {
       scanners.forEach(KeyValueScanner::close);
       return NO_DATA;
     }
@@ -249,7 +254,7 @@ public class TestRegionObserverScannerOpenHook {
     }
 
     @Override
-    public boolean compact(CompactionContext compaction, Store store,
+    public boolean compact(CompactionContext compaction, HStore store,
         ThroughputController throughputController) throws IOException {
       boolean ret = super.compact(compaction, store, throughputController);
       if (ret) compactionStateChangeLatch.countDown();
@@ -257,7 +262,7 @@ public class TestRegionObserverScannerOpenHook {
     }
 
     @Override
-    public boolean compact(CompactionContext compaction, Store store,
+    public boolean compact(CompactionContext compaction, HStore store,
         ThroughputController throughputController, User user) throws IOException {
       boolean ret = super.compact(compaction, store, throughputController, user);
       if (ret) compactionStateChangeLatch.countDown();

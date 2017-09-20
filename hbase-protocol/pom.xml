@@ -21,10 +21,10 @@
     -->
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>hbase</artifactId>
+    <artifactId>hbase-build-configuration</artifactId>
     <groupId>org.apache.hbase</groupId>
-    <version>2.0.0-alpha3-SNAPSHOT</version>
-    <relativePath>..</relativePath>
+    <version>2.0.0-alpha3</version>
+    <relativePath>../hbase-build-configuration</relativePath>
   </parent>
   <artifactId>hbase-protocol</artifactId>
   <name>Apache HBase - Protocol</name>
@@ -114,17 +114,6 @@
     </pluginManagement>
   </build>
   <dependencies>
-    <!-- Intra-project dependencies -->
-    <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase-annotations</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>jdk.tools</groupId>
-          <artifactId>jdk.tools</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
     <!-- General dependencies -->
     <dependency>
       <groupId>com.google.protobuf</groupId>

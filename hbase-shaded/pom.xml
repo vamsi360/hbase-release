@@ -21,10 +21,10 @@
       -->
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>hbase</artifactId>
+        <artifactId>hbase-build-configuration</artifactId>
         <groupId>org.apache.hbase</groupId>
-        <version>2.0.0-alpha3-SNAPSHOT</version>
-        <relativePath>..</relativePath>
+        <version>2.0.0-alpha3</version>
+        <relativePath>../hbase-build-configuration</relativePath>
     </parent>
     <artifactId>hbase-shaded</artifactId>
     <name>Apache HBase - Shaded</name>
@@ -141,6 +141,7 @@
                                         <exclude>com.google.code.findbugs:*</exclude>
                                         <exclude>com.github.stephenc.findbugs:*</exclude>
                                         <exclude>org.apache.htrace:*</exclude>
+                                        <exclude>org.apache.yetus:*</exclude>
                                         <exclude>log4j:*</exclude>
                                         <exclude>commons-logging:*</exclude>
                                     </excludes>
@@ -316,6 +317,10 @@
                                     <relocation>
                                         <pattern>org.apache.commons.net</pattern>
                                         <shadedPattern>org.apache.hadoop.hbase.shaded.org.apache.commons.net</shadedPattern>
+                                    </relocation>
+                                    <relocation>
+                                        <pattern>org.apache.commons.lang</pattern>
+                                        <shadedPattern>org.apache.hadoop.hbase.shaded.org.apache.commons.lang</shadedPattern>
                                     </relocation>
                                     <relocation>
                                         <pattern>org.apache.commons.lang3</pattern>

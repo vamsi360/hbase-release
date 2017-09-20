@@ -1,4 +1,4 @@
-/*
+/**
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,6 +19,9 @@
 
 package org.apache.hadoop.hbase.regionserver;
 
+import com.google.protobuf.Message;
+import com.google.protobuf.Service;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceMap;
+import org.apache.commons.collections4.map.AbstractReferenceMap;
+import org.apache.commons.collections4.map.ReferenceMap;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,14 +41,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseInterfaceAudience;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.classification.InterfaceStability;
+import org.apache.yetus.audience.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceStability;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Durability;
@@ -65,26 +68,24 @@ import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver.MutationType;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
-import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.io.FSDataInputStreamWrapper;
 import org.apache.hadoop.hbase.io.Reference;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.metrics.MetricRegistry;
 import org.apache.hadoop.hbase.regionserver.Region.Operation;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.regionserver.querymatcher.DeleteTracker;
-import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.CoprocessorClassLoader;
 import org.apache.hadoop.hbase.util.Pair;
+import org.apache.hadoop.hbase.wal.WALEdit;
 import org.apache.hadoop.hbase.wal.WALKey;
 
 import org.apache.hadoop.hbase.shaded.com.google.common.collect.ImmutableList;
 import org.apache.hadoop.hbase.shaded.com.google.common.collect.Lists;
-import com.google.protobuf.Message;
-import com.google.protobuf.Service;
 
 /**
  * Implements the coprocessor environment and runtime support for coprocessors
@@ -97,8 +98,9 @@ public class RegionCoprocessorHost
 
   private static final Log LOG = LogFactory.getLog(RegionCoprocessorHost.class);
   // The shared data map
-  private static ReferenceMap sharedDataMap =
-      new ReferenceMap(AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK);
+  private static final ReferenceMap<String, ConcurrentMap<String, Object>> SHARED_DATA_MAP =
+      new ReferenceMap<>(AbstractReferenceMap.ReferenceStrength.HARD,
+          AbstractReferenceMap.ReferenceStrength.WEAK);
 
   // optimization: no need to call postScannerFilterRow, if no coprocessor implements it
   private final boolean hasCustomPostScannerFilterRow;
@@ -401,14 +403,11 @@ public class RegionCoprocessorHost
     }
     ConcurrentMap<String, Object> classData;
     // make sure only one thread can add maps
-    synchronized (sharedDataMap) {
+    synchronized (SHARED_DATA_MAP) {
       // as long as at least one RegionEnvironment holds on to its classData it will
       // remain in this map
-      classData = (ConcurrentMap<String, Object>)sharedDataMap.get(implClass.getName());
-      if (classData == null) {
-        classData = new ConcurrentHashMap<>();
-        sharedDataMap.put(implClass.getName(), classData);
-      }
+      classData =
+          SHARED_DATA_MAP.computeIfAbsent(implClass.getName(), k -> new ConcurrentHashMap<>());
     }
     return new RegionEnvironment(instance, priority, seq, conf, region,
         rsServices, classData);
@@ -501,18 +500,18 @@ public class RegionCoprocessorHost
   /**
    * See
    * {@link RegionObserver#preCompactScannerOpen(ObserverContext, Store, List, ScanType, long,
-   *   InternalScanner, CompactionRequest, long)}
+   *   InternalScanner, CompactionLifeCycleTracker, long)}
    */
-  public InternalScanner preCompactScannerOpen(final Store store,
-      final List<StoreFileScanner> scanners, final ScanType scanType, final long earliestPutTs,
-      final CompactionRequest request, final User user, final long readPoint) throws IOException {
+  public InternalScanner preCompactScannerOpen(Store store, List<StoreFileScanner> scanners,
+      ScanType scanType, long earliestPutTs, CompactionLifeCycleTracker tracker, User user,
+      long readPoint) throws IOException {
     return execOperationWithResult(null,
         coprocessors.isEmpty() ? null : new RegionOperationWithResult<InternalScanner>(user) {
       @Override
       public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
           throws IOException {
         setResult(oserver.preCompactScannerOpen(ctx, store, scanners, scanType,
-          earliestPutTs, getResult(), request, readPoint));
+          earliestPutTs, getResult(), tracker, readPoint));
       }
     });
   }
@@ -522,17 +521,17 @@ public class RegionCoprocessorHost
    * available candidates.
    * @param store The store where compaction is being requested
    * @param candidates The currently available store files
-   * @param request custom compaction request
+   * @param tracker used to track the life cycle of a compaction
    * @return If {@code true}, skip the normal selection process and use the current list
    * @throws IOException
    */
-  public boolean preCompactSelection(final Store store, final List<StoreFile> candidates,
-      final CompactionRequest request, final User user) throws IOException {
+  public boolean preCompactSelection(Store store, List<StoreFile> candidates,
+      CompactionLifeCycleTracker tracker, User user) throws IOException {
     return execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
       @Override
       public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.preCompactSelection(ctx, store, candidates, request);
+        oserver.preCompactSelection(ctx, store, candidates, tracker);
       }
     });
   }
@@ -542,21 +541,17 @@ public class RegionCoprocessorHost
    * candidates.
    * @param store The store where compaction is being requested
    * @param selected The store files selected to compact
-   * @param request custom compaction
+   * @param tracker used to track the life cycle of a compaction
    */
-  public void postCompactSelection(final Store store, final ImmutableList<StoreFile> selected,
-      final CompactionRequest request, final User user) {
-    try {
-      execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
-        @Override
-        public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
-            throws IOException {
-          oserver.postCompactSelection(ctx, store, selected, request);
-        }
-      });
-    } catch (IOException e) {
-      LOG.warn(e);
-    }
+  public void postCompactSelection(Store store, ImmutableList<StoreFile> selected,
+      CompactionLifeCycleTracker tracker, User user) throws IOException {
+    execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
+      @Override
+      public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
+          throws IOException {
+        oserver.postCompactSelection(ctx, store, selected, tracker);
+      }
+    });
   }
 
   /**
@@ -564,18 +559,17 @@ public class RegionCoprocessorHost
    * @param store the store being compacted
    * @param scanner the scanner used to read store data during compaction
    * @param scanType type of Scan
-   * @param request the compaction that will be executed
+   * @param tracker used to track the life cycle of a compaction
    * @throws IOException
    */
-  public InternalScanner preCompact(final Store store, final InternalScanner scanner,
-      final ScanType scanType, final CompactionRequest request, final User user)
-      throws IOException {
+  public InternalScanner preCompact(Store store, InternalScanner scanner, ScanType scanType,
+      CompactionLifeCycleTracker tracker, User user) throws IOException {
     return execOperationWithResult(false, scanner,
         coprocessors.isEmpty() ? null : new RegionOperationWithResult<InternalScanner>(user) {
       @Override
       public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
           throws IOException {
-        setResult(oserver.preCompact(ctx, store, getResult(), scanType, request));
+        setResult(oserver.preCompact(ctx, store, getResult(), scanType, tracker));
       }
     });
   }
@@ -584,16 +578,16 @@ public class RegionCoprocessorHost
    * Called after the store compaction has completed.
    * @param store the store being compacted
    * @param resultFile the new store file written during compaction
-   * @param request the compaction that is being executed
+   * @param tracker used to track the life cycle of a compaction
    * @throws IOException
    */
-  public void postCompact(final Store store, final StoreFile resultFile,
-      final CompactionRequest request, final User user) throws IOException {
+  public void postCompact(Store store, StoreFile resultFile, CompactionLifeCycleTracker tracker,
+      User user) throws IOException {
     execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
       @Override
       public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
           throws IOException {
-        oserver.postCompact(ctx, store, resultFile, request);
+        oserver.postCompact(ctx, store, resultFile, tracker);
       }
     });
   }
@@ -672,136 +666,7 @@ public class RegionCoprocessorHost
     });
   }
 
-  /**
-   * Invoked just before a split
-   * @throws IOException
-   */
-  @Deprecated
-  public void preSplit(final User user) throws IOException {
-    execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
-      @Override
-      public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
-          throws IOException {
-        oserver.preSplit(ctx);
-      }
-    });
-  }
-
-  /**
-   * Invoked just before a split
-   * @throws IOException
-   *
-   * Note: the logic moves to Master; it is unused in RS
-   */
-  @Deprecated
-  public void preSplit(final byte[] splitRow, final User user) throws IOException {
-    execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
-      @Override
-      public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
-          throws IOException {
-        oserver.preSplit(ctx, splitRow);
-      }
-    });
-  }
-
-  /**
-   * Invoked just after a split
-   * @param l the new left-hand daughter region
-   * @param r the new right-hand daughter region
-   * @throws IOException
-   *
-   * Note: the logic moves to Master; it is unused in RS
-   */
-  @Deprecated
-  public void postSplit(final Region l, final Region r, final User user) throws IOException {
-    execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
-      @Override
-      public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
-          throws IOException {
-        oserver.postSplit(ctx, l, r);
-      }
-    });
-  }
-
-  /**
-  * Note: the logic moves to Master; it is unused in RS
-  */
- @Deprecated
-  public boolean preSplitBeforePONR(final byte[] splitKey,
-      final List<Mutation> metaEntries, final User user) throws IOException {
-    return execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
-      @Override
-      public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
-          throws IOException {
-        oserver.preSplitBeforePONR(ctx, splitKey, metaEntries);
-      }
-    });
-  }
-
-  /**
-  * Note: the logic moves to Master; it is unused in RS
-  */
-  @Deprecated
-  public void preSplitAfterPONR(final User user) throws IOException {
-    execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
-      @Override
-      public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
-          throws IOException {
-        oserver.preSplitAfterPONR(ctx);
-      }
-    });
-  }
-
-  /**
-   * Invoked just before the rollback of a failed split is started
-   * @throws IOException
-   *
-  * Note: the logic moves to Master; it is unused in RS
-  */
-  @Deprecated
-  public void preRollBackSplit(final User user) throws IOException {
-    execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
-      @Override
-      public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
-          throws IOException {
-        oserver.preRollBackSplit(ctx);
-      }
-    });
-  }
-
-  /**
-   * Invoked just after the rollback of a failed split is done
-   * @throws IOException
-   *
-  * Note: the logic moves to Master; it is unused in RS
-  */
-  @Deprecated
-  public void postRollBackSplit(final User user) throws IOException {
-    execOperation(coprocessors.isEmpty() ? null : new RegionOperation(user) {
-      @Override
-      public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
-          throws IOException {
-        oserver.postRollBackSplit(ctx);
-      }
-    });
-  }
-
-  /**
-   * Invoked after a split is completed irrespective of a failure or success.
-   * @throws IOException
-   */
-  public void postCompleteSplit() throws IOException {
-    execOperation(coprocessors.isEmpty() ? null : new RegionOperation() {
-      @Override
-      public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
-          throws IOException {
-        oserver.postCompleteSplit(ctx);
-      }
-    });
-  }
-
   // RegionObserver support
-
   /**
    * @param get the Get request
    * @return true if default processing should be bypassed
@@ -1007,7 +872,7 @@ public class RegionCoprocessorHost
    * @param row row to check
    * @param family column family
    * @param qualifier column qualifier
-   * @param compareOp the comparison operation
+   * @param op the comparison operation
    * @param comparator the comparator
    * @param put data to put if check succeeds
    * @return true or false to return to client if default processing should
@@ -1015,7 +880,7 @@ public class RegionCoprocessorHost
    * @throws IOException e
    */
   public Boolean preCheckAndPut(final byte [] row, final byte [] family,
-      final byte [] qualifier, final CompareOp compareOp,
+      final byte [] qualifier, final CompareOperator op,
       final ByteArrayComparable comparator, final Put put)
       throws IOException {
     return execOperationWithResult(true, false,
@@ -1024,7 +889,7 @@ public class RegionCoprocessorHost
       public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
           throws IOException {
         setResult(oserver.preCheckAndPut(ctx, row, family, qualifier,
-          compareOp, comparator, put, getResult()));
+          op, comparator, put, getResult()));
       }
     });
   }
@@ -1033,7 +898,7 @@ public class RegionCoprocessorHost
    * @param row row to check
    * @param family column family
    * @param qualifier column qualifier
-   * @param compareOp the comparison operation
+   * @param op the comparison operation
    * @param comparator the comparator
    * @param put data to put if check succeeds
    * @return true or false to return to client if default processing should
@@ -1041,15 +906,15 @@ public class RegionCoprocessorHost
    * @throws IOException e
    */
   public Boolean preCheckAndPutAfterRowLock(final byte[] row, final byte[] family,
-      final byte[] qualifier, final CompareOp compareOp, final ByteArrayComparable comparator,
-      final Put put) throws IOException {
+                                            final byte[] qualifier, final CompareOperator op, final ByteArrayComparable comparator,
+                                            final Put put) throws IOException {
     return execOperationWithResult(true, false,
         coprocessors.isEmpty() ? null : new RegionOperationWithResult<Boolean>() {
       @Override
       public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
           throws IOException {
         setResult(oserver.preCheckAndPutAfterRowLock(ctx, row, family, qualifier,
-          compareOp, comparator, put, getResult()));
+          op, comparator, put, getResult()));
       }
     });
   }
@@ -1058,13 +923,13 @@ public class RegionCoprocessorHost
    * @param row row to check
    * @param family column family
    * @param qualifier column qualifier
-   * @param compareOp the comparison operation
+   * @param op the comparison operation
    * @param comparator the comparator
    * @param put data to put if check succeeds
    * @throws IOException e
    */
   public boolean postCheckAndPut(final byte [] row, final byte [] family,
-      final byte [] qualifier, final CompareOp compareOp,
+      final byte [] qualifier, final CompareOperator op,
       final ByteArrayComparable comparator, final Put put,
       boolean result) throws IOException {
     return execOperationWithResult(result,
@@ -1073,7 +938,7 @@ public class RegionCoprocessorHost
       public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
           throws IOException {
         setResult(oserver.postCheckAndPut(ctx, row, family, qualifier,
-          compareOp, comparator, put, getResult()));
+          op, comparator, put, getResult()));
       }
     });
   }
@@ -1082,7 +947,7 @@ public class RegionCoprocessorHost
    * @param row row to check
    * @param family column family
    * @param qualifier column qualifier
-   * @param compareOp the comparison operation
+   * @param op the comparison operation
    * @param comparator the comparator
    * @param delete delete to commit if check succeeds
    * @return true or false to return to client if default processing should
@@ -1090,7 +955,7 @@ public class RegionCoprocessorHost
    * @throws IOException e
    */
   public Boolean preCheckAndDelete(final byte [] row, final byte [] family,
-      final byte [] qualifier, final CompareOp compareOp,
+      final byte [] qualifier, final CompareOperator op,
       final ByteArrayComparable comparator, final Delete delete)
       throws IOException {
     return execOperationWithResult(true, false,
@@ -1099,7 +964,7 @@ public class RegionCoprocessorHost
       public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
           throws IOException {
         setResult(oserver.preCheckAndDelete(ctx, row, family,
-            qualifier, compareOp, comparator, delete, getResult()));
+            qualifier, op, comparator, delete, getResult()));
       }
     });
   }
@@ -1108,7 +973,7 @@ public class RegionCoprocessorHost
    * @param row row to check
    * @param family column family
    * @param qualifier column qualifier
-   * @param compareOp the comparison operation
+   * @param op the comparison operation
    * @param comparator the comparator
    * @param delete delete to commit if check succeeds
    * @return true or false to return to client if default processing should
@@ -1116,15 +981,15 @@ public class RegionCoprocessorHost
    * @throws IOException e
    */
   public Boolean preCheckAndDeleteAfterRowLock(final byte[] row, final byte[] family,
-      final byte[] qualifier, final CompareOp compareOp, final ByteArrayComparable comparator,
-      final Delete delete) throws IOException {
+                                               final byte[] qualifier, final CompareOperator op, final ByteArrayComparable comparator,
+                                               final Delete delete) throws IOException {
     return execOperationWithResult(true, false,
         coprocessors.isEmpty() ? null : new RegionOperationWithResult<Boolean>() {
       @Override
       public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
           throws IOException {
         setResult(oserver.preCheckAndDeleteAfterRowLock(ctx, row,
-              family, qualifier, compareOp, comparator, delete, getResult()));
+              family, qualifier, op, comparator, delete, getResult()));
       }
     });
   }
@@ -1133,13 +998,13 @@ public class RegionCoprocessorHost
    * @param row row to check
    * @param family column family
    * @param qualifier column qualifier
-   * @param compareOp the comparison operation
+   * @param op the comparison operation
    * @param comparator the comparator
    * @param delete delete to commit if check succeeds
    * @throws IOException e
    */
   public boolean postCheckAndDelete(final byte [] row, final byte [] family,
-      final byte [] qualifier, final CompareOp compareOp,
+      final byte [] qualifier, final CompareOperator op,
       final ByteArrayComparable comparator, final Delete delete,
       boolean result) throws IOException {
     return execOperationWithResult(result,
@@ -1148,7 +1013,7 @@ public class RegionCoprocessorHost
       public void call(RegionObserver oserver, ObserverContext<RegionCoprocessorEnvironment> ctx)
           throws IOException {
         setResult(oserver.postCheckAndDelete(ctx, row, family,
-            qualifier, compareOp, comparator, delete, getResult()));
+            qualifier, op, comparator, delete, getResult()));
       }
     });
   }
@@ -1272,8 +1137,7 @@ public class RegionCoprocessorHost
 
   /**
    * See
-   * {@link RegionObserver#preStoreScannerOpen(ObserverContext,
-   *    Store, Scan, NavigableSet, KeyValueScanner)}
+   * {@link RegionObserver#preStoreScannerOpen(ObserverContext, Store, Scan, NavigableSet, KeyValueScanner, long)}
    */
   public KeyValueScanner preStoreScannerOpen(final Store store, final Scan scan,
       final NavigableSet<byte[]> targetCols, final long readPt) throws IOException {

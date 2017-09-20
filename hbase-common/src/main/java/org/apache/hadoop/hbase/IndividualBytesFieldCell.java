@@ -18,11 +18,13 @@
 
 package org.apache.hadoop.hbase;
 
+import org.apache.yetus.audience.InterfaceAudience;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.util.ArrayUtils;
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -181,7 +183,7 @@ public class IndividualBytesFieldCell implements ExtendedCell {
   }
 
   @Override
-  public Cell deepClone() {
+  public ExtendedCell deepClone() {
     // When being added to the memstore, deepClone() is called and KeyValue has less heap overhead.
     return new KeyValue(this);
   }

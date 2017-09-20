@@ -37,7 +37,7 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ClassSize;
@@ -1237,10 +1237,11 @@ public class KeyValue implements ExtendedCell {
   //---------------------------------------------------------------------------
 
   /**
+   * To be used only in tests where the Cells are clearly assumed to be of type KeyValue
+   * and that we need access to the backing array to do some test case related assertions.
    * @return The byte array backing this KeyValue.
-   * @deprecated Since 0.98.0.  Use Cell Interface instead.  Do not presume single backing buffer.
    */
-  @Deprecated
+  @VisibleForTesting
   public byte [] getBuffer() {
     return this.bytes;
   }
@@ -2807,7 +2808,7 @@ public class KeyValue implements ExtendedCell {
   }
 
   @Override
-  public Cell deepClone() {
+  public ExtendedCell deepClone() {
     byte[] copy = Bytes.copy(this.bytes, this.offset, this.length);
     KeyValue kv = new KeyValue(copy, 0, copy.length);
     kv.setSequenceId(this.getSequenceId());

@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Append;
@@ -55,7 +56,6 @@ import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionServerCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.BinaryComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.master.MasterCoprocessorHost;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.QuotaProtos.Quotas;
 import org.apache.hadoop.hbase.regionserver.MiniBatchOperationInProgress;
@@ -63,7 +63,7 @@ import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.regionserver.RegionCoprocessorHost;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.regionserver.RegionServerCoprocessorHost;
-import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
+import org.apache.hadoop.hbase.wal.WALEdit;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.access.Permission.Action;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.SnapshotProtos.SnapshotDescription;
@@ -836,21 +836,6 @@ public class TestWithDisabledAuthorization extends SecureTestUtil {
       }
     }, SUPERUSER, USER_ADMIN, USER_RW, USER_RO, USER_OWNER, USER_CREATE, USER_QUAL, USER_NONE);
 
-    // preMerge
-    verifyAllowed(new AccessTestAction() {
-      @Override
-      public Object run() throws Exception {
-        HTableDescriptor htd = new HTableDescriptor(TEST_TABLE.getTableName());
-        Region region_a = mock(Region.class);
-        when(region_a.getTableDescriptor()).thenReturn(htd);
-        Region region_b = mock(Region.class);
-        when(region_b.getTableDescriptor()).thenReturn(htd);
-        ACCESS_CONTROLLER.preMerge(ObserverContext.createAndPrepare(RSCP_ENV, null), region_a,
-          region_b);
-        return null;
-      }
-    }, SUPERUSER, USER_ADMIN, USER_RW, USER_RO, USER_OWNER, USER_CREATE, USER_QUAL, USER_NONE);
-
     // preRollWALWriterRequest
     verifyAllowed(new AccessTestAction() {
       @Override
@@ -941,7 +926,7 @@ public class TestWithDisabledAuthorization extends SecureTestUtil {
       @Override
       public Object run() throws Exception {
         ACCESS_CONTROLLER.preCheckAndPut(ObserverContext.createAndPrepare(RCP_ENV, null),
-          TEST_ROW, TEST_FAMILY, TEST_Q1, CompareFilter.CompareOp.EQUAL,
+          TEST_ROW, TEST_FAMILY, TEST_Q1, CompareOperator.EQUAL,
           new BinaryComparator("foo".getBytes()), new Put(TEST_ROW), true);
         return null;
       }
@@ -952,7 +937,7 @@ public class TestWithDisabledAuthorization extends SecureTestUtil {
       @Override
       public Object run() throws Exception {
         ACCESS_CONTROLLER.preCheckAndDelete(ObserverContext.createAndPrepare(RCP_ENV, null),
-          TEST_ROW, TEST_FAMILY, TEST_Q1, CompareFilter.CompareOp.EQUAL,
+          TEST_ROW, TEST_FAMILY, TEST_Q1, CompareOperator.EQUAL,
           new BinaryComparator("foo".getBytes()), new Delete(TEST_ROW), true);
         return null;
       }
