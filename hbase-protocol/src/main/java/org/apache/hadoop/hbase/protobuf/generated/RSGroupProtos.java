@@ -26,27 +26,27 @@ public final class RSGroupProtos {
     com.google.protobuf.ByteString
         getNameBytes();
 
-    // repeated .ServerName servers = 4;
+    // repeated .hbase.pb.ServerName servers = 4;
     /**
-     * <code>repeated .ServerName servers = 4;</code>
+     * <code>repeated .hbase.pb.ServerName servers = 4;</code>
      */
     java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName> 
         getServersList();
     /**
-     * <code>repeated .ServerName servers = 4;</code>
+     * <code>repeated .hbase.pb.ServerName servers = 4;</code>
      */
     org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName getServers(int index);
     /**
-     * <code>repeated .ServerName servers = 4;</code>
+     * <code>repeated .hbase.pb.ServerName servers = 4;</code>
      */
     int getServersCount();
     /**
-     * <code>repeated .ServerName servers = 4;</code>
+     * <code>repeated .hbase.pb.ServerName servers = 4;</code>
      */
     java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerNameOrBuilder> 
         getServersOrBuilderList();
     /**
-     * <code>repeated .ServerName servers = 4;</code>
+     * <code>repeated .hbase.pb.ServerName servers = 4;</code>
      */
     org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerNameOrBuilder getServersOrBuilder(
         int index);
@@ -237,36 +237,36 @@ public final class RSGroupProtos {
       }
     }
 
-    // repeated .ServerName servers = 4;
+    // repeated .hbase.pb.ServerName servers = 4;
     public static final int SERVERS_FIELD_NUMBER = 4;
     private java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName> servers_;
     /**
-     * <code>repeated .ServerName servers = 4;</code>
+     * <code>repeated .hbase.pb.ServerName servers = 4;</code>
      */
     public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName> getServersList() {
       return servers_;
     }
     /**
-     * <code>repeated .ServerName servers = 4;</code>
+     * <code>repeated .hbase.pb.ServerName servers = 4;</code>
      */
     public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerNameOrBuilder> 
         getServersOrBuilderList() {
       return servers_;
     }
     /**
-     * <code>repeated .ServerName servers = 4;</code>
+     * <code>repeated .hbase.pb.ServerName servers = 4;</code>
      */
     public int getServersCount() {
       return servers_.size();
     }
     /**
-     * <code>repeated .ServerName servers = 4;</code>
+     * <code>repeated .hbase.pb.ServerName servers = 4;</code>
      */
     public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName getServers(int index) {
       return servers_.get(index);
     }
     /**
-     * <code>repeated .ServerName servers = 4;</code>
+     * <code>repeated .hbase.pb.ServerName servers = 4;</code>
      */
     public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerNameOrBuilder getServersOrBuilder(
         int index) {
@@ -794,7 +794,7 @@ public final class RSGroupProtos {
         return this;
       }
 
-      // repeated .ServerName servers = 4;
+      // repeated .hbase.pb.ServerName servers = 4;
       private java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName> servers_ =
         java.util.Collections.emptyList();
       private void ensureServersIsMutable() {
@@ -808,7 +808,7 @@ public final class RSGroupProtos {
           org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerNameOrBuilder> serversBuilder_;
 
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName> getServersList() {
         if (serversBuilder_ == null) {
@@ -818,7 +818,7 @@ public final class RSGroupProtos {
         }
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public int getServersCount() {
         if (serversBuilder_ == null) {
@@ -828,7 +828,7 @@ public final class RSGroupProtos {
         }
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName getServers(int index) {
         if (serversBuilder_ == null) {
@@ -838,7 +838,7 @@ public final class RSGroupProtos {
         }
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public Builder setServers(
           int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName value) {
@@ -855,7 +855,7 @@ public final class RSGroupProtos {
         return this;
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public Builder setServers(
           int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.Builder builderForValue) {
@@ -869,7 +869,7 @@ public final class RSGroupProtos {
         return this;
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public Builder addServers(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName value) {
         if (serversBuilder_ == null) {
@@ -885,7 +885,7 @@ public final class RSGroupProtos {
         return this;
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public Builder addServers(
           int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName value) {
@@ -902,7 +902,7 @@ public final class RSGroupProtos {
         return this;
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public Builder addServers(
           org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.Builder builderForValue) {
@@ -916,7 +916,7 @@ public final class RSGroupProtos {
         return this;
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public Builder addServers(
           int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.Builder builderForValue) {
@@ -930,7 +930,7 @@ public final class RSGroupProtos {
         return this;
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public Builder addAllServers(
           java.lang.Iterable<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName> values) {
@@ -944,7 +944,7 @@ public final class RSGroupProtos {
         return this;
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public Builder clearServers() {
         if (serversBuilder_ == null) {
@@ -957,7 +957,7 @@ public final class RSGroupProtos {
         return this;
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public Builder removeServers(int index) {
         if (serversBuilder_ == null) {
@@ -970,14 +970,14 @@ public final class RSGroupProtos {
         return this;
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.Builder getServersBuilder(
           int index) {
         return getServersFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerNameOrBuilder getServersOrBuilder(
           int index) {
@@ -987,7 +987,7 @@ public final class RSGroupProtos {
         }
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerNameOrBuilder> 
            getServersOrBuilderList() {
@@ -998,14 +998,14 @@ public final class RSGroupProtos {
         }
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.Builder addServersBuilder() {
         return getServersFieldBuilder().addBuilder(
             org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.getDefaultInstance());
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.Builder addServersBuilder(
           int index) {
@@ -1013,7 +1013,7 @@ public final class RSGroupProtos {
             index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.getDefaultInstance());
       }
       /**
-       * <code>repeated .ServerName servers = 4;</code>
+       * <code>repeated .hbase.pb.ServerName servers = 4;</code>
        */
       public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.ServerName.Builder> 
            getServersBuilderList() {
@@ -1300,11 +1300,11 @@ public final class RSGroupProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\rRSGroup.proto\022\010hbase.pb\032\013HBase.proto\032\013" +
-      "Table.proto\"U\n\013RSGroupInfo\022\014\n\004name\030\001 \002(\t" +
-      "\022\034\n\007servers\030\004 \003(\0132\013.ServerName\022\032\n\006tables" +
-      "\030\003 \003(\0132\n.TableNameBC\n*org.apache.hadoop." +
-      "hbase.protobuf.generatedB\rRSGroupProtosH" +
-      "\001\210\001\001\240\001\001"
+      "Table.proto\"^\n\013RSGroupInfo\022\014\n\004name\030\001 \002(\t" +
+      "\022%\n\007servers\030\004 \003(\0132\024.hbase.pb.ServerName\022" +
+      "\032\n\006tables\030\003 \003(\0132\n.TableNameBC\n*org.apach" +
+      "e.hadoop.hbase.protobuf.generatedB\rRSGro" +
+      "upProtosH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

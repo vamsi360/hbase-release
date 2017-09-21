@@ -101,7 +101,7 @@ public class ProcedureWALPrettyPrinter {
           break;
         }
         switch (entry.getType()) {
-          case EOF:
+          case PROCEDURE_WAL_EOF:
             hasMore = false;
             break;
           default:
