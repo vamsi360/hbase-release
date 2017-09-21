@@ -37,6 +37,11 @@ public abstract class Policy extends StoppableImplementation implements Runnable
     this.context = context;
   }
 
+  @Override
+  public void stop(String why) {
+    super.stop(why);
+    LOG.info("stopping for " + why);
+  }
   /**
    * A context for a Policy
    */
