@@ -1394,6 +1394,70 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     return this;
   }
 
+  /**
+   * Add a table coprocessor to this table. The coprocessor
+   * type must be {@link org.apache.hadoop.hbase.coprocessor.RegionObserver}
+   * or Endpoint.
+   * It won't check if the class can be loaded or not.
+   * Whether a coprocessor is loadable or not will be determined when
+   * a region is opened.
+   * @param specStr The Coprocessor specification all in in one String formatted so matches
+   * {@link HConstants#CP_HTD_ATTR_VALUE_PATTERN}
+   * @throws IOException
+   */
+  public HTableDescriptor addCoprocessorWithSpec(final String specStr) throws IOException {
+    String className = getCoprocessorClassNameFromSpecStr(specStr);
+    if (className == null) {
+      throw new IllegalArgumentException("Format does not match " +
+        HConstants.CP_HTD_ATTR_VALUE_PATTERN + ": " + specStr);
+    }
+    checkHasCoprocessor(className);
+    return addCoprocessorToMap(specStr);
+  }
+
+  /**
+   * Add coprocessor to values Map
+   * @param specStr The Coprocessor specification all in in one String formatted so matches
+   * {@link HConstants#CP_HTD_ATTR_VALUE_PATTERN}
+   * @return Returns <code>this</code>
+   */
+  private HTableDescriptor addCoprocessorToMap(final String specStr) {
+    if (specStr == null) return this;
+    // generate a coprocessor key
+    int maxCoprocessorNumber = 0;
+    Matcher keyMatcher;
+    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> e:
+        this.values.entrySet()) {
+      keyMatcher =
+          HConstants.CP_HTD_ATTR_KEY_PATTERN.matcher(
+              Bytes.toString(e.getKey().get()));
+      if (!keyMatcher.matches()) {
+        continue;
+      }
+      maxCoprocessorNumber = Math.max(Integer.parseInt(keyMatcher.group(1)), maxCoprocessorNumber);
+    }
+    maxCoprocessorNumber++;
+    String key = "coprocessor$" + Integer.toString(maxCoprocessorNumber);
+    this.values.put(new ImmutableBytesWritable(Bytes.toBytes(key)),
+      new ImmutableBytesWritable(Bytes.toBytes(specStr)));
+    return this;
+  }
+
+  private void checkHasCoprocessor(final String className) throws IOException {
+    if (hasCoprocessor(className)) {
+      throw new IOException("Coprocessor " + className + " already exists.");
+    }
+  }
+
+  /**
+   * @param spec String formatted as per {@link HConstants#CP_HTD_ATTR_VALUE_PATTERN}
+   * @return Class parsed from passed in <code>spec</code> or null if no match or classpath found
+   */
+  private static String getCoprocessorClassNameFromSpecStr(final String spec) {
+    Matcher matcher = HConstants.CP_HTD_ATTR_VALUE_PATTERN.matcher(spec);
+    // Classname is the 2nd field
+    return matcher != null && matcher.matches()? matcher.group(2).trim(): null;
+  }
 
   /**
    * Check if the table has an attached co-processor represented by the name className
