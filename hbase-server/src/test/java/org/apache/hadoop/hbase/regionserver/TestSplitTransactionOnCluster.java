@@ -47,7 +47,6 @@ import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.MetaTableAccessor;
@@ -62,11 +61,13 @@ import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TestReplicasClient.SlowMeCopro;
+import org.apache.hadoop.hbase.coprocessor.MasterCoprocessor;
 import org.apache.hadoop.hbase.coprocessor.MasterCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.MasterObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
@@ -153,10 +154,10 @@ public class TestSplitTransactionOnCluster {
     }
   }
 
-  private HRegionInfo getAndCheckSingleTableRegion(final List<HRegion> regions)
+  private RegionInfo getAndCheckSingleTableRegion(final List<HRegion> regions)
       throws IOException, InterruptedException {
     assertEquals(1, regions.size());
-    HRegionInfo hri = regions.get(0).getRegionInfo();
+    RegionInfo hri = regions.get(0).getRegionInfo();
     try {
       cluster.getMaster().getAssignmentManager().waitForAssignment(hri, 600000);
     } catch (NoSuchProcedureException e) {
@@ -183,7 +184,7 @@ public class TestSplitTransactionOnCluster {
       // Create table then get the single region for our new table.
       Table t = createTableAndWait(tableName, Bytes.toBytes("cf"));
       final List<HRegion> regions = cluster.getRegions(tableName);
-      final HRegionInfo hri = getAndCheckSingleTableRegion(regions);
+      final RegionInfo hri = getAndCheckSingleTableRegion(regions);
       insertData(tableName, admin, t);
       t.close();
 
@@ -207,8 +208,7 @@ public class TestSplitTransactionOnCluster {
 
       // we have to wait until the SPLITTING state is seen by the master
       FailingSplitMasterObserver observer =
-          (FailingSplitMasterObserver) master.getMasterCoprocessorHost().findCoprocessor(
-            FailingSplitMasterObserver.class.getName());
+          master.getMasterCoprocessorHost().findCoprocessor(FailingSplitMasterObserver.class);
       assertNotNull(observer);
       observer.latch.await();
 
@@ -269,12 +269,19 @@ public class TestSplitTransactionOnCluster {
     assertEquals(2, cluster.getRegions(tableName).size());
   }
 
-  public static class FailingSplitMasterObserver implements MasterObserver {
+  public static class FailingSplitMasterObserver implements MasterCoprocessor, MasterObserver {
     volatile CountDownLatch latch;
+
     @Override
     public void start(CoprocessorEnvironment e) throws IOException {
       latch = new CountDownLatch(1);
     }
+
+    @Override
+    public Optional<MasterObserver> getMasterObserver() {
+      return Optional.of(this);
+    }
+
     @Override
     public void preSplitRegionBeforePONRAction(
         final ObserverContext<MasterCoprocessorEnvironment> ctx,
@@ -292,7 +299,7 @@ public class TestSplitTransactionOnCluster {
     // Create table then get the single region for our new table.
     Table t = createTableAndWait(tableName, HConstants.CATALOG_FAMILY);
     List<HRegion> regions = cluster.getRegions(tableName);
-    HRegionInfo hri = getAndCheckSingleTableRegion(regions);
+    RegionInfo hri = getAndCheckSingleTableRegion(regions);
 
     int tableRegionIndex = ensureTableRegionNotOnSameServerAsMeta(admin, hri);
 
@@ -348,7 +355,7 @@ public class TestSplitTransactionOnCluster {
     // Create table then get the single region for our new table.
     Table t = createTableAndWait(tableName, HConstants.CATALOG_FAMILY);
     List<HRegion> regions = cluster.getRegions(tableName);
-    HRegionInfo hri = getAndCheckSingleTableRegion(regions);
+    RegionInfo hri = getAndCheckSingleTableRegion(regions);
 
     int tableRegionIndex = ensureTableRegionNotOnSameServerAsMeta(admin, hri);
 
@@ -369,7 +376,7 @@ public class TestSplitTransactionOnCluster {
       List<HRegion> daughters = checkAndGetDaughters(tableName);
       // Now split one of the daughters.
       regionCount = ProtobufUtil.getOnlineRegions(server.getRSRpcServices()).size();
-      HRegionInfo daughter = daughters.get(0).getRegionInfo();
+      RegionInfo daughter = daughters.get(0).getRegionInfo();
       LOG.info("Daughter we are going to split: " + daughter);
       // Compact first to ensure we have cleaned up references -- else the split
       // will fail.
@@ -377,7 +384,7 @@ public class TestSplitTransactionOnCluster {
       daughters = cluster.getRegions(tableName);
       HRegion daughterRegion = null;
       for (HRegion r: daughters) {
-        if (r.getRegionInfo().equals(daughter)) {
+        if (RegionInfo.COMPARATOR.compare(r.getRegionInfo(), daughter) == 0) {
           daughterRegion = r;
           LOG.info("Found matching HRI: " + daughterRegion);
           break;
@@ -444,11 +451,11 @@ public class TestSplitTransactionOnCluster {
         admin.flush(userTableName);
       }
       admin.majorCompact(userTableName);
-      List<HRegionInfo> regionsOfTable =
+      List<RegionInfo> regionsOfTable =
           cluster.getMaster().getAssignmentManager().getRegionStates()
           .getRegionsOfTable(userTableName);
       assertEquals(1, regionsOfTable.size());
-      HRegionInfo hRegionInfo = regionsOfTable.get(0);
+      RegionInfo hRegionInfo = regionsOfTable.get(0);
       Put p = new Put("row6".getBytes());
       p.addColumn("col".getBytes(), "ql".getBytes(), "val".getBytes());
       table.put(p);
@@ -504,7 +511,7 @@ public class TestSplitTransactionOnCluster {
     // Create table then get the single region for our new table.
     Table t = createTableAndWait(tableName, HConstants.CATALOG_FAMILY);
     List<HRegion> regions = cluster.getRegions(tableName);
-    HRegionInfo hri = getAndCheckSingleTableRegion(regions);
+    RegionInfo hri = getAndCheckSingleTableRegion(regions);
 
     int tableRegionIndex = ensureTableRegionNotOnSameServerAsMeta(admin, hri);
 
@@ -653,7 +660,7 @@ public class TestSplitTransactionOnCluster {
     // Create table then get the single region for our new table.
     createTableAndWait(tableName, HConstants.CATALOG_FAMILY);
     List<HRegion> regions = cluster.getRegions(tableName);
-    HRegionInfo hri = getAndCheckSingleTableRegion(regions);
+    RegionInfo hri = getAndCheckSingleTableRegion(regions);
     ensureTableRegionNotOnSameServerAsMeta(admin, hri);
     int regionServerIndex = cluster.getServerWith(regions.get(0).getRegionInfo()
       .getRegionName());
@@ -802,7 +809,7 @@ public class TestSplitTransactionOnCluster {
     return master;
   }
 
-  private void split(final HRegionInfo hri, final HRegionServer server, final int regionCount)
+  private void split(final RegionInfo hri, final HRegionServer server, final int regionCount)
       throws IOException, InterruptedException {
     this.admin.splitRegion(hri.getRegionName());
     for (int i = 0; this.cluster.getRegions(hri.getTable()).size() <= regionCount && i < 60; i++) {
@@ -826,7 +833,7 @@ public class TestSplitTransactionOnCluster {
    * @throws InterruptedException
    */
   private int ensureTableRegionNotOnSameServerAsMeta(final Admin admin,
-      final HRegionInfo hri)
+      final RegionInfo hri)
   throws IOException, MasterNotRunningException,
   ZooKeeperConnectionException, InterruptedException {
     // Now make sure that the table region is not on same server as that hosting
@@ -894,8 +901,8 @@ public class TestSplitTransactionOnCluster {
 
   private void printOutRegions(final HRegionServer hrs, final String prefix)
       throws IOException {
-    List<HRegionInfo> regions = ProtobufUtil.getOnlineRegions(hrs.getRSRpcServices());
-    for (HRegionInfo region: regions) {
+    List<RegionInfo> regions = ProtobufUtil.getOnlineRegions(hrs.getRSRpcServices());
+    for (RegionInfo region: regions) {
       LOG.info(prefix + region.getRegionNameAsString());
     }
   }

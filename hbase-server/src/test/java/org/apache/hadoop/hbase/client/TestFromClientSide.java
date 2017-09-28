@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -74,6 +75,7 @@ import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.coprocessor.MultiRowMutationEndpoint;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
+import org.apache.hadoop.hbase.coprocessor.RegionCoprocessor;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.RegionObserver;
 import org.apache.hadoop.hbase.exceptions.ScannerResetException;
@@ -197,19 +199,19 @@ public class TestFromClientSide {
 
       try {
         Append append = new Append(ROW);
-        append.addColumn(TEST_UTIL.fam1, QUALIFIER, VALUE);
+        append.addColumn(HBaseTestingUtility.fam1, QUALIFIER, VALUE);
         Result result = table.append(append);
 
         // Verify expected result
         Cell[] cells = result.rawCells();
         assertEquals(1, cells.length);
-        assertKey(cells[0], ROW, TEST_UTIL.fam1, QUALIFIER, VALUE);
+        assertKey(cells[0], ROW, HBaseTestingUtility.fam1, QUALIFIER, VALUE);
 
         // Verify expected result again
         Result readResult = table.get(new Get(ROW));
         cells = readResult.rawCells();
         assertEquals(1, cells.length);
-        assertKey(cells[0], ROW, TEST_UTIL.fam1, QUALIFIER, VALUE);
+        assertKey(cells[0], ROW, HBaseTestingUtility.fam1, QUALIFIER, VALUE);
       } finally {
         table.close();
         connection.close();
@@ -543,7 +545,7 @@ public class TestFromClientSide {
    * This is a coprocessor to inject a test failure so that a store scanner.reseek() call will
    * fail with an IOException() on the first call.
    */
-  public static class ExceptionInReseekRegionObserver implements RegionObserver {
+  public static class ExceptionInReseekRegionObserver implements RegionCoprocessor, RegionObserver {
     static AtomicLong reqCount = new AtomicLong(0);
     static AtomicBoolean isDoNotRetry = new AtomicBoolean(false); // whether to throw DNRIOE
     static AtomicBoolean throwOnce = new AtomicBoolean(true); // whether to only throw once
@@ -554,6 +556,11 @@ public class TestFromClientSide {
       throwOnce.set(true);
     }
 
+    @Override
+    public Optional<RegionObserver> getRegionObserver() {
+      return Optional.of(this);
+    }
+
     class MyStoreScanner extends StoreScanner {
       public MyStoreScanner(HStore store, ScanInfo scanInfo, Scan scan, NavigableSet<byte[]> columns,
           long readPt) throws IOException {
@@ -561,7 +568,7 @@ public class TestFromClientSide {
       }
 
       @Override
-      protected List<KeyValueScanner> selectScannersFrom(Store store,
+      protected List<KeyValueScanner> selectScannersFrom(HStore store,
           List<? extends KeyValueScanner> allScanners) {
         List<KeyValueScanner> scanners = super.selectScannersFrom(store, allScanners);
         List<KeyValueScanner> newScanners = new ArrayList<>(scanners.size());
@@ -589,7 +596,8 @@ public class TestFromClientSide {
     public KeyValueScanner preStoreScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c,
         Store store, Scan scan, NavigableSet<byte[]> targetCols, KeyValueScanner s,
         final long readPt) throws IOException {
-      return new MyStoreScanner((HStore) store, store.getScanInfo(), scan, targetCols, readPt);
+      HStore hs = (HStore) store;
+      return new MyStoreScanner(hs, hs.getScanInfo(), scan, targetCols, readPt);
     }
   }
 
@@ -2036,7 +2044,6 @@ public class TestFromClientSide {
   public void testDeleteWithFailed() throws Exception {
     final TableName tableName = TableName.valueOf(name.getMethodName());
 
-    byte [][] ROWS = makeNAscii(ROW, 6);
     byte [][] FAMILIES = makeNAscii(FAMILY, 3);
     byte [][] VALUES = makeN(VALUE, 5);
     long [] ts = {1000, 2000, 3000, 4000, 5000};
@@ -2054,7 +2061,7 @@ public class TestFromClientSide {
 
     Get get = new Get(ROW);
     get.addFamily(FAMILIES[0]);
-    get.setMaxVersions(Integer.MAX_VALUE);
+    get.readAllVersions();
     Result result = ht.get(get);
     assertTrue(Bytes.equals(result.getValue(FAMILIES[0], QUALIFIER), VALUES[0]));
   }
@@ -5294,8 +5301,9 @@ public class TestFromClientSide {
       // get the block cache and region
       String regionName = locator.getAllRegionLocations().get(0).getRegionInfo().getEncodedName();
 
-      Region region = TEST_UTIL.getRSForFirstRegionInTable(tableName).getRegion(regionName);
-      Store store = region.getStores().iterator().next();
+      HRegion region = (HRegion) TEST_UTIL.getRSForFirstRegionInTable(tableName)
+          .getRegion(regionName);
+      HStore store = region.getStores().iterator().next();
       CacheConfig cacheConf = store.getCacheConfig();
       cacheConf.setCacheDataOnWrite(true);
       cacheConf.setEvictOnClose(true);
@@ -5387,15 +5395,14 @@ public class TestFromClientSide {
     }
   }
 
-  private void waitForStoreFileCount(Store store, int count, int timeout)
-  throws InterruptedException {
+  private void waitForStoreFileCount(HStore store, int count, int timeout)
+      throws InterruptedException {
     long start = System.currentTimeMillis();
-    while (start + timeout > System.currentTimeMillis() &&
-        store.getStorefilesCount() != count) {
+    while (start + timeout > System.currentTimeMillis() && store.getStorefilesCount() != count) {
       Thread.sleep(100);
     }
-    System.out.println("start=" + start + ", now=" +
-        System.currentTimeMillis() + ", cur=" + store.getStorefilesCount());
+    System.out.println("start=" + start + ", now=" + System.currentTimeMillis() + ", cur=" +
+        store.getStorefilesCount());
     assertEquals(count, store.getStorefilesCount());
   }
 
@@ -5455,8 +5462,8 @@ public class TestFromClientSide {
     // Test Initialization.
     byte [] startKey = Bytes.toBytes("ddc");
     byte [] endKey = Bytes.toBytes("mmm");
-    final TableName tableName = TableName.valueOf(name.getMethodName());
-    Table t = TEST_UTIL.createMultiRegionTable(tableName, new byte[][] { FAMILY }, 10);
+    TableName tableName = TableName.valueOf(name.getMethodName());
+    TEST_UTIL.createMultiRegionTable(tableName, new byte[][] { FAMILY }, 10);
 
     int numOfRegions = -1;
     try (RegionLocator r = TEST_UTIL.getConnection().getRegionLocator(tableName)) {
