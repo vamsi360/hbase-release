@@ -22,7 +22,9 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.util.Pair;
 
 /**
  * This provides an interface for maintaining a region server's replication queues. These queues
@@ -125,10 +127,11 @@ public interface ReplicationQueues {
   /**
    * Add new hfile references to the queue.
    * @param peerId peer cluster id to which the hfiles need to be replicated
-   * @param files list of hfile references to be added
+   * @param pairs list of pairs of { HFile location in staging dir, HFile path in region dir which
+   *          will be added in the queue }
    * @throws ReplicationException if fails to add a hfile reference
    */
-  void addHFileRefs(String peerId, List<String> files) throws ReplicationException;
+  void addHFileRefs(String peerId, List<Pair<Path, Path>> pairs) throws ReplicationException;
 
   /**
    * Remove hfile references from the queue.

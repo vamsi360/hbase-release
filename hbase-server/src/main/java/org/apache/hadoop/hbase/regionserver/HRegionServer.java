@@ -151,6 +151,7 @@ import org.apache.hadoop.hbase.regionserver.handler.CloseRegionHandler;
 import org.apache.hadoop.hbase.regionserver.handler.RegionReplicaFlushHandler;
 import org.apache.hadoop.hbase.regionserver.wal.MetricsWAL;
 import org.apache.hadoop.hbase.regionserver.wal.WALActionsListener;
+import org.apache.hadoop.hbase.replication.regionserver.Replication;
 import org.apache.hadoop.hbase.replication.regionserver.ReplicationLoad;
 import org.apache.hadoop.hbase.security.Superusers;
 import org.apache.hadoop.hbase.security.UserProvider;
@@ -527,6 +528,9 @@ public class HRegionServer extends HasThread implements
     checkCodecs(this.conf);
     this.userProvider = UserProvider.instantiate(conf);
     FSUtils.setupShortCircuitRead(this.conf);
+
+    Replication.decorateRegionServerConfiguration(this.conf);
+
     // Disable usage of meta replicas in the regionserver
     this.conf.setBoolean(HConstants.USE_META_REPLICAS, false);
     BackupManager.decorateRSConfiguration(conf);
@@ -2310,7 +2314,7 @@ public class HRegionServer extends HasThread implements
    * @return Return the object that implements the replication
    * source service.
    */
-  ReplicationSourceService getReplicationSourceService() {
+  public ReplicationSourceService getReplicationSourceService() {
     return replicationSourceHandler;
   }
 

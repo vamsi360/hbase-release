@@ -58,6 +58,7 @@ import org.apache.hadoop.hbase.replication.ReplicationPeers;
 import org.apache.hadoop.hbase.replication.ReplicationQueueInfo;
 import org.apache.hadoop.hbase.replication.ReplicationQueues;
 import org.apache.hadoop.hbase.replication.ReplicationTracker;
+import org.apache.hadoop.hbase.util.Pair;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
@@ -667,10 +668,10 @@ public class ReplicationSourceManager implements ReplicationListener {
     return stats.toString();
   }
 
-  public void addHFileRefs(TableName tableName, byte[] family, List<String> files)
+  public void addHFileRefs(TableName tableName, byte[] family, List<Pair<Path, Path>> pairs)
       throws ReplicationException {
     for (ReplicationSourceInterface source : this.sources) {
-      source.addHFileRefs(tableName, family, files);
+      source.addHFileRefs(tableName, family, pairs);
     }
   }
 

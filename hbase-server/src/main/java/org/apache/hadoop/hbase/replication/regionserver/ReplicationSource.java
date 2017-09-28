@@ -58,6 +58,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.CancelableProgressable;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.LeaseNotRecoveredException;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.wal.DefaultWALProvider;
 import org.apache.hadoop.hbase.wal.WAL;
@@ -216,7 +217,7 @@ public class ReplicationSource extends Thread
   }
 
   @Override
-  public void addHFileRefs(TableName tableName, byte[] family, List<String> files)
+  public void addHFileRefs(TableName tableName, byte[] family, List<Pair<Path, Path>> pairs)
       throws ReplicationException {
     String peerId = peerClusterZnode;
     if (peerId.contains("-")) {
@@ -229,8 +230,8 @@ public class ReplicationSource extends Thread
       List<String> tableCfs = tableCFMap.get(tableName);
       if (tableCFMap.containsKey(tableName)
           && (tableCfs == null || tableCfs.contains(Bytes.toString(family)))) {
-        this.replicationQueues.addHFileRefs(peerId, files);
-        metrics.incrSizeOfHFileRefsQueue(files.size());
+        this.replicationQueues.addHFileRefs(peerId, pairs);
+        metrics.incrSizeOfHFileRefsQueue(pairs.size());
       } else {
         LOG.debug("HFiles will not be replicated belonging to the table " + tableName + " family "
             + Bytes.toString(family) + " to peer id " + peerId);
@@ -238,8 +239,8 @@ public class ReplicationSource extends Thread
     } else {
       // user has explicitly not defined any table cfs for replication, means replicate all the
       // data
-      this.replicationQueues.addHFileRefs(peerId, files);
-      metrics.incrSizeOfHFileRefsQueue(files.size());
+      this.replicationQueues.addHFileRefs(peerId, pairs);
+      metrics.incrSizeOfHFileRefsQueue(pairs.size());
     }
   }
 
