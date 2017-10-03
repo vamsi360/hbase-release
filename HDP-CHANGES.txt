@@ -314,3 +314,74 @@ HBASE-17241 Avoid compacting already compacted mob files with _del files
 HBASE-17005 Improve log message in MobFileCache
 HBASE-16767 Mob compaction needs to clean up files in /hbase/mobdir/.tmp
 HBASE-14425 In Secure Zookeeper cluster superuser will not have sufficient permission if multiple values are configured in hbase.superuser (Pankaj Kumar)
+
+** HDP-2.6.3.0
+
+HBASE-11013 Clone Snapshots on Secure Cluster Should provide option to apply Retained User Permissions
+HBASE-14469 Fix some comment, validation and logging around memstore lower limit configuration
+HBASE-14584 TestNamespacesInstanceModel fails on jdk8
+HBASE-14644 Region in transition metric is broken (Huaxiang Sun)
+HBASE-14663 HStore::close does not honor config hbase.rs.evictblocksonclose
+HBASE-15160 Put back HFile's HDFS op latency sampling code and add metrics for monitoring (Yu Li and Enis Soztutar) HBASE-18184 Add hbase-hadoop2-compat jar as MapReduce dependency
+HBASE-15198 RPC client not using Codec and CellBlock for puts by default
+HBASE-15203 Reduce garbage created by path.toString() during Checksum verification
+HBASE-15214 Valid mutate Ops fail with RPC Codec in use and region moves across
+HBASE-15433 SnapshotManager#restoreSnapshot not update table and region count quota correctly when encountering exception (Jianwei Cui)
+HBASE-16700 Allow for coprocessor whitelisting
+HBASE-16886 hbase-client: scanner with reversed=true and small=true gets no result
+HBASE-17002 JMX metrics and some UI additions for space quotas
+HBASE-17003 Documentation updates for space quotas
+HBASE-17127 Locate region should fail fast if underlying Connection already closed
+HBASE-17215 Separate small/large file delete threads in HFileCleaner to accelerate archived hfile cleanup speed
+HBASE-17290 Potential loss of data for replication of bulk loaded hfiles
+HBASE-17557 HRegionServer#reportRegionSizesForQuotas() should respond to UnsupportedOperationException
+HBASE-17602 Reduce some quota chore periods/delays
+HBASE-17612 [C++] Set client version info in RPC header
+HBASE-17794 Swap "violation" for "snapshot" where appropriate
+HBASE-17854 Use StealJobQueue in HFileCleaner
+HBASE-17955 Various reviewboard improvements to space quota work
+HBASE-17977 Enable the MasterSpaceQuotaObserver by default
+HBASE-17978 Ensure superusers can circumvent actions restricted by space quota violations
+HBASE-17981 Consolidate the space quota shell commands
+HBASE-18024 HRegion#initializeRegionInternals should not re-create .hregioninfo file when the region directory no longer exists
+HBASE-18061 [C++] Fix retry logic in multi-get calls (Sudeep Sunthankar)
+HBASE-18078 [C++] Harden RPC by handling various communication abnormalities
+HBASE-18086 Create native client which creates load on selected cluster
+HBASE-18093 Overloading the meaning of 'enabled' in Quota Manager to indicate either quota disabled or quota manager not ready is not good (Stephen Yuan Jiang)
+HBASE-18150 Do not call FSUtils.setVersion() and FSUtils.checkVersion() when using checkRootDir() to check hbase.wal.dir
+HBASE-18168 NoSuchElementException when rolling the log (Allan Yang)
+HBASE-18204 [C++] Rpc connection close and reconnecting
+HBASE-18338 [C++] Implement RpcTestServer (Xiaobing Zhou)
+HBASE-18371 [C++] Update folly and wangle dependencies
+HBASE-18400 [C++] ConnectionId Equals/Hash should consider service_name (Xiaobing Zhou)
+HBASE-18407 [C++] make Configuration::Set/GetBool work for both true/false and 1/0 (Xiaobing Zhou)
+HBASE-18459 [C++] Fix Segfault in location-cache
+HBASE-18466 [C++] Support handling exception in RpcTestServer
+HBASE-18471 The DeleteFamily cell is skipped when StoreScanner seeks to next column
+HBASE-18507 [C++] Support for MultiPuts in AsyncBatchRpcRetryingCaller class (Sudeep Sunthankar)
+HBASE-18536 [C++] Add fault injection infra
+HBASE-18537 [C++] Improvements to load-client
+HBASE-18564 [C++] Problems compiling with GCC
+HBASE-18565 [C++] Fix deadlock in AsyncScanRetryingCaller and other RPCs
+HBASE-18568 Correct metric of numRegions
+HBASE-18576 [C++] Add ping for RPC test
+HBASE-18578 [C++] Add pause for RPC test
+HBASE-18579 Enable core dump by default for docker
+HBASE-18603 buck complains about Build target path containing double slash
+HBASE-18614 Setting BUCKET_CACHE_COMBINED_KEY to false disables stats on RS UI
+HBASE-18629 Enhance ChaosMonkeyRunner with interruptibility
+HBASE-18631 Allow ChaosMonkey properties to be specified in hbase-site
+HBASE-18646 LogRollMasterProcedureManager: make procedure timeout, thread pool size configurable
+HBASE-18665 ReversedScannerCallable invokes getRegionLocations incorrectly
+HBASE-18679 Add a null check around the result of getCounters() in ITBLL
+HBASE-18720 [C++] Update wangle dependency to pick up the new release with Apache License v2
+HBASE-18725 [C++] Install header files as well as library
+HBASE-18727 [C++] Don't link JNI/JVM stuff into libHbaseClient
+HBASE-18728 [C++] The library should be named libHBaseClient, instead of libHbaseClient
+HBASE-18743 HFiles in use by a table which has the same name and namespace with a default table cloned from snapshot may be deleted when that snapshot and default table are deleted (wenbang)
+HBASE-18757 Fix Improper bitwise & in BucketCache offset calculation
+HBASE-18777 Create one table for subtests in multi-retry-test
+HBASE-18802 [C++] Remove hbase-macros.h
+HBASE-18891 BUG-89216 Upgrade netty-all dependency
+HBASE-9393  Hbase does not closing a closed socket resulting in many CLOSE_WAIT
+
