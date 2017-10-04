@@ -213,6 +213,7 @@ public class HBaseAdmin implements Admin {
   private boolean cleanupConnectionOnClose = false; // close the connection in close()
   private boolean closed = false;
   private int operationTimeout;
+  private int rpcTimeout;
 
   private RpcRetryingCallerFactory rpcCallerFactory;
   private RpcControllerFactory rpcControllerFactory;
@@ -269,6 +270,8 @@ public class HBaseAdmin implements Admin {
         "hbase.client.retries.longer.multiplier", 10);
     this.operationTimeout = this.conf.getInt(HConstants.HBASE_CLIENT_OPERATION_TIMEOUT,
         HConstants.DEFAULT_HBASE_CLIENT_OPERATION_TIMEOUT);
+    this.rpcTimeout = this.conf.getInt(HConstants.HBASE_RPC_TIMEOUT_KEY,
+        HConstants.DEFAULT_HBASE_RPC_TIMEOUT);
     this.syncWaitTimeout = this.conf.getInt(
       "hbase.client.sync.wait.timeout.msec", 10 * 60000); // 10min
     this.rpcCallerFactory = connection.getRpcRetryingCallerFactory();
@@ -535,12 +538,12 @@ public class HBaseAdmin implements Admin {
   @Override
   public HTableDescriptor getTableDescriptor(final TableName tableName) throws IOException {
      return getTableDescriptor(tableName, getConnection(), rpcCallerFactory, rpcControllerFactory,
-       operationTimeout);
+       operationTimeout, rpcTimeout);
   }
 
   static HTableDescriptor getTableDescriptor(final TableName tableName, HConnection connection,
       RpcRetryingCallerFactory rpcCallerFactory, final RpcControllerFactory rpcControllerFactory,
-      int operationTimeout) throws IOException {
+      int operationTimeout, int rpcTimeout) throws IOException {
       if (tableName == null) return null;
       HTableDescriptor htd = executeCallable(new MasterCallable<HTableDescriptor>(connection) {
         @Override
@@ -557,7 +560,7 @@ public class HBaseAdmin implements Admin {
           }
           return null;
         }
-      }, rpcCallerFactory, operationTimeout);
+      }, rpcCallerFactory, operationTimeout, rpcTimeout);
       if (htd != null) {
         return htd;
       }
@@ -2692,6 +2695,27 @@ public class HBaseAdmin implements Admin {
   }
 
   /**
+   * Do a get with a timeout against the passed in <code>future<code>.
+   */
+  private static <T> T get(final Future<T> future, final long timeout, final TimeUnit units)
+  throws IOException {
+    try {
+      // TODO: how long should we wait? Spin forever?
+      return future.get(timeout, units);
+    } catch (InterruptedException e) {
+      throw new InterruptedIOException("Interrupt while waiting on " + future);
+    } catch (TimeoutException e) {
+      throw new TimeoutIOException(e);
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof IOException) {
+        throw (IOException)e.getCause();
+      } else {
+        throw new IOException(e.getCause());
+      }
+    }
+  }
+
+  /**
    * Modify an existing table, more IRB friendly version.
    * Asynchronous operation.  This means that it may be a while before your
    * schema change is updated across all of the table.
@@ -4259,6 +4283,17 @@ public class HBaseAdmin implements Admin {
 
   private <V> V executeCallable(MasterCallable<V> callable) throws IOException {
     RpcRetryingCaller<V> caller = rpcCallerFactory.newCaller();
+    try {
+      return executeCallable(callable, rpcCallerFactory, operationTimeout, rpcTimeout);
+    } finally {
+      callable.close();
+    }
+  }
+
+  private static <C extends RetryingCallable<V> & Closeable, V> V executeCallable(C callable,
+             RpcRetryingCallerFactory rpcCallerFactory, int operationTimeout, int rpcTimeout)
+      throws IOException {
+    RpcRetryingCaller<V> caller = rpcCallerFactory.newCaller(rpcTimeout);
     try {
       return caller.callWithRetries(callable, operationTimeout);
     } finally {
