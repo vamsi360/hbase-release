@@ -59,6 +59,7 @@ import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellBuilder;
 import org.apache.hadoop.hbase.CellBuilderFactory;
 import org.apache.hadoop.hbase.CellBuilderType;
 import org.apache.hadoop.hbase.CellComparator;
@@ -249,11 +250,13 @@ public class TestHStore {
         // Initialize region
         init(name.getMethodName(), conf);
 
-        MemstoreSize size = store.memstore.getFlushableSize();
+        MemStoreSize size = store.memstore.getFlushableSize();
         assertEquals(0, size.getDataSize());
         LOG.info("Adding some data");
-        MemstoreSize kvSize = new MemstoreSize();
-        store.add(new KeyValue(row, family, qf1, 1, (byte[])null), kvSize);
+        MemStoreSize kvSize = new MemStoreSize();
+        store.add(new KeyValue(row, family, qf1, 1, (byte[]) null), kvSize);
+        // add the heap size of active (mutable) segment
+        kvSize.incMemStoreSize(0, MutableSegment.DEEP_OVERHEAD);
         size = store.memstore.getFlushableSize();
         assertEquals(kvSize, size);
         // Flush.  Bug #1 from HBASE-10466.  Make sure size calculation on failed flush is right.
@@ -264,10 +267,14 @@ public class TestHStore {
         } catch (IOException ioe) {
           assertTrue(ioe.getMessage().contains("Fault injected"));
         }
+        // due to snapshot, change mutable to immutable segment
+        kvSize.incMemStoreSize(0,
+            CSLMImmutableSegment.DEEP_OVERHEAD_CSLM-MutableSegment.DEEP_OVERHEAD);
         size = store.memstore.getFlushableSize();
         assertEquals(kvSize, size);
-        MemstoreSize kvSize2 = new MemstoreSize();
+        MemStoreSize kvSize2 = new MemStoreSize();
         store.add(new KeyValue(row, family, qf2, 2, (byte[])null), kvSize2);
+        kvSize2.incMemStoreSize(0, MutableSegment.DEEP_OVERHEAD);
         // Even though we add a new kv, we expect the flushable size to be 'same' since we have
         // not yet cleared the snapshot -- the above flush failed.
         assertEquals(kvSize, size);
@@ -279,7 +286,7 @@ public class TestHStore {
         flushStore(store, id++);
         size = store.memstore.getFlushableSize();
         assertEquals(0, size.getDataSize());
-        assertEquals(0, size.getHeapSize());
+        assertEquals(MutableSegment.DEEP_OVERHEAD, size.getHeapSize());
         return null;
       }
     });
@@ -1008,13 +1015,13 @@ public class TestHStore {
     long seqId = 100;
     long timestamp = System.currentTimeMillis();
     Cell cell0 = CellBuilderFactory.create(CellBuilderType.DEEP_COPY).setRow(row).setFamily(family)
-        .setQualifier(qf1).setTimestamp(timestamp).setType(KeyValue.Type.Put.getCode())
+        .setQualifier(qf1).setTimestamp(timestamp).setType(CellBuilder.DataType.Put)
         .setValue(qf1).build();
     CellUtil.setSequenceId(cell0, seqId);
     testNumberOfMemStoreScannersAfterFlush(Arrays.asList(cell0), Collections.emptyList());
 
     Cell cell1 = CellBuilderFactory.create(CellBuilderType.DEEP_COPY).setRow(row).setFamily(family)
-        .setQualifier(qf2).setTimestamp(timestamp).setType(KeyValue.Type.Put.getCode())
+        .setQualifier(qf2).setTimestamp(timestamp).setType(CellBuilder.DataType.Put)
         .setValue(qf1).build();
     CellUtil.setSequenceId(cell1, seqId);
     testNumberOfMemStoreScannersAfterFlush(Arrays.asList(cell0), Arrays.asList(cell1));
@@ -1022,7 +1029,7 @@ public class TestHStore {
     seqId = 101;
     timestamp = System.currentTimeMillis();
     Cell cell2 = CellBuilderFactory.create(CellBuilderType.DEEP_COPY).setRow(row2).setFamily(family)
-        .setQualifier(qf2).setTimestamp(timestamp).setType(KeyValue.Type.Put.getCode())
+        .setQualifier(qf2).setTimestamp(timestamp).setType(CellBuilder.DataType.Put)
         .setValue(qf1).build();
      CellUtil.setSequenceId(cell2, seqId);
     testNumberOfMemStoreScannersAfterFlush(Arrays.asList(cell0), Arrays.asList(cell1, cell2));
@@ -1075,7 +1082,7 @@ public class TestHStore {
   private Cell createCell(byte[] row, byte[] qualifier, long ts, long sequenceId, byte[] value)
       throws IOException {
     Cell c = CellBuilderFactory.create(CellBuilderType.DEEP_COPY).setRow(row).setFamily(family)
-        .setQualifier(qualifier).setTimestamp(ts).setType(KeyValue.Type.Put.getCode())
+        .setQualifier(qualifier).setTimestamp(ts).setType(CellBuilder.DataType.Put)
         .setValue(value).build();
     CellUtil.setSequenceId(c, sequenceId);
     return c;
@@ -1176,7 +1183,7 @@ public class TestHStore {
     byte[] value0 = Bytes.toBytes("value0");
     byte[] value1 = Bytes.toBytes("value1");
     byte[] value2 = Bytes.toBytes("value2");
-    MemstoreSize memStoreSize = new MemstoreSize();
+    MemStoreSize memStoreSize = new MemStoreSize();
     long ts = EnvironmentEdgeManager.currentTime();
     long seqId = 100;
     init(name.getMethodName(), conf, TableDescriptorBuilder.newBuilder(TableName.valueOf(table)),
@@ -1235,7 +1242,7 @@ public class TestHStore {
     init(name.getMethodName(), conf, ColumnFamilyDescriptorBuilder.newBuilder(family)
         .setInMemoryCompaction(MemoryCompactionPolicy.BASIC).build());
     byte[] value = Bytes.toBytes("value");
-    MemstoreSize memStoreSize = new MemstoreSize();
+    MemStoreSize memStoreSize = new MemStoreSize();
     long ts = EnvironmentEdgeManager.currentTime();
     long seqId = 100;
     // older data whihc shouldn't be "seen" by client
@@ -1313,7 +1320,7 @@ public class TestHStore {
     });
     byte[] oldValue = Bytes.toBytes("oldValue");
     byte[] currentValue = Bytes.toBytes("currentValue");
-    MemstoreSize memStoreSize = new MemstoreSize();
+    MemStoreSize memStoreSize = new MemStoreSize();
     long ts = EnvironmentEdgeManager.currentTime();
     long seqId = 100;
     // older data whihc shouldn't be "seen" by client
@@ -1426,7 +1433,7 @@ public class TestHStore {
     init(name.getMethodName(), conf, ColumnFamilyDescriptorBuilder.newBuilder(family)
         .setInMemoryCompaction(MemoryCompactionPolicy.BASIC).build());
     byte[] value = Bytes.toBytes("thisisavarylargevalue");
-    MemstoreSize memStoreSize = new MemstoreSize();
+    MemStoreSize memStoreSize = new MemStoreSize();
     long ts = EnvironmentEdgeManager.currentTime();
     long seqId = 100;
     // older data whihc shouldn't be "seen" by client
@@ -1548,7 +1555,7 @@ public class TestHStore {
     conf.setLong(StoreScanner.STORESCANNER_PREAD_MAX_BYTES, 0);
     // Set the lower threshold to invoke the "MERGE" policy
     MyStore store = initMyStore(name.getMethodName(), conf, new MyStoreHook() {});
-    MemstoreSize memStoreSize = new MemstoreSize();
+    MemStoreSize memStoreSize = new MemStoreSize();
     long ts = System.currentTimeMillis();
     long seqID = 1l;
     // Add some data to the region and do some flushes

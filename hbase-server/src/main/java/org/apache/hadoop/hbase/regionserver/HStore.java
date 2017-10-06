@@ -82,7 +82,7 @@ import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionContext;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionLifeCycleTracker;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionProgress;
-import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequestImpl;
 import org.apache.hadoop.hbase.regionserver.compactions.DefaultCompactor;
 import org.apache.hadoop.hbase.regionserver.compactions.OffPeakHours;
 import org.apache.hadoop.hbase.regionserver.querymatcher.ScanQueryMatcher;
@@ -393,18 +393,18 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
   }
 
   @Override
-  public long getMemstoreFlushSize() {
+  public long getMemStoreFlushSize() {
     // TODO: Why is this in here?  The flushsize of the region rather than the store?  St.Ack
     return this.region.memstoreFlushSize;
   }
 
   @Override
-  public MemstoreSize getFlushableSize() {
+  public MemStoreSize getFlushableSize() {
     return this.memstore.getFlushableSize();
   }
 
   @Override
-  public MemstoreSize getSnapshotSize() {
+  public MemStoreSize getSnapshotSize() {
     return this.memstore.getSnapshotSize();
   }
 
@@ -461,8 +461,8 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
   }
 
   @Override
-  public OptionalLong getMaxMemstoreTS() {
-    return StoreUtils.getMaxMemstoreTSInList(this.getStorefiles());
+  public OptionalLong getMaxMemStoreTS() {
+    return StoreUtils.getMaxMemStoreTSInList(this.getStorefiles());
   }
 
   /**
@@ -684,7 +684,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
    * @param cell
    * @param memstoreSize
    */
-  public void add(final Cell cell, MemstoreSize memstoreSize) {
+  public void add(final Cell cell, MemStoreSize memstoreSize) {
     lock.readLock().lock();
     try {
        this.memstore.add(cell, memstoreSize);
@@ -698,7 +698,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
    * @param cells
    * @param memstoreSize
    */
-  public void add(final Iterable<Cell> cells, MemstoreSize memstoreSize) {
+  public void add(final Iterable<Cell> cells, MemStoreSize memstoreSize) {
     lock.readLock().lock();
     try {
       memstore.add(cells, memstoreSize);
@@ -1349,9 +1349,9 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
     ThroughputController throughputController, User user) throws IOException {
     assert compaction != null;
     List<HStoreFile> sfs = null;
-    CompactionRequest cr = compaction.getRequest();
+    CompactionRequestImpl cr = compaction.getRequest();
     try {
-      // Do all sanity checking in here if we have a valid CompactionRequest
+      // Do all sanity checking in here if we have a valid CompactionRequestImpl
       // because we need to clean up after it on the way out in a finally
       // block below
       long compactionStartTime = EnvironmentEdgeManager.currentTime();
@@ -1387,7 +1387,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
         return sfs;
       }
       // Do the steps necessary to complete the compaction.
-      sfs = moveCompatedFilesIntoPlace(cr, newFiles, user);
+      sfs = moveCompactedFilesIntoPlace(cr, newFiles, user);
       writeCompactionWalRecord(filesToCompact, sfs);
       replaceStoreFiles(filesToCompact, sfs);
       if (cr.isMajor()) {
@@ -1417,14 +1417,14 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
     }
   }
 
-  private List<HStoreFile> moveCompatedFilesIntoPlace(CompactionRequest cr, List<Path> newFiles,
+  private List<HStoreFile> moveCompactedFilesIntoPlace(CompactionRequestImpl cr, List<Path> newFiles,
       User user) throws IOException {
     List<HStoreFile> sfs = new ArrayList<>(newFiles.size());
     for (Path newFile : newFiles) {
       assert newFile != null;
       HStoreFile sf = moveFileIntoPlace(newFile);
       if (this.getCoprocessorHost() != null) {
-        getCoprocessorHost().postCompact(this, sf, cr.getTracker(), user);
+        getCoprocessorHost().postCompact(this, sf, cr.getTracker(), cr, user);
       }
       assert sf != null;
       sfs.add(sf);
@@ -1483,7 +1483,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
    * @param compactionStartTime Start time.
    */
   private void logCompactionEndMessage(
-      CompactionRequest cr, List<HStoreFile> sfs, long now, long compactionStartTime) {
+      CompactionRequestImpl cr, List<HStoreFile> sfs, long now, long compactionStartTime) {
     StringBuilder message = new StringBuilder(
       "Completed" + (cr.isMajor() ? " major" : "") + " compaction of "
       + cr.getFiles().size() + (cr.isAllFiles() ? " (all)" : "") + " file(s) in "
@@ -1625,7 +1625,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
         // Move the compaction into place.
         HStoreFile sf = moveFileIntoPlace(newFile);
         if (this.getCoprocessorHost() != null) {
-          this.getCoprocessorHost().postCompact(this, sf, null, null);
+          this.getCoprocessorHost().postCompact(this, sf, null, null, null);
         }
         replaceStoreFiles(filesToCompact, Collections.singletonList(sf));
         completeCompaction(filesToCompact);
@@ -1674,7 +1674,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
     removeUnneededFiles();
 
     final CompactionContext compaction = storeEngine.createCompaction();
-    CompactionRequest request = null;
+    CompactionRequestImpl request = null;
     this.lock.readLock().lock();
     try {
       synchronized (filesCompacting) {
@@ -1682,11 +1682,12 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
         if (this.getCoprocessorHost() != null) {
           final List<HStoreFile> candidatesForCoproc = compaction.preSelect(this.filesCompacting);
           boolean override = false;
+          //TODO: is it correct way to get CompactionRequest?
           override = getCoprocessorHost().preCompactSelection(this, candidatesForCoproc,
-            tracker, user);
+            tracker, null, user);
           if (override) {
             // Coprocessor is overriding normal file selection.
-            compaction.forceSelect(new CompactionRequest(candidatesForCoproc));
+            compaction.forceSelect(new CompactionRequestImpl(candidatesForCoproc));
           }
         }
 
@@ -1712,7 +1713,8 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
         }
         if (this.getCoprocessorHost() != null) {
           this.getCoprocessorHost().postCompactSelection(
-              this, ImmutableList.copyOf(compaction.getRequest().getFiles()), tracker, user);
+              this, ImmutableList.copyOf(compaction.getRequest().getFiles()), tracker,
+              compaction.getRequest(), user);
         }
         // Finally, we have the resulting files list. Check if we have any files at all.
         request = compaction.getRequest();
@@ -1790,7 +1792,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
     finishCompactionRequest(compaction.getRequest());
   }
 
-  private void finishCompactionRequest(CompactionRequest cr) {
+  private void finishCompactionRequest(CompactionRequestImpl cr) {
     this.region.reportCompactionRequestEnd(cr.isMajor(), cr.getFiles().size(), cr.getSize());
     if (cr.isOffPeak()) {
       offPeakCompactionTracker.set(false);
@@ -2115,7 +2117,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
   }
 
   @Override
-  public MemstoreSize getMemStoreSize() {
+  public MemStoreSize getMemStoreSize() {
     return this.memstore.size();
   }
 
@@ -2169,7 +2171,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
    * @param memstoreSize
    * @throws IOException
    */
-  public void upsert(Iterable<Cell> cells, long readpoint, MemstoreSize memstoreSize)
+  public void upsert(Iterable<Cell> cells, long readpoint, MemStoreSize memstoreSize)
       throws IOException {
     this.lock.readLock().lock();
     try {
@@ -2343,7 +2345,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
 
   @Override
   public long heapSize() {
-    MemstoreSize memstoreSize = this.memstore.size();
+    MemStoreSize memstoreSize = this.memstore.size();
     return DEEP_OVERHEAD + memstoreSize.getHeapSize();
   }
 
@@ -2578,7 +2580,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
   }
 
   @Override
-  public boolean isSloppyMemstore() {
+  public boolean isSloppyMemStore() {
     return this.memstore.isSloppy();
   }
 

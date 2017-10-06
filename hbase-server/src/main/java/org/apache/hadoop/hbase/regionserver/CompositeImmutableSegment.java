@@ -18,18 +18,19 @@
  */
 package org.apache.hadoop.hbase.regionserver;
 
-import org.apache.commons.logging.Log;
-import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellComparator;
-import org.apache.hadoop.hbase.io.TimeRange;
-import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
+
+import org.apache.commons.logging.Log;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellComparator;
+import org.apache.hadoop.hbase.io.TimeRange;
+import org.apache.yetus.audience.InterfaceAudience;
+
+import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
 
 /**
  * The CompositeImmutableSegments is created as a collection of ImmutableSegments and supports
@@ -51,7 +52,7 @@ public class CompositeImmutableSegment extends ImmutableSegment {
   public CompositeImmutableSegment(CellComparator comparator, List<ImmutableSegment> segments) {
     super(comparator);
     this.segments = segments;
-    this.timeRangeTracker = new TimeRangeTracker();
+    this.timeRangeTracker = TimeRangeTracker.create(TimeRangeTracker.Type.SYNC);
     for (ImmutableSegment s : segments) {
       this.timeRangeTracker.includeTimestamp(s.getTimeRangeTracker().getMax());
       this.timeRangeTracker.includeTimestamp(s.getTimeRangeTracker().getMin());
@@ -184,6 +185,16 @@ public class CompositeImmutableSegment extends ImmutableSegment {
     throw new IllegalStateException("Not supported by CompositeImmutableScanner");
   }
 
+
+  @Override
+  protected long indexEntrySize() {
+    throw new IllegalStateException("Not supported by CompositeImmutableScanner");
+  }
+
+  @Override protected boolean canBeFlattened() {
+    return false;
+  }
+
   /**
    * @return Sum of all cell sizes.
    */
@@ -257,13 +268,13 @@ public class CompositeImmutableSegment extends ImmutableSegment {
   }
 
   @Override
-  protected void internalAdd(Cell cell, boolean mslabUsed, MemstoreSize memstoreSize) {
+  protected void internalAdd(Cell cell, boolean mslabUsed, MemStoreSize memstoreSize) {
     throw new IllegalStateException("Not supported by CompositeImmutableScanner");
   }
 
   @Override
   protected void updateMetaInfo(Cell cellToAdd, boolean succ, boolean mslabUsed,
-      MemstoreSize memstoreSize) {
+      MemStoreSize memstoreSize) {
     throw new IllegalStateException("Not supported by CompositeImmutableScanner");
   }
 

@@ -53,6 +53,8 @@ public class ClientSideRegionScanner extends AbstractClientScanner {
     // region is immutable, set isolation level
     scan.setIsolationLevel(IsolationLevel.READ_UNCOMMITTED);
 
+    htd = TableDescriptorBuilder.newBuilder(htd).setReadOnly(true).build();
+
     // open region from the snapshot directory
     this.region = HRegion.openHRegion(conf, fs, rootDir, hri, htd, null, null, null);
 
@@ -84,6 +86,7 @@ public class ClientSideRegionScanner extends AbstractClientScanner {
         resultSize += CellUtil.estimatedSerializedSizeOf(cell);
       }
       this.scanMetrics.countOfBytesInResults.addAndGet(resultSize);
+      this.scanMetrics.countOfRowsScanned.incrementAndGet();
     }
 
     return result;

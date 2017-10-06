@@ -32,7 +32,10 @@ import org.apache.hadoop.mapreduce.Reducer;
  * KeyValues in sorted order.  If lots of columns per row, it will use lots of
  * memory sorting.
  * @see HFileOutputFormat2
+ * @deprecated Use {@link CellSortReducer}. Will be removed from
+ * 3.0 onwards
  */
+@Deprecated
 @InterfaceAudience.Public
 public class KeyValueSortReducer
     extends Reducer<ImmutableBytesWritable, KeyValue, ImmutableBytesWritable, KeyValue> {

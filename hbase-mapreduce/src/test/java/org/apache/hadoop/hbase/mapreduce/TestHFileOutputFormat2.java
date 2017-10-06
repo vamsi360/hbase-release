@@ -119,6 +119,7 @@ import org.mockito.Mockito;
  * emits keys and values like those of {@link PerformanceEvaluation}.
  */
 @Category({VerySlowMapReduceTests.class, LargeTests.class})
+//TODO : Remove this in 3.0
 public class TestHFileOutputFormat2  {
   @Rule public final TestRule timeout = CategoryBasedTimeout.builder().
       withTimeout(this.getClass()).withLookingForStuckThread(true).build();
@@ -399,7 +400,7 @@ public class TestHFileOutputFormat2  {
       assertNotNull(range);
 
       // unmarshall and check values.
-      TimeRangeTracker timeRangeTracker = new TimeRangeTracker();
+      TimeRangeTracker timeRangeTracker = TimeRangeTracker.create(TimeRangeTracker.Type.SYNC);
       Writables.copyWritable(range, timeRangeTracker);
       LOG.info(timeRangeTracker.getMin() +
           "...." + timeRangeTracker.getMax());

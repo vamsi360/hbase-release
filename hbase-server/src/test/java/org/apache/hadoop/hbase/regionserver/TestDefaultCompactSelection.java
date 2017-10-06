@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequestImpl;
 import org.apache.hadoop.hbase.regionserver.compactions.RatioBasedCompactionPolicy;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
@@ -168,12 +168,12 @@ public class TestDefaultCompactSelection extends TestCompactionPolicy {
     for (HStoreFile file : candidates) {
       if (file instanceof MockHStoreFile) {
         MockHStoreFile mockFile = (MockHStoreFile) file;
-        mockFile.setTimeRangeTracker(new TimeRangeTracker(-1, -1));
+        mockFile.setTimeRangeTracker(TimeRangeTracker.create(TimeRangeTracker.Type.SYNC, -1, -1));
         mockFile.setEntries(0);
       }
     }
     // Test Default compactions
-    CompactionRequest result = ((RatioBasedCompactionPolicy) store.storeEngine
+    CompactionRequestImpl result = ((RatioBasedCompactionPolicy) store.storeEngine
         .getCompactionPolicy()).selectCompaction(candidates,
         new ArrayList<>(), false, false, false);
     Assert.assertTrue(result.getFiles().isEmpty());
