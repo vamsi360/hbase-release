@@ -43,6 +43,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 @InterfaceStability.Evolving
 public class ProcedureWALFormatReader {
   private static final Log LOG = LogFactory.getLog(ProcedureWALFormatReader.class);
+  private static final String SERVER_CRASH_PROCEDURE_CLASS_NAME =
+      "org.apache.hadoop.hbase.master.procedure.ServerCrashProcedure";
 
   private final ProcedureStoreTracker tracker;
   //private final long compactionLogId;
@@ -107,15 +109,39 @@ public class ProcedureWALFormatReader {
         minProcId = Math.min(minProcId, procId);
         maxProcId = Math.max(maxProcId, procId);
 
-        // Deserialize the procedure
-        Procedure proc = Procedure.convert(entry.getValue());
-        procedures.put(procId, proc);
+        deserializeAndStoreProcedure(procedures, entry.getValue(), procId);
       }
 
       // TODO: Some procedure may be already runnables (see readInitEntry())
       //       (we can also check the "update map" in the log trackers)
       log.setProcIds(minProcId, maxProcId);
     }
+  }
+
+  @SuppressWarnings("rawtypes") 
+  void deserializeAndStoreProcedure(
+      Map<Long,Procedure> procedures, ProcedureProtos.Procedure procedure,
+      Long procId) throws IOException {
+    /* BIG WARNING:
+     *   This conditional was added to support the migration of IOP (HBase 1.2.x)
+     *   clusters to HDP clusters (HBase 1.1.x). The newer clusters have a procedure
+     *   called ServerCrashProcedure which does not exist in HDP (handled instead
+     *   by the ServerShutdownHandler). While HDP remains on a version in which
+     *   this ServerCrashProcedure doesn't exist, we need to make sure that we
+     *   ignore such a procedure from IOP clusters. We MUST not propagate this
+     *   change to a version of HDP which DOES have the ServerCrashProcedure.
+     */
+    if (!SERVER_CRASH_PROCEDURE_CLASS_NAME.equals(procedure.getClassName())) {
+      // Deserialize the procedure
+      Procedure proc = convert(procedure);
+      procedures.put(procId, proc);
+    } else {
+      LOG.info("Skipping known, missing ServerCrashProcedure implementation");
+    }
+  }
+
+  Procedure convert(ProcedureProtos.Procedure procedure) throws IOException {
+    return Procedure.convert(procedure);
   }
 
   public Iterator<Procedure> getProcedures() {
