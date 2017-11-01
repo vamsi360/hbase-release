@@ -46,7 +46,6 @@ import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.replication.ReplicationEndpoint;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
-import org.apache.hadoop.hbase.testclassification.RegionServerTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.apache.hadoop.hbase.wal.WAL;
@@ -68,7 +67,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Tests around regionserver shutdown and abort
  */
-@Category({RegionServerTests.class, MediumTests.class})
+@Category({MediumTests.class})
 public class TestRegionServerAbort {
   private static final byte[] FAMILY_BYTES = Bytes.toBytes("f");
 
