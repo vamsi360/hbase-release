@@ -32,3 +32,4 @@ notice here [9].
 7. http://hbase.apache.org/license.html
 8. http://hbase.apache.org/mail-lists.html
 9. https://hbase.apache.org/export_control.html
+Patch Upgrade - Wed Nov 15 09:57:50 UTC 2017
