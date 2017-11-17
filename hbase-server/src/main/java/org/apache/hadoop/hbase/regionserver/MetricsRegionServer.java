@@ -22,6 +22,7 @@ import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CompatibilitySingletonFactory;
+import org.apache.hadoop.hbase.TableName;
 
 /**
  * This class is for maintaining the various regionserver statistics
@@ -33,9 +34,14 @@ import org.apache.hadoop.hbase.CompatibilitySingletonFactory;
 @InterfaceStability.Evolving
 @InterfaceAudience.Private
 public class MetricsRegionServer {
+  public static final String RS_ENABLE_TABLE_METRICS_KEY =
+      "hbase.regionserver.enable.table.latencies";
+  public static final boolean RS_ENABLE_TABLE_METRICS_DEFAULT = true;
+
   private final MetricsRegionServerSource serverSource;
   private final MetricsRegionServerWrapper regionServerWrapper;
   private final MetricsTable metricsTable;
+  private final RegionServerTableMetrics tableMetrics;
 
   private final MetricsUserAggregate userAggregate;
 
@@ -43,16 +49,28 @@ public class MetricsRegionServer {
                              MetricsTable metricsTable) {
     this(conf, regionServerWrapper,
         CompatibilitySingletonFactory.getInstance(MetricsRegionServerSourceFactory.class)
-            .createServer(regionServerWrapper), metricsTable);
+            .createServer(regionServerWrapper), metricsTable, createTableMetrics(conf));
 
   }
 
   MetricsRegionServer(Configuration conf, MetricsRegionServerWrapper regionServerWrapper,
-                      MetricsRegionServerSource serverSource, MetricsTable metricsTable) {
+                      MetricsRegionServerSource serverSource, MetricsTable metricsTable,
+                      RegionServerTableMetrics tableMetrics) {
     this.regionServerWrapper = regionServerWrapper;
     this.serverSource = serverSource;
     this.userAggregate = new MetricsUserAggregate(conf);
     this.metricsTable = metricsTable;
+    this.tableMetrics = tableMetrics;
+  }
+
+  /**
+   * Creates an instance of {@link RegionServerTableMetrics} only if the feature is enabled.
+   */
+  static RegionServerTableMetrics createTableMetrics(Configuration conf) {
+    if (conf.getBoolean(RS_ENABLE_TABLE_METRICS_KEY, RS_ENABLE_TABLE_METRICS_DEFAULT)) {
+      return new RegionServerTableMetrics();
+    }
+    return null;
   }
 
   // for unit-test usage
@@ -69,7 +87,10 @@ public class MetricsRegionServer {
     return regionServerWrapper;
   }
 
-  public void updatePut(long t) {
+  public void updatePut(TableName tn, long t) {
+    if (tableMetrics != null && tn != null) {
+      tableMetrics.updatePut(tn, t);
+    }
     if (t > 1000) {
       serverSource.incrSlowPut();
     }
@@ -77,7 +98,10 @@ public class MetricsRegionServer {
     userAggregate.updatePut(t);
   }
 
-  public void updateDelete(long t) {
+  public void updateDelete(TableName tn, long t) {
+    if (tableMetrics != null && tn != null) {
+      tableMetrics.updateDelete(tn, t);
+    }
     if (t > 1000) {
       serverSource.incrSlowDelete();
     }
@@ -85,7 +109,10 @@ public class MetricsRegionServer {
     userAggregate.updateDelete(t);
   }
 
-  public void updateGet(long t) {
+  public void updateGet(TableName tn, long t) {
+    if (tableMetrics != null && tn != null) {
+      tableMetrics.updateGet(tn, t);
+    }
     if (t > 1000) {
       serverSource.incrSlowGet();
     }
@@ -93,7 +120,10 @@ public class MetricsRegionServer {
     userAggregate.updateGet(t);
   }
 
-  public void updateIncrement(long t) {
+  public void updateIncrement(TableName tn, long t) {
+    if (tableMetrics != null && tn != null) {
+      tableMetrics.updateIncrement(tn, t);
+    }
     if (t > 1000) {
       serverSource.incrSlowIncrement();
     }
@@ -101,7 +131,10 @@ public class MetricsRegionServer {
     userAggregate.updateIncrement(t);
   }
 
-  public void updateAppend(long t) {
+  public void updateAppend(TableName tn, long t) {
+    if (tableMetrics != null && tn != null) {
+      tableMetrics.updateAppend(tn, t);
+    }
     if (t > 1000) {
       serverSource.incrSlowAppend();
     }
@@ -114,11 +147,17 @@ public class MetricsRegionServer {
     userAggregate.updateReplay(t);
   }
 
-  public void updateScanSize(long scanSize){
+  public void updateScanSize(TableName tn, long scanSize){
+    if (tableMetrics != null && tn != null) {
+      tableMetrics.updateScanSize(tn, scanSize);
+    }
     serverSource.updateScanSize(scanSize);
   }
 
-  public void updateScanTime(long t) {
+  public void updateScanTime(TableName tn, long t) {
+    if (tableMetrics != null && tn != null) {
+      tableMetrics.updateScanTime(tn, t);
+    }
     serverSource.updateScanTime(t);
     userAggregate.updateScanTime(t);
   }
