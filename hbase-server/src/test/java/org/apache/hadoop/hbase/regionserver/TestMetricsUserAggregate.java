@@ -55,22 +55,22 @@ public class TestMetricsUserAggregate {
 
   private void doOperations() {
     for (int i=0; i < 10; i ++) {
-      rsm.updateGet(10);
+      rsm.updateGet(null, 10);
     }
     for (int i=0; i < 11; i ++) {
-      rsm.updateScanTime(11);
+      rsm.updateScanTime(null, 11);
     }
     for (int i=0; i < 12; i ++) {
-      rsm.updatePut(12);
+      rsm.updatePut(null, 12);
     }
     for (int i=0; i < 13; i ++) {
-      rsm.updateDelete(13);
+      rsm.updateDelete(null, 13);
     }
     for (int i=0; i < 14; i ++) {
-      rsm.updateIncrement(14);
+      rsm.updateIncrement(null, 14);
     }
     for (int i=0; i < 15; i ++) {
-      rsm.updateAppend(15);
+      rsm.updateAppend(null, 15);
     }
     for (int i=0; i < 16; i ++) {
       rsm.updateReplay(16);
