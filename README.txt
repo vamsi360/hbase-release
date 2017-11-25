@@ -33,3 +33,4 @@ notice here [9].
 8. http://hbase.apache.org/mail-lists.html
 9. https://hbase.apache.org/export_control.html
 Patch Upgrade - Wed Nov 15 09:57:50 UTC 2017
+Patch Upgrade - Sat Nov 25 14:55:59 UTC 2017
