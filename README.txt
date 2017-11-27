@@ -35,3 +35,4 @@ notice here [9].
 Patch Upgrade - Wed Nov 15 09:57:50 UTC 2017
 Patch Upgrade - Sat Nov 25 14:55:59 UTC 2017
 Patch Upgrade - Sat Nov 25 19:14:22 UTC 2017
+Patch Upgrade - Mon Nov 27 12:55:20 UTC 2017
