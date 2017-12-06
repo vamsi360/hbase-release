@@ -45,11 +45,13 @@ import org.apache.hadoop.hbase.wal.WALFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Lists;
 
 @Category(SmallTests.class)
+@Ignore
 public class TestDefaultCompactSelection extends TestCompactionPolicy {
   private final static Log LOG = LogFactory.getLog(TestDefaultCompactSelection.class);
 

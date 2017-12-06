@@ -43,6 +43,7 @@ import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -58,6 +59,7 @@ import com.google.protobuf.ServiceException;
  * first one.
  */
 @Category(MediumTests.class) // Fails sometimes with small tests
+@Ignore
 public class TestDelayedRpc {
   private static final Log LOG = LogFactory.getLog(TestDelayedRpc.class);
   public static RpcServerInterface rpcServer;
