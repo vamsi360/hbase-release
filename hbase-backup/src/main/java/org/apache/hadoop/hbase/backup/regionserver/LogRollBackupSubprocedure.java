@@ -24,7 +24,7 @@ import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.backup.master.LogRollMasterProcedureManager;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.errorhandling.ForeignException;
@@ -100,7 +100,7 @@ public class LogRollBackupSubprocedure extends Subprocedure {
           + " on " + rss.getServerName());
 
       Connection connection = rss.getConnection();
-      try (final BackupSystemTable table = new BackupSystemTable(connection)) {
+      try (final BackupMetaTable table = new BackupMetaTable(connection)) {
         // sanity check, good for testing
         HashMap<String, Long> serverTimestampMap =
             table.readRegionServerLastLogRollResult(backupRoot);

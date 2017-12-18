@@ -32,7 +32,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
@@ -145,7 +145,7 @@ public class TestBackupDeleteWithFailures extends TestBackupBase{
     assertTrue(checkSucceeded(backupId));
     LOG.info("backup complete");
     String[] backupIds = new String[] { backupId };
-    BackupSystemTable table = new BackupSystemTable(TEST_UTIL.getConnection());
+    BackupMetaTable table = new BackupMetaTable(TEST_UTIL.getConnection());
     BackupInfo info = table.readBackupInfo(backupId);
     Path path = new Path(info.getBackupRootDir(), backupId);
     FileSystem fs = FileSystem.get(path.toUri(), conf1);

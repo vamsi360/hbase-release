@@ -44,7 +44,7 @@ import org.apache.hadoop.hbase.backup.BackupInfo.BackupPhase;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
 import org.apache.hadoop.hbase.backup.impl.BackupAdminImpl;
 import org.apache.hadoop.hbase.backup.impl.BackupManager;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.backup.impl.FullTableBackupClient;
 import org.apache.hadoop.hbase.backup.impl.IncrementalBackupManager;
 import org.apache.hadoop.hbase.backup.impl.IncrementalTableBackupClient;
@@ -58,7 +58,6 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.security.HadoopSecurityEnabledUserProviderForTesting;
 import org.apache.hadoop.hbase.security.UserProvider;
 import org.apache.hadoop.hbase.security.access.SecureTestUtil;
@@ -296,9 +295,6 @@ public class TestBackupBase {
       // setup configuration
       SecureTestUtil.enableSecurity(TEST_UTIL.getConfiguration());
     }
-    String coproc = conf1.get(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY);
-    conf1.set(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY, (coproc == null ? "" : coproc + ",") +
-        BackupObserver.class.getName());
     conf1.setBoolean(BackupRestoreConstants.BACKUP_ENABLE_KEY, true);
     BackupManager.decorateMasterConfiguration(conf1);
     BackupManager.decorateRegionServerConfiguration(conf1);
@@ -475,7 +471,7 @@ public class TestBackupBase {
   }
 
   private BackupInfo getBackupInfo(String backupId) throws IOException {
-    try (BackupSystemTable table = new BackupSystemTable(TEST_UTIL.getConnection())) {
+    try (BackupMetaTable table = new BackupMetaTable(TEST_UTIL.getConnection())) {
       BackupInfo status = table.readBackupInfo(backupId);
       return status;
     }

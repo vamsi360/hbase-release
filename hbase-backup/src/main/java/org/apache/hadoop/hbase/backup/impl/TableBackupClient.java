@@ -37,13 +37,12 @@ import org.apache.hadoop.hbase.backup.BackupRestoreConstants;
 import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.backup.HBackupFileSystem;
 import org.apache.hadoop.hbase.backup.impl.BackupManifest.BackupImage;
-import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
-
-import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
+import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Base class for backup operation. Concrete implementation for
@@ -108,7 +107,7 @@ public abstract class TableBackupClient {
   protected void beginBackup(BackupManager backupManager, BackupInfo backupInfo)
       throws IOException {
 
-    BackupSystemTable.snapshot(conn);
+    BackupMetaTable.snapshot(conn);
     backupManager.setBackupInfo(backupInfo);
     // set the start timestamp of the overall backup
     long startTs = EnvironmentEdgeManager.currentTime();
@@ -258,22 +257,21 @@ public abstract class TableBackupClient {
     }
   }
 
-  public static void cleanupAndRestoreBackupSystem (Connection conn, BackupInfo backupInfo,
-      Configuration conf) throws IOException
-  {
+  public static void cleanupAndRestoreBackupSystem(Connection conn, BackupInfo backupInfo,
+      Configuration conf) throws IOException {
     BackupType type = backupInfo.getType();
-     // if full backup, then delete HBase snapshots if there already are snapshots taken
-     // and also clean up export snapshot log files if exist
-     if (type == BackupType.FULL) {
-       deleteSnapshots(conn, backupInfo, conf);
-       cleanupExportSnapshotLog(conf);
-     }
-     BackupSystemTable.restoreFromSnapshot(conn);
-     BackupSystemTable.deleteSnapshot(conn);
-     // clean up the uncompleted data at target directory if the ongoing backup has already entered
-     // the copy phase
-     // For incremental backup, DistCp logs will be cleaned with the targetDir.
-     cleanupTargetDir(backupInfo, conf);
+    // if full backup, then delete HBase snapshots if there already are snapshots taken
+    // and also clean up export snapshot log files if exist
+    if (type == BackupType.FULL) {
+      deleteSnapshots(conn, backupInfo, conf);
+      cleanupExportSnapshotLog(conf);
+    }
+    BackupMetaTable.restoreFromSnapshot(conn);
+    BackupMetaTable.deleteSnapshot(conn);
+    // clean up the uncompleted data at target directory if the ongoing backup has already entered
+    // the copy phase
+    // For incremental backup, DistCp logs will be cleaned with the targetDir.
+    cleanupTargetDir(backupInfo, conf);
   }
 
 
@@ -402,7 +400,7 @@ public abstract class TableBackupClient {
     } else if (type == BackupType.INCREMENTAL) {
       cleanupDistCpLog(backupInfo, conf);
     }
-    BackupSystemTable.deleteSnapshot(conn);
+    BackupMetaTable.deleteSnapshot(conn);
     backupManager.updateBackupInfo(backupInfo);
 
     // Finish active session

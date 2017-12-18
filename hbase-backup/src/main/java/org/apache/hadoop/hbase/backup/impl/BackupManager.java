@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupInfo;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
+import org.apache.hadoop.hbase.backup.BackupObserver;
 import org.apache.hadoop.hbase.backup.BackupRestoreConstants;
 import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.backup.HBackupFileSystem;
@@ -43,13 +44,13 @@ import org.apache.hadoop.hbase.backup.impl.BackupManifest.BackupImage;
 import org.apache.hadoop.hbase.backup.master.BackupLogCleaner;
 import org.apache.hadoop.hbase.backup.master.LogRollMasterProcedureManager;
 import org.apache.hadoop.hbase.backup.regionserver.LogRollRegionServerProcedureManager;
-import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.procedure.ProcedureManagerHost;
-import org.apache.hadoop.hbase.util.Pair;
-
 import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
+import org.apache.hadoop.hbase.util.Pair;
+import org.apache.yetus.audience.InterfaceAudience;
 
 /**
  * Handles backup requests, creates backup info records in backup system table to
@@ -61,7 +62,7 @@ public class BackupManager implements Closeable {
 
   protected Configuration conf = null;
   protected BackupInfo backupInfo = null;
-  protected BackupSystemTable systemTable;
+  protected BackupMetaTable systemTable;
   protected final Connection conn;
 
   /**
@@ -78,7 +79,7 @@ public class BackupManager implements Closeable {
     }
     this.conf = conf;
     this.conn = conn;
-    this.systemTable = new BackupSystemTable(conn);
+    this.systemTable = new BackupMetaTable(conn);
 
   }
 
@@ -140,10 +141,14 @@ public class BackupManager implements Closeable {
       conf.set(ProcedureManagerHost.REGIONSERVER_PROCEDURE_CONF_KEY, classes + ","
           + regionProcedureClass);
     }
+    String coproc = conf.get(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY);
+    String regionObserverClass = BackupObserver.class.getName();
+    conf.set(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY, (coproc == null ? "" : coproc + ",") +
+        regionObserverClass);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Added region procedure manager: " + regionProcedureClass);
+      LOG.debug("Added region procedure manager: " + regionProcedureClass+"\nAdded region observer: " +
+          regionObserverClass);
     }
-
   }
 
   public static boolean isBackupEnabled(Configuration conf) {
@@ -208,7 +213,7 @@ public class BackupManager implements Closeable {
         tableList = new ArrayList<>();
         for (HTableDescriptor hTableDescriptor : htds) {
           TableName tn = hTableDescriptor.getTableName();
-          if (tn.equals(BackupSystemTable.getTableName(conf))) {
+          if (tn.equals(BackupMetaTable.getTableName(conf))) {
             // skip backup system table
             continue;
           }
@@ -415,13 +420,8 @@ public class BackupManager implements Closeable {
     return systemTable.readBulkloadRows(tableList);
   }
 
-  public void removeBulkLoadedRows(List<TableName> lst, List<byte[]> rows) throws IOException {
-    systemTable.removeBulkLoadedRows(lst, rows);
-  }
-
-  public void writeBulkLoadedFiles(List<TableName> sTableList, Map<byte[], List<Path>>[] maps)
-      throws IOException {
-    systemTable.writeBulkLoadedFiles(sTableList, maps, backupInfo.getBackupId());
+  public void deleteBulkLoadedRows(List<byte[]> rows) throws IOException {
+    systemTable.deleteBulkLoadedRows(rows);
   }
 
   /**
@@ -492,7 +492,7 @@ public class BackupManager implements Closeable {
    * @return WAL files iterator from backup system table
    * @throws IOException
    */
-  public Iterator<BackupSystemTable.WALItem> getWALFilesFromBackupSystem() throws IOException {
+  public Iterator<BackupMetaTable.WALItem> getWALFilesFromBackupSystem() throws IOException {
     return systemTable.getWALFilesIterator(backupInfo.getBackupRootDir());
   }
 
