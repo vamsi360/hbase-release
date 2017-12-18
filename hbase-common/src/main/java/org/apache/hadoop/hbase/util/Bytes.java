@@ -38,9 +38,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.protobuf.ByteString;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.KeyValue;
@@ -48,9 +45,14 @@ import org.apache.hadoop.io.RawComparator;
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.yetus.audience.InterfaceAudience;
-import sun.misc.Unsafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
+
+import com.google.protobuf.ByteString;
+
+import sun.misc.Unsafe;
 
 /**
  * Utility class that handles byte arrays, conversions to/from other types,
@@ -71,7 +73,7 @@ public class Bytes implements Comparable<Bytes> {
   //HConstants.EMPTY_BYTE_ARRAY should be updated if this changed
   private static final byte [] EMPTY_BYTE_ARRAY = new byte [0];
 
-  private static final Log LOG = LogFactory.getLog(Bytes.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Bytes.class);
 
   /**
    * Size of boolean in bytes
@@ -1534,8 +1536,8 @@ public class Bytes implements Comparable<Bytes> {
         final int stride = 8;
         final int minLength = Math.min(length1, length2);
         int strideLimit = minLength & ~(stride - 1);
-        final long offset1Adj = (long) offset1 + UnsafeAccess.BYTE_ARRAY_BASE_OFFSET;
-        final long offset2Adj = (long) offset2 + UnsafeAccess.BYTE_ARRAY_BASE_OFFSET;
+        final long offset1Adj = offset1 + UnsafeAccess.BYTE_ARRAY_BASE_OFFSET;
+        final long offset2Adj = offset2 + UnsafeAccess.BYTE_ARRAY_BASE_OFFSET;
         int i;
 
         /*
@@ -1543,8 +1545,8 @@ public class Bytes implements Comparable<Bytes> {
          * than 4 bytes even on 32-bit. On the other hand, it is substantially faster on 64-bit.
          */
         for (i = 0; i < strideLimit; i += stride) {
-          long lw = theUnsafe.getLong(buffer1, offset1Adj + (long) i);
-          long rw = theUnsafe.getLong(buffer2, offset2Adj + (long) i);
+          long lw = theUnsafe.getLong(buffer1, offset1Adj + i);
+          long rw = theUnsafe.getLong(buffer2, offset2Adj + i);
           if (lw != rw) {
             if(!UnsafeAccess.littleEndian) {
               return ((lw + Long.MIN_VALUE) < (rw + Long.MIN_VALUE)) ? -1 : 1;
@@ -1937,7 +1939,7 @@ public class Bytes implements Comparable<Bytes> {
   public static int hashCode(byte[] bytes, int offset, int length) {
     int hash = 1;
     for (int i = offset; i < offset + length; i++)
-      hash = (31 * hash) + (int) bytes[i];
+      hash = (31 * hash) + bytes[i];
     return hash;
   }
 
@@ -2521,7 +2523,7 @@ public class Bytes implements Comparable<Bytes> {
     }
     return new String(ch);
   }
-  
+
   /**
    * Convert a byte array into a hex string
    */

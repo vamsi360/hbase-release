@@ -23,12 +23,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 
-import org.apache.commons.logging.Log;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.io.TimeRange;
 import org.apache.yetus.audience.InterfaceAudience;
-
+import org.slf4j.Logger;
 import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
 
 /**
@@ -280,7 +279,7 @@ public class CompositeImmutableSegment extends ImmutableSegment {
   /**
    * Dumps all cells of the segment into the given log
    */
-  void dump(Log log) {
+  void dump(Logger log) {
     for (ImmutableSegment s : segments) {
       s.dump(log);
     }
