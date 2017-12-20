@@ -385,3 +385,7 @@ HBASE-18802 [C++] Remove hbase-macros.h
 HBASE-18891 BUG-89216 Upgrade netty-all dependency
 HBASE-9393  Hbase does not closing a closed socket resulting in many CLOSE_WAIT
 
+** HDP-2.6.4.0
+HBASE-14897 TestTableLockManager.testReapAllTableLocks is flakey
+BUG-92836 BUG-92835 Ignore TestDelayedRpc and TestDefaultCompactSelection
+HBASE-19150 TestSnapshotWithAcl is flaky
