@@ -111,7 +111,7 @@ public class CompositeImmutableSegment extends ImmutableSegment {
    * @return either the given cell or its clone
    */
   @Override
-  public Cell maybeCloneWithAllocator(Cell cell) {
+  public Cell maybeCloneWithAllocator(Cell cell, boolean forceCloneOfBigCell) {
     throw new IllegalStateException("Not supported by CompositeImmutableScanner");
   }
 
