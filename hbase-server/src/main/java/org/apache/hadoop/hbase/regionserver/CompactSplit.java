@@ -398,6 +398,7 @@ public class CompactSplit implements CompactionRequester, PropagatingConfigurati
         }
       } catch (InterruptedException ie) {
         LOG.warn("Interrupted waiting for " + name + " to finish...");
+        t.shutdownNow();
       }
     }
   }
