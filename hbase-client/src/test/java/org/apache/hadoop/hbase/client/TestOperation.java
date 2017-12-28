@@ -368,14 +368,14 @@ public class TestOperation {
     Put p = new Put(ROW);
     List<Cell> c = p.get(FAMILY, QUALIFIER);
     Assert.assertEquals(0, c.size());
-    Assert.assertEquals(HConstants.LATEST_TIMESTAMP, p.getTimeStamp());
+    Assert.assertEquals(HConstants.LATEST_TIMESTAMP, p.getTimestamp());
 
     p.addColumn(FAMILY, ByteBuffer.wrap(QUALIFIER), 1984L, ByteBuffer.wrap(VALUE));
     c = p.get(FAMILY, QUALIFIER);
     Assert.assertEquals(1, c.size());
     Assert.assertEquals(1984L, c.get(0).getTimestamp());
     Assert.assertArrayEquals(VALUE, CellUtil.cloneValue(c.get(0)));
-    Assert.assertEquals(HConstants.LATEST_TIMESTAMP, p.getTimeStamp());
+    Assert.assertEquals(HConstants.LATEST_TIMESTAMP, p.getTimestamp());
     Assert.assertEquals(0, CellComparatorImpl.COMPARATOR.compare(c.get(0), new KeyValue(c.get(0))));
 
     p = new Put(ROW);
@@ -384,7 +384,7 @@ public class TestOperation {
     Assert.assertEquals(1, c.size());
     Assert.assertEquals(2013L, c.get(0).getTimestamp());
     Assert.assertArrayEquals(new byte[]{}, CellUtil.cloneValue(c.get(0)));
-    Assert.assertEquals(HConstants.LATEST_TIMESTAMP, p.getTimeStamp());
+    Assert.assertEquals(HConstants.LATEST_TIMESTAMP, p.getTimestamp());
     Assert.assertEquals(0, CellComparatorImpl.COMPARATOR.compare(c.get(0), new KeyValue(c.get(0))));
 
     p = new Put(ByteBuffer.wrap(ROW));
@@ -394,7 +394,7 @@ public class TestOperation {
     Assert.assertEquals(2001L, c.get(0).getTimestamp());
     Assert.assertArrayEquals(new byte[]{}, CellUtil.cloneValue(c.get(0)));
     Assert.assertArrayEquals(ROW, CellUtil.cloneRow(c.get(0)));
-    Assert.assertEquals(HConstants.LATEST_TIMESTAMP, p.getTimeStamp());
+    Assert.assertEquals(HConstants.LATEST_TIMESTAMP, p.getTimestamp());
     Assert.assertEquals(0, CellComparatorImpl.COMPARATOR.compare(c.get(0), new KeyValue(c.get(0))));
 
     p = new Put(ByteBuffer.wrap(ROW), 1970L);
@@ -404,7 +404,7 @@ public class TestOperation {
     Assert.assertEquals(2001L, c.get(0).getTimestamp());
     Assert.assertArrayEquals(new byte[]{}, CellUtil.cloneValue(c.get(0)));
     Assert.assertArrayEquals(ROW, CellUtil.cloneRow(c.get(0)));
-    Assert.assertEquals(1970L, p.getTimeStamp());
+    Assert.assertEquals(1970L, p.getTimestamp());
     Assert.assertEquals(0, CellComparatorImpl.COMPARATOR.compare(c.get(0), new KeyValue(c.get(0))));
   }
 
