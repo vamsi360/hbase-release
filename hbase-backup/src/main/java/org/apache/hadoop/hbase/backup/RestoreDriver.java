@@ -47,7 +47,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.impl.BackupAdminImpl;
 import org.apache.hadoop.hbase.backup.impl.BackupManager;
-import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
+import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.hadoop.hbase.backup.util.BackupUtils;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Connection;
@@ -189,7 +189,7 @@ public class RestoreDriver extends AbstractHBaseTool {
 
   private String getTablesForSet(Connection conn, String name, Configuration conf)
       throws IOException {
-    try (final BackupMetaTable table = new BackupMetaTable(conn)) {
+    try (final BackupSystemTable table = new BackupSystemTable(conn)) {
       List<TableName> tables = table.describeBackupSet(name);
       if (tables == null) return null;
       return StringUtils.join(tables, BackupRestoreConstants.TABLENAME_DELIMITER_IN_COMMAND);

@@ -30,7 +30,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseInterfaceAudience;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.impl.BackupManager;
-import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
+import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.RegionInfo;
@@ -67,7 +67,7 @@ public class BackupObserver implements RegionCoprocessor, RegionObserver {
       return;
     }
     try (Connection connection = ConnectionFactory.createConnection(cfg);
-        BackupMetaTable tbl = new BackupMetaTable(connection)) {
+        BackupSystemTable tbl = new BackupSystemTable(connection)) {
       List<TableName> fullyBackedUpTables = tbl.getTablesForBackupType(BackupType.FULL);
       RegionInfo info = ctx.getEnvironment().getRegionInfo();
       TableName tableName = info.getTable();
@@ -91,7 +91,7 @@ public class BackupObserver implements RegionCoprocessor, RegionObserver {
       return;
     }
     try (Connection connection = ConnectionFactory.createConnection(cfg);
-        BackupMetaTable tbl = new BackupMetaTable(connection)) {
+        BackupSystemTable tbl = new BackupSystemTable(connection)) {
       List<TableName> fullyBackedUpTables = tbl.getTablesForBackupType(BackupType.FULL);
       RegionInfo info = ctx.getEnvironment().getRegionInfo();
       TableName tableName = info.getTable();

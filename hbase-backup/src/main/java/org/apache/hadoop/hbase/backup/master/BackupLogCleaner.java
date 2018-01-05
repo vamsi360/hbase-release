@@ -31,7 +31,7 @@ import org.apache.hadoop.hbase.HBaseInterfaceAudience;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.backup.BackupRestoreConstants;
 import org.apache.hadoop.hbase.backup.impl.BackupManager;
-import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
+import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -84,7 +84,7 @@ public class BackupLogCleaner extends BaseLogCleanerDelegate {
     }
 
     List<FileStatus> list = new ArrayList<FileStatus>();
-    try (final BackupMetaTable table = new BackupMetaTable(conn)) {
+    try (final BackupSystemTable table = new BackupSystemTable(conn)) {
       // If we do not have recorded backup sessions
       try {
         if (!table.hasBackupSessions()) {

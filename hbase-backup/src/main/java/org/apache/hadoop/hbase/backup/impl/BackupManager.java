@@ -62,7 +62,7 @@ public class BackupManager implements Closeable {
 
   protected Configuration conf = null;
   protected BackupInfo backupInfo = null;
-  protected BackupMetaTable systemTable;
+  protected BackupSystemTable systemTable;
   protected final Connection conn;
 
   /**
@@ -79,7 +79,7 @@ public class BackupManager implements Closeable {
     }
     this.conf = conf;
     this.conn = conn;
-    this.systemTable = new BackupMetaTable(conn);
+    this.systemTable = new BackupSystemTable(conn);
 
   }
 
@@ -213,7 +213,7 @@ public class BackupManager implements Closeable {
         tableList = new ArrayList<>();
         for (HTableDescriptor hTableDescriptor : htds) {
           TableName tn = hTableDescriptor.getTableName();
-          if (tn.equals(BackupMetaTable.getTableName(conf))) {
+          if (tn.equals(BackupSystemTable.getTableName(conf))) {
             // skip backup system table
             continue;
           }
@@ -492,7 +492,7 @@ public class BackupManager implements Closeable {
    * @return WAL files iterator from backup system table
    * @throws IOException
    */
-  public Iterator<BackupMetaTable.WALItem> getWALFilesFromBackupSystem() throws IOException {
+  public Iterator<BackupSystemTable.WALItem> getWALFilesFromBackupSystem() throws IOException {
     return systemTable.getWALFilesIterator(backupInfo.getBackupRootDir());
   }
 

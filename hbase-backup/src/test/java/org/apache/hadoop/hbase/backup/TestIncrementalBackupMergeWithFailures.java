@@ -34,7 +34,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.impl.BackupAdminImpl;
-import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
+import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.hadoop.hbase.backup.mapreduce.MapReduceBackupMergeJob;
 import org.apache.hadoop.hbase.backup.mapreduce.MapReduceHFileSplitterJob;
 import org.apache.hadoop.hbase.backup.util.BackupUtils;
@@ -98,7 +98,7 @@ public class TestIncrementalBackupMergeWithFailures extends TestBackupBase {
       List<Pair<TableName, Path>> processedTableList = new ArrayList<Pair<TableName, Path>>();
       boolean finishedTables = false;
       Connection conn = ConnectionFactory.createConnection(getConf());
-      BackupMetaTable table = new BackupMetaTable(conn);
+      BackupSystemTable table = new BackupSystemTable(conn);
       FileSystem fs = FileSystem.get(getConf());
 
       try {
@@ -273,7 +273,7 @@ public class TestIncrementalBackupMergeWithFailures extends TestBackupBase {
         bAdmin.mergeBackups(backups);
         Assert.fail("Expected IOException");
       } catch (IOException e) {
-        BackupMetaTable table = new BackupMetaTable(conn);
+        BackupSystemTable table = new BackupSystemTable(conn);
         if(phase.ordinal() < FailurePhase.PHASE4.ordinal()) {
           // No need to repair:
           // Both Merge and backup exclusive operations are finished

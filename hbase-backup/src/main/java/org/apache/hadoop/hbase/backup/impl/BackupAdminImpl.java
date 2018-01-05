@@ -72,7 +72,7 @@ public class BackupAdminImpl implements BackupAdmin {
   @Override
   public BackupInfo getBackupInfo(String backupId) throws IOException {
     BackupInfo backupInfo = null;
-    try (final BackupMetaTable table = new BackupMetaTable(conn)) {
+    try (final BackupSystemTable table = new BackupSystemTable(conn)) {
       if (backupId == null) {
         ArrayList<BackupInfo> recentSessions = table.getBackupInfos(BackupState.RUNNING);
         if (recentSessions.isEmpty()) {
@@ -97,7 +97,7 @@ public class BackupAdminImpl implements BackupAdmin {
 
     boolean deleteSessionStarted = false;
     boolean snapshotDone = false;
-    try (final BackupMetaTable sysTable = new BackupMetaTable(conn)) {
+    try (final BackupSystemTable sysTable = new BackupSystemTable(conn)) {
 
       // Step 1: Make sure there is no active session
       // is running by using startBackupSession API
@@ -123,8 +123,8 @@ public class BackupAdminImpl implements BackupAdmin {
       // Step 3: Record delete session
       sysTable.startDeleteOperation(backupIds);
       // Step 4: Snapshot backup system table
-      if (!BackupMetaTable.snapshotExists(conn)) {
-        BackupMetaTable.snapshot(conn);
+      if (!BackupSystemTable.snapshotExists(conn)) {
+        BackupSystemTable.snapshot(conn);
       } else {
         LOG.warn("Backup system table snapshot exists");
       }
@@ -147,15 +147,15 @@ public class BackupAdminImpl implements BackupAdmin {
         // Finish
         sysTable.finishDeleteOperation();
         // delete snapshot
-        BackupMetaTable.deleteSnapshot(conn);
+        BackupSystemTable.deleteSnapshot(conn);
       } catch (IOException e) {
         // Fail delete operation
         // Step 1
         if (snapshotDone) {
-          if (BackupMetaTable.snapshotExists(conn)) {
-            BackupMetaTable.restoreFromSnapshot(conn);
+          if (BackupSystemTable.snapshotExists(conn)) {
+            BackupSystemTable.restoreFromSnapshot(conn);
             // delete snapshot
-            BackupMetaTable.deleteSnapshot(conn);
+            BackupSystemTable.deleteSnapshot(conn);
             // We still have record with unfinished delete operation
             LOG.error("Delete operation failed, please run backup repair utility to restore "
                 + "backup system integrity", e);
@@ -181,7 +181,7 @@ public class BackupAdminImpl implements BackupAdmin {
    * @throws IOException
    */
 
-  private void finalizeDelete(Map<String, HashSet<TableName>> tablesMap, BackupMetaTable table)
+  private void finalizeDelete(Map<String, HashSet<TableName>> tablesMap, BackupSystemTable table)
       throws IOException {
     for (String backupRoot : tablesMap.keySet()) {
       Set<TableName> incrTableSet = table.getIncrementalBackupTableSet(backupRoot);
@@ -220,7 +220,7 @@ public class BackupAdminImpl implements BackupAdmin {
    * @return total number of deleted backup images
    * @throws IOException
    */
-  private int deleteBackup(String backupId, BackupMetaTable sysTable) throws IOException {
+  private int deleteBackup(String backupId, BackupSystemTable sysTable) throws IOException {
 
     BackupInfo backupInfo = sysTable.readBackupInfo(backupId);
 
@@ -284,7 +284,7 @@ public class BackupAdminImpl implements BackupAdmin {
   }
 
   private void
-      removeTableFromBackupImage(BackupInfo info, TableName tn, BackupMetaTable sysTable)
+      removeTableFromBackupImage(BackupInfo info, TableName tn, BackupSystemTable sysTable)
           throws IOException {
     List<TableName> tables = info.getTableNames();
     LOG.debug("Remove " + tn + " from " + info.getBackupId() + " tables="
@@ -308,7 +308,7 @@ public class BackupAdminImpl implements BackupAdmin {
   }
 
   private List<BackupInfo> getAffectedBackupSessions(BackupInfo backupInfo, TableName tn,
-      BackupMetaTable table) throws IOException {
+      BackupSystemTable table) throws IOException {
     LOG.debug("GetAffectedBackupInfos for: " + backupInfo.getBackupId() + " table=" + tn);
     long ts = backupInfo.getStartTs();
     List<BackupInfo> list = new ArrayList<BackupInfo>();
@@ -367,7 +367,7 @@ public class BackupAdminImpl implements BackupAdmin {
     }
   }
 
-  private boolean isLastBackupSession(BackupMetaTable table, TableName tn, long startTime)
+  private boolean isLastBackupSession(BackupSystemTable table, TableName tn, long startTime)
       throws IOException {
     List<BackupInfo> history = table.getBackupHistory();
     for (BackupInfo info : history) {
@@ -386,7 +386,7 @@ public class BackupAdminImpl implements BackupAdmin {
 
   @Override
   public List<BackupInfo> getHistory(int n) throws IOException {
-    try (final BackupMetaTable table = new BackupMetaTable(conn)) {
+    try (final BackupSystemTable table = new BackupSystemTable(conn)) {
       List<BackupInfo> history = table.getBackupHistory();
       if (history.size() <= n) return history;
       List<BackupInfo> list = new ArrayList<BackupInfo>();
@@ -400,7 +400,7 @@ public class BackupAdminImpl implements BackupAdmin {
   @Override
   public List<BackupInfo> getHistory(int n, BackupInfo.Filter... filters) throws IOException {
     if (filters.length == 0) return getHistory(n);
-    try (final BackupMetaTable table = new BackupMetaTable(conn)) {
+    try (final BackupSystemTable table = new BackupSystemTable(conn)) {
       List<BackupInfo> history = table.getBackupHistory();
       List<BackupInfo> result = new ArrayList<BackupInfo>();
       for (BackupInfo bi : history) {
@@ -422,7 +422,7 @@ public class BackupAdminImpl implements BackupAdmin {
 
   @Override
   public List<BackupSet> listBackupSets() throws IOException {
-    try (final BackupMetaTable table = new BackupMetaTable(conn)) {
+    try (final BackupSystemTable table = new BackupSystemTable(conn)) {
       List<String> list = table.listBackupSets();
       List<BackupSet> bslist = new ArrayList<BackupSet>();
       for (String s : list) {
@@ -437,7 +437,7 @@ public class BackupAdminImpl implements BackupAdmin {
 
   @Override
   public BackupSet getBackupSet(String name) throws IOException {
-    try (final BackupMetaTable table = new BackupMetaTable(conn)) {
+    try (final BackupSystemTable table = new BackupSystemTable(conn)) {
       List<TableName> list = table.describeBackupSet(name);
       if (list == null) return null;
       return new BackupSet(name, list);
@@ -446,7 +446,7 @@ public class BackupAdminImpl implements BackupAdmin {
 
   @Override
   public boolean deleteBackupSet(String name) throws IOException {
-    try (final BackupMetaTable table = new BackupMetaTable(conn)) {
+    try (final BackupSystemTable table = new BackupSystemTable(conn)) {
       if (table.describeBackupSet(name) == null) {
         return false;
       }
@@ -458,7 +458,7 @@ public class BackupAdminImpl implements BackupAdmin {
   @Override
   public void addToBackupSet(String name, TableName[] tables) throws IOException {
     String[] tableNames = new String[tables.length];
-    try (final BackupMetaTable table = new BackupMetaTable(conn);
+    try (final BackupSystemTable table = new BackupSystemTable(conn);
         final Admin admin = conn.getAdmin();) {
       for (int i = 0; i < tables.length; i++) {
         tableNames[i] = tables[i].getNameAsString();
@@ -475,7 +475,7 @@ public class BackupAdminImpl implements BackupAdmin {
   @Override
   public void removeFromBackupSet(String name, TableName[] tables) throws IOException {
     LOG.info("Removing tables [" + StringUtils.join(tables, " ") + "] from '" + name + "'");
-    try (final BackupMetaTable table = new BackupMetaTable(conn)) {
+    try (final BackupSystemTable table = new BackupSystemTable(conn)) {
       table.removeFromBackupSet(name, toStringArray(tables));
       LOG.info("Removing tables [" + StringUtils.join(tables, " ") + "] from '" + name
           + "' completed.");
@@ -523,7 +523,7 @@ public class BackupAdminImpl implements BackupAdmin {
     String backupId = BackupRestoreConstants.BACKUPID_PREFIX + EnvironmentEdgeManager.currentTime();
     if (type == BackupType.INCREMENTAL) {
       Set<TableName> incrTableSet = null;
-      try (BackupMetaTable table = new BackupMetaTable(conn)) {
+      try (BackupSystemTable table = new BackupSystemTable(conn)) {
         incrTableSet = table.getIncrementalBackupTableSet(targetRootDir);
       }
 
@@ -614,7 +614,7 @@ public class BackupAdminImpl implements BackupAdmin {
 
   @Override
   public void mergeBackups(String[] backupIds) throws IOException {
-    try (final BackupMetaTable sysTable = new BackupMetaTable(conn);) {
+    try (final BackupSystemTable sysTable = new BackupSystemTable(conn);) {
       checkIfValidForMerge(backupIds, sysTable);
       BackupMergeJob job = BackupRestoreFactory.getBackupMergeJob(conn.getConfiguration());
       job.run(backupIds);
@@ -635,7 +635,7 @@ public class BackupAdminImpl implements BackupAdmin {
    * @param table backup system table
    * @throws IOException
    */
-  private void checkIfValidForMerge(String[] backupIds, BackupMetaTable table) throws IOException {
+  private void checkIfValidForMerge(String[] backupIds, BackupSystemTable table) throws IOException {
     String backupRoot = null;
 
     final Set<TableName> allTables = new HashSet<TableName>();

@@ -39,7 +39,7 @@ import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.backup.RestoreRequest;
 import org.apache.hadoop.hbase.backup.impl.BackupAdminImpl;
 import org.apache.hadoop.hbase.backup.impl.BackupManager;
-import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
+import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.HTable;
@@ -230,7 +230,7 @@ public class IntegrationTestBackupRestore extends IntegrationTestBase {
   }
 
   private BackupInfo getBackupInfo(String backupId) throws IOException {
-    try (BackupMetaTable table = new BackupMetaTable(util.getConnection())) {
+    try (BackupSystemTable table = new BackupSystemTable(util.getConnection())) {
       return table.readBackupInfo(backupId);
     }
   }

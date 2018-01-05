@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
+import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.Test;
@@ -37,7 +37,7 @@ public class TestFullBackup extends TestBackupBase {
   @Test
   public void testFullBackupMultipleCommand() throws Exception {
     LOG.info("test full backup on a multiple tables with data: command-line");
-    try (BackupMetaTable table = new BackupMetaTable(TEST_UTIL.getConnection())) {
+    try (BackupSystemTable table = new BackupSystemTable(TEST_UTIL.getConnection())) {
       int before = table.getBackupHistory().size();
       String[] args =
           new String[] { "create", "full", BACKUP_ROOT_DIR, "-t",

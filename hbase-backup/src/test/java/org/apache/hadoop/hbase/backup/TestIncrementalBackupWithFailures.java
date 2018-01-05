@@ -32,7 +32,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
 import org.apache.hadoop.hbase.backup.impl.BackupAdminImpl;
-import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
+import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.hadoop.hbase.backup.impl.TableBackupClient;
 import org.apache.hadoop.hbase.backup.impl.TableBackupClient.Stage;
 import org.apache.hadoop.hbase.client.Connection;
@@ -136,7 +136,7 @@ public class TestIncrementalBackupWithFailures extends TestBackupBase {
   private void runBackupAndFailAtStage(int stage) throws Exception {
 
     conf1.setInt(FullTableBackupClientForTest.BACKUP_TEST_MODE_STAGE, stage);
-    try (BackupMetaTable table = new BackupMetaTable(TEST_UTIL.getConnection())) {
+    try (BackupSystemTable table = new BackupSystemTable(TEST_UTIL.getConnection())) {
       int before = table.getBackupHistory().size();
       String[] args =
           new String[] { "create", "incremental", BACKUP_ROOT_DIR, "-t",

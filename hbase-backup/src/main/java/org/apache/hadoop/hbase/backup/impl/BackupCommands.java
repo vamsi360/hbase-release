@@ -144,7 +144,7 @@ public final class BackupCommands {
       conn = ConnectionFactory.createConnection(getConf());
       if (requiresNoActiveSession()) {
         // Check active session
-        try (BackupMetaTable table = new BackupMetaTable(conn);) {
+        try (BackupSystemTable table = new BackupSystemTable(conn);) {
           List<BackupInfo> sessions = table.getBackupInfos(BackupState.RUNNING);
 
           if (sessions.size() > 0) {
@@ -158,7 +158,7 @@ public final class BackupCommands {
       }
       if (requiresConsistentState()) {
         // Check failed delete
-        try (BackupMetaTable table = new BackupMetaTable(conn);) {
+        try (BackupSystemTable table = new BackupSystemTable(conn);) {
           String[] ids = table.getListOfBackupIdsFromDeleteOperation();
 
           if (ids != null && ids.length > 0) {
@@ -369,7 +369,7 @@ public final class BackupCommands {
     }
 
     private String getTablesForSet(String name, Configuration conf) throws IOException {
-      try (final BackupMetaTable table = new BackupMetaTable(conn)) {
+      try (final BackupSystemTable table = new BackupSystemTable(conn)) {
         List<TableName> tables = table.describeBackupSet(name);
         if (tables == null) return null;
         return StringUtils.join(tables, BackupRestoreConstants.TABLENAME_DELIMITER_IN_COMMAND);
@@ -471,7 +471,7 @@ public final class BackupCommands {
       super.execute();
 
       String backupId = args[1];
-      try (final BackupMetaTable sysTable = new BackupMetaTable(conn);) {
+      try (final BackupSystemTable sysTable = new BackupSystemTable(conn);) {
         BackupInfo info = sysTable.readBackupInfo(backupId);
         if (info == null) {
           System.out.println("ERROR: " + backupId + " does not exist");
@@ -512,7 +512,7 @@ public final class BackupCommands {
       super.execute();
 
       String backupId = (args == null || args.length <= 1) ? null : args[1];
-      try (final BackupMetaTable sysTable = new BackupMetaTable(conn);) {
+      try (final BackupSystemTable sysTable = new BackupSystemTable(conn);) {
         BackupInfo info = null;
 
         if (backupId != null) {
@@ -606,7 +606,7 @@ public final class BackupCommands {
 
       Configuration conf = getConf() != null ? getConf() : HBaseConfiguration.create();
       try (final Connection conn = ConnectionFactory.createConnection(conf);
-          final BackupMetaTable sysTable = new BackupMetaTable(conn);) {
+          final BackupSystemTable sysTable = new BackupSystemTable(conn);) {
 
         // Failed backup
         BackupInfo backupInfo;
@@ -643,19 +643,19 @@ public final class BackupCommands {
       }
     }
 
-    private void repairFailedBackupDeletionIfAny(Connection conn, BackupMetaTable sysTable)
+    private void repairFailedBackupDeletionIfAny(Connection conn, BackupSystemTable sysTable)
         throws IOException {
       String[] backupIds = sysTable.getListOfBackupIdsFromDeleteOperation();
       if (backupIds == null || backupIds.length == 0) {
         System.out.println("No failed backup DELETE operation found");
         // Delete backup table snapshot if exists
-        BackupMetaTable.deleteSnapshot(conn);
+        BackupSystemTable.deleteSnapshot(conn);
         return;
       }
       System.out.println("Found failed DELETE operation for: " + StringUtils.join(backupIds));
       System.out.println("Running DELETE again ...");
       // Restore table from snapshot
-      BackupMetaTable.restoreFromSnapshot(conn);
+      BackupSystemTable.restoreFromSnapshot(conn);
       // Finish previous failed session
       sysTable.finishBackupExclusiveOperation();
       try (BackupAdmin admin = new BackupAdminImpl(conn);) {
@@ -665,19 +665,19 @@ public final class BackupCommands {
 
     }
 
-    private void repairFailedBackupMergeIfAny(Connection conn, BackupMetaTable sysTable)
+    private void repairFailedBackupMergeIfAny(Connection conn, BackupSystemTable sysTable)
         throws IOException {
       String[] backupIds = sysTable.getListOfBackupIdsFromMergeOperation();
       if (backupIds == null || backupIds.length == 0) {
         System.out.println("No failed backup MERGE operation found");
         // Delete backup table snapshot if exists
-        BackupMetaTable.deleteSnapshot(conn);
+        BackupSystemTable.deleteSnapshot(conn);
         return;
       }
       System.out.println("Found failed MERGE operation for: " + StringUtils.join(backupIds));
       System.out.println("Running MERGE again ...");
       // Restore table from snapshot
-      BackupMetaTable.restoreFromSnapshot(conn);
+      BackupSystemTable.restoreFromSnapshot(conn);
       // Unlock backupo system
       sysTable.finishBackupExclusiveOperation();
       // Finish previous failed session
@@ -781,7 +781,7 @@ public final class BackupCommands {
       if (backupRootPath == null) {
         // Load from backup system table
         super.execute();
-        try (final BackupMetaTable sysTable = new BackupMetaTable(conn);) {
+        try (final BackupSystemTable sysTable = new BackupSystemTable(conn);) {
           history = sysTable.getBackupHistory(n, tableNameFilter, tableSetFilter);
         }
       } else {
@@ -921,7 +921,7 @@ public final class BackupCommands {
       super.execute();
 
       String setName = args[2];
-      try (final BackupMetaTable sysTable = new BackupMetaTable(conn);) {
+      try (final BackupSystemTable sysTable = new BackupSystemTable(conn);) {
         List<TableName> tables = sysTable.describeBackupSet(setName);
         BackupSet set = tables == null ? null : new BackupSet(setName, tables);
         if (set == null) {
