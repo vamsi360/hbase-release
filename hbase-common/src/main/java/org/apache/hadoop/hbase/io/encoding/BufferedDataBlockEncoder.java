@@ -21,14 +21,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-
-import org.apache.hadoop.hbase.ArrayBackedTag;
-import org.apache.hadoop.hbase.ByteBufferCell;
-import org.apache.hadoop.hbase.ByteBufferTag;
+import org.apache.hadoop.hbase.ByteBufferExtendedCell;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.CellUtil;
@@ -38,7 +31,6 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.Type;
 import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.PrivateCellUtil;
-import org.apache.hadoop.hbase.Tag;
 import org.apache.hadoop.hbase.io.TagCompressionContext;
 import org.apache.hadoop.hbase.io.util.LRUDictionary;
 import org.apache.hadoop.hbase.io.util.StreamUtils;
@@ -259,7 +251,7 @@ abstract class BufferedDataBlockEncoder extends AbstractDataBlockEncoder {
 
     private Cell toOffheapCell(ByteBuffer valAndTagsBuffer, int vOffset,
         int tagsLenSerializationSize) {
-      ByteBuffer tagsBuf =  HConstants.EMPTY_BYTE_BUFFER;
+      ByteBuffer tagsBuf = HConstants.EMPTY_BYTE_BUFFER;
       int tOffset = 0;
       if (this.includeTags) {
         if (this.tagCompressionContext == null) {
@@ -270,8 +262,9 @@ abstract class BufferedDataBlockEncoder extends AbstractDataBlockEncoder {
           tOffset = 0;
         }
       }
-      return new OffheapDecodedCell(ByteBuffer.wrap(Bytes.copy(keyBuffer, 0, this.keyLength)),
-          currentKey.getRowLength(), currentKey.getFamilyOffset(), currentKey.getFamilyLength(),
+      return new OffheapDecodedExtendedCell(
+          ByteBuffer.wrap(Bytes.copy(keyBuffer, 0, this.keyLength)), currentKey.getRowLength(),
+          currentKey.getFamilyOffset(), currentKey.getFamilyLength(),
           currentKey.getQualifierOffset(), currentKey.getQualifierLength(),
           currentKey.getTimestamp(), currentKey.getTypeByte(), valAndTagsBuffer, vOffset,
           this.valueLength, memstoreTS, tagsBuf, tOffset, this.tagsLength);
@@ -482,35 +475,9 @@ abstract class BufferedDataBlockEncoder extends AbstractDataBlockEncoder {
       // This is not used in actual flow. Throwing UnsupportedOperationException
       throw new UnsupportedOperationException();
     }
-
-    @Override
-    public Optional<Tag> getTag(byte type) {
-      int length = getTagsLength();
-      int offset = getTagsOffset();
-      int pos = offset;
-      while (pos < offset + length) {
-        int tagLen = Bytes.readAsInt(getTagsArray(), pos, Tag.TAG_LENGTH_SIZE);
-        if (getTagsArray()[pos + Tag.TAG_LENGTH_SIZE] == type) {
-          return Optional
-              .ofNullable(new ArrayBackedTag(getTagsArray(), pos, tagLen + Tag.TAG_LENGTH_SIZE));
-        }
-        pos += Tag.TAG_LENGTH_SIZE + tagLen;
-      }
-      return Optional.ofNullable(null);
-    }
-
-    @Override
-    public List<Tag> getTags() {
-      List<Tag> tags = new ArrayList<>();
-      Iterator<Tag> tagsItr = PrivateCellUtil.tagsIterator(this);
-      while (tagsItr.hasNext()) {
-        tags.add(tagsItr.next());
-      }
-      return tags;
-    }
   }
 
-  protected static class OffheapDecodedCell extends ByteBufferCell implements ExtendedCell {
+  protected static class OffheapDecodedExtendedCell extends ByteBufferExtendedCell {
     private static final long FIXED_OVERHEAD = ClassSize.align(ClassSize.OBJECT
         + (3 * ClassSize.REFERENCE) + (2 * Bytes.SIZEOF_LONG) + (7 * Bytes.SIZEOF_INT)
         + (Bytes.SIZEOF_SHORT) + (2 * Bytes.SIZEOF_BYTE) + (3 * ClassSize.BYTE_BUFFER));
@@ -530,7 +497,7 @@ abstract class BufferedDataBlockEncoder extends AbstractDataBlockEncoder {
     private int tagsLength;
     private long seqId;
 
-    protected OffheapDecodedCell(ByteBuffer keyBuffer, short rowLength, int familyOffset,
+    protected OffheapDecodedExtendedCell(ByteBuffer keyBuffer, short rowLength, int familyOffset,
         byte familyLength, int qualOffset, int qualLength, long timeStamp, byte typeByte,
         ByteBuffer valueBuffer, int valueOffset, int valueLen, long seqId, ByteBuffer tagsBuffer,
         int tagsOffset, int tagsLength) {
@@ -753,35 +720,6 @@ abstract class BufferedDataBlockEncoder extends AbstractDataBlockEncoder {
       // This is not used in actual flow. Throwing UnsupportedOperationException
       throw new UnsupportedOperationException();
     }
-
-    @Override
-    public Optional<Tag> getTag(byte type) {
-      int length = getTagsLength();
-      int offset = getTagsPosition();
-      int pos = offset;
-      int tagLen;
-      while (pos < offset + length) {
-        ByteBuffer tagsBuffer = getTagsByteBuffer();
-        tagLen = ByteBufferUtils.readAsInt(tagsBuffer, pos, Tag.TAG_LENGTH_SIZE);
-        if (ByteBufferUtils.toByte(tagsBuffer, pos + Tag.TAG_LENGTH_SIZE) == type) {
-          return Optional
-              .ofNullable(new ByteBufferTag(tagsBuffer, pos, tagLen + Tag.TAG_LENGTH_SIZE));
-        }
-        pos += Tag.TAG_LENGTH_SIZE + tagLen;
-      }
-      return Optional.ofNullable(null);
-    }
-
-    @Override
-    public List<Tag> getTags() {
-      List<Tag> tags = new ArrayList<>();
-      Iterator<Tag> tagsItr = PrivateCellUtil.tagsIterator(this);
-      while (tagsItr.hasNext()) {
-        tags.add(tagsItr.next());
-      }
-      return tags;
-    }
-
   }
 
   protected abstract static class BufferedEncodedSeeker<STATE extends SeekerState>

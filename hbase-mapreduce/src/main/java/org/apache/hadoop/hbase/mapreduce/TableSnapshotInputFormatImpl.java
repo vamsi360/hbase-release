@@ -51,7 +51,7 @@ import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.hadoop.hbase.shaded.com.google.common.collect.Lists;
+import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MapReduceProtos.TableSnapshotRegionSplit;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.SnapshotProtos.SnapshotDescription;
@@ -491,9 +491,9 @@ public class TableSnapshotInputFormatImpl {
    * Configures the job to use TableSnapshotInputFormat to read from a snapshot.
    * @param conf the job to configuration
    * @param snapshotName the name of the snapshot to read from
-   * @param restoreDir a temporary directory to restore the snapshot into. Current user should
-   * have write permissions to this directory, and this should not be a subdirectory of rootdir.
-   * After the job is finished, restoreDir can be deleted.
+   * @param restoreDir a temporary directory to restore the snapshot into. Current user should have
+   *          write permissions to this directory, and this should not be a subdirectory of rootdir.
+   *          After the job is finished, restoreDir can be deleted.
    * @throws IOException if an error occurs
    */
   public static void setInput(Configuration conf, String snapshotName, Path restoreDir)

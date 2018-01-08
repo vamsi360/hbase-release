@@ -73,7 +73,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.ArrayBackedTag;
 import org.apache.hadoop.hbase.CategoryBasedTimeout;
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.Cell.DataType;
+import org.apache.hadoop.hbase.Cell.Type;
 import org.apache.hadoop.hbase.CellBuilderFactory;
 import org.apache.hadoop.hbase.CellBuilderType;
 import org.apache.hadoop.hbase.CellUtil;
@@ -180,8 +180,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.hadoop.hbase.shaded.com.google.common.collect.Lists;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.ByteString;
+import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
+import org.apache.hbase.thirdparty.com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.CompactionDescriptor;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.FlushDescriptor;
@@ -6285,20 +6285,20 @@ public class TestHRegion {
               .setRow(a)
               .setFamily(fam1)
               .setTimestamp(HConstants.LATEST_TIMESTAMP)
-              .setType(DataType.Put)
+              .setType(Cell.Type.Put)
               .build()),
         // this is outside the region boundary
         new Put(c).add(CellBuilderFactory.create(CellBuilderType.SHALLOW_COPY)
               .setRow(c)
               .setFamily(fam1)
               .setTimestamp(HConstants.LATEST_TIMESTAMP)
-              .setType(DataType.Put)
+              .setType(Type.Put)
               .build()),
         new Put(b).add(CellBuilderFactory.create(CellBuilderType.SHALLOW_COPY)
               .setRow(b)
               .setFamily(fam1)
               .setTimestamp(HConstants.LATEST_TIMESTAMP)
-              .setType(DataType.Put)
+              .setType(Cell.Type.Put)
               .build())
     };
 
@@ -6334,13 +6334,13 @@ public class TestHRegion {
                 .setRow(a)
                 .setFamily(fam1)
                 .setTimestamp(HConstants.LATEST_TIMESTAMP)
-                .setType(DataType.Put)
+                .setType(Cell.Type.Put)
                 .build()),
             new Put(b).add(CellBuilderFactory.create(CellBuilderType.SHALLOW_COPY)
                 .setRow(b)
                 .setFamily(fam1)
                 .setTimestamp(HConstants.LATEST_TIMESTAMP)
-                .setType(DataType.Put)
+                .setType(Cell.Type.Put)
                 .build()),
         };
 

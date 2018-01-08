@@ -28,11 +28,11 @@ import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
 import org.apache.hadoop.hbase.regionserver.BloomType;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.PrettyPrinter;
 import org.apache.hadoop.hbase.testclassification.MiscTests;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.util.BuilderStyleTest;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.PrettyPrinter;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -100,7 +100,7 @@ public class TestHColumnDescriptor {
   public void testHColumnDescriptorShouldThrowIAEWhenFamilyNameEmpty() throws Exception {
     expectedEx.expect(IllegalArgumentException.class);
     expectedEx.expectMessage("Column Family name can not be empty");
-    new HColumnDescriptor("".getBytes(StandardCharsets.UTF_8));
+    new HColumnDescriptor(Bytes.toBytes(""));
   }
 
   /**

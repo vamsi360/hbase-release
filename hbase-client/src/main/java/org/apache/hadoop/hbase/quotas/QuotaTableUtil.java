@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CompareOperator;
@@ -54,10 +55,10 @@ import org.apache.hadoop.hbase.filter.QualifierFilter;
 import org.apache.hadoop.hbase.filter.RegexStringComparator;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.protobuf.ProtobufMagic;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.ByteString;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.InvalidProtocolBufferException;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.TextFormat;
-import org.apache.hadoop.hbase.shaded.com.google.protobuf.UnsafeByteOperations;
+import org.apache.hbase.thirdparty.com.google.protobuf.ByteString;
+import org.apache.hbase.thirdparty.com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.hbase.thirdparty.com.google.protobuf.TextFormat;
+import org.apache.hbase.thirdparty.com.google.protobuf.UnsafeByteOperations;
 import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.QuotaProtos;
@@ -69,7 +70,6 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.QuotaProtos.GetSpaceQuo
 import org.apache.hadoop.hbase.shaded.protobuf.generated.QuotaProtos.Quotas;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.QuotaProtos.SpaceQuota;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.Strings;
 
 /**
  * Helper class to interact with the quota table.
@@ -191,11 +191,11 @@ public class QuotaTableUtil {
    */
   public static Filter makeFilter(final QuotaFilter filter) {
     FilterList filterList = new FilterList(FilterList.Operator.MUST_PASS_ALL);
-    if (!Strings.isEmpty(filter.getUserFilter())) {
+    if (StringUtils.isNotEmpty(filter.getUserFilter())) {
       FilterList userFilters = new FilterList(FilterList.Operator.MUST_PASS_ONE);
       boolean hasFilter = false;
 
-      if (!Strings.isEmpty(filter.getNamespaceFilter())) {
+      if (StringUtils.isNotEmpty(filter.getNamespaceFilter())) {
         FilterList nsFilters = new FilterList(FilterList.Operator.MUST_PASS_ALL);
         nsFilters.addFilter(new RowFilter(CompareOperator.EQUAL,
             new RegexStringComparator(getUserRowKeyRegex(filter.getUserFilter()), 0)));
@@ -205,7 +205,7 @@ public class QuotaTableUtil {
         userFilters.addFilter(nsFilters);
         hasFilter = true;
       }
-      if (!Strings.isEmpty(filter.getTableFilter())) {
+      if (StringUtils.isNotEmpty(filter.getTableFilter())) {
         FilterList tableFilters = new FilterList(FilterList.Operator.MUST_PASS_ALL);
         tableFilters.addFilter(new RowFilter(CompareOperator.EQUAL,
             new RegexStringComparator(getUserRowKeyRegex(filter.getUserFilter()), 0)));
@@ -221,10 +221,10 @@ public class QuotaTableUtil {
       }
 
       filterList.addFilter(userFilters);
-    } else if (!Strings.isEmpty(filter.getTableFilter())) {
+    } else if (StringUtils.isNotEmpty(filter.getTableFilter())) {
       filterList.addFilter(new RowFilter(CompareOperator.EQUAL,
           new RegexStringComparator(getTableRowKeyRegex(filter.getTableFilter()), 0)));
-    } else if (!Strings.isEmpty(filter.getNamespaceFilter())) {
+    } else if (StringUtils.isNotEmpty(filter.getNamespaceFilter())) {
       filterList.addFilter(new RowFilter(CompareOperator.EQUAL,
           new RegexStringComparator(getNamespaceRowKeyRegex(filter.getNamespaceFilter()), 0)));
     }

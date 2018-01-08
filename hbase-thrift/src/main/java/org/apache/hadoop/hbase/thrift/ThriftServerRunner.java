@@ -49,7 +49,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell.DataType;
+import org.apache.hadoop.hbase.Cell.Type;
 import org.apache.hadoop.hbase.CellBuilder;
 import org.apache.hadoop.hbase.CellBuilderFactory;
 import org.apache.hadoop.hbase.CellBuilderType;
@@ -140,9 +140,9 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.hadoop.hbase.shaded.com.google.common.base.Joiner;
-import org.apache.hadoop.hbase.shaded.com.google.common.base.Throwables;
-import org.apache.hadoop.hbase.shaded.com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.hbase.thirdparty.com.google.common.base.Joiner;
+import org.apache.hbase.thirdparty.com.google.common.base.Throwables;
+import org.apache.hbase.thirdparty.com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * ThriftServerRunner - this class starts up a Thrift server which implements
@@ -1353,7 +1353,7 @@ public class ThriftServerRunner implements Runnable {
                   .setFamily(famAndQf[0])
                   .setQualifier(famAndQf[1])
                   .setTimestamp(put.getTimeStamp())
-                  .setType(DataType.Put)
+                  .setType(Type.Put)
                   .setValue(m.value != null ? getBytes(m.value)
                       : HConstants.EMPTY_BYTE_ARRAY)
                   .build());
@@ -1421,7 +1421,7 @@ public class ThriftServerRunner implements Runnable {
                     .setFamily(famAndQf[0])
                     .setQualifier(famAndQf[1])
                     .setTimestamp(put.getTimeStamp())
-                    .setType(DataType.Put)
+                    .setType(Type.Put)
                     .setValue(m.value != null ? getBytes(m.value)
                         : HConstants.EMPTY_BYTE_ARRAY)
                     .build());
@@ -1904,7 +1904,7 @@ public class ThriftServerRunner implements Runnable {
             .setFamily(famAndQf[0])
             .setQualifier(famAndQf[1])
             .setTimestamp(put.getTimeStamp())
-            .setType(DataType.Put)
+            .setType(Type.Put)
             .setValue(mput.value != null ? getBytes(mput.value)
                 : HConstants.EMPTY_BYTE_ARRAY)
             .build());

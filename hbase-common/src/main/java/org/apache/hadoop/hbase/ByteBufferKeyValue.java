@@ -17,29 +17,22 @@
  */
 package org.apache.hadoop.hbase;
 
-import static org.apache.hadoop.hbase.Tag.TAG_LENGTH_SIZE;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ClassSize;
 import org.apache.yetus.audience.InterfaceAudience;
 
-import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
+import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
 
 /**
- * This Cell is an implementation of {@link ByteBufferCell} where the data resides in
+ * This Cell is an implementation of {@link ByteBufferExtendedCell} where the data resides in
  * off heap/ on heap ByteBuffer
  */
 @InterfaceAudience.Private
-public class ByteBufferKeyValue extends ByteBufferCell implements ExtendedCell {
+public class ByteBufferKeyValue extends ByteBufferExtendedCell {
 
   protected final ByteBuffer buf;
   protected final int offset;
@@ -336,7 +329,7 @@ public class ByteBufferKeyValue extends ByteBufferCell implements ExtendedCell {
     return calculateHashForKey(this);
   }
 
-  private int calculateHashForKey(ByteBufferCell cell) {
+  private int calculateHashForKey(ByteBufferExtendedCell cell) {
     int rowHash = ByteBufferUtils.hashCode(cell.getRowByteBuffer(), cell.getRowPosition(),
       cell.getRowLength());
     int familyHash = ByteBufferUtils.hashCode(cell.getFamilyByteBuffer(), cell.getFamilyPosition(),
@@ -349,32 +342,5 @@ public class ByteBufferKeyValue extends ByteBufferCell implements ExtendedCell {
     hash = 31 * hash + (int) cell.getTimestamp();
     hash = 31 * hash + cell.getTypeByte();
     return hash;
-  }
-
-  @Override
-  public Optional<Tag> getTag(byte type) {
-    int length = getTagsLength();
-    int offset = getTagsPosition();
-    int pos = offset;
-    int tagLen;
-    while (pos < offset + length) {
-      ByteBuffer tagsBuffer = getTagsByteBuffer();
-      tagLen = ByteBufferUtils.readAsInt(tagsBuffer, pos, TAG_LENGTH_SIZE);
-      if (ByteBufferUtils.toByte(tagsBuffer, pos + TAG_LENGTH_SIZE) == type) {
-        return Optional.ofNullable(new ByteBufferTag(tagsBuffer, pos, tagLen + TAG_LENGTH_SIZE));
-      }
-      pos += TAG_LENGTH_SIZE + tagLen;
-    }
-    return Optional.ofNullable(null);
-  }
-
-  @Override
-  public List<Tag> getTags() {
-    List<Tag> tags = new ArrayList<>();
-    Iterator<Tag> tagsItr = PrivateCellUtil.tagsIterator(this);
-    while (tagsItr.hasNext()) {
-      tags.add(tagsItr.next());
-    }
-    return tags;
   }
 }

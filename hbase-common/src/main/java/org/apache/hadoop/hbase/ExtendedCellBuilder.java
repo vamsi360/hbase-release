@@ -26,7 +26,7 @@ import org.apache.yetus.audience.InterfaceAudience;
  * {@link Tag} and memstoreTS/mvcc are internal implementation detail
  *  that should not be exposed publicly.
  * Use {@link ExtendedCellBuilderFactory} to get ExtendedCellBuilder instance.
- * TODO: ditto for ByteBufferCell?
+ * TODO: ditto for ByteBufferExtendedCell?
  */
 @InterfaceAudience.Private
 public interface ExtendedCellBuilder extends RawCellBuilder {
@@ -49,7 +49,7 @@ public interface ExtendedCellBuilder extends RawCellBuilder {
   ExtendedCellBuilder setTimestamp(final long timestamp);
 
   @Override
-  ExtendedCellBuilder setType(final Cell.DataType type);
+  ExtendedCellBuilder setType(final Cell.Type type);
 
   ExtendedCellBuilder setType(final byte type);
 

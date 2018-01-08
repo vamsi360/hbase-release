@@ -31,7 +31,7 @@ import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
+import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
 
 /**
  * The ongoing MemStore Compaction manager, dispatches a solo running compaction and interrupts
@@ -92,11 +92,8 @@ public class MemStoreCompactor {
     // get a snapshot of the list of the segments from the pipeline,
     // this local copy of the list is marked with specific version
     versionedList = compactingMemStore.getImmutableSegments();
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Starting the In-Memory Compaction for store "
-          + compactingMemStore.getStore().getColumnFamilyName());
-    }
+    LOG.debug("Starting In-Memory Compaction of {}",
+        compactingMemStore.getStore().getColumnFamilyName());
     HStore store = compactingMemStore.getStore();
     RegionCoprocessorHost cpHost = store.getCoprocessorHost();
     if (cpHost != null) {

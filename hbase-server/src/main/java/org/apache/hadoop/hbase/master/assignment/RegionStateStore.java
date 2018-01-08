@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.Cell.DataType;
 import org.apache.hadoop.hbase.CellBuilderFactory;
 import org.apache.hadoop.hbase.CellBuilderType;
 import org.apache.hadoop.hbase.HConstants;
@@ -50,8 +49,8 @@ import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.hadoop.hbase.shaded.com.google.common.annotations.VisibleForTesting;
-import org.apache.hadoop.hbase.shaded.com.google.common.base.Preconditions;
+import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
+import org.apache.hbase.thirdparty.com.google.common.base.Preconditions;
 
 /**
  * Store Region State to hbase:meta table.
@@ -186,7 +185,7 @@ public class RegionStateStore {
           .setFamily(HConstants.CATALOG_FAMILY)
           .setQualifier(getServerNameColumn(replicaId))
           .setTimestamp(put.getTimeStamp())
-          .setType(DataType.Put)
+          .setType(Cell.Type.Put)
           .setValue(Bytes.toBytes(regionLocation.getServerName()))
           .build());
       info.append(", regionLocation=").append(regionLocation);
@@ -196,7 +195,7 @@ public class RegionStateStore {
         .setFamily(HConstants.CATALOG_FAMILY)
         .setQualifier(getStateColumn(replicaId))
         .setTimestamp(put.getTimeStamp())
-        .setType(DataType.Put)
+        .setType(Cell.Type.Put)
         .setValue(Bytes.toBytes(state.name()))
         .build());
     LOG.info(info.toString());

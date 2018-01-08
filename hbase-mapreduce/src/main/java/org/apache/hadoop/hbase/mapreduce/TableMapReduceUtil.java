@@ -345,22 +345,20 @@ public class TableMapReduceUtil {
   }
 
   /**
-   * Sets up the job for reading from a table snapshot. It bypasses hbase servers
-   * and read directly from snapshot files.
-   *
+   * Sets up the job for reading from a table snapshot. It bypasses hbase servers and read directly
+   * from snapshot files.
    * @param snapshotName The name of the snapshot (of a table) to read from.
-   * @param scan  The scan instance with the columns, time range etc.
-   * @param mapper  The mapper class to use.
-   * @param outputKeyClass  The class of the output key.
-   * @param outputValueClass  The class of the output value.
-   * @param job  The current job to adjust.  Make sure the passed job is
-   * carrying all necessary HBase configuration.
-   * @param addDependencyJars upload HBase jars and jars for any of the configured
-   *           job classes via the distributed cache (tmpjars).
-   *
+   * @param scan The scan instance with the columns, time range etc.
+   * @param mapper The mapper class to use.
+   * @param outputKeyClass The class of the output key.
+   * @param outputValueClass The class of the output value.
+   * @param job The current job to adjust. Make sure the passed job is carrying all necessary HBase
+   *          configuration.
+   * @param addDependencyJars upload HBase jars and jars for any of the configured job classes via
+   *          the distributed cache (tmpjars).
    * @param tmpRestoreDir a temporary directory to copy the snapshot files into. Current user should
-   * have write permissions to this directory, and this should not be a subdirectory of rootdir.
-   * After the job is finished, restore directory can be deleted.
+   *          have write permissions to this directory, and this should not be a subdirectory of
+   *          rootdir. After the job is finished, restore directory can be deleted.
    * @throws IOException When setting up the details fails.
    * @see TableSnapshotInputFormat
    */
@@ -369,10 +367,10 @@ public class TableMapReduceUtil {
       Class<?> outputKeyClass,
       Class<?> outputValueClass, Job job,
       boolean addDependencyJars, Path tmpRestoreDir)
-  throws IOException {
+      throws IOException {
     TableSnapshotInputFormat.setInput(job, snapshotName, tmpRestoreDir);
-    initTableMapperJob(snapshotName, scan, mapper, outputKeyClass,
-        outputValueClass, job, addDependencyJars, false, TableSnapshotInputFormat.class);
+    initTableMapperJob(snapshotName, scan, mapper, outputKeyClass, outputValueClass, job,
+      addDependencyJars, false, TableSnapshotInputFormat.class);
     resetCacheConfig(job.getConfiguration());
   }
 
@@ -810,14 +808,14 @@ public class TableMapReduceUtil {
       org.apache.hadoop.hbase.ipc.RpcServer.class,                   // hbase-server
       org.apache.hadoop.hbase.CompatibilityFactory.class,            // hbase-hadoop-compat
       org.apache.hadoop.hbase.mapreduce.JobUtil.class,               // hbase-hadoop2-compat
-      org.apache.hadoop.hbase.mapreduce.TableMapper.class,           // hbase-mapreduce
+      org.apache.hadoop.hbase.mapreduce.TableMapper.class,           // hbase-server
       org.apache.hadoop.hbase.metrics.impl.FastLongHistogram.class,  // hbase-metrics
       org.apache.hadoop.hbase.metrics.Snapshot.class,                // hbase-metrics-api
       org.apache.zookeeper.ZooKeeper.class,
-      org.apache.hadoop.hbase.shaded.io.netty.channel.Channel.class,
+      org.apache.hbase.thirdparty.io.netty.channel.Channel.class,
       com.google.protobuf.Message.class,
-      org.apache.hadoop.hbase.shaded.com.google.protobuf.UnsafeByteOperations.class,
-      org.apache.hadoop.hbase.shaded.com.google.common.collect.Lists.class,
+      org.apache.hbase.thirdparty.com.google.protobuf.UnsafeByteOperations.class,
+      org.apache.hbase.thirdparty.com.google.common.collect.Lists.class,
       org.apache.htrace.core.Tracer.class,
       com.codahale.metrics.MetricRegistry.class,
       org.apache.commons.lang3.ArrayUtils.class,

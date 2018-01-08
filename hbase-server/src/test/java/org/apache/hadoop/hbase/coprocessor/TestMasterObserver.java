@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -1523,7 +1522,7 @@ public class TestMasterObserver {
       assertNotNull("Found a non-null entry", firstGoodPair);
       LOG.info("Found " + firstGoodPair.toString());
       // Try to force a move
-      Collection<ServerName> servers = master.getClusterStatus().getServers();
+      Collection<ServerName> servers = master.getClusterMetrics().getLiveServerMetrics().keySet();
       String destName = null;
       String serverNameForFirstRegion = firstGoodPair.getServerName().toString();
       LOG.info("serverNameForFirstRegion=" + serverNameForFirstRegion);

@@ -28,8 +28,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
-import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
@@ -64,8 +64,8 @@ import org.junit.rules.TestName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.hadoop.hbase.shaded.com.google.common.collect.Lists;
-import org.apache.hadoop.hbase.shaded.com.google.common.collect.Maps;
+import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
+import org.apache.hbase.thirdparty.com.google.common.collect.Maps;
 
 @Category(LargeTests.class)
 public class TestFavoredStochasticBalancerPickers extends BalancerTestBase {
@@ -169,14 +169,14 @@ public class TestFavoredStochasticBalancerPickers extends BalancerTestBase {
     TEST_UTIL.getHBaseCluster().startRegionServerAndWait(60000);
 
     Map<ServerName, List<RegionInfo>> serverAssignments = Maps.newHashMap();
-    ClusterStatus status = admin.getClusterStatus(EnumSet.of(Option.LIVE_SERVERS));
-    for (ServerName sn : status.getServers()) {
+    ClusterMetrics status = admin.getClusterMetrics(EnumSet.of(Option.LIVE_SERVERS));
+    for (ServerName sn : status.getLiveServerMetrics().keySet()) {
       if (!ServerName.isSameAddress(sn, masterServerName)) {
         serverAssignments.put(sn, getTableRegionsFromServer(tableName, sn));
       }
     }
     RegionLocationFinder regionFinder = new RegionLocationFinder();
-    regionFinder.setClusterStatus(admin.getClusterStatus(EnumSet.of(Option.LIVE_SERVERS)));
+    regionFinder.setClusterMetrics(admin.getClusterMetrics(EnumSet.of(Option.LIVE_SERVERS)));
     regionFinder.setConf(conf);
     regionFinder.setServices(TEST_UTIL.getMiniHBaseCluster().getMaster());
     Cluster cluster = new Cluster(serverAssignments, null, regionFinder, new RackManager(conf));

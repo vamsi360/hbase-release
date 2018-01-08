@@ -361,20 +361,20 @@ public class ReplicationPeersZKImpl extends ReplicationStateZKBase implements Re
           + existingConfig.getReplicationEndpointImpl()
           + "' does not match new class '" + newConfig.getReplicationEndpointImpl() + "'");
     }
-    //Update existingConfig's peer config and peer data with the new values, but don't touch config
+    // Update existingConfig's peer config and peer data with the new values, but don't touch config
     // or data that weren't explicitly changed
-    existingConfig.getConfiguration().putAll(newConfig.getConfiguration());
-    existingConfig.getPeerData().putAll(newConfig.getPeerData());
-    existingConfig.setTableCFsMap(newConfig.getTableCFsMap());
-    existingConfig.setNamespaces(newConfig.getNamespaces());
-    existingConfig.setBandwidth(newConfig.getBandwidth());
-    existingConfig.setReplicateAllUserTables(newConfig.replicateAllUserTables());
-    existingConfig.setExcludeNamespaces(newConfig.getExcludeNamespaces());
-    existingConfig.setExcludeTableCFsMap(newConfig.getExcludeTableCFsMap());
+    ReplicationPeerConfigBuilder builder = ReplicationPeerConfig.newBuilder(existingConfig);
+    builder.putAllConfiguration(newConfig.getConfiguration())
+        .putAllPeerData(newConfig.getPeerData())
+        .setReplicateAllUserTables(newConfig.replicateAllUserTables())
+        .setNamespaces(newConfig.getNamespaces()).setTableCFsMap(newConfig.getTableCFsMap())
+        .setExcludeNamespaces(newConfig.getExcludeNamespaces())
+        .setExcludeTableCFsMap(newConfig.getExcludeTableCFsMap())
+        .setBandwidth(newConfig.getBandwidth());
 
     try {
       ZKUtil.setData(this.zookeeper, getPeerNode(id),
-          ReplicationPeerConfigUtil.toByteArray(existingConfig));
+          ReplicationPeerConfigUtil.toByteArray(builder.build()));
     }
     catch(KeeperException ke){
       throw new ReplicationException("There was a problem trying to save changes to the " +
