@@ -1528,9 +1528,11 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
 
       requestCount.increment();
       if (sn == null) {
-        LOG.info("Close " + encodedRegionName + " without moving");
+        LOG.info("Close " + encodedRegionName + " without moving. Requested from " +
+            RpcServer.getRemoteAddress().orElse(null));
       } else {
-        LOG.info("Close " + encodedRegionName + ", moving to " + sn);
+        LOG.info("Close " + encodedRegionName + ", moving to " + sn + ". Requested from " +
+            RpcServer.getRemoteAddress().orElse(null));
       }
       boolean closed = regionServer.closeRegion(encodedRegionName, false, sn);
       CloseRegionResponse.Builder builder = CloseRegionResponse.newBuilder().setClosed(closed);
