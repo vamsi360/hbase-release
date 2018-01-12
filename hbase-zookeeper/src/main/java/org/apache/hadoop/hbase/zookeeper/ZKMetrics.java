@@ -33,8 +33,7 @@ public class ZKMetrics implements ZKMetricsListener {
   private final MetricsZooKeeperSource source;
 
   public ZKMetrics() {
-    this(null);
-    //this(CompatibilitySingletonFactory.getInstance(MetricsZooKeeperSource.class));
+    this(CompatibilitySingletonFactory.getInstance(MetricsZooKeeperSource.class));
   }
 
   @VisibleForTesting
@@ -44,66 +43,66 @@ public class ZKMetrics implements ZKMetricsListener {
 
   @Override
   public void registerAuthFailedException() {
-    // source.incrementAuthFailedCount();
+    source.incrementAuthFailedCount();
   }
 
   @Override
   public void registerConnectionLossException() {
-    // source.incrementConnectionLossCount();
+    source.incrementConnectionLossCount();
   }
 
   @Override
   public void registerDataInconsistencyException() {
-    // source.incrementDataInconsistencyCount();
+    source.incrementDataInconsistencyCount();
   }
 
   @Override
   public void registerInvalidACLException() {
-    // source.incrementInvalidACLCount();
+    source.incrementInvalidACLCount();
   }
 
   @Override
   public void registerNoAuthException() {
-    // source.incrementNoAuthCount();
+    source.incrementNoAuthCount();
   }
 
   @Override
   public void registerOperationTimeoutException() {
-    // source.incrementOperationTimeoutCount();
+    source.incrementOperationTimeoutCount();
   }
 
   @Override
   public void registerRuntimeInconsistencyException() {
-    // source.incrementRuntimeInconsistencyCount();
+    source.incrementRuntimeInconsistencyCount();
   }
 
   @Override
   public void registerSessionExpiredException() {
-    // source.incrementSessionExpiredCount();
+    source.incrementSessionExpiredCount();
   }
 
   @Override
   public void registerSystemErrorException() {
-    // source.incrementSystemErrorCount();
+    source.incrementSystemErrorCount();
   }
 
   @Override
   public void registerFailedZKCall() {
-    // source.incrementTotalFailedZKCalls();
+    source.incrementTotalFailedZKCalls();
   }
 
   @Override
   public void registerReadOperationLatency(long latency) {
-    // source.recordReadOperationLatency(latency);
+    source.recordReadOperationLatency(latency);
   }
 
   @Override
   public void registerWriteOperationLatency(long latency) {
-    // source.recordWriteOperationLatency(latency);
+    source.recordWriteOperationLatency(latency);
   }
 
   @Override
   public void registerSyncOperationLatency(long latency) {
-    // source.recordSyncOperationLatency(latency);
+    source.recordSyncOperationLatency(latency);
   }
 }

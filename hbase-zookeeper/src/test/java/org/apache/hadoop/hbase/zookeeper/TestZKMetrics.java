@@ -23,12 +23,10 @@ import static org.mockito.Mockito.verify;
 
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.testclassification.ZKTests;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ ZKTests.class, SmallTests.class })
-@Ignore
 public class TestZKMetrics {
 
   @Test
