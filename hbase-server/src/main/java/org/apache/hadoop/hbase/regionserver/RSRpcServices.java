@@ -3447,6 +3447,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
     }
     if (request.getCloseRegionCount() > 0) {
       for (CloseRegionRequest req : request.getCloseRegionList()) {
+        LOG.info("submitting region close " + req.getRegion());
         builder.addCloseRegion(closeRegion(controller, req));
       }
     }

@@ -479,6 +479,7 @@ public class RSProcedureDispatcher
     public void dispatchCloseRequests(final MasterProcedureEnv env,
         final List<RegionCloseOperation> operations) {
       for (RegionCloseOperation op: operations) {
+        LOG.info("submitting region close " + op.getRegionInfo() + " to " + serverName);
         submitTask(new CloseRegionRemoteCall(serverName, op));
       }
     }
