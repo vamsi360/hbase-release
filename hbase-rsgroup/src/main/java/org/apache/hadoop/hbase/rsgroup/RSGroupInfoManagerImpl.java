@@ -44,7 +44,6 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MetaTableAccessor;
 import org.apache.hadoop.hbase.MetaTableAccessor.DefaultVisitorBase;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ClusterConnection;
@@ -399,14 +398,8 @@ class RSGroupInfoManagerImpl implements RSGroupInfoManager {
       orphanTables.add(TableName.valueOf(entry));
     }
 
-    final List<TableName> specialTables;
-    if(!masterServices.isInitialized()) {
-      specialTables = Arrays.asList(AccessControlLists.ACL_TABLE_NAME, TableName.META_TABLE_NAME,
-          TableName.NAMESPACE_TABLE_NAME, RSGROUP_TABLE_NAME);
-    } else {
-      specialTables =
-          masterServices.listTableNamesByNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
-    }
+    final List<TableName> specialTables = Arrays.asList(AccessControlLists.ACL_TABLE_NAME,
+        TableName.META_TABLE_NAME, TableName.NAMESPACE_TABLE_NAME, RSGROUP_TABLE_NAME);
 
     for (TableName table : specialTables) {
       orphanTables.add(table);
