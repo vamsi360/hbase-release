@@ -626,8 +626,12 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
     // ResultOrException instance that matches each Put or Delete is then added down in the
     // doBatchOp call.  We should be staying aligned though the Put and Delete are deferred/batched
     List<ClientProtos.Action> mutations = null;
+    ClientProtos.ResultOrException.Builder resultOrExceptionBuilder = ResultOrException.newBuilder();
+    boolean hasResultOrException = false;
+
     for (ClientProtos.Action action: actions.getActionList()) {
-      ClientProtos.ResultOrException.Builder resultOrExceptionBuilder = null;
+      hasResultOrException = false;
+      resultOrExceptionBuilder.clear();
       try {
         Result r = null;
         if (action.hasGet()) {
@@ -643,7 +647,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
             }
           }
         } else if (action.hasServiceCall()) {
-          resultOrExceptionBuilder = ResultOrException.newBuilder();
+          hasResultOrException = true;
           try {
             Message result = execServiceOnRegion(region, action.getServiceCall());
             ClientProtos.CoprocessorServiceResult.Builder serviceResultBuilder =
@@ -698,8 +702,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           } else {
             pbResult = ProtobufUtil.toResult(r);
           }
-          resultOrExceptionBuilder =
-            ClientProtos.ResultOrException.newBuilder().setResult(pbResult);
+          hasResultOrException = true;
+          resultOrExceptionBuilder.setResult(pbResult);
         }
         // Could get to here and there was no result and no exception.  Presumes we added
         // a Put or Delete to the collecting Mutations List for adding later.  In this
@@ -707,10 +711,10 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
         // down in the doBatchOp method call rather than up here.
       } catch (IOException ie) {
         rpcServer.getMetrics().exception(ie);
-        resultOrExceptionBuilder = ResultOrException.newBuilder().
-          setException(ResponseConverter.buildException(ie));
+        hasResultOrException = true;
+        resultOrExceptionBuilder.setException(ResponseConverter.buildException(ie));
       }
-      if (resultOrExceptionBuilder != null) {
+      if (hasResultOrException) {
         // Propagate index.
         resultOrExceptionBuilder.setIndex(action.getIndex());
         builder.addResultOrException(resultOrExceptionBuilder.build());
