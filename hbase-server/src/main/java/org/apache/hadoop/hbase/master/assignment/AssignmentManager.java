@@ -740,6 +740,10 @@ public class AssignmentManager implements ServerListener {
 
   public MoveRegionProcedure createMoveRegionProcedure(final RegionPlan plan) {
     if (plan.getRegionInfo().getTable().isSystemTable()) {
+      if (plan.getDestination() == null) {
+        Exception ex = new Exception();
+        LOG.info("empty dest " + plan, ex);
+      }
       List<ServerName> exclude = getExcludedServersForSystemTable();
       if (plan.getDestination() != null && exclude.contains(plan.getDestination())) {
         try {
