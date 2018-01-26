@@ -34,7 +34,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.testclassification.MasterTests;
@@ -119,7 +119,7 @@ public class TestBackupHFileCleaner {
     List<Path> list = new ArrayList<>(1);
     list.add(file);
     try (Connection conn = ConnectionFactory.createConnection(conf);
-        BackupSystemTable sysTbl = new BackupSystemTable(conn)) {
+        BackupMetaTable sysTbl = new BackupMetaTable(conn)) {
       List<TableName> sTableList = new ArrayList<>();
       sTableList.add(tableName);
       Map<byte[], List<Path>>[] maps = new Map[1];

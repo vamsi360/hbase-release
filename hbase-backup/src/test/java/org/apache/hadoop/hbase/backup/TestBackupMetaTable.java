@@ -43,7 +43,7 @@ import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
 import org.apache.hadoop.hbase.backup.impl.BackupManager;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
@@ -58,13 +58,13 @@ import org.junit.experimental.categories.Category;
  * Test cases for backup system table API
  */
 @Category(MediumTests.class)
-public class TestBackupSystemTable {
+public class TestBackupMetaTable {
 
   private static final HBaseTestingUtility UTIL = new HBaseTestingUtility();
   protected static Configuration conf = UTIL.getConfiguration();
   protected static MiniHBaseCluster cluster;
   protected static Connection conn;
-  protected BackupSystemTable table;
+  protected BackupMetaTable table;
 
   @BeforeClass
   public static void setUp() throws Exception {
@@ -77,7 +77,7 @@ public class TestBackupSystemTable {
 
   @Before
   public void before() throws IOException {
-    table = new BackupSystemTable(conn);
+    table = new BackupMetaTable(conn);
   }
 
   @After
@@ -115,10 +115,10 @@ public class TestBackupSystemTable {
 
   private void cleanBackupTable() throws IOException {
     Admin admin = UTIL.getHBaseAdmin();
-    admin.disableTable(BackupSystemTable.getTableName(conf));
-    admin.truncateTable(BackupSystemTable.getTableName(conf), true);
-    if (admin.isTableDisabled(BackupSystemTable.getTableName(conf))) {
-      admin.enableTable(BackupSystemTable.getTableName(conf));
+    admin.disableTable(BackupMetaTable.getTableName(conf));
+    admin.truncateTable(BackupMetaTable.getTableName(conf), true);
+    if (admin.isTableDisabled(BackupMetaTable.getTableName(conf))) {
+      admin.enableTable(BackupMetaTable.getTableName(conf));
     }
   }
 
@@ -152,7 +152,7 @@ public class TestBackupSystemTable {
   @Test
   public void testBackupDelete() throws IOException {
 
-    try (BackupSystemTable table = new BackupSystemTable(conn)) {
+    try (BackupMetaTable table = new BackupMetaTable(conn)) {
 
       int n = 10;
       List<BackupInfo> list = createBackupInfoList(n);
@@ -225,7 +225,7 @@ public class TestBackupSystemTable {
     tables2.add(TableName.valueOf("t5"));
 
     table.addIncrementalBackupTableSet(tables1, "root");
-    BackupSystemTable table = new BackupSystemTable(conn);
+    BackupMetaTable table = new BackupMetaTable(conn);
     TreeSet<TableName> res1 = (TreeSet<TableName>) table.getIncrementalBackupTableSet("root");
     assertTrue(tables1.size() == res1.size());
     Iterator<TableName> desc1 = tables1.descendingIterator();
@@ -365,7 +365,7 @@ public class TestBackupSystemTable {
 
   @Test
   public void testBackupSetAddNotExists() throws IOException {
-    try (BackupSystemTable table = new BackupSystemTable(conn)) {
+    try (BackupMetaTable table = new BackupMetaTable(conn)) {
 
       String[] tables = new String[] { "table1", "table2", "table3" };
       String setName = "name";
@@ -383,7 +383,7 @@ public class TestBackupSystemTable {
 
   @Test
   public void testBackupSetAddExists() throws IOException {
-    try (BackupSystemTable table = new BackupSystemTable(conn)) {
+    try (BackupMetaTable table = new BackupMetaTable(conn)) {
 
       String[] tables = new String[] { "table1", "table2", "table3" };
       String setName = "name";
@@ -403,7 +403,7 @@ public class TestBackupSystemTable {
 
   @Test
   public void testBackupSetAddExistsIntersects() throws IOException {
-    try (BackupSystemTable table = new BackupSystemTable(conn)) {
+    try (BackupMetaTable table = new BackupMetaTable(conn)) {
 
       String[] tables = new String[] { "table1", "table2", "table3" };
       String setName = "name";
@@ -423,7 +423,7 @@ public class TestBackupSystemTable {
 
   @Test
   public void testBackupSetRemoveSomeNotExists() throws IOException {
-    try (BackupSystemTable table = new BackupSystemTable(conn)) {
+    try (BackupMetaTable table = new BackupMetaTable(conn)) {
 
       String[] tables = new String[] { "table1", "table2", "table3", "table4" };
       String setName = "name";
@@ -443,7 +443,7 @@ public class TestBackupSystemTable {
 
   @Test
   public void testBackupSetRemove() throws IOException {
-    try (BackupSystemTable table = new BackupSystemTable(conn)) {
+    try (BackupMetaTable table = new BackupMetaTable(conn)) {
 
       String[] tables = new String[] { "table1", "table2", "table3", "table4" };
       String setName = "name";
@@ -463,7 +463,7 @@ public class TestBackupSystemTable {
 
   @Test
   public void testBackupSetDelete() throws IOException {
-    try (BackupSystemTable table = new BackupSystemTable(conn)) {
+    try (BackupMetaTable table = new BackupMetaTable(conn)) {
 
       String[] tables = new String[] { "table1", "table2", "table3", "table4" };
       String setName = "name";
@@ -478,7 +478,7 @@ public class TestBackupSystemTable {
 
   @Test
   public void testBackupSetList() throws IOException {
-    try (BackupSystemTable table = new BackupSystemTable(conn)) {
+    try (BackupMetaTable table = new BackupMetaTable(conn)) {
 
       String[] tables = new String[] { "table1", "table2", "table3", "table4" };
       String setName1 = "name1";

@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
@@ -49,7 +49,7 @@ public class TestRepairAfterFailedDelete extends TestBackupBase {
     assertTrue(checkSucceeded(backupId));
     LOG.info("backup complete");
     String[] backupIds = new String[] { backupId };
-    BackupSystemTable table = new BackupSystemTable(TEST_UTIL.getConnection());
+    BackupMetaTable table = new BackupMetaTable(TEST_UTIL.getConnection());
     BackupInfo info = table.readBackupInfo(backupId);
     Path path = new Path(info.getBackupRootDir(), backupId);
     FileSystem fs = FileSystem.get(path.toUri(), conf1);
@@ -59,7 +59,7 @@ public class TestRepairAfterFailedDelete extends TestBackupBase {
     String snapshotName = "snapshot-backup";
     Connection conn = TEST_UTIL.getConnection();
     Admin admin = conn.getAdmin();
-    admin.snapshot(snapshotName, BackupSystemTable.getTableName(conf1));
+    admin.snapshot(snapshotName, BackupMetaTable.getTableName(conf1));
 
     int deleted = getBackupAdmin().deleteBackups(backupIds);
 
@@ -69,9 +69,9 @@ public class TestRepairAfterFailedDelete extends TestBackupBase {
 
     // Emulate delete failure
     // Restore backup system table
-    admin.disableTable(BackupSystemTable.getTableName(conf1));
+    admin.disableTable(BackupMetaTable.getTableName(conf1));
     admin.restoreSnapshot(snapshotName);
-    admin.enableTable(BackupSystemTable.getTableName(conf1));
+    admin.enableTable(BackupMetaTable.getTableName(conf1));
     // Start backup session
     table.startBackupExclusiveOperation();
     // Start delete operation

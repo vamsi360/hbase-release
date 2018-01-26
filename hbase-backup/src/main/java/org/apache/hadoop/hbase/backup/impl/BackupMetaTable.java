@@ -86,8 +86,8 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 
 @InterfaceAudience.Private
-public final class BackupSystemTable implements Closeable {
-  private static final Log LOG = LogFactory.getLog(BackupSystemTable.class);
+public final class BackupMetaTable implements Closeable {
+  private static final Log LOG = LogFactory.getLog(BackupMetaTable.class);
 
   static class WALItem {
     String backupId;
@@ -183,11 +183,11 @@ public final class BackupSystemTable implements Closeable {
   // Safe delimiter in a string
   private final static String NULL = "\u0000";
 
-  public BackupSystemTable(Connection conn) throws IOException {
+  public BackupMetaTable(Connection conn) throws IOException {
     this.connection = conn;
     Configuration conf = this.connection.getConfiguration();
-    tableName = BackupSystemTable.getTableName(conf);
-    bulkLoadTableName = BackupSystemTable.getTableNameForBulkLoadedData(conf);
+    tableName = BackupMetaTable.getTableName(conf);
+    bulkLoadTableName = BackupMetaTable.getTableNameForBulkLoadedData(conf);
     checkSystemTable();
   }
 
@@ -198,12 +198,12 @@ public final class BackupSystemTable implements Closeable {
       Configuration conf = connection.getConfiguration();
       if (!admin.tableExists(tableName)) {
         TableDescriptor backupHTD =
-            BackupSystemTable.getSystemTableDescriptor(conf);
+            BackupMetaTable.getSystemTableDescriptor(conf);
         admin.createTable(backupHTD);
       }
       if (!admin.tableExists(bulkLoadTableName)) {
         TableDescriptor blHTD =
-            BackupSystemTable.getSystemTableForBulkLoadedDataDescriptor(conf);
+            BackupMetaTable.getSystemTableForBulkLoadedDataDescriptor(conf);
         admin.createTable(blHTD);
       }
       waitForSystemTable(admin, tableName);
@@ -272,7 +272,7 @@ public final class BackupSystemTable implements Closeable {
    * @return Map of rows to path of bulk loaded hfile
    */
   Map<byte[], String> readBulkLoadedFiles(String backupId) throws IOException {
-    Scan scan = BackupSystemTable.createScanForBulkLoadedFiles(backupId);
+    Scan scan = BackupMetaTable.createScanForBulkLoadedFiles(backupId);
     try (Table table = connection.getTable(bulkLoadTableName);
         ResultScanner scanner = table.getScanner(scan)) {
       Result res = null;
@@ -281,8 +281,8 @@ public final class BackupSystemTable implements Closeable {
         res.advance();
         byte[] row = CellUtil.cloneRow(res.listCells().get(0));
         for (Cell cell : res.listCells()) {
-          if (CellUtil.compareQualifiers(cell, BackupSystemTable.PATH_COL, 0,
-            BackupSystemTable.PATH_COL.length) == 0) {
+          if (CellUtil.compareQualifiers(cell, BackupMetaTable.PATH_COL, 0,
+            BackupMetaTable.PATH_COL.length) == 0) {
             map.put(row, Bytes.toString(CellUtil.cloneValue(cell)));
           }
         }
@@ -299,7 +299,7 @@ public final class BackupSystemTable implements Closeable {
    */
   public Map<byte[], List<Path>>[] readBulkLoadedFiles(String backupId, List<TableName> sTableList)
       throws IOException {
-    Scan scan = BackupSystemTable.createScanForBulkLoadedFiles(backupId);
+    Scan scan = BackupMetaTable.createScanForBulkLoadedFiles(backupId);
     Map<byte[], List<Path>>[] mapForSrc = new Map[sTableList == null ? 1 : sTableList.size()];
     try (Table table = connection.getTable(bulkLoadTableName);
         ResultScanner scanner = table.getScanner(scan)) {
@@ -310,14 +310,14 @@ public final class BackupSystemTable implements Closeable {
         byte[] fam = null;
         String path = null;
         for (Cell cell : res.listCells()) {
-          if (CellUtil.compareQualifiers(cell, BackupSystemTable.TBL_COL, 0,
-            BackupSystemTable.TBL_COL.length) == 0) {
+          if (CellUtil.compareQualifiers(cell, BackupMetaTable.TBL_COL, 0,
+            BackupMetaTable.TBL_COL.length) == 0) {
             tbl = TableName.valueOf(CellUtil.cloneValue(cell));
-          } else if (CellUtil.compareQualifiers(cell, BackupSystemTable.FAM_COL, 0,
-            BackupSystemTable.FAM_COL.length) == 0) {
+          } else if (CellUtil.compareQualifiers(cell, BackupMetaTable.FAM_COL, 0,
+            BackupMetaTable.FAM_COL.length) == 0) {
             fam = CellUtil.cloneValue(cell);
-          } else if (CellUtil.compareQualifiers(cell, BackupSystemTable.PATH_COL, 0,
-            BackupSystemTable.PATH_COL.length) == 0) {
+          } else if (CellUtil.compareQualifiers(cell, BackupMetaTable.PATH_COL, 0,
+            BackupMetaTable.PATH_COL.length) == 0) {
             path = Bytes.toString(CellUtil.cloneValue(cell));
           }
         }
@@ -377,7 +377,7 @@ public final class BackupSystemTable implements Closeable {
           + " entries");
     }
     try (Table table = connection.getTable(bulkLoadTableName)) {
-      List<Put> puts = BackupSystemTable.createPutForCommittedBulkload(tabName, region, finalPaths);
+      List<Put> puts = BackupMetaTable.createPutForCommittedBulkload(tabName, region, finalPaths);
       table.put(puts);
       LOG.debug("written " + puts.size() + " rows for bulk load of " + tabName);
     }
@@ -398,7 +398,7 @@ public final class BackupSystemTable implements Closeable {
     }
     try (Table table = connection.getTable(bulkLoadTableName)) {
       List<Put> puts =
-          BackupSystemTable.createPutForPreparedBulkload(tabName, region, family, pairs);
+          BackupMetaTable.createPutForPreparedBulkload(tabName, region, family, pairs);
       table.put(puts);
       LOG.debug("written " + puts.size() + " rows for bulk load of " + tabName);
     }
@@ -433,7 +433,7 @@ public final class BackupSystemTable implements Closeable {
     Map<TableName, Map<String, Map<String, List<Pair<String, Boolean>>>>> map = new HashMap<>();
     List<byte[]> rows = new ArrayList<>();
     for (TableName tTable : tableList) {
-      Scan scan = BackupSystemTable.createScanForOrigBulkLoadedFiles(tTable);
+      Scan scan = BackupMetaTable.createScanForOrigBulkLoadedFiles(tTable);
       Map<String, Map<String, List<Pair<String, Boolean>>>> tblMap = map.get(tTable);
       try (Table table = connection.getTable(bulkLoadTableName);
           ResultScanner scanner = table.getScanner(scan)) {
@@ -449,17 +449,17 @@ public final class BackupSystemTable implements Closeable {
             row = CellUtil.cloneRow(cell);
             rows.add(row);
             String rowStr = Bytes.toString(row);
-            region = BackupSystemTable.getRegionNameFromOrigBulkLoadRow(rowStr);
-            if (CellUtil.compareQualifiers(cell, BackupSystemTable.FAM_COL, 0,
-              BackupSystemTable.FAM_COL.length) == 0) {
+            region = BackupMetaTable.getRegionNameFromOrigBulkLoadRow(rowStr);
+            if (CellUtil.compareQualifiers(cell, BackupMetaTable.FAM_COL, 0,
+              BackupMetaTable.FAM_COL.length) == 0) {
               fam = Bytes.toString(CellUtil.cloneValue(cell));
-            } else if (CellUtil.compareQualifiers(cell, BackupSystemTable.PATH_COL, 0,
-              BackupSystemTable.PATH_COL.length) == 0) {
+            } else if (CellUtil.compareQualifiers(cell, BackupMetaTable.PATH_COL, 0,
+              BackupMetaTable.PATH_COL.length) == 0) {
               path = Bytes.toString(CellUtil.cloneValue(cell));
-            } else if (CellUtil.compareQualifiers(cell, BackupSystemTable.STATE_COL, 0,
-              BackupSystemTable.STATE_COL.length) == 0) {
+            } else if (CellUtil.compareQualifiers(cell, BackupMetaTable.STATE_COL, 0,
+              BackupMetaTable.STATE_COL.length) == 0) {
               byte[] state = CellUtil.cloneValue(cell);
-              if (Bytes.equals(BackupSystemTable.BL_PREPARE, state)) {
+              if (Bytes.equals(BackupMetaTable.BL_PREPARE, state)) {
                 raw = true;
               } else raw = false;
             }
@@ -503,7 +503,7 @@ public final class BackupSystemTable implements Closeable {
           List<Path> paths = entry.getValue();
           for (Path p : paths) {
             Put put =
-                BackupSystemTable.createPutForBulkLoadedFile(tn, fam, p.toString(), backupId, ts,
+                BackupMetaTable.createPutForBulkLoadedFile(tn, fam, p.toString(), backupId, ts,
                   cnt++);
             puts.add(put);
           }
@@ -1463,7 +1463,7 @@ public final class BackupSystemTable implements Closeable {
    */
   private Put createPutForBackupInfo(BackupInfo context) throws IOException {
     Put put = new Put(rowkey(BACKUP_INFO_PREFIX, context.getBackupId()));
-    put.addColumn(BackupSystemTable.SESSIONS_FAMILY, Bytes.toBytes("context"),
+    put.addColumn(BackupMetaTable.SESSIONS_FAMILY, Bytes.toBytes("context"),
       context.toByteArray());
     return put;
   }
@@ -1476,7 +1476,7 @@ public final class BackupSystemTable implements Closeable {
    */
   private Get createGetForBackupInfo(String backupId) throws IOException {
     Get get = new Get(rowkey(BACKUP_INFO_PREFIX, backupId));
-    get.addFamily(BackupSystemTable.SESSIONS_FAMILY);
+    get.addFamily(BackupMetaTable.SESSIONS_FAMILY);
     get.setMaxVersions(1);
     return get;
   }
@@ -1489,7 +1489,7 @@ public final class BackupSystemTable implements Closeable {
    */
   private Delete createDeleteForBackupInfo(String backupId) {
     Delete del = new Delete(rowkey(BACKUP_INFO_PREFIX, backupId));
-    del.addFamily(BackupSystemTable.SESSIONS_FAMILY);
+    del.addFamily(BackupMetaTable.SESSIONS_FAMILY);
     return del;
   }
 
@@ -1512,7 +1512,7 @@ public final class BackupSystemTable implements Closeable {
    */
   private Get createGetForStartCode(String rootPath) throws IOException {
     Get get = new Get(rowkey(START_CODE_ROW, rootPath));
-    get.addFamily(BackupSystemTable.META_FAMILY);
+    get.addFamily(BackupMetaTable.META_FAMILY);
     get.setMaxVersions(1);
     return get;
   }
@@ -1524,7 +1524,7 @@ public final class BackupSystemTable implements Closeable {
    */
   private Put createPutForStartCode(String startCode, String rootPath) {
     Put put = new Put(rowkey(START_CODE_ROW, rootPath));
-    put.addColumn(BackupSystemTable.META_FAMILY, Bytes.toBytes("startcode"),
+    put.addColumn(BackupMetaTable.META_FAMILY, Bytes.toBytes("startcode"),
       Bytes.toBytes(startCode));
     return put;
   }
@@ -1536,7 +1536,7 @@ public final class BackupSystemTable implements Closeable {
    */
   private Get createGetForIncrBackupTableSet(String backupRoot) throws IOException {
     Get get = new Get(rowkey(INCR_BACKUP_SET, backupRoot));
-    get.addFamily(BackupSystemTable.META_FAMILY);
+    get.addFamily(BackupMetaTable.META_FAMILY);
     get.setMaxVersions(1);
     return get;
   }
@@ -1549,7 +1549,7 @@ public final class BackupSystemTable implements Closeable {
   private Put createPutForIncrBackupTableSet(Set<TableName> tables, String backupRoot) {
     Put put = new Put(rowkey(INCR_BACKUP_SET, backupRoot));
     for (TableName table : tables) {
-      put.addColumn(BackupSystemTable.META_FAMILY, Bytes.toBytes(table.getNameAsString()),
+      put.addColumn(BackupMetaTable.META_FAMILY, Bytes.toBytes(table.getNameAsString()),
         EMPTY_VALUE);
     }
     return put;
@@ -1562,7 +1562,7 @@ public final class BackupSystemTable implements Closeable {
    */
   private Delete createDeleteForIncrBackupTableSet(String backupRoot) {
     Delete delete = new Delete(rowkey(INCR_BACKUP_SET, backupRoot));
-    delete.addFamily(BackupSystemTable.META_FAMILY);
+    delete.addFamily(BackupMetaTable.META_FAMILY);
     return delete;
   }
 
@@ -1577,7 +1577,7 @@ public final class BackupSystemTable implements Closeable {
     stopRow[stopRow.length - 1] = (byte) (stopRow[stopRow.length - 1] + 1);
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
-    scan.addFamily(BackupSystemTable.SESSIONS_FAMILY);
+    scan.addFamily(BackupMetaTable.SESSIONS_FAMILY);
     scan.setMaxVersions(1);
     return scan;
   }
@@ -1602,7 +1602,7 @@ public final class BackupSystemTable implements Closeable {
   private Put createPutForWriteRegionServerLogTimestamp(TableName table, byte[] smap,
       String backupRoot) {
     Put put = new Put(rowkey(TABLE_RS_LOG_MAP_PREFIX, backupRoot, NULL, table.getNameAsString()));
-    put.addColumn(BackupSystemTable.META_FAMILY, Bytes.toBytes("log-roll-map"), smap);
+    put.addColumn(BackupMetaTable.META_FAMILY, Bytes.toBytes("log-roll-map"), smap);
     return put;
   }
 
@@ -1617,7 +1617,7 @@ public final class BackupSystemTable implements Closeable {
     stopRow[stopRow.length - 1] = (byte) (stopRow[stopRow.length - 1] + 1);
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
-    scan.addFamily(BackupSystemTable.META_FAMILY);
+    scan.addFamily(BackupMetaTable.META_FAMILY);
 
     return scan;
   }
@@ -1642,7 +1642,7 @@ public final class BackupSystemTable implements Closeable {
   private Put createPutForRegionServerLastLogRollResult(String server, Long timestamp,
       String backupRoot) {
     Put put = new Put(rowkey(RS_LOG_TS_PREFIX, backupRoot, NULL, server));
-    put.addColumn(BackupSystemTable.META_FAMILY, Bytes.toBytes("rs-log-ts"),
+    put.addColumn(BackupMetaTable.META_FAMILY, Bytes.toBytes("rs-log-ts"),
       Bytes.toBytes(timestamp));
     return put;
   }
@@ -1658,7 +1658,7 @@ public final class BackupSystemTable implements Closeable {
     stopRow[stopRow.length - 1] = (byte) (stopRow[stopRow.length - 1] + 1);
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
-    scan.addFamily(BackupSystemTable.META_FAMILY);
+    scan.addFamily(BackupMetaTable.META_FAMILY);
     scan.setMaxVersions(1);
 
     return scan;
@@ -1689,10 +1689,10 @@ public final class BackupSystemTable implements Closeable {
         Put put =
             new Put(rowkey(BULK_LOAD_PREFIX, table.toString(), BLK_LD_DELIM,
               Bytes.toString(region), BLK_LD_DELIM, filename));
-        put.addColumn(BackupSystemTable.META_FAMILY, TBL_COL, table.getName());
-        put.addColumn(BackupSystemTable.META_FAMILY, FAM_COL, entry.getKey());
-        put.addColumn(BackupSystemTable.META_FAMILY, PATH_COL, file.getBytes());
-        put.addColumn(BackupSystemTable.META_FAMILY, STATE_COL, BL_COMMIT);
+        put.addColumn(BackupMetaTable.META_FAMILY, TBL_COL, table.getName());
+        put.addColumn(BackupMetaTable.META_FAMILY, FAM_COL, entry.getKey());
+        put.addColumn(BackupMetaTable.META_FAMILY, PATH_COL, file.getBytes());
+        put.addColumn(BackupMetaTable.META_FAMILY, STATE_COL, BL_COMMIT);
         puts.add(put);
         LOG.debug("writing done bulk path " + file + " for " + table + " " + Bytes.toString(region));
       }
@@ -1704,20 +1704,20 @@ public final class BackupSystemTable implements Closeable {
 
     try (Admin admin = conn.getAdmin();) {
       Configuration conf = conn.getConfiguration();
-      admin.snapshot(BackupSystemTable.getSnapshotName(conf), BackupSystemTable.getTableName(conf));
+      admin.snapshot(BackupMetaTable.getSnapshotName(conf), BackupMetaTable.getTableName(conf));
     }
   }
 
   public static void restoreFromSnapshot(Connection conn) throws IOException {
 
     Configuration conf = conn.getConfiguration();
-    LOG.debug("Restoring " + BackupSystemTable.getTableNameAsString(conf) + " from snapshot");
+    LOG.debug("Restoring " + BackupMetaTable.getTableNameAsString(conf) + " from snapshot");
     try (Admin admin = conn.getAdmin();) {
-      String snapshotName = BackupSystemTable.getSnapshotName(conf);
+      String snapshotName = BackupMetaTable.getSnapshotName(conf);
       if (snapshotExists(admin, snapshotName)) {
-        admin.disableTable(BackupSystemTable.getTableName(conf));
+        admin.disableTable(BackupMetaTable.getTableName(conf));
         admin.restoreSnapshot(snapshotName);
-        admin.enableTable(BackupSystemTable.getTableName(conf));
+        admin.enableTable(BackupMetaTable.getTableName(conf));
         LOG.debug("Done restoring backup system table");
       } else {
         // Snapshot does not exists, i.e completeBackup failed after
@@ -1747,9 +1747,9 @@ public final class BackupSystemTable implements Closeable {
   public static void deleteSnapshot(Connection conn) throws IOException {
 
     Configuration conf = conn.getConfiguration();
-    LOG.debug("Deleting " + BackupSystemTable.getSnapshotName(conf) + " from the system");
+    LOG.debug("Deleting " + BackupMetaTable.getSnapshotName(conf) + " from the system");
     try (Admin admin = conn.getAdmin();) {
-      String snapshotName = BackupSystemTable.getSnapshotName(conf);
+      String snapshotName = BackupMetaTable.getSnapshotName(conf);
       if (snapshotExists(admin, snapshotName)) {
         admin.deleteSnapshot(snapshotName);
         LOG.debug("Done deleting backup system table snapshot");
@@ -1773,10 +1773,10 @@ public final class BackupSystemTable implements Closeable {
       Put put =
           new Put(rowkey(BULK_LOAD_PREFIX, table.toString(), BLK_LD_DELIM, Bytes.toString(region),
             BLK_LD_DELIM, filename));
-      put.addColumn(BackupSystemTable.META_FAMILY, TBL_COL, table.getName());
-      put.addColumn(BackupSystemTable.META_FAMILY, FAM_COL, family);
-      put.addColumn(BackupSystemTable.META_FAMILY, PATH_COL, file.getBytes());
-      put.addColumn(BackupSystemTable.META_FAMILY, STATE_COL, BL_PREPARE);
+      put.addColumn(BackupMetaTable.META_FAMILY, TBL_COL, table.getName());
+      put.addColumn(BackupMetaTable.META_FAMILY, FAM_COL, family);
+      put.addColumn(BackupMetaTable.META_FAMILY, PATH_COL, file.getBytes());
+      put.addColumn(BackupMetaTable.META_FAMILY, STATE_COL, BL_PREPARE);
       puts.add(put);
       LOG.debug("writing raw bulk path " + file + " for " + table + " " + Bytes.toString(region));
     }
@@ -1787,7 +1787,7 @@ public final class BackupSystemTable implements Closeable {
     List<Delete> lstDels = new ArrayList<>();
     for (TableName table : lst) {
       Delete del = new Delete(rowkey(BULK_LOAD_PREFIX, table.toString(), BLK_LD_DELIM));
-      del.addFamily(BackupSystemTable.META_FAMILY);
+      del.addFamily(BackupMetaTable.META_FAMILY);
       lstDels.add(del);
     }
     return lstDels;
@@ -1951,7 +1951,7 @@ public final class BackupSystemTable implements Closeable {
     stopRow[stopRow.length - 1] = (byte) (stopRow[stopRow.length - 1] + 1);
     scan.withStartRow(startRow);
     scan.withStopRow(stopRow);
-    scan.addFamily(BackupSystemTable.META_FAMILY);
+    scan.addFamily(BackupMetaTable.META_FAMILY);
     scan.setMaxVersions(1);
     return scan;
   }
@@ -1988,7 +1988,7 @@ public final class BackupSystemTable implements Closeable {
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
     // scan.setTimeRange(lower, Long.MAX_VALUE);
-    scan.addFamily(BackupSystemTable.META_FAMILY);
+    scan.addFamily(BackupMetaTable.META_FAMILY);
     scan.setMaxVersions(1);
     return scan;
   }
@@ -1996,9 +1996,9 @@ public final class BackupSystemTable implements Closeable {
   static Put createPutForBulkLoadedFile(TableName tn, byte[] fam, String p, String backupId,
       long ts, int idx) {
     Put put = new Put(rowkey(BULK_LOAD_PREFIX, backupId + BLK_LD_DELIM + ts + BLK_LD_DELIM + idx));
-    put.addColumn(BackupSystemTable.META_FAMILY, TBL_COL, tn.getName());
-    put.addColumn(BackupSystemTable.META_FAMILY, FAM_COL, fam);
-    put.addColumn(BackupSystemTable.META_FAMILY, PATH_COL, p.getBytes());
+    put.addColumn(BackupMetaTable.META_FAMILY, TBL_COL, tn.getName());
+    put.addColumn(BackupMetaTable.META_FAMILY, FAM_COL, fam);
+    put.addColumn(BackupMetaTable.META_FAMILY, PATH_COL, p.getBytes());
     return put;
   }
 
@@ -2016,10 +2016,10 @@ public final class BackupSystemTable implements Closeable {
     List<Put> puts = new ArrayList<Put>();
     for (String file : files) {
       Put put = new Put(rowkey(WALS_PREFIX, BackupUtils.getUniqueWALFileNamePart(file)));
-      put.addColumn(BackupSystemTable.META_FAMILY, Bytes.toBytes("backupId"),
+      put.addColumn(BackupMetaTable.META_FAMILY, Bytes.toBytes("backupId"),
         Bytes.toBytes(backupId));
-      put.addColumn(BackupSystemTable.META_FAMILY, Bytes.toBytes("file"), Bytes.toBytes(file));
-      put.addColumn(BackupSystemTable.META_FAMILY, Bytes.toBytes("root"), Bytes.toBytes(backupRoot));
+      put.addColumn(BackupMetaTable.META_FAMILY, Bytes.toBytes("file"), Bytes.toBytes(file));
+      put.addColumn(BackupMetaTable.META_FAMILY, Bytes.toBytes("root"), Bytes.toBytes(backupRoot));
       puts.add(put);
     }
     return puts;
@@ -2038,7 +2038,7 @@ public final class BackupSystemTable implements Closeable {
     stopRow[stopRow.length - 1] = (byte) (stopRow[stopRow.length - 1] + 1);
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
-    scan.addFamily(BackupSystemTable.META_FAMILY);
+    scan.addFamily(BackupMetaTable.META_FAMILY);
     return scan;
   }
 
@@ -2051,7 +2051,7 @@ public final class BackupSystemTable implements Closeable {
   private Get createGetForCheckWALFile(String file) throws IOException {
     Get get = new Get(rowkey(WALS_PREFIX, BackupUtils.getUniqueWALFileNamePart(file)));
     // add backup root column
-    get.addFamily(BackupSystemTable.META_FAMILY);
+    get.addFamily(BackupMetaTable.META_FAMILY);
     return get;
   }
 
@@ -2066,7 +2066,7 @@ public final class BackupSystemTable implements Closeable {
     stopRow[stopRow.length - 1] = (byte) (stopRow[stopRow.length - 1] + 1);
     scan.setStartRow(startRow);
     scan.setStopRow(stopRow);
-    scan.addFamily(BackupSystemTable.META_FAMILY);
+    scan.addFamily(BackupMetaTable.META_FAMILY);
     return scan;
   }
 
@@ -2076,7 +2076,7 @@ public final class BackupSystemTable implements Closeable {
    */
   private Get createGetForBackupSet(String name) {
     Get get = new Get(rowkey(SET_KEY_PREFIX, name));
-    get.addFamily(BackupSystemTable.META_FAMILY);
+    get.addFamily(BackupMetaTable.META_FAMILY);
     return get;
   }
 
@@ -2087,7 +2087,7 @@ public final class BackupSystemTable implements Closeable {
    */
   private Delete createDeleteForBackupSet(String name) {
     Delete del = new Delete(rowkey(SET_KEY_PREFIX, name));
-    del.addFamily(BackupSystemTable.META_FAMILY);
+    del.addFamily(BackupMetaTable.META_FAMILY);
     return del;
   }
 
@@ -2100,7 +2100,7 @@ public final class BackupSystemTable implements Closeable {
   private Put createPutForBackupSet(String name, String[] tables) {
     Put put = new Put(rowkey(SET_KEY_PREFIX, name));
     byte[] value = convertToByteArray(tables);
-    put.addColumn(BackupSystemTable.META_FAMILY, Bytes.toBytes("tables"), value);
+    put.addColumn(BackupMetaTable.META_FAMILY, Bytes.toBytes("tables"), value);
     return put;
   }
 

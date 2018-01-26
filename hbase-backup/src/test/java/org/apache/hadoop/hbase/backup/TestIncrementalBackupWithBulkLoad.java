@@ -29,7 +29,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.impl.BackupAdminImpl;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.backup.util.BackupUtils;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -143,7 +143,7 @@ public class TestIncrementalBackupWithBulkLoad extends TestBackupBase {
     request = createBackupRequest(BackupType.FULL, tables, BACKUP_ROOT_DIR);
 
     backupIdFull = client.backupTables(request);
-    try (final BackupSystemTable table = new BackupSystemTable(conn)) {
+    try (final BackupMetaTable table = new BackupMetaTable(conn)) {
       Pair<Map<TableName, Map<String, Map<String, List<Pair<String, Boolean>>>>>, List<byte[]>> pair
       = table.readBulkloadRows(tables);
       assertTrue("map still has " + pair.getSecond().size() + " entries",

@@ -107,7 +107,7 @@ public abstract class TableBackupClient {
   protected void beginBackup(BackupManager backupManager, BackupInfo backupInfo)
       throws IOException {
 
-    BackupSystemTable.snapshot(conn);
+    BackupMetaTable.snapshot(conn);
     backupManager.setBackupInfo(backupInfo);
     // set the start timestamp of the overall backup
     long startTs = EnvironmentEdgeManager.currentTime();
@@ -266,8 +266,8 @@ public abstract class TableBackupClient {
       deleteSnapshots(conn, backupInfo, conf);
       cleanupExportSnapshotLog(conf);
     }
-    BackupSystemTable.restoreFromSnapshot(conn);
-    BackupSystemTable.deleteSnapshot(conn);
+    BackupMetaTable.restoreFromSnapshot(conn);
+    BackupMetaTable.deleteSnapshot(conn);
     // clean up the uncompleted data at target directory if the ongoing backup has already entered
     // the copy phase
     // For incremental backup, DistCp logs will be cleaned with the targetDir.
@@ -400,7 +400,7 @@ public abstract class TableBackupClient {
     } else if (type == BackupType.INCREMENTAL) {
       cleanupDistCpLog(backupInfo, conf);
     }
-    BackupSystemTable.deleteSnapshot(conn);
+    BackupMetaTable.deleteSnapshot(conn);
     backupManager.updateBackupInfo(backupInfo);
 
     // Finish active session

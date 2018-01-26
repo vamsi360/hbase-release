@@ -37,7 +37,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.backup.TestBackupBase;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HTable;
@@ -65,7 +65,7 @@ public class TestBackupLogCleaner extends TestBackupBase {
 
     List<TableName> tableSetFullList = Lists.newArrayList(table1, table2, table3, table4);
 
-    try (BackupSystemTable systemTable = new BackupSystemTable(TEST_UTIL.getConnection())) {
+    try (BackupMetaTable systemTable = new BackupMetaTable(TEST_UTIL.getConnection())) {
       // Verify that we have no backup sessions yet
       assertFalse(systemTable.hasBackupSessions());
 

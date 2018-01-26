@@ -30,7 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
 import org.apache.hadoop.hbase.backup.impl.BackupCommands;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
@@ -98,7 +98,7 @@ public class TestBackupDescribe extends TestBackupBase {
     assertTrue(response.indexOf(backupId) > 0);
     assertTrue(response.indexOf("COMPLETE") > 0);
 
-    BackupSystemTable table = new BackupSystemTable(TEST_UTIL.getConnection());
+    BackupMetaTable table = new BackupMetaTable(TEST_UTIL.getConnection());
     BackupInfo status = table.readBackupInfo(backupId);
     String desc = status.getShortDescription();
     table.close();
