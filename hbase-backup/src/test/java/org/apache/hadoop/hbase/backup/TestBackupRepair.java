@@ -26,7 +26,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.backup.impl.TableBackupClient;
 import org.apache.hadoop.hbase.backup.impl.TableBackupClient.Stage;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
@@ -59,7 +59,7 @@ public class TestBackupRepair extends TestBackupBase {
   public void runBackupAndFailAtStageWithRestore(int stage) throws Exception {
 
     conf1.setInt(FullTableBackupClientForTest.BACKUP_TEST_MODE_STAGE, stage);
-    try (BackupSystemTable table = new BackupSystemTable(TEST_UTIL.getConnection())) {
+    try (BackupMetaTable table = new BackupMetaTable(TEST_UTIL.getConnection())) {
       int before = table.getBackupHistory().size();
       String[] args =
           new String[] { "create", "full", BACKUP_ROOT_DIR, "-t",

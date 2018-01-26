@@ -32,7 +32,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.HBaseInterfaceAudience;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.master.cleaner.BaseHFileCleanerDelegate;
@@ -76,7 +76,7 @@ public class BackupHFileCleaner extends BaseHFileCleanerDelegate implements Abor
     if (connection == null) {
       connection = ConnectionFactory.createConnection(conf);
     }
-    try (BackupSystemTable tbl = new BackupSystemTable(connection)) {
+    try (BackupMetaTable tbl = new BackupMetaTable(connection)) {
       Map<byte[], List<Path>>[] res =
           tbl.readBulkLoadedFiles(null, tableList);
       secondPrevReadFromBackupTbl = prevReadFromBackupTbl;
@@ -98,7 +98,7 @@ public class BackupHFileCleaner extends BaseHFileCleanerDelegate implements Abor
     // so that we filter BulkLoad to be returned from server
     if (checkForFullyBackedUpTables) {
       if (connection == null) return files;
-      try (BackupSystemTable tbl = new BackupSystemTable(connection)) {
+      try (BackupMetaTable tbl = new BackupMetaTable(connection)) {
         fullyBackedUpTables = tbl.getTablesForBackupType(BackupType.FULL);
       } catch (IOException ioe) {
         LOG.error("Failed to get tables which have been fully backed up, skipping checking", ioe);

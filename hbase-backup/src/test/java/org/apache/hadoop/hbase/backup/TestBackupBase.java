@@ -44,7 +44,7 @@ import org.apache.hadoop.hbase.backup.BackupInfo.BackupPhase;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
 import org.apache.hadoop.hbase.backup.impl.BackupAdminImpl;
 import org.apache.hadoop.hbase.backup.impl.BackupManager;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.backup.impl.FullTableBackupClient;
 import org.apache.hadoop.hbase.backup.impl.IncrementalBackupManager;
 import org.apache.hadoop.hbase.backup.impl.IncrementalTableBackupClient;
@@ -471,7 +471,7 @@ public class TestBackupBase {
   }
 
   private BackupInfo getBackupInfo(String backupId) throws IOException {
-    try (BackupSystemTable table = new BackupSystemTable(TEST_UTIL.getConnection())) {
+    try (BackupMetaTable table = new BackupMetaTable(TEST_UTIL.getConnection())) {
       BackupInfo status = table.readBackupInfo(backupId);
       return status;
     }

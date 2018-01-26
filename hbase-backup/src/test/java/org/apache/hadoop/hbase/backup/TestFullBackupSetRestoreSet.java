@@ -27,7 +27,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.util.ToolRunner;
@@ -45,7 +45,7 @@ public class TestFullBackupSetRestoreSet extends TestBackupBase {
     LOG.info("Test full restore set");
 
     // Create set
-    try (BackupSystemTable table = new BackupSystemTable(TEST_UTIL.getConnection())) {
+    try (BackupMetaTable table = new BackupMetaTable(TEST_UTIL.getConnection())) {
       String name = "name";
       table.addToBackupSet(name, new String[] { table1.getNameAsString() });
       List<TableName> names = table.describeBackupSet(name);
@@ -88,7 +88,7 @@ public class TestFullBackupSetRestoreSet extends TestBackupBase {
     LOG.info("Test full restore set to same table");
 
     // Create set
-    try (BackupSystemTable table = new BackupSystemTable(TEST_UTIL.getConnection())) {
+    try (BackupMetaTable table = new BackupMetaTable(TEST_UTIL.getConnection())) {
       String name = "name1";
       table.addToBackupSet(name, new String[] { table1.getNameAsString() });
       List<TableName> names = table.describeBackupSet(name);

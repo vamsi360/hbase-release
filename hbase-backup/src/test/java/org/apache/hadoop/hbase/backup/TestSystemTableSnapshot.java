@@ -21,7 +21,7 @@ package org.apache.hadoop.hbase.backup;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
+import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.junit.experimental.categories.Category;
@@ -40,7 +40,7 @@ public class TestSystemTableSnapshot extends TestBackupBase {
 
     LOG.info("test snapshot system table");
 
-    TableName backupSystem = BackupSystemTable.getTableName(conf1);
+    TableName backupSystem = BackupMetaTable.getTableName(conf1);
 
     HBaseAdmin hba = TEST_UTIL.getHBaseAdmin();
     String snapshotName = "sysTable";
