@@ -752,9 +752,6 @@ public class HMaster extends HRegionServer implements MasterServices {
     this.mpmHost.initialize(this, this.metricsMaster);
   }
 
-  public RegionServerTracker getRegionServerTracker() {
-    return this.regionServerTracker;
-  }
   /**
    * Finish initialization of HMaster after becoming the primary master.
    *
