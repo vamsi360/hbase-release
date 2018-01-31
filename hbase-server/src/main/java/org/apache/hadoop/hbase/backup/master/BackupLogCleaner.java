@@ -28,6 +28,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.hbase.HBaseInterfaceAudience;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.backup.impl.BackupManager;
 import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
@@ -53,7 +54,11 @@ public class BackupLogCleaner extends BaseLogCleanerDelegate {
   public Iterable<FileStatus> getDeletableFiles(Iterable<FileStatus> files) {
     // all members of this class are null if backup is disabled,
     // so we cannot filter the files
-    if (this.getConf() == null) {
+    if (this.getConf() == null|| !BackupManager.isBackupEnabled(getConf())) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Backup is not enabled. Check your "
+            + HConstants.BACKUP_ENABLE_KEY + " setting");
+      }
       return files;
     }
     
@@ -91,12 +96,12 @@ public class BackupLogCleaner extends BaseLogCleanerDelegate {
 
   @Override
   public void setConf(Configuration config) {
+    super.setConf(config);
     // If backup is disabled, keep all members null
     if (!config.getBoolean(HConstants.BACKUP_ENABLE_KEY, HConstants.BACKUP_ENABLE_DEFAULT)) {
       LOG.warn("Backup is disabled - allowing all wals to be deleted");
       return;
     }
-    super.setConf(config);
   }
 
   @Override
