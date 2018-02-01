@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A MemStoreLAB implementation which wraps N MemStoreLABs. Its main duty is in proper managing the
@@ -30,10 +32,11 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 public class ImmutableMemStoreLAB implements MemStoreLAB {
-
+  protected static final Logger LOG = LoggerFactory.getLogger(ImmutableMemStoreLAB.class);
   private final AtomicInteger openScannerCount = new AtomicInteger();
   private volatile boolean closed = false;
 
+  private static final String MSG = "This is an Immutable MemStoreLAB.";
   private final List<MemStoreLAB> mslabs;
 
   public ImmutableMemStoreLAB(List<MemStoreLAB> mslabs) {
@@ -42,12 +45,14 @@ public class ImmutableMemStoreLAB implements MemStoreLAB {
 
   @Override
   public Cell copyCellInto(Cell cell) {
-    throw new IllegalStateException("This is an Immutable MemStoreLAB.");
+    LOG.error(MSG + cell.toString());
+    throw new IllegalStateException(MSG);
   }
 
   @Override
   public Cell forceCopyOfBigCellInto(Cell cell) {
-    throw new IllegalStateException("This is an Immutable MemStoreLAB.");
+    LOG.error(MSG + cell.toString());
+    throw new IllegalStateException(MSG);
   }
 
   /* Creating chunk to be used as index chunk in CellChunkMap, part of the chunks array.
