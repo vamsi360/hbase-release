@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.regionserver.CompactingMemStore;
 import org.apache.hadoop.hbase.testclassification.IntegrationTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.HFileTestUtil;
@@ -110,7 +111,7 @@ public class IntegrationTestIngestWithMOB extends IntegrationTestIngest {
   @Test
   public void testIngest() throws Exception {
     runIngestTest(JUNIT_RUN_TIME, 100, 10, 1024, 10, 20);
-  };
+  }
 
   @Override
   protected void initTable() throws IOException {
@@ -153,6 +154,7 @@ public class IntegrationTestIngestWithMOB extends IntegrationTestIngest {
 
   public static void main(String[] args) throws Exception {
     Configuration conf = HBaseConfiguration.create();
+    conf.set(CompactingMemStore.COMPACTING_MEMSTORE_TYPE_KEY, MemoryCompactionPolicy.NONE.name());
     IntegrationTestingUtility.setUseDistributedCluster(conf);
     int ret = ToolRunner.run(conf, new IntegrationTestIngestWithMOB(), args);
     System.exit(ret);
