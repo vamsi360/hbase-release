@@ -23,9 +23,10 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -49,8 +50,6 @@ import org.apache.hadoop.hbase.Cell.Type;
 import org.apache.hadoop.hbase.CellBuilderType;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.ClusterMetricsBuilder;
-import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.ExtendedCellBuilder;
 import org.apache.hadoop.hbase.ExtendedCellBuilderFactory;
@@ -108,6 +107,8 @@ import org.apache.hadoop.hbase.util.VersionInfo;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.yetus.audience.InterfaceAudience;
 
+import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
+import org.apache.hbase.thirdparty.com.google.common.io.ByteStreams;
 import org.apache.hbase.thirdparty.com.google.gson.JsonArray;
 import org.apache.hbase.thirdparty.com.google.gson.JsonElement;
 import org.apache.hbase.thirdparty.com.google.protobuf.ByteString;
@@ -126,7 +127,6 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.GetOnlineRe
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.GetOnlineRegionResponse;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.GetRegionInfoRequest;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.GetRegionInfoResponse;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.GetRegionLoadRequest;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.GetRegionLoadResponse;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.GetServerInfoRequest;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.GetServerInfoResponse;
@@ -194,17 +194,10 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.ZooKeeperProtos;
  * @see ProtobufUtil
  */
 // TODO: Generate the non-shaded protobufutil from this one.
-@edu.umd.cs.findbugs.annotations.SuppressWarnings(
-  value="DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEGED", justification="None. Address sometime.")
 @InterfaceAudience.Private // TODO: some clients (Hive, etc) use this class
 public final class ProtobufUtil {
   private ProtobufUtil() {
   }
-
-  /**
-   * Primitive type to class mapping.
-   */
-  private final static Map<String, Class<?>> PRIMITIVES = new HashMap<>();
 
   /**
    * Many results are simple: no cell, exists true or false. To save on object creations,
@@ -252,25 +245,27 @@ public final class ProtobufUtil {
     EMPTY_RESULT_PB_STALE = builder.build();
   }
 
+  private static volatile boolean classLoaderLoaded = false;
+
   /**
    * Dynamic class loader to load filter/comparators
    */
-  private final static ClassLoader CLASS_LOADER;
+  private final static class ClassLoaderHolder {
+    private final static ClassLoader CLASS_LOADER;
 
-  static {
-    ClassLoader parent = ProtobufUtil.class.getClassLoader();
-    Configuration conf = HBaseConfiguration.create();
-    CLASS_LOADER = new DynamicClassLoader(conf, parent);
+    static {
+      ClassLoader parent = ProtobufUtil.class.getClassLoader();
+      Configuration conf = HBaseConfiguration.create();
+      CLASS_LOADER = AccessController.doPrivileged((PrivilegedAction<ClassLoader>)
+        () -> new DynamicClassLoader(conf, parent)
+      );
+      classLoaderLoaded = true;
+    }
+  }
 
-    PRIMITIVES.put(Boolean.TYPE.getName(), Boolean.TYPE);
-    PRIMITIVES.put(Byte.TYPE.getName(), Byte.TYPE);
-    PRIMITIVES.put(Character.TYPE.getName(), Character.TYPE);
-    PRIMITIVES.put(Short.TYPE.getName(), Short.TYPE);
-    PRIMITIVES.put(Integer.TYPE.getName(), Integer.TYPE);
-    PRIMITIVES.put(Long.TYPE.getName(), Long.TYPE);
-    PRIMITIVES.put(Float.TYPE.getName(), Float.TYPE);
-    PRIMITIVES.put(Double.TYPE.getName(), Double.TYPE);
-    PRIMITIVES.put(Void.TYPE.getName(), Void.TYPE);
+  @VisibleForTesting
+  public static boolean isClassLoaderLoaded() {
+    return classLoaderLoaded;
   }
 
   /**
@@ -1604,8 +1599,7 @@ public final class ProtobufUtil {
     String funcName = "parseFrom";
     byte [] value = proto.getSerializedComparator().toByteArray();
     try {
-      Class<? extends ByteArrayComparable> c =
-        (Class<? extends ByteArrayComparable>)Class.forName(type, true, CLASS_LOADER);
+      Class<?> c = Class.forName(type, true, ClassLoaderHolder.CLASS_LOADER);
       Method parseFrom = c.getMethod(funcName, byte[].class);
       if (parseFrom == null) {
         throw new IOException("Unable to locate function: " + funcName + " in type: " + type);
@@ -1628,8 +1622,7 @@ public final class ProtobufUtil {
     final byte [] value = proto.getSerializedFilter().toByteArray();
     String funcName = "parseFrom";
     try {
-      Class<? extends Filter> c =
-        (Class<? extends Filter>)Class.forName(type, true, CLASS_LOADER);
+      Class<?> c = Class.forName(type, true, ClassLoaderHolder.CLASS_LOADER);
       Method parseFrom = c.getMethod(funcName, byte[].class);
       if (parseFrom == null) {
         throw new IOException("Unable to locate function: " + funcName + " in type: " + type);
@@ -1715,7 +1708,7 @@ public final class ProtobufUtil {
     String type = parameter.getName();
     try {
       Class<? extends Throwable> c =
-        (Class<? extends Throwable>)Class.forName(type, true, CLASS_LOADER);
+        (Class<? extends Throwable>)Class.forName(type, true, ClassLoaderHolder.CLASS_LOADER);
       Constructor<? extends Throwable> cn = null;
       try {
         cn = c.getDeclaredConstructor(String.class);
@@ -1762,20 +1755,6 @@ public final class ProtobufUtil {
     } catch (ServiceException se) {
       throw getRemoteException(se);
     }
-  }
-
-  public static List<org.apache.hadoop.hbase.RegionLoad> getRegionLoad(
-      final RpcController controller, final AdminService.BlockingInterface admin,
-      final TableName tableName) throws IOException {
-    GetRegionLoadRequest request =
-        RequestConverter.buildGetRegionLoadRequest(tableName);
-    GetRegionLoadResponse response;
-    try {
-      response = admin.getRegionLoad(controller, request);
-    } catch (ServiceException se) {
-      throw getRemoteException(se);
-    }
-    return getRegionLoadInfo(response);
   }
 
   public static List<org.apache.hadoop.hbase.RegionLoad> getRegionLoadInfo(
@@ -2626,7 +2605,7 @@ public final class ProtobufUtil {
     final int firstByte = in.read();
     if (firstByte != -1) {
       final int size = CodedInputStream.readRawVarint32(firstByte, in);
-      final InputStream limitedInput = new BoundedInputStream(in, size);
+      final InputStream limitedInput = ByteStreams.limit(in, size);
       final CodedInputStream codedInput = CodedInputStream.newInstance(limitedInput);
       codedInput.setSizeLimit(size);
       builder.mergeFrom(codedInput);
@@ -2967,16 +2946,6 @@ public final class ProtobufUtil {
         snapshotDesc.hasTable() ? TableName.valueOf(snapshotDesc.getTable()) : null,
         createSnapshotType(snapshotDesc.getType()), snapshotDesc.getOwner(),
         snapshotDesc.getCreationTime(), snapshotDesc.getVersion());
-  }
-
-  /**
-   * Convert a protobuf ClusterStatus to a ClusterStatus
-   *
-   * @param proto the protobuf ClusterStatus
-   * @return the converted ClusterStatus
-   */
-  public static ClusterStatus toClusterStatus(ClusterStatusProtos.ClusterStatus proto) {
-    return new ClusterStatus(ClusterMetricsBuilder.toClusterMetrics(proto));
   }
 
   public static RegionLoadStats createRegionLoadStats(ClientProtos.RegionLoadStats stats) {
