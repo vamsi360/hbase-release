@@ -31,8 +31,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 import org.apache.hadoop.hbase.AsyncMetaTableAccessor;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
@@ -51,7 +51,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.apache.hadoop.hbase.util.Threads;
-import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -64,6 +64,10 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 @Category({ LargeTests.class, ClientTests.class })
 public class TestAsyncRegionAdminApi extends TestAsyncAdminBase {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestAsyncRegionAdminApi.class);
 
   @Test
   public void testGetRegionLocation() throws Exception {
@@ -204,14 +208,14 @@ public class TestAsyncRegionAdminApi extends TestAsyncAdminBase {
           rs -> {
             ServerName serverName = rs.getServerName();
             try {
-              Assert.assertEquals(admin.getRegions(serverName).get().size(), rs
+              assertEquals(admin.getRegions(serverName).get().size(), rs
                   .getRegions().size());
             } catch (Exception e) {
               fail("admin.getOnlineRegions() method throws a exception: " + e.getMessage());
             }
             regionServerCount.incrementAndGet();
           });
-    Assert.assertEquals(regionServerCount.get(), 2);
+    assertEquals(2, regionServerCount.get());
   }
 
   @Test
@@ -229,7 +233,7 @@ public class TestAsyncRegionAdminApi extends TestAsyncAdminBase {
     ASYNC_CONN.getTable(tableName)
         .put(new Put(hri.getStartKey()).addColumn(FAMILY, FAMILY_0, Bytes.toBytes("value-1")))
         .join();
-    Assert.assertTrue(regionServer.getOnlineRegion(hri.getRegionName()).getMemStoreSize() > 0);
+    assertTrue(regionServer.getOnlineRegion(hri.getRegionName()).getMemStoreSize() > 0);
     // flush region and wait flush operation finished.
     LOG.info("flushing region: " + Bytes.toStringBinary(hri.getRegionName()));
     admin.flushRegion(hri.getRegionName()).get();
@@ -239,20 +243,20 @@ public class TestAsyncRegionAdminApi extends TestAsyncAdminBase {
       Threads.sleep(50);
     }
     // check the memstore.
-    Assert.assertEquals(regionServer.getOnlineRegion(hri.getRegionName()).getMemStoreSize(), 0);
+    assertEquals(0, regionServer.getOnlineRegion(hri.getRegionName()).getMemStoreSize());
 
     // write another put into the specific region
     ASYNC_CONN.getTable(tableName)
         .put(new Put(hri.getStartKey()).addColumn(FAMILY, FAMILY_0, Bytes.toBytes("value-2")))
         .join();
-    Assert.assertTrue(regionServer.getOnlineRegion(hri.getRegionName()).getMemStoreSize() > 0);
+    assertTrue(regionServer.getOnlineRegion(hri.getRegionName()).getMemStoreSize() > 0);
     admin.flush(tableName).get();
     Threads.sleepWithoutInterrupt(500);
     while (regionServer.getOnlineRegion(hri.getRegionName()).getMemStoreSize() > 0) {
       Threads.sleep(50);
     }
     // check the memstore.
-    Assert.assertEquals(regionServer.getOnlineRegion(hri.getRegionName()).getMemStoreSize(), 0);
+    assertEquals(0, regionServer.getOnlineRegion(hri.getRegionName()).getMemStoreSize());
   }
 
   @Test
@@ -421,7 +425,7 @@ public class TestAsyncRegionAdminApi extends TestAsyncAdminBase {
         LOG.error(e.toString(), e);
       }
     }
-    assertEquals(count, 2);
+    assertEquals(2, count);
   }
 
   private void waitUntilMobCompactionFinished(TableName tableName)
@@ -471,23 +475,23 @@ public class TestAsyncRegionAdminApi extends TestAsyncAdminBase {
             .map(rsThread -> rsThread.getRegionServer()).collect(Collectors.toList());
     List<Region> regions = new ArrayList<>();
     rsList.forEach(rs -> regions.addAll(rs.getRegions(tableName)));
-    Assert.assertEquals(regions.size(), 1);
+    assertEquals(1, regions.size());
     int countBefore = countStoreFilesInFamilies(regions, families);
-    Assert.assertTrue(countBefore > 0);
+    assertTrue(countBefore > 0);
 
     // Minor compaction for all region servers.
     for (HRegionServer rs : rsList)
       admin.compactRegionServer(rs.getServerName()).get();
     Thread.sleep(5000);
     int countAfterMinorCompaction = countStoreFilesInFamilies(regions, families);
-    Assert.assertTrue(countAfterMinorCompaction < countBefore);
+    assertTrue(countAfterMinorCompaction < countBefore);
 
     // Major compaction for all region servers.
     for (HRegionServer rs : rsList)
       admin.majorCompactRegionServer(rs.getServerName()).get();
     Thread.sleep(5000);
     int countAfterMajorCompaction = countStoreFilesInFamilies(regions, families);
-    Assert.assertEquals(countAfterMajorCompaction, 3);
+    assertEquals(3, countAfterMajorCompaction);
   }
 
   @Test
@@ -512,7 +516,7 @@ public class TestAsyncRegionAdminApi extends TestAsyncAdminBase {
         .getHBaseCluster()
         .getLiveRegionServerThreads()
         .forEach(rsThread -> regions.addAll(rsThread.getRegionServer().getRegions(tableName)));
-    Assert.assertEquals(regions.size(), 1);
+    assertEquals(1, regions.size());
 
     int countBefore = countStoreFilesInFamilies(regions, families);
     int countBeforeSingleFamily = countStoreFilesInFamily(regions, family);

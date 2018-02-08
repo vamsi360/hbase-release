@@ -92,9 +92,6 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.RegionServerStatusProto
  * A server is fully processed only after the handler is fully enabled
  * and has completed the handling.
  */
-/**
- *
- */
 @InterfaceAudience.Private
 public class ServerManager {
   public static final String WAIT_ON_REGIONSERVERS_MAXTOSTART =
@@ -200,10 +197,8 @@ public class ServerManager {
     Configuration c = master.getConfiguration();
     maxSkew = c.getLong("hbase.master.maxclockskew", 30000);
     warningSkew = c.getLong("hbase.master.warningclockskew", 10000);
-    this.connection = connect ? master.getClusterConnection() : null;
-    this.rpcControllerFactory = this.connection == null
-        ? null
-        : connection.getRpcControllerFactory();
+    this.connection = connect? master.getClusterConnection(): null;
+    this.rpcControllerFactory = this.connection == null? null: connection.getRpcControllerFactory();
   }
 
   /**
@@ -429,7 +424,7 @@ public class ServerManager {
    */
   @VisibleForTesting
   void recordNewServerWithLock(final ServerName serverName, final ServerLoad sl) {
-    LOG.info("Registering server=" + serverName);
+    LOG.info("Registering regionserver=" + serverName);
     this.onlineServers.put(serverName, sl);
     this.rsAdmins.remove(serverName);
   }
@@ -526,7 +521,7 @@ public class ServerManager {
           }
           sb.append(key);
         }
-        LOG.info("Waiting on regionserver(s) to go down " + sb.toString());
+        LOG.info("Waiting on regionserver(s) " + sb.toString());
         previousLogTime = System.currentTimeMillis();
       }
 
@@ -589,7 +584,7 @@ public class ServerManager {
 
     // If cluster is going down, yes, servers are going to be expiring; don't
     // process as a dead server
-    if (this.clusterShutdown.get()) {
+    if (isClusterShutdown()) {
       LOG.info("Cluster shutdown set; " + serverName +
         " expired; onlineServers=" + this.onlineServers.size());
       if (this.onlineServers.isEmpty()) {
@@ -865,7 +860,7 @@ public class ServerManager {
       if (oldCount != count || lastLogTime + interval < now) {
         lastLogTime = now;
         String msg =
-            "Waiting on RegionServer count=" + count + " to settle; waited="+
+            "Waiting on regionserver count=" + count + "; waited="+
                 slept + "ms, expecting min=" + minToStart + " server(s), max="+ getStrForMax(maxToStart) +
                 " server(s), " + "timeout=" + timeout + "ms, lastChange=" + (lastCountChange - now) + "ms";
         LOG.info(msg);
@@ -888,7 +883,7 @@ public class ServerManager {
     if (isClusterShutdown()) {
       this.master.stop("Cluster shutdown");
     }
-    LOG.info("Finished wait on RegionServer count=" + count + "; waited=" + slept + "ms," +
+    LOG.info("Finished waiting on RegionServer count=" + count + "; waited=" + slept + "ms," +
         " expected min=" + minToStart + " server(s), max=" +  getStrForMax(maxToStart) + " server(s),"+
         " master is "+ (this.master.isStopped() ? "stopped.": "running"));
   }
@@ -963,21 +958,15 @@ public class ServerManager {
     this.clusterShutdown.set(true);
   }
 
-  public boolean isClusterShutdown() {
+  boolean isClusterShutdown() {
     return this.clusterShutdown.get();
   }
 
   /**
-   * Stop the ServerManager.  Currently closes the connection to the master.
+   * Stop the ServerManager.
    */
   public void stop() {
-    if (connection != null) {
-      try {
-        connection.close();
-      } catch (IOException e) {
-        LOG.error("Attempt to close connection to master failed", e);
-      }
-    }
+    // Nothing to do.
   }
 
   /**

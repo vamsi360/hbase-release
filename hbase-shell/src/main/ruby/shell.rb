@@ -83,7 +83,7 @@ module Shell
       self.interactive = interactive
       self.return_values = return_values
       # If we're in non-interactive mode, force return_values
-      self.return_values = true if not self.interactive
+      self.return_values = true unless self.interactive
     end
 
     # Returns Admin class from admin.rb
@@ -336,6 +336,7 @@ Shell.load_command_group(
     normalize
     normalizer_switch
     normalizer_enabled
+    is_in_maintenance_mode
     close_region
     compact
     flush

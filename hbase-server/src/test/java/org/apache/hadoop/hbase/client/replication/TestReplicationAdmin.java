@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.hbase.client.replication;
 
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +27,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.ReplicationPeerNotFoundException;
@@ -40,12 +40,15 @@ import org.apache.hadoop.hbase.replication.ReplicationPeerConfigBuilder;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 import org.apache.hadoop.hbase.replication.ReplicationQueues;
 import org.apache.hadoop.hbase.replication.ReplicationQueuesArguments;
+import org.apache.hadoop.hbase.replication.TestReplicationEndpoint.InterClusterReplicationEndpointForTest;
+import org.apache.hadoop.hbase.replication.TestReplicationEndpoint.ReplicationEndpointForTest;
 import org.apache.hadoop.hbase.testclassification.ClientTests;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -66,8 +69,12 @@ import static org.junit.Assert.fail;
 @Category({MediumTests.class, ClientTests.class})
 public class TestReplicationAdmin {
 
-  private static final Logger LOG =
-      LoggerFactory.getLogger(TestReplicationAdmin.class);
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestReplicationAdmin.class);
+
+  private static final Logger LOG = LoggerFactory.getLogger(TestReplicationAdmin.class);
+
   private final static HBaseTestingUtility TEST_UTIL =
       new HBaseTestingUtility();
 
@@ -763,5 +770,57 @@ public class TestReplicationAdmin {
 
     assertEquals(2097152, admin.getPeerConfig(ID_ONE).getBandwidth());
     admin.removePeer(ID_ONE);
+  }
+
+  @Test
+  public void testPeerClusterKey() throws Exception {
+    ReplicationPeerConfigBuilder builder = ReplicationPeerConfig.newBuilder();
+    builder.setClusterKey(KEY_ONE);
+    hbaseAdmin.addReplicationPeer(ID_ONE, builder.build());
+
+    try {
+      builder.setClusterKey(KEY_SECOND);
+      hbaseAdmin.updateReplicationPeerConfig(ID_ONE, builder.build());
+      fail("Change cluster key on an existing peer is not allowed");
+    } catch (Exception e) {
+      // OK
+    }
+  }
+
+  @Test
+  public void testPeerReplicationEndpointImpl() throws Exception {
+    ReplicationPeerConfigBuilder builder = ReplicationPeerConfig.newBuilder();
+    builder.setClusterKey(KEY_ONE);
+    builder.setReplicationEndpointImpl(ReplicationEndpointForTest.class.getName());
+    hbaseAdmin.addReplicationPeer(ID_ONE, builder.build());
+
+    try {
+      builder.setReplicationEndpointImpl(InterClusterReplicationEndpointForTest.class.getName());
+      hbaseAdmin.updateReplicationPeerConfig(ID_ONE, builder.build());
+      fail("Change replication endpoint implementation class on an existing peer is not allowed");
+    } catch (Exception e) {
+      // OK
+    }
+
+    try {
+      builder = ReplicationPeerConfig.newBuilder();
+      builder.setClusterKey(KEY_ONE);
+      hbaseAdmin.updateReplicationPeerConfig(ID_ONE, builder.build());
+      fail("Change replication endpoint implementation class on an existing peer is not allowed");
+    } catch (Exception e) {
+      // OK
+    }
+
+    builder = ReplicationPeerConfig.newBuilder();
+    builder.setClusterKey(KEY_SECOND);
+    hbaseAdmin.addReplicationPeer(ID_SECOND, builder.build());
+
+    try {
+      builder.setReplicationEndpointImpl(ReplicationEndpointForTest.class.getName());
+      hbaseAdmin.updateReplicationPeerConfig(ID_SECOND, builder.build());
+      fail("Change replication endpoint implementation class on an existing peer is not allowed");
+    } catch (Exception e) {
+      // OK
+    }
   }
 }

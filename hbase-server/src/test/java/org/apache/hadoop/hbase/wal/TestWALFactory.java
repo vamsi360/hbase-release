@@ -1,5 +1,4 @@
-/*
- *
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -30,7 +29,6 @@ import java.net.BindException;
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -40,15 +38,17 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.RegionInfoBuilder;
+import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.coprocessor.SampleRegionWALCoprocessor;
 import org.apache.hadoop.hbase.regionserver.MultiVersionConcurrencyControl;
@@ -66,6 +66,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -78,6 +79,11 @@ import org.slf4j.LoggerFactory;
  */
 @Category({RegionServerTests.class, MediumTests.class})
 public class TestWALFactory {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestWALFactory.class);
+
   private static final Logger LOG = LoggerFactory.getLogger(TestWALFactory.class);
 
   protected static Configuration conf;
@@ -99,7 +105,7 @@ public class TestWALFactory {
     fs = cluster.getFileSystem();
     dir = new Path(hbaseDir, currentTest.getMethodName());
     this.currentServername = ServerName.valueOf(currentTest.getMethodName(), 16010, 1);
-    wals = new WALFactory(conf, null, this.currentServername.toString());
+    wals = new WALFactory(conf, this.currentServername.toString());
   }
 
   @After
@@ -169,27 +175,24 @@ public class TestWALFactory {
     final byte [] rowName = tableName.getName();
     final MultiVersionConcurrencyControl mvcc = new MultiVersionConcurrencyControl(1);
     final int howmany = 3;
-    HRegionInfo[] infos = new HRegionInfo[3];
+    RegionInfo[] infos = new RegionInfo[3];
     Path tabledir = FSUtils.getTableDir(hbaseWALDir, tableName);
     fs.mkdirs(tabledir);
-    for(int i = 0; i < howmany; i++) {
-      infos[i] = new HRegionInfo(tableName,
-                Bytes.toBytes("" + i), Bytes.toBytes("" + (i+1)), false);
+    for (int i = 0; i < howmany; i++) {
+      infos[i] = RegionInfoBuilder.newBuilder(tableName).setStartKey(Bytes.toBytes("" + i))
+          .setEndKey(Bytes.toBytes("" + (i + 1))).build();
       fs.mkdirs(new Path(tabledir, infos[i].getEncodedName()));
       LOG.info("allo " + new Path(tabledir, infos[i].getEncodedName()).toString());
     }
-    HTableDescriptor htd = new HTableDescriptor(tableName);
-    htd.addFamily(new HColumnDescriptor("column"));
     NavigableMap<byte[], Integer> scopes = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-    for(byte[] fam : htd.getFamiliesKeys()) {
-      scopes.put(fam, 0);
-    }
+    scopes.put(Bytes.toBytes("column"), 0);
+
 
     // Add edits for three regions.
     for (int ii = 0; ii < howmany; ii++) {
       for (int i = 0; i < howmany; i++) {
         final WAL log =
-            wals.getWAL(infos[i].getEncodedNameAsBytes(), infos[i].getTable().getNamespace());
+            wals.getWAL(infos[i]);
         for (int j = 0; j < howmany; j++) {
           WALEdit edit = new WALEdit();
           byte [] family = Bytes.toBytes("column");
@@ -254,15 +257,10 @@ public class TestWALFactory {
     WAL.Reader reader = null;
 
     try {
-      HRegionInfo info = new HRegionInfo(tableName,
-                  null,null, false);
-      HTableDescriptor htd = new HTableDescriptor(tableName);
-      htd.addFamily(new HColumnDescriptor(tableName.getName()));
+      RegionInfo info = RegionInfoBuilder.newBuilder(tableName).build();
       NavigableMap<byte[], Integer> scopes = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-      for(byte[] fam : htd.getFamiliesKeys()) {
-        scopes.put(fam, 0);
-      }
-      final WAL wal = wals.getWAL(info.getEncodedNameAsBytes(), info.getTable().getNamespace());
+      scopes.put(tableName.getName(), 0);
+      final WAL wal = wals.getWAL(info);
 
       for (int i = 0; i < total; i++) {
         WALEdit kvs = new WALEdit();
@@ -370,28 +368,22 @@ public class TestWALFactory {
    *              [FSNamesystem.nextGenerationStampForBlock])
    * 3. HDFS-142 (on restart, maintain pendingCreates)
    */
-  @Test (timeout=300000)
+  @Test
   public void testAppendClose() throws Exception {
     TableName tableName =
         TableName.valueOf(currentTest.getMethodName());
-    HRegionInfo regioninfo = new HRegionInfo(tableName,
-             HConstants.EMPTY_START_ROW, HConstants.EMPTY_END_ROW, false);
+    RegionInfo regionInfo = RegionInfoBuilder.newBuilder(tableName).build();
 
-    final WAL wal =
-        wals.getWAL(regioninfo.getEncodedNameAsBytes(), regioninfo.getTable().getNamespace());
-    final int total = 20;
+    WAL wal = wals.getWAL(regionInfo);
+    int total = 20;
 
-    HTableDescriptor htd = new HTableDescriptor(tableName);
-    htd.addFamily(new HColumnDescriptor(tableName.getName()));
     NavigableMap<byte[], Integer> scopes = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-    for(byte[] fam : htd.getFamiliesKeys()) {
-      scopes.put(fam, 0);
-    }
+    scopes.put(tableName.getName(), 0);
     MultiVersionConcurrencyControl mvcc = new MultiVersionConcurrencyControl();
     for (int i = 0; i < total; i++) {
       WALEdit kvs = new WALEdit();
       kvs.add(new KeyValue(Bytes.toBytes(i), tableName.getName(), tableName.getName()));
-      wal.append(regioninfo, new WALKeyImpl(regioninfo.getEncodedNameAsBytes(), tableName,
+      wal.append(regionInfo, new WALKeyImpl(regionInfo.getEncodedNameAsBytes(), tableName,
           System.currentTimeMillis(), mvcc, scopes),
         kvs, true);
     }
@@ -491,25 +483,23 @@ public class TestWALFactory {
     reader.close();
 
     // Reset the lease period
-    setLeasePeriod.invoke(cluster, new Object[]{new Long(60000), new Long(3600000)});
+    setLeasePeriod.invoke(cluster, new Object[]{ 60000L, 3600000L });
   }
 
   /**
    * Tests that we can write out an edit, close, and then read it back in again.
-   * @throws IOException
    */
   @Test
   public void testEditAdd() throws IOException {
-    final int COL_COUNT = 10;
-    final HTableDescriptor htd =
-        new HTableDescriptor(TableName.valueOf(currentTest.getMethodName())).addFamily(new HColumnDescriptor(
-            "column"));
-    NavigableMap<byte[], Integer> scopes = new TreeMap<byte[], Integer>(
-        Bytes.BYTES_COMPARATOR);
-    for(byte[] fam : htd.getFamiliesKeys()) {
+    int colCount = 10;
+    TableDescriptor htd =
+        TableDescriptorBuilder.newBuilder(TableName.valueOf(currentTest.getMethodName()))
+            .addColumnFamily(ColumnFamilyDescriptorBuilder.of("column")).build();
+    NavigableMap<byte[], Integer> scopes = new TreeMap<byte[], Integer>(Bytes.BYTES_COMPARATOR);
+    for (byte[] fam : htd.getColumnFamilyNames()) {
       scopes.put(fam, 0);
     }
-    final byte [] row = Bytes.toBytes("row");
+    byte[] row = Bytes.toBytes("row");
     WAL.Reader reader = null;
     try {
       final MultiVersionConcurrencyControl mvcc = new MultiVersionConcurrencyControl(1);
@@ -518,21 +508,21 @@ public class TestWALFactory {
       // 1, 2, 3...
       long timestamp = System.currentTimeMillis();
       WALEdit cols = new WALEdit();
-      for (int i = 0; i < COL_COUNT; i++) {
+      for (int i = 0; i < colCount; i++) {
         cols.add(new KeyValue(row, Bytes.toBytes("column"),
             Bytes.toBytes(Integer.toString(i)),
           timestamp, new byte[] { (byte)(i + '0') }));
       }
-      HRegionInfo info = new HRegionInfo(htd.getTableName(),
-        row,Bytes.toBytes(Bytes.toString(row) + "1"), false);
-      final WAL log = wals.getWAL(info.getEncodedNameAsBytes(), info.getTable().getNamespace());
+      RegionInfo info = RegionInfoBuilder.newBuilder(htd.getTableName()).setStartKey(row)
+          .setEndKey(Bytes.toBytes(Bytes.toString(row) + "1")).build();
+      final WAL log = wals.getWAL(info);
 
       final long txid = log.append(info,
         new WALKeyImpl(info.getEncodedNameAsBytes(), htd.getTableName(), System.currentTimeMillis(),
             mvcc, scopes),
         cols, true);
       log.sync(txid);
-      log.startCacheFlush(info.getEncodedNameAsBytes(), htd.getFamiliesKeys());
+      log.startCacheFlush(info.getEncodedNameAsBytes(), htd.getColumnFamilyNames());
       log.completeCacheFlush(info.getEncodedNameAsBytes());
       log.shutdown();
       Path filename = AbstractFSWALProvider.getCurrentFileName(log);
@@ -546,7 +536,7 @@ public class TestWALFactory {
         WALKey key = entry.getKey();
         WALEdit val = entry.getEdit();
         assertTrue(Bytes.equals(info.getEncodedNameAsBytes(), key.getEncodedRegionName()));
-        assertTrue(htd.getTableName().equals(key.getTablename()));
+        assertTrue(htd.getTableName().equals(key.getTableName()));
         Cell cell = val.getCells().get(0);
         assertTrue(Bytes.equals(row, 0, row.length, cell.getRowArray(), cell.getRowOffset(),
           cell.getRowLength()));
@@ -560,21 +550,17 @@ public class TestWALFactory {
     }
   }
 
-  /**
-   * @throws IOException
-   */
   @Test
   public void testAppend() throws IOException {
-    final int COL_COUNT = 10;
-    final HTableDescriptor htd =
-        new HTableDescriptor(TableName.valueOf(currentTest.getMethodName())).addFamily(new HColumnDescriptor(
-            "column"));
-    NavigableMap<byte[], Integer> scopes = new TreeMap<byte[], Integer>(
-        Bytes.BYTES_COMPARATOR);
-    for(byte[] fam : htd.getFamiliesKeys()) {
+    int colCount = 10;
+    TableDescriptor htd =
+        TableDescriptorBuilder.newBuilder(TableName.valueOf(currentTest.getMethodName()))
+            .addColumnFamily(ColumnFamilyDescriptorBuilder.of("column")).build();
+    NavigableMap<byte[], Integer> scopes = new TreeMap<byte[], Integer>(Bytes.BYTES_COMPARATOR);
+    for (byte[] fam : htd.getColumnFamilyNames()) {
       scopes.put(fam, 0);
     }
-    final byte [] row = Bytes.toBytes("row");
+    byte[] row = Bytes.toBytes("row");
     WAL.Reader reader = null;
     final MultiVersionConcurrencyControl mvcc = new MultiVersionConcurrencyControl(1);
     try {
@@ -582,32 +568,31 @@ public class TestWALFactory {
       // 1, 2, 3...
       long timestamp = System.currentTimeMillis();
       WALEdit cols = new WALEdit();
-      for (int i = 0; i < COL_COUNT; i++) {
+      for (int i = 0; i < colCount; i++) {
         cols.add(new KeyValue(row, Bytes.toBytes("column"),
           Bytes.toBytes(Integer.toString(i)),
           timestamp, new byte[] { (byte)(i + '0') }));
       }
-      HRegionInfo hri = new HRegionInfo(htd.getTableName(),
-          HConstants.EMPTY_START_ROW, HConstants.EMPTY_END_ROW);
-      final WAL log = wals.getWAL(hri.getEncodedNameAsBytes(), hri.getTable().getNamespace());
+      RegionInfo hri = RegionInfoBuilder.newBuilder(htd.getTableName()).build();
+      final WAL log = wals.getWAL(hri);
       final long txid = log.append(hri,
         new WALKeyImpl(hri.getEncodedNameAsBytes(), htd.getTableName(), System.currentTimeMillis(),
             mvcc, scopes),
         cols, true);
       log.sync(txid);
-      log.startCacheFlush(hri.getEncodedNameAsBytes(), htd.getFamiliesKeys());
+      log.startCacheFlush(hri.getEncodedNameAsBytes(), htd.getColumnFamilyNames());
       log.completeCacheFlush(hri.getEncodedNameAsBytes());
       log.shutdown();
       Path filename = AbstractFSWALProvider.getCurrentFileName(log);
       // Now open a reader on the log and assert append worked.
       reader = wals.createReader(fs, filename);
       WAL.Entry entry = reader.next();
-      assertEquals(COL_COUNT, entry.getEdit().size());
+      assertEquals(colCount, entry.getEdit().size());
       int idx = 0;
       for (Cell val : entry.getEdit().getCells()) {
         assertTrue(Bytes.equals(hri.getEncodedNameAsBytes(),
           entry.getKey().getEncodedRegionName()));
-        assertTrue(htd.getTableName().equals(entry.getKey().getTablename()));
+        assertTrue(htd.getTableName().equals(entry.getKey().getTableName()));
         assertTrue(Bytes.equals(row, 0, row.length, val.getRowArray(), val.getRowOffset(),
           val.getRowLength()));
         assertEquals((byte) (idx + '0'), CellUtil.cloneValue(val)[0]);
@@ -633,15 +618,11 @@ public class TestWALFactory {
     final DumbWALActionsListener visitor = new DumbWALActionsListener();
     final MultiVersionConcurrencyControl mvcc = new MultiVersionConcurrencyControl(1);
     long timestamp = System.currentTimeMillis();
-    HTableDescriptor htd = new HTableDescriptor(tableName);
-    htd.addFamily(new HColumnDescriptor("column"));
     NavigableMap<byte[], Integer> scopes = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-    for(byte[] fam : htd.getFamiliesKeys()) {
-      scopes.put(fam, 0);
-    }
-    HRegionInfo hri = new HRegionInfo(tableName,
-        HConstants.EMPTY_START_ROW, HConstants.EMPTY_END_ROW);
-    final WAL log = wals.getWAL(hri.getEncodedNameAsBytes(), hri.getTable().getNamespace());
+    scopes.put(Bytes.toBytes("column"), 0);
+
+    RegionInfo hri = RegionInfoBuilder.newBuilder(tableName).build();
+    final WAL log = wals.getWAL(hri);
     log.registerWALActionsListener(visitor);
     for (int i = 0; i < COL_COUNT; i++) {
       WALEdit cols = new WALEdit();
@@ -670,7 +651,7 @@ public class TestWALFactory {
   @Test
   public void testWALCoprocessorLoaded() throws Exception {
     // test to see whether the coprocessor is loaded or not.
-    WALCoprocessorHost host = wals.getWAL(UNSPECIFIED_REGION, null).getCoprocessorHost();
+    WALCoprocessorHost host = wals.getWAL(null).getCoprocessorHost();
     Coprocessor c = host.findCoprocessor(SampleRegionWALCoprocessor.class);
     assertNotNull(c);
   }
@@ -690,7 +671,4 @@ public class TestWALFactory {
       increments++;
     }
   }
-
-  private static final byte[] UNSPECIFIED_REGION = new byte[]{};
-
 }

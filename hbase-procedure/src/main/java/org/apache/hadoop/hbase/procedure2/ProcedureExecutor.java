@@ -217,20 +217,20 @@ public class ProcedureExecutor<TEnvironment> {
 
         // TODO: Select TTL based on Procedure type
         if (retainer.isExpired(now, evictTtl, evictAckTtl)) {
-          if (debugEnabled) {
-            LOG.debug("Evict completed " + proc);
+          // Failed procedures aren't persisted in WAL.
+          if (!(proc instanceof FailedProcedure)) {
+            batchIds[batchCount++] = entry.getKey();
+            if (batchCount == batchIds.length) {
+              store.delete(batchIds, 0, batchCount);
+              batchCount = 0;
+            }
           }
-          batchIds[batchCount++] = entry.getKey();
-          if (batchCount == batchIds.length) {
-            store.delete(batchIds, 0, batchCount);
-            batchCount = 0;
-          }
-          it.remove();
-
           final NonceKey nonceKey = proc.getNonceKey();
           if (nonceKey != null) {
             nonceKeysToProcIdsMap.remove(nonceKey);
           }
+          it.remove();
+          LOG.trace("Evict completed {}", proc);
         }
       }
       if (batchCount > 0) {
@@ -314,7 +314,6 @@ public class ProcedureExecutor<TEnvironment> {
       @Override
       public void setMaxProcId(long maxProcId) {
         assert lastProcId.get() < 0 : "expected only one call to setMaxProcId()";
-        LOG.debug("Load max pid=" + maxProcId);
         lastProcId.set(maxProcId);
       }
 
@@ -510,10 +509,10 @@ public class ProcedureExecutor<TEnvironment> {
     // We have numThreads executor + one timer thread used for timing out
     // procedures and triggering periodic procedures.
     this.corePoolSize = numThreads;
-    LOG.info("Starting ProcedureExecutor Worker threads (ProcExecWrkr)=" + corePoolSize);
+    LOG.info("Starting {} Workers (bigger of cpus/4 or 16)", corePoolSize);
 
     // Create the Thread Group for the executors
-    threadGroup = new ThreadGroup("ProcExecThrdGrp");
+    threadGroup = new ThreadGroup("PEWorkerGroup");
 
     // Create the timeout executor
     timeoutExecutor = new TimeoutExecutorThread(threadGroup);
@@ -531,7 +530,7 @@ public class ProcedureExecutor<TEnvironment> {
     st = EnvironmentEdgeManager.currentTime();
     store.recoverLease();
     et = EnvironmentEdgeManager.currentTime();
-    LOG.info(String.format("Recover store (%s) lease: %s",
+    LOG.info(String.format("Recovered %s lease in %s",
       store.getClass().getSimpleName(), StringUtils.humanTimeDiff(et - st)));
 
     // start the procedure scheduler
@@ -545,7 +544,7 @@ public class ProcedureExecutor<TEnvironment> {
     st = EnvironmentEdgeManager.currentTime();
     load(abortOnCorruption);
     et = EnvironmentEdgeManager.currentTime();
-    LOG.info(String.format("Load store (%s): %s",
+    LOG.info(String.format("Loaded %s in %s, um pid=",
       store.getClass().getSimpleName(), StringUtils.humanTimeDiff(et - st)));
 
     // Start the executors. Here we must have the lastProcId set.
@@ -592,7 +591,7 @@ public class ProcedureExecutor<TEnvironment> {
     try {
       threadGroup.destroy();
     } catch (IllegalThreadStateException e) {
-      LOG.error("Thread group " + threadGroup + " contains running threads");
+      LOG.error("ThreadGroup " + threadGroup + " contains running threads; " + e.getMessage());
       threadGroup.list();
     } finally {
       threadGroup = null;
@@ -1610,7 +1609,6 @@ public class ProcedureExecutor<TEnvironment> {
     }
 
     // If this procedure is the last child awake the parent procedure
-    LOG.info("Finish suprocedure " + procedure);
     if (parent.tryRunnable()) {
       // If we succeeded in making the parent runnable -- i.e. all of its
       // children have completed, move parent to front of the queue.
@@ -1709,7 +1707,8 @@ public class ProcedureExecutor<TEnvironment> {
     private Procedure activeProcedure;
 
     public WorkerThread(final ThreadGroup group) {
-      super(group, "ProcExecWrkr-" + workerId.incrementAndGet());
+      super(group, "PEWorker-" + workerId.incrementAndGet());
+      setDaemon(true);
     }
 
     @Override
@@ -1751,7 +1750,7 @@ public class ProcedureExecutor<TEnvironment> {
       } catch (Throwable t) {
         LOG.warn("Worker terminating UNNATURALLY " + this.activeProcedure, t);
       } finally {
-        LOG.debug("Worker terminated.");
+        LOG.trace("Worker terminated.");
       }
       workerThreads.remove(this);
     }
@@ -1784,6 +1783,7 @@ public class ProcedureExecutor<TEnvironment> {
 
     public TimeoutExecutorThread(final ThreadGroup group) {
       super(group, "ProcExecTimeout");
+      setDaemon(true);
     }
 
     @Override
@@ -1902,9 +1902,12 @@ public class ProcedureExecutor<TEnvironment> {
         for (int i = 0; isAlive(); ++i) {
           sendStopSignal();
           join(250);
+          // Log every two seconds; send interrupt too.
           if (i > 0 && (i % 8) == 0) {
             LOG.warn("Waiting termination of thread " + getName() + ", " +
-              StringUtils.humanTimeDiff(EnvironmentEdgeManager.currentTime() - startTime));
+              StringUtils.humanTimeDiff(EnvironmentEdgeManager.currentTime() - startTime) +
+            "; sending interrupt");
+            interrupt();
           }
         }
       } catch (InterruptedException e) {

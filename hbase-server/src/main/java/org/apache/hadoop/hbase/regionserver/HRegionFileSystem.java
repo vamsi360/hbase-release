@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -51,6 +50,7 @@ import org.apache.hadoop.hbase.util.FSHDFSUtils;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.ServerRegionReplicaUtil;
+import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +76,7 @@ public class HRegionFileSystem {
   public static final String REGION_SPLITS_DIR = ".splits";
 
   /** Temporary subdirectory of the region directory used for compaction output. */
-  private static final String REGION_TEMP_DIR = ".tmp";
+  @VisibleForTesting static final String REGION_TEMP_DIR = ".tmp";
 
   private final RegionInfo regionInfo;
   //regionInfo for interacting with FS (getting encodedName, etc)
@@ -652,7 +652,9 @@ public class HRegionFileSystem {
    * @param f File to split.
    * @param splitRow Split Row
    * @param top True if we are referring to the top half of the hfile.
-   * @param splitPolicy
+   * @param splitPolicy A split policy instance; be careful! May not be full populated; e.g. if
+   *                    this method is invoked on the Master side, then the RegionSplitPolicy will
+   *                    NOT have a reference to a Region.
    * @return Path to created reference.
    * @throws IOException
    */

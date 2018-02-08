@@ -1,5 +1,4 @@
-/*
- *
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,8 +17,14 @@
  */
 package org.apache.hadoop.hbase.regionserver;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellComparatorImpl;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValueUtil;
@@ -29,9 +34,7 @@ import org.apache.hadoop.hbase.testclassification.RegionServerTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ClassSize;
 import org.apache.hadoop.hbase.util.Threads;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -39,15 +42,17 @@ import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.List;
-
 /**
  * compacted memstore test case
  */
 @Category({RegionServerTests.class, MediumTests.class})
 @RunWith(Parameterized.class)
 public class TestCompactingToCellFlatMapMemStore extends TestCompactingMemStore {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestCompactingToCellFlatMapMemStore.class);
+
   @Parameterized.Parameters
   public static Object[] data() {
     return new Object[] { "CHUNK_MAP", "ARRAY_MAP" }; // test different immutable indexes
@@ -454,7 +459,7 @@ public class TestCompactingToCellFlatMapMemStore extends TestCompactingMemStore 
         count++;
       }
     }
-    assertEquals("the count should be ", count, 150);
+    assertEquals("the count should be ", 150, count);
     for(int i = 0; i < scanners.size(); i++) {
       scanners.get(i).close();
     }
@@ -481,7 +486,7 @@ public class TestCompactingToCellFlatMapMemStore extends TestCompactingMemStore 
     } finally {
       itr.close();
     }
-    assertEquals("the count should be ", cnt, 150);
+    assertEquals("the count should be ", 150, cnt);
   }
 
   private void addRowsByKeysWith50Cols(AbstractMemStore hmc, String[] keys) {
@@ -749,9 +754,9 @@ public class TestCompactingToCellFlatMapMemStore extends TestCompactingMemStore 
     // set memstore to flat into CellChunkMap
     MemoryCompactionPolicy compactionType = MemoryCompactionPolicy.BASIC;
     memstore.getConfiguration().set(CompactingMemStore.COMPACTING_MEMSTORE_TYPE_KEY,
-        String.valueOf(compactionType));
-    ((MyCompactingMemStore)memstore).initiateType(compactionType, memstore.getConfiguration());
-    ((CompactingMemStore)memstore).setIndexType(CompactingMemStore.IndexType.CHUNK_MAP);
+            String.valueOf(compactionType));
+    ((MyCompactingMemStore) memstore).initiateType(compactionType, memstore.getConfiguration());
+    ((CompactingMemStore) memstore).setIndexType(CompactingMemStore.IndexType.CHUNK_MAP);
 
     int numOfCells = 1;
     char[] chars = new char[MemStoreLAB.CHUNK_SIZE_DEFAULT];
@@ -759,7 +764,7 @@ public class TestCompactingToCellFlatMapMemStore extends TestCompactingMemStore 
       chars[i] = 'A';
     }
     String bigVal = new String(chars);
-    String[] keys1 = { "A"};
+    String[] keys1 = {"A"};
 
     // make one cell
     byte[] row = Bytes.toBytes(keys1[0]);
@@ -779,7 +784,7 @@ public class TestCompactingToCellFlatMapMemStore extends TestCompactingMemStore 
     assertEquals(totalCellsLen, regionServicesForStores.getMemStoreSize());
     assertEquals(totalHeapSize, ((CompactingMemStore) memstore).heapSize());
 
-    ((CompactingMemStore)memstore).flushInMemory(); // push keys to pipeline and flatten
+    ((CompactingMemStore) memstore).flushInMemory(); // push keys to pipeline and flatten
     while (((CompactingMemStore) memstore).isMemStoreFlushingInMemory()) {
       Threads.sleep(10);
     }
@@ -804,12 +809,17 @@ public class TestCompactingToCellFlatMapMemStore extends TestCompactingMemStore 
 
     memstore.clearSnapshot(snapshot.getId());
 
-    String[] keys2 = { "C", "D", "E"};
+    // Allocating two big cells (too big for being copied into a regular chunk).
+    String[] keys2 = {"C", "D"};
     addRowsByKeys(memstore, keys2, val);
     while (((CompactingMemStore) memstore).isMemStoreFlushingInMemory()) {
       Threads.sleep(10);
     }
-    totalHeapSize = 1 * oneCellOnCSLMHeapSize + MutableSegment.DEEP_OVERHEAD
+
+    // The in-memory flush size is bigger than the size of a single cell,
+    // but smaller than the size of two cells.
+    // Therefore, the two created cells are flattened together.
+    totalHeapSize = MutableSegment.DEEP_OVERHEAD
             + CellChunkImmutableSegment.DEEP_OVERHEAD_CCM
             + 2 * oneCellOnCCMHeapSize;
     assertEquals(totalHeapSize, ((CompactingMemStore) memstore).heapSize());

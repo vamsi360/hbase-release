@@ -105,9 +105,8 @@ public class RSProcedureDispatcher
       final Set<RemoteProcedure> remoteProcedures) {
     final int rsVersion = master.getAssignmentManager().getServerVersion(serverName);
     if (rsVersion >= RS_VERSION_WITH_EXEC_PROCS) {
-      LOG.info(String.format(
-        "Using procedure batch rpc execution for serverName=%s version=%s",
-        serverName, rsVersion));
+      LOG.trace("Using procedure batch rpc execution for serverName={} version={}",
+        serverName, rsVersion);
       submitTask(new ExecuteProceduresRemoteCall(serverName, remoteProcedures));
     } else {
       LOG.info(String.format(
@@ -117,6 +116,7 @@ public class RSProcedureDispatcher
     }
   }
 
+  @Override
   protected void abortPendingOperations(final ServerName serverName,
       final Set<RemoteProcedure> operations) {
     // TODO: Replace with a ServerNotOnlineException()
@@ -126,10 +126,12 @@ public class RSProcedureDispatcher
     }
   }
 
+  @Override
   public void serverAdded(final ServerName serverName) {
     addNode(serverName);
   }
 
+  @Override
   public void serverRemoved(final ServerName serverName) {
     removeNode(serverName);
   }
@@ -138,6 +140,7 @@ public class RSProcedureDispatcher
    * Base remote call
    */
   protected abstract class AbstractRSRemoteCall implements Callable<Void> {
+    @Override
     public abstract Void call();
 
     private final ServerName serverName;
@@ -269,6 +272,7 @@ public class RSProcedureDispatcher
       this.remoteProcedures = remoteProcedures;
     }
 
+    @Override
     public Void call() {
       request = ExecuteProceduresRequest.newBuilder();
       if (LOG.isTraceEnabled()) {
@@ -290,11 +294,13 @@ public class RSProcedureDispatcher
       return null;
     }
 
+    @Override
     public void dispatchOpenRequests(final MasterProcedureEnv env,
         final List<RegionOpenOperation> operations) {
       request.addOpenRegion(buildOpenRegionRequest(env, getServerName(), operations));
     }
 
+    @Override
     public void dispatchCloseRequests(final MasterProcedureEnv env,
         final List<RegionCloseOperation> operations) {
       for (RegionCloseOperation op: operations) {
@@ -471,11 +477,13 @@ public class RSProcedureDispatcher
       return null;
     }
 
+    @Override
     public void dispatchOpenRequests(final MasterProcedureEnv env,
         final List<RegionOpenOperation> operations) {
       submitTask(new OpenRegionRemoteCall(serverName, operations));
     }
 
+    @Override
     public void dispatchCloseRequests(final MasterProcedureEnv env,
         final List<RegionCloseOperation> operations) {
       for (RegionCloseOperation op: operations) {

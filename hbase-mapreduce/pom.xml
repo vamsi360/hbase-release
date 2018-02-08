@@ -24,7 +24,7 @@
   <parent>
     <artifactId>hbase-build-configuration</artifactId>
     <groupId>org.apache.hbase</groupId>
-    <version>2.0.0-beta-1-SNAPSHOT</version>
+    <version>2.0.0-beta-2-SNAPSHOT</version>
     <relativePath>../hbase-build-configuration</relativePath>
   </parent>
   <artifactId>hbase-mapreduce</artifactId>
@@ -64,18 +64,6 @@
               <mainClass>org/apache/hadoop/hbase/mapreduce/Driver</mainClass>
             </manifest>
           </archive>
-        </configuration>
-      </plugin>
-      <!-- Testing plugins -->
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <properties>
-            <property>
-              <name>listener</name>
-              <value>org.apache.hadoop.hbase.ServerResourceCheckerJUnitListener</value>
-            </property>
-          </properties>
         </configuration>
       </plugin>
       <!-- Make a jar and put the sources in the jar -->
@@ -171,7 +159,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.htrace</groupId>
@@ -256,10 +243,6 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
@@ -404,6 +387,10 @@
             <exclusion>
               <groupId>org.apache.htrace</groupId>
               <artifactId>htrace-core</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.apache.zookeeper</groupId>
+              <artifactId>zookeeper</artifactId>
             </exclusion>
           </exclusions>
         </dependency>

@@ -15,12 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.quotas;
+
+import static org.junit.Assert.assertEquals;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
@@ -34,21 +35,24 @@ import org.apache.hadoop.hbase.testclassification.RegionServerTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManagerTestHelper;
-import org.apache.hadoop.hbase.util.ManualEnvironmentEdge;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
-
+import org.apache.hadoop.hbase.util.ManualEnvironmentEdge;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertEquals;
-
 @Category({RegionServerTests.class, MediumTests.class})
 public class TestQuotaThrottle {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestQuotaThrottle.class);
+
   private final static Logger LOG = LoggerFactory.getLogger(TestQuotaThrottle.class);
 
   private final static int REFRESH_TIME = 30 * 60000;
@@ -113,7 +117,7 @@ public class TestQuotaThrottle {
     }
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testUserGlobalThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
     final String userName = User.getCurrent().getShortName();
@@ -137,7 +141,7 @@ public class TestQuotaThrottle {
     assertEquals(60, doGets(60, tables));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testUserGlobalReadAndWriteThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
     final String userName = User.getCurrent().getShortName();
@@ -169,7 +173,7 @@ public class TestQuotaThrottle {
     assertEquals(60, doGets(60, tables));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testUserTableThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
     final String userName = User.getCurrent().getShortName();
@@ -194,7 +198,7 @@ public class TestQuotaThrottle {
     assertEquals(60, doGets(60, tables));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testUserTableReadAndWriteThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
     final String userName = User.getCurrent().getShortName();
@@ -235,7 +239,7 @@ public class TestQuotaThrottle {
     assertEquals(60, doGets(60, tables));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testUserNamespaceThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
     final String userName = User.getCurrent().getShortName();
@@ -260,7 +264,7 @@ public class TestQuotaThrottle {
     assertEquals(60, doGets(60, tables));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testUserNamespaceReadAndWriteThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
     final String userName = User.getCurrent().getShortName();
@@ -293,7 +297,7 @@ public class TestQuotaThrottle {
     assertEquals(60, doGets(60, tables));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testTableGlobalThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
 
@@ -317,7 +321,7 @@ public class TestQuotaThrottle {
     assertEquals(80, doGets(80, tables[0], tables[1]));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testTableGlobalReadAndWriteThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
 
@@ -354,7 +358,7 @@ public class TestQuotaThrottle {
     assertEquals(80, doGets(80, tables[0], tables[1]));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testNamespaceGlobalThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
     final String NAMESPACE = "default";
@@ -376,7 +380,7 @@ public class TestQuotaThrottle {
     assertEquals(40, doPuts(40, tables[0]));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testNamespaceGlobalReadAndWriteThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
     final String NAMESPACE = "default";
@@ -407,7 +411,7 @@ public class TestQuotaThrottle {
     assertEquals(40, doPuts(40, tables[0]));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testUserAndTableThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
     final String userName = User.getCurrent().getShortName();
@@ -456,7 +460,7 @@ public class TestQuotaThrottle {
     assertEquals(40, doGets(40, tables[0]));
   }
 
-  @Test(timeout=60000)
+  @Test
   public void testUserGlobalBypassThrottle() throws Exception {
     final Admin admin = TEST_UTIL.getAdmin();
     final String userName = User.getCurrent().getShortName();

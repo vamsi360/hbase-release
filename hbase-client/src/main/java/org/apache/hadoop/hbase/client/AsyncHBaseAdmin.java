@@ -27,6 +27,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+
+import org.apache.hadoop.hbase.CacheEvictionStats;
 import org.apache.hadoop.hbase.ClusterMetrics;
 import org.apache.hadoop.hbase.ClusterMetrics.Option;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
@@ -238,6 +240,11 @@ class AsyncHBaseAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<Void> flushRegion(byte[] regionName) {
     return wrap(rawAdmin.flushRegion(regionName));
+  }
+
+  @Override
+  public CompletableFuture<Void> flushRegionServer(ServerName sn) {
+    return wrap(rawAdmin.flushRegionServer(sn));
   }
 
   @Override
@@ -733,5 +740,10 @@ class AsyncHBaseAdmin implements AsyncAdmin {
   @Override
   public CompletableFuture<List<ServerName>> clearDeadServers(List<ServerName> servers) {
     return wrap(rawAdmin.clearDeadServers(servers));
+  }
+
+  @Override
+  public CompletableFuture<CacheEvictionStats> clearBlockCache(TableName tableName) {
+    return wrap(rawAdmin.clearBlockCache(tableName));
   }
 }

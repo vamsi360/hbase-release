@@ -17,12 +17,18 @@
  */
 package org.apache.hadoop.hbase.master;
 
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.MasterTests;
+import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 
 @Category({ MasterTests.class, LargeTests.class })
 public class TestDLSAsyncFSWAL extends AbstractTestDLS {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestDLSAsyncFSWAL.class);
 
   @Override
   protected String getWalProvider() {

@@ -118,7 +118,8 @@ module Shell
           raise "Unknown region #{args.first}!"
         end
         if cause.is_a?(org.apache.hadoop.hbase.NamespaceNotFoundException)
-          raise "Unknown namespace #{args.first}!"
+          s = /.*NamespaceNotFoundException: (?<namespace>[^\n]+).*/.match(cause.message)
+          raise "Unknown namespace #{s['namespace']}!"
         end
         if cause.is_a?(org.apache.hadoop.hbase.snapshot.SnapshotDoesNotExistException)
           raise "Unknown snapshot #{args.first}!"

@@ -23,12 +23,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Random;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.Stoppable;
 import org.apache.hadoop.hbase.testclassification.MasterTests;
@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.StoppableImplementation;
 import org.junit.After;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
@@ -46,6 +47,10 @@ import org.slf4j.LoggerFactory;
 
 @Category({MasterTests.class, SmallTests.class})
 public class TestCleanerChore {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestCleanerChore.class);
 
   private static final Logger LOG = LoggerFactory.getLogger(TestCleanerChore.class);
   private static final HBaseTestingUtility UTIL = new HBaseTestingUtility();
@@ -356,13 +361,22 @@ public class TestCleanerChore {
 
   @Test
   public void testOnConfigurationChange() throws Exception {
+    int availableProcessorNum = Runtime.getRuntime().availableProcessors();
+    if (availableProcessorNum == 1) { // no need to run this test
+      return;
+    }
+
+    // have at least 2 available processors/cores
+    int    initPoolSize = availableProcessorNum / 2;
+    int changedPoolSize = availableProcessorNum;
+
     Stoppable stop = new StoppableImplementation();
     Configuration conf = UTIL.getConfiguration();
     Path testDir = UTIL.getDataTestDir();
     FileSystem fs = UTIL.getTestFileSystem();
     String confKey = "hbase.test.cleaner.delegates";
     conf.set(confKey, AlwaysDelete.class.getName());
-    conf.set(CleanerChore.CHORE_POOL_SIZE, "2");
+    conf.set(CleanerChore.CHORE_POOL_SIZE, String.valueOf(initPoolSize));
     AllValidPaths chore = new AllValidPaths("test-file-cleaner", stop, conf, fs, testDir, confKey);
     chore.setEnabled(true);
     // Create subdirs under testDir
@@ -381,9 +395,9 @@ public class TestCleanerChore {
     t.setDaemon(true);
     t.start();
     // Change size of chore's pool
-    conf.set(CleanerChore.CHORE_POOL_SIZE, "4");
+    conf.set(CleanerChore.CHORE_POOL_SIZE, String.valueOf(changedPoolSize));
     chore.onConfigurationChange(conf);
-    assertEquals(4, chore.getChorePoolSize());
+    assertEquals(changedPoolSize, chore.getChorePoolSize());
     // Stop chore
     t.join();
   }

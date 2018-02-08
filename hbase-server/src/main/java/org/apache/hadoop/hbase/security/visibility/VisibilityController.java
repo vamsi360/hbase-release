@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.hadoop.conf.Configuration;
@@ -105,6 +106,7 @@ import org.apache.hadoop.hbase.regionserver.querymatcher.DeleteTracker;
 import org.apache.hadoop.hbase.security.AccessDeniedException;
 import org.apache.hadoop.hbase.security.Superusers;
 import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.security.access.AccessChecker;
 import org.apache.hadoop.hbase.security.access.AccessController;
 import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
 import org.apache.hbase.thirdparty.com.google.common.collect.MapMaker;
@@ -141,8 +143,8 @@ public class VisibilityController implements MasterCoprocessor, RegionCoprocesso
 
   private VisibilityLabelService visibilityLabelService;
 
-  /** if we are active, usually true, only not true if "hbase.security.authorization"
-    has been set to false in site configuration */
+  /** if we are active, usually false, only true if "hbase.security.authorization"
+    has been set to true in site configuration */
   boolean authorizationEnabled;
 
   // Add to this list if there are any reserved tag types
@@ -153,19 +155,15 @@ public class VisibilityController implements MasterCoprocessor, RegionCoprocesso
     RESERVED_VIS_TAG_TYPES.add(TagType.STRING_VIS_TAG_TYPE);
   }
 
-  public static boolean isAuthorizationSupported(Configuration conf) {
-    return conf.getBoolean(User.HBASE_SECURITY_AUTHORIZATION_CONF_KEY, true);
-  }
-
   public static boolean isCellAuthorizationSupported(Configuration conf) {
-    return isAuthorizationSupported(conf);
+    return AccessChecker.isAuthorizationSupported(conf);
   }
 
   @Override
   public void start(CoprocessorEnvironment env) throws IOException {
     this.conf = env.getConfiguration();
 
-    authorizationEnabled = isAuthorizationSupported(conf);
+    authorizationEnabled = AccessChecker.isAuthorizationSupported(conf);
     if (!authorizationEnabled) {
       LOG.warn("The VisibilityController has been loaded with authorization checks disabled.");
     }
@@ -756,8 +754,9 @@ public class VisibilityController implements MasterCoprocessor, RegionCoprocesso
           logResult(true, "addLabels", "Adding labels allowed", null, labels, null);
           int i = 0;
           for (OperationStatus status : opStatus) {
-            while (response.getResult(i) != successResult)
+            while (!Objects.equals(response.getResult(i), successResult)) {
               i++;
+            }
             if (status.getOperationStatusCode() != SUCCESS) {
               RegionActionResult.Builder failureResultBuilder = RegionActionResult.newBuilder();
               failureResultBuilder.setException(buildException(new DoNotRetryIOException(

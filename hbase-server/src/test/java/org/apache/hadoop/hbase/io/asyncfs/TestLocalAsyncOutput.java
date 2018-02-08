@@ -19,14 +19,15 @@ package org.apache.hadoop.hbase.io.asyncfs;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HBaseCommonTestingUtility;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.testclassification.MiscTests;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.junit.AfterClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -38,11 +39,15 @@ import org.apache.hbase.thirdparty.io.netty.channel.socket.nio.NioSocketChannel;
 @Category({ MiscTests.class, SmallTests.class })
 public class TestLocalAsyncOutput {
 
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestLocalAsyncOutput.class);
+
   private static EventLoopGroup GROUP = new NioEventLoopGroup();
 
   private static Class<? extends Channel> CHANNEL_CLASS = NioSocketChannel.class;
 
-  private static final HBaseCommonTestingUtility TEST_UTIL = new HBaseCommonTestingUtility();
+  private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
   @AfterClass
   public static void tearDownAfterClass() throws IOException {

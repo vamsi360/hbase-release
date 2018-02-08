@@ -39,7 +39,7 @@
   <groupId>org.apache.hbase</groupId>
   <artifactId>hbase</artifactId>
   <packaging>pom</packaging>
-  <version>2.0.0-beta-1-SNAPSHOT</version>
+  <version>2.0.0-beta-2-SNAPSHOT</version>
   <name>Apache HBase</name>
   <description>
     Apache HBase is the Hadoop database. Use it when you need
@@ -612,6 +612,12 @@
               -->
               <exclude>${test.exclude.pattern}</exclude>
             </excludes>
+            <properties>
+              <property>
+                <name>listener</name>
+                <value>org.apache.hadoop.hbase.HBaseClassTestRuleChecker,org.apache.hadoop.hbase.ResourceCheckerJUnitListener</value>
+              </property>
+            </properties>
           </configuration>
           <executions>
             <execution>
@@ -879,6 +885,9 @@
           </configuration>
         </plugin>
         <plugin>
+          <!-- Approach followed here is roughly the same as mentioned here:
+          https://maven.apache.org/plugins/maven-checkstyle-plugin/examples/multi-module-config.html
+          -->
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>${maven.checkstyle.version}</version>
@@ -1084,23 +1093,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-checkstyle</artifactId>
-            <version>${project.version}</version>
-          </dependency>
-          <dependency>
-            <groupId>com.puppycrawl.tools</groupId>
-            <artifactId>checkstyle</artifactId>
-            <version>${checkstyle.version}</version>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <configLocation>hbase/checkstyle.xml</configLocation>
-          <suppressionsLocation>hbase/checkstyle-suppressions.xml</suppressionsLocation>
-          <includeTestSourceDirectory>true</includeTestSourceDirectory>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -1453,7 +1445,8 @@
         Default is the build start timestamp. Up on jenkins pass in the jenkins build id by setting
         this parameter by invoking mvn with -Dbuild.id=$BUILD_ID-->
     <build.id>${maven.build.timestamp}</build.id>
-    </properties>
+    <shell-executable>bash</shell-executable>
+  </properties>
   <!-- Sorted by groups of dependencies then groupId and artifactId -->
   <dependencyManagement>
     <dependencies>
@@ -2793,10 +2786,6 @@
                <artifactId>htrace-core</artifactId>
              </exclusion>
              <exclusion>
-               <groupId>commons-beanutils</groupId>
-               <artifactId>commons-beanutils</artifactId>
-             </exclusion>
-             <exclusion>
                <groupId>javax.servlet.jsp</groupId>
                <artifactId>jsp-api</artifactId>
              </exclusion>
@@ -3588,12 +3577,8 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>${maven.checkstyle.version}</version>
         <configuration>
           <excludes>target/**</excludes>
-          <configLocation>hbase/checkstyle.xml</configLocation>
-          <suppressionsLocation>hbase/checkstyle-suppressions.xml</suppressionsLocation>
-          <includeTestSourceDirectory>true</includeTestSourceDirectory>
         </configuration>
       </plugin>
 

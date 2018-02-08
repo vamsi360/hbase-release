@@ -21,12 +21,14 @@ import static org.apache.hadoop.hbase.HConstants.REPLICATION_SCOPE_LOCAL;
 import static org.apache.hadoop.hbase.regionserver.HStoreFile.MAJOR_COMPACTION_KEY;
 import static org.apache.hadoop.hbase.util.CollectionUtils.computeIfAbsent;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.EOFException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -69,7 +71,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -89,6 +90,7 @@ import org.apache.hadoop.hbase.ExtendedCellBuilderFactory;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HConstants.OperationStatusCode;
 import org.apache.hadoop.hbase.HDFSBlocksDistribution;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
@@ -147,28 +149,6 @@ import org.apache.hadoop.hbase.regionserver.throttle.NoLimitThroughputController
 import org.apache.hadoop.hbase.regionserver.throttle.ThroughputController;
 import org.apache.hadoop.hbase.regionserver.wal.WALUtil;
 import org.apache.hadoop.hbase.security.User;
-import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
-import org.apache.hbase.thirdparty.com.google.common.base.Preconditions;
-import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
-import org.apache.hbase.thirdparty.com.google.common.collect.Maps;
-import org.apache.hbase.thirdparty.com.google.common.io.Closeables;
-import org.apache.hbase.thirdparty.com.google.protobuf.Service;
-import org.apache.hbase.thirdparty.com.google.protobuf.TextFormat;
-import org.apache.hbase.thirdparty.com.google.protobuf.UnsafeByteOperations;
-import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.ClientProtos;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.ClientProtos.CoprocessorServiceCall;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.ClusterStatusProtos.RegionLoad;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.ClusterStatusProtos.StoreSequenceId;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.SnapshotProtos.SnapshotDescription;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.CompactionDescriptor;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.FlushDescriptor;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.FlushDescriptor.FlushAction;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.FlushDescriptor.StoreFlushDescriptor;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.RegionEventDescriptor;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.RegionEventDescriptor.EventType;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.StoreDescriptor;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.SnapshotManifest;
 import org.apache.hadoop.hbase.trace.TraceUtil;
@@ -199,7 +179,29 @@ import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
+import org.apache.hbase.thirdparty.com.google.common.base.Preconditions;
+import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
+import org.apache.hbase.thirdparty.com.google.common.collect.Maps;
+import org.apache.hbase.thirdparty.com.google.common.io.Closeables;
+import org.apache.hbase.thirdparty.com.google.protobuf.Service;
+import org.apache.hbase.thirdparty.com.google.protobuf.TextFormat;
+import org.apache.hbase.thirdparty.com.google.protobuf.UnsafeByteOperations;
+
+import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.ClientProtos;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.ClientProtos.CoprocessorServiceCall;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.ClusterStatusProtos.RegionLoad;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.ClusterStatusProtos.StoreSequenceId;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.SnapshotProtos.SnapshotDescription;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.CompactionDescriptor;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.FlushDescriptor;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.FlushDescriptor.FlushAction;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.FlushDescriptor.StoreFlushDescriptor;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.RegionEventDescriptor;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.RegionEventDescriptor.EventType;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.StoreDescriptor;
 
 /**
  * Regions store data for a certain region of a table.  It stores all columns
@@ -1015,7 +1017,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
           }
 
           long storeMaxSequenceId = store.getMaxSequenceId().orElse(0L);
-          maxSeqIdInStores.put(store.getColumnFamilyName().getBytes(),
+          maxSeqIdInStores.put(Bytes.toBytes(store.getColumnFamilyName()),
               storeMaxSequenceId);
           if (maxSeqId == -1 || storeMaxSequenceId > maxSeqId) {
             maxSeqId = storeMaxSequenceId;
@@ -3918,16 +3920,14 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
   throws IOException{
     checkMutationType(mutation, row);
     return doCheckAndRowMutate(row, family, qualifier, op, comparator, null,
-      mutation, writeToWAL);
+      mutation);
   }
 
   @Override
   public boolean checkAndRowMutate(byte [] row, byte [] family, byte [] qualifier,
-                                   CompareOperator op, ByteArrayComparable comparator, RowMutations rm,
-                                   boolean writeToWAL)
+    CompareOperator op, ByteArrayComparable comparator, RowMutations rm)
   throws IOException {
-    return doCheckAndRowMutate(row, family, qualifier, op, comparator, rm, null,
-      writeToWAL);
+    return doCheckAndRowMutate(row, family, qualifier, op, comparator, rm, null);
   }
 
   /**
@@ -3936,7 +3936,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
    */
   private boolean doCheckAndRowMutate(byte [] row, byte [] family, byte [] qualifier,
                                       CompareOperator op, ByteArrayComparable comparator, RowMutations rowMutations,
-                                      Mutation mutation, boolean writeToWAL)
+                                      Mutation mutation)
   throws IOException {
     // Could do the below checks but seems wacky with two callers only. Just comment out for now.
     // One caller passes a Mutation, the other passes RowMutation. Presume all good so we don't
@@ -5524,7 +5524,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
         HStore store = this.stores.get(column);
         if (store == null) {
           throw new IllegalArgumentException(
-              "No column family : " + new String(column) + " available");
+              "No column family : " + new String(column, StandardCharsets.UTF_8) + " available");
         }
         Collection<HStoreFile> storeFiles = store.getStorefiles();
         if (storeFiles == null) {
@@ -6389,7 +6389,9 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
       int initialBatchProgress = scannerContext.getBatchProgress();
       long initialSizeProgress = scannerContext.getDataSizeProgress();
       long initialHeapSizeProgress = scannerContext.getHeapSizeProgress();
-      long initialTimeProgress = scannerContext.getTimeProgress();
+
+      // Used to check time limit
+      LimitScope limitScope = LimitScope.BETWEEN_CELLS;
 
       // The loop here is used only when at some point during the next we determine
       // that due to effects of filters or otherwise, we have an empty row in the result.
@@ -6402,7 +6404,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
         if (scannerContext.getKeepProgress()) {
           // Progress should be kept. Reset to initial values seen at start of method invocation.
           scannerContext.setProgress(initialBatchProgress, initialSizeProgress,
-              initialHeapSizeProgress, initialTimeProgress);
+              initialHeapSizeProgress);
         } else {
           scannerContext.clearProgress();
         }
@@ -6441,6 +6443,16 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
           }
           scannerContext.setSizeLimitScope(LimitScope.BETWEEN_ROWS);
           scannerContext.setTimeLimitScope(LimitScope.BETWEEN_ROWS);
+          limitScope = LimitScope.BETWEEN_ROWS;
+        }
+
+        if (scannerContext.checkTimeLimit(LimitScope.BETWEEN_CELLS)) {
+          if (hasFilterRow) {
+            throw new IncompatibleFilterException(
+                "Filter whose hasFilterRow() returns true is incompatible with scans that must " +
+                    " stop mid-row because of a limit. ScannerContext:" + scannerContext);
+          }
+          return true;
         }
 
         // Check if we were getting data from the joinedHeap and hit the limit.
@@ -6471,6 +6483,11 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
               return scannerContext.setScannerState(NextState.NO_MORE_VALUES).hasMoreValues();
             }
             results.clear();
+
+            // Read nothing as the rowkey was filtered, but still need to check time limit
+            if (scannerContext.checkTimeLimit(limitScope)) {
+              return true;
+            }
             continue;
           }
 
@@ -6497,16 +6514,13 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
             ret = filter.filterRowCellsWithRet(results);
 
             // We don't know how the results have changed after being filtered. Must set progress
-            // according to contents of results now. However, a change in the results should not
-            // affect the time progress. Thus preserve whatever time progress has been made
-            long timeProgress = scannerContext.getTimeProgress();
+            // according to contents of results now.
             if (scannerContext.getKeepProgress()) {
               scannerContext.setProgress(initialBatchProgress, initialSizeProgress,
-                  initialHeapSizeProgress, initialTimeProgress);
+                  initialHeapSizeProgress);
             } else {
               scannerContext.clearProgress();
             }
-            scannerContext.setTimeProgress(timeProgress);
             scannerContext.incrementBatchProgress(results.size());
             for (Cell cell : results) {
               scannerContext.incrementSizeProgress(PrivateCellUtil.estimatedSerializedSizeOf(cell),
@@ -6524,7 +6538,13 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
 
             // This row was totally filtered out, if this is NOT the last row,
             // we should continue on. Otherwise, nothing else to do.
-            if (!shouldStop) continue;
+            if (!shouldStop) {
+              // Read nothing as the cells was filtered, but still need to check time limit
+              if (scannerContext.checkTimeLimit(limitScope)) {
+                return true;
+              }
+              continue;
+            }
             return scannerContext.setScannerState(NextState.NO_MORE_VALUES).hasMoreValues();
           }
 
@@ -6999,6 +7019,31 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
       writeRegionOpenMarker(wal, openSeqNum);
     }
     return this;
+  }
+
+  /**
+   * Open a Region on a read-only file-system (like hdfs snapshots)
+   * @param conf The Configuration object to use.
+   * @param fs Filesystem to use
+   * @param info Info for region to be opened.
+   * @param htd the table descriptor
+   * @return new HRegion
+   * @throws IOException e
+   */
+  public static HRegion openReadOnlyFileSystemHRegion(final Configuration conf, final FileSystem fs,
+      final Path tableDir, RegionInfo info, final TableDescriptor htd) throws IOException {
+    if (info == null) {
+      throw new NullPointerException("Passed region info is null");
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Opening region (readOnly filesystem): " + info);
+    }
+    if (info.getReplicaId() <= 0) {
+      info = new HRegionInfo((HRegionInfo) info, 1);
+    }
+    HRegion r = HRegion.newHRegion(tableDir, null, fs, conf, info, htd, null);
+    r.writestate.setReadOnly(true);
+    return r.openHRegion(null);
   }
 
   public static void warmupHRegion(final RegionInfo info,

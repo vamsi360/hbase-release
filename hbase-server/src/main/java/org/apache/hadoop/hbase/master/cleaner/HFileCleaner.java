@@ -182,7 +182,7 @@ public class HFileCleaner extends CleanerChore<BaseHFileCleanerDelegate> {
   }
 
   @Override
-  public void cleanup() {
+  public synchronized void cleanup() {
     super.cleanup();
     stopHFileDeleteThreads();
   }
@@ -204,7 +204,7 @@ public class HFileCleaner extends CleanerChore<BaseHFileCleanerDelegate> {
       large.setDaemon(true);
       large.setName(n + "-HFileCleaner.large." + i + "-" + System.currentTimeMillis());
       large.start();
-      LOG.debug("Starting hfile cleaner for large files: {}", large);
+      LOG.debug("Starting for large file={}", large);
       threads.add(large);
     }
 
@@ -219,7 +219,7 @@ public class HFileCleaner extends CleanerChore<BaseHFileCleanerDelegate> {
       small.setDaemon(true);
       small.setName(n + "-HFileCleaner.small." + i + "-" + System.currentTimeMillis());
       small.start();
-      LOG.debug("Starting hfile cleaner for small files: {}", small);
+      LOG.debug("Starting for small files={}", small);
       threads.add(small);
     }
   }
@@ -231,7 +231,7 @@ public class HFileCleaner extends CleanerChore<BaseHFileCleanerDelegate> {
         try {
           task = queue.take();
         } catch (InterruptedException e) {
-          LOG.debug("Interrupted while trying to take a task from queue", e);
+          LOG.trace("Interrupted while trying to take a task from queue", e);
           break;
         }
         if (task != null) {
@@ -444,5 +444,13 @@ public class HFileCleaner extends CleanerChore<BaseHFileCleanerDelegate> {
       updated = true;
     }
     return updated;
+  }
+
+  @Override
+  public synchronized void cancel(boolean mayInterruptIfRunning) {
+    super.cancel(mayInterruptIfRunning);
+    for (Thread t: this.threads) {
+      t.interrupt();
+    }
   }
 }

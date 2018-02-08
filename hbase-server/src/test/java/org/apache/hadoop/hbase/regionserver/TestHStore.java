@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -47,7 +47,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -62,10 +61,10 @@ import org.apache.hadoop.hbase.CellBuilderType;
 import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.CellComparatorImpl;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.MemoryCompactionPolicy;
 import org.apache.hadoop.hbase.PrivateCellUtil;
@@ -73,6 +72,8 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
@@ -105,6 +106,7 @@ import org.apache.hadoop.util.Progressable;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -112,6 +114,7 @@ import org.junit.rules.TestName;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
 
 /**
@@ -119,6 +122,11 @@ import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
  */
 @Category({ RegionServerTests.class, MediumTests.class })
 public class TestHStore {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestHStore.class);
+
   private static final Logger LOG = LoggerFactory.getLogger(TestHStore.class);
   @Rule
   public TestName name = new TestName();
@@ -205,12 +213,12 @@ public class TestHStore {
     fs.delete(logdir, true);
     ChunkCreator.initialize(MemStoreLABImpl.CHUNK_SIZE_DEFAULT, false,
       MemStoreLABImpl.CHUNK_SIZE_DEFAULT, 1, 0, null);
-    HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
+    RegionInfo info = RegionInfoBuilder.newBuilder(htd.getTableName()).build();
     Configuration walConf = new Configuration(conf);
     FSUtils.setRootDir(walConf, basedir);
-    WALFactory wals = new WALFactory(walConf, null, methodName);
-    region = new HRegion(new HRegionFileSystem(conf, fs, tableDir, info),
-        wals.getWAL(info.getEncodedNameAsBytes(), info.getTable().getNamespace()), conf, htd, null);
+    WALFactory wals = new WALFactory(walConf, methodName);
+    region = new HRegion(new HRegionFileSystem(conf, fs, tableDir, info), wals.getWAL(info), conf,
+        htd, null);
   }
 
   private HStore init(String methodName, Configuration conf, TableDescriptorBuilder builder,
@@ -233,7 +241,7 @@ public class TestHStore {
   public void testFlushSizeSizing() throws Exception {
     LOG.info("Setting up a faulty file system that cannot write in " +
       this.name.getMethodName());
-    final Configuration conf = HBaseConfiguration.create();
+    final Configuration conf = HBaseConfiguration.create(TEST_UTIL.getConfiguration());
     // Only retry once.
     conf.setInt("hbase.hstore.flush.retries.number", 1);
     User user = User.createUserForTesting(conf, this.name.getMethodName(),
@@ -660,7 +668,7 @@ public class TestHStore {
   public void testHandleErrorsInFlush() throws Exception {
     LOG.info("Setting up a faulty file system that cannot write");
 
-    final Configuration conf = HBaseConfiguration.create();
+    final Configuration conf = HBaseConfiguration.create(TEST_UTIL.getConfiguration());
     User user = User.createUserForTesting(conf,
         "testhandleerrorsinflush", new String[]{"foo"});
     // Inject our faulty LocalFileSystem
@@ -755,7 +763,7 @@ public class TestHStore {
     }
 
     @Override
-    public void write(byte[] buf, int offset, int length) throws IOException {
+    public synchronized void write(byte[] buf, int offset, int length) throws IOException {
       System.err.println("faulty stream write at pos " + getPos());
       injectFault();
       super.write(buf, offset, length);
@@ -1006,7 +1014,6 @@ public class TestHStore {
     assertEquals(0, this.store.getStorefilesCount());
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testRefreshStoreFilesNotChanged() throws IOException {
     init(name.getMethodName());
@@ -1458,7 +1465,7 @@ public class TestHStore {
    * @throws IOException
    * @throws InterruptedException
    */
-  @Test (timeout=30000)
+  @Test
   public void testRunDoubleMemStoreCompactors() throws IOException, InterruptedException {
     int flushSize = 500;
     Configuration conf = HBaseConfiguration.create();
@@ -1551,7 +1558,7 @@ public class TestHStore {
       ColumnFamilyDescriptorBuilder.newBuilder(family).setMaxVersions(5).build(), hook);
   }
 
-  private class MyStore extends HStore {
+  private static class MyStore extends HStore {
     private final MyStoreHook hook;
 
     MyStore(final HRegion region, final ColumnFamilyDescriptor family, final Configuration
@@ -1576,7 +1583,7 @@ public class TestHStore {
     }
   }
 
-  private abstract class MyStoreHook {
+  private abstract static class MyStoreHook {
 
     void getScanners(MyStore store) throws IOException {
     }
@@ -1595,7 +1602,7 @@ public class TestHStore {
     MyStore store = initMyStore(name.getMethodName(), conf, new MyStoreHook() {});
     MemStoreSizing memStoreSizing = new MemStoreSizing();
     long ts = System.currentTimeMillis();
-    long seqID = 1l;
+    long seqID = 1L;
     // Add some data to the region and do some flushes
     for (int i = 1; i < 10; i++) {
       store.add(createCell(Bytes.toBytes("row" + i), qf1, ts, seqID++, Bytes.toBytes("")),
@@ -1663,6 +1670,7 @@ public class TestHStore {
       return this.heap;
     }
 
+    @Override
     public void run() {
       scanner.trySwitchToStreamRead();
       heap = scanner.heap;

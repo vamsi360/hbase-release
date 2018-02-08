@@ -21,22 +21,24 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
 import org.apache.hadoop.hbase.log.HBaseMarkers;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.regionserver.MultiVersionConcurrencyControl;
@@ -55,6 +57,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -66,6 +69,11 @@ import org.slf4j.LoggerFactory;
  */
 @Category({RegionServerTests.class, MediumTests.class})
 public class TestLogRollAbort {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestLogRollAbort.class);
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTestLogRolling.class);
   private static MiniDFSCluster dfsCluster;
   private static Admin admin;
@@ -136,11 +144,11 @@ public class TestLogRollAbort {
 
     // Create the test table and open it
     TableName tableName = TableName.valueOf(this.getClass().getSimpleName());
-    HTableDescriptor desc = new HTableDescriptor(tableName);
-    desc.addFamily(new HColumnDescriptor(HConstants.CATALOG_FAMILY));
+    TableDescriptor desc = TableDescriptorBuilder.newBuilder(tableName)
+        .addColumnFamily(ColumnFamilyDescriptorBuilder.of(HConstants.CATALOG_FAMILY)).build();
 
     admin.createTable(desc);
-    Table table = TEST_UTIL.getConnection().getTable(desc.getTableName());
+    Table table = TEST_UTIL.getConnection().getTable(tableName);
     try {
       HRegionServer server = TEST_UTIL.getRSForFirstRegionInTable(tableName);
       WAL log = server.getWAL(null);
@@ -177,44 +185,38 @@ public class TestLogRollAbort {
    * comes back online after the master declared it dead and started to split.
    * Want log rolling after a master split to fail. See HBASE-2312.
    */
-  @Test (timeout=300000)
+  @Test
   public void testLogRollAfterSplitStart() throws IOException {
     LOG.info("Verify wal roll after split starts will fail.");
     String logName = ServerName.valueOf("testLogRollAfterSplitStart",
         16010, System.currentTimeMillis()).toString();
     Path thisTestsDir = new Path(HBASELOGDIR, AbstractFSWALProvider.getWALDirectoryName(logName));
-    final WALFactory wals = new WALFactory(conf, null, logName);
+    final WALFactory wals = new WALFactory(conf, logName);
 
     try {
       // put some entries in an WAL
       TableName tableName =
           TableName.valueOf(this.getClass().getName());
-      HRegionInfo regioninfo = new HRegionInfo(tableName,
-          HConstants.EMPTY_START_ROW, HConstants.EMPTY_END_ROW);
-      final WAL log = wals.getWAL(regioninfo.getEncodedNameAsBytes(),
-          regioninfo.getTable().getNamespace());
+      RegionInfo regionInfo = RegionInfoBuilder.newBuilder(tableName).build();
+      WAL log = wals.getWAL(regionInfo);
       MultiVersionConcurrencyControl mvcc = new MultiVersionConcurrencyControl(1);
 
-      final int total = 20;
+      int total = 20;
       for (int i = 0; i < total; i++) {
         WALEdit kvs = new WALEdit();
         kvs.add(new KeyValue(Bytes.toBytes(i), tableName.getName(), tableName.getName()));
-        HTableDescriptor htd = new HTableDescriptor(tableName);
-        htd.addFamily(new HColumnDescriptor("column"));
         NavigableMap<byte[], Integer> scopes = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-        for(byte[] fam : htd.getFamiliesKeys()) {
-          scopes.put(fam, 0);
-        }
-        log.append(regioninfo, new WALKeyImpl(regioninfo.getEncodedNameAsBytes(), tableName,
-            System.currentTimeMillis(), mvcc, scopes), kvs, true);
+        scopes.put(Bytes.toBytes("column"), 0);
+        log.append(regionInfo, new WALKeyImpl(regionInfo.getEncodedNameAsBytes(), tableName,
+            System.currentTimeMillis(), mvcc, scopes),
+          kvs, true);
       }
       // Send the data to HDFS datanodes and close the HDFS writer
       log.sync();
       ((AbstractFSWAL<?>) log).replaceWriter(((FSHLog)log).getOldPath(), null, null);
 
-      /* code taken from MasterFileSystem.getLogDirs(), which is called from MasterFileSystem.splitLog()
-       * handles RS shutdowns (as observed by the splitting process)
-       */
+      // code taken from MasterFileSystem.getLogDirs(), which is called from
+      // MasterFileSystem.splitLog() handles RS shutdowns (as observed by the splitting process)
       // rename the directory so a rogue RS doesn't create more WALs
       Path rsSplitDir = thisTestsDir.suffix(AbstractFSWALProvider.SPLITTING_EXT);
       if (!fs.rename(thisTestsDir, rsSplitDir)) {

@@ -469,7 +469,7 @@ public class WALSplitter {
   static Path getRegionSplitEditsPath(final FileSystem fs,
       final Entry logEntry, final Path rootDir, String fileNameBeingSplit)
   throws IOException {
-    Path tableDir = FSUtils.getTableDir(rootDir, logEntry.getKey().getTablename());
+    Path tableDir = FSUtils.getTableDir(rootDir, logEntry.getKey().getTableName());
     String encodedRegionName = Bytes.toString(logEntry.getKey().getEncodedRegionName());
     Path regiondir = HRegion.getRegionDir(tableDir, encodedRegionName);
     Path dir = getRegionDirRecoveredEditsDir(regiondir);
@@ -876,7 +876,7 @@ public class WALSplitter {
       synchronized (this) {
         buffer = buffers.get(key.getEncodedRegionName());
         if (buffer == null) {
-          buffer = new RegionEntryBuffer(key.getTablename(), key.getEncodedRegionName());
+          buffer = new RegionEntryBuffer(key.getTableName(), key.getEncodedRegionName());
           buffers.put(key.getEncodedRegionName(), buffer);
         }
         incrHeap= buffer.appendEntry(entry);
@@ -1084,7 +1084,7 @@ public class WALSplitter {
     protected EntryBuffers entryBuffers;
 
     protected ConcurrentHashMap<String, SinkWriter> writers = new ConcurrentHashMap<>();
-    protected ConcurrentHashMap<String, Long> regionMaximumEditLogSeqNum =
+    protected final ConcurrentHashMap<String, Long> regionMaximumEditLogSeqNum =
         new ConcurrentHashMap<>();
 
 
@@ -1645,8 +1645,10 @@ public class WALSplitter {
         List<IOException> thrown, List<Path> paths)
         throws InterruptedException, ExecutionException {
       for (final Map.Entry<byte[], RegionEntryBuffer> buffer : entryBuffers.buffers.entrySet()) {
-        LOG.info("Submitting writeThenClose of " + buffer.getValue().encodedRegionName);
+        LOG.info("Submitting writeThenClose of {}",
+            Arrays.toString(buffer.getValue().encodedRegionName));
         completionService.submit(new Callable<Void>() {
+          @Override
           public Void call() throws Exception {
             Path dst = writeThenClose(buffer.getValue());
             paths.add(dst);

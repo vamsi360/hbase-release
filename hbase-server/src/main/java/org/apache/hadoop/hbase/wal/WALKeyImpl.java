@@ -352,7 +352,7 @@ public class WALKeyImpl implements WALKey {
 
   /** @return table name */
   @Override
-  public TableName getTablename() {
+  public TableName getTableName() {
     return tablename;
   }
 
@@ -470,8 +470,8 @@ public class WALKeyImpl implements WALKey {
   @Override
   public int hashCode() {
     int result = Bytes.hashCode(this.encodedRegionName);
-    result ^= getSequenceId();
-    result ^= this.writeTime;
+    result = (int) (result ^ getSequenceId());
+    result = (int) (result ^ this.writeTime);
     return result;
   }
 

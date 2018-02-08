@@ -187,7 +187,9 @@ public class JVMClusterUtil {
       int startTimeout = configuration != null ? Integer.parseInt(
         configuration.get("hbase.master.start.timeout.localHBaseCluster", "30000")) : 30000;
       if (System.currentTimeMillis() > startTime + startTimeout) {
-        throw new RuntimeException(String.format("Master not active after %s seconds", startTimeout));
+        String msg = "Master not active after " + startTimeout + "ms";
+        Threads.printThreadInfo(System.out, "Thread dump because: " + msg);
+        throw new RuntimeException(msg);
       }
     }
 
@@ -216,8 +218,7 @@ public class JVMClusterUtil {
       }
       if (System.currentTimeMillis() > startTime + maxwait) {
         String msg = "Master not initialized after " + maxwait + "ms seconds";
-        Threads.printThreadInfo(System.out,
-          "Thread dump because: " + msg);
+        Threads.printThreadInfo(System.out, "Thread dump because: " + msg);
         throw new RuntimeException(msg);
       }
       try {
@@ -257,7 +258,6 @@ public class JVMClusterUtil {
           LOG.error("Exception occurred in HMaster.shutdown()", e);
         }
       }
-
     }
     boolean wasInterrupted = false;
     final long maxTime = System.currentTimeMillis() + 30 * 1000;
@@ -296,7 +296,11 @@ public class JVMClusterUtil {
         if (!atLeastOneLiveServer) break;
         for (RegionServerThread t : regionservers) {
           if (t.isAlive()) {
-            LOG.warn("RegionServerThreads taking too long to stop, interrupting");
+            LOG.warn("RegionServerThreads taking too long to stop, interrupting; thread dump "  +
+              "if > 3 attempts: i=" + i);
+            if (i > 3) {
+              Threads.printThreadInfo(System.out, "Thread dump " + t.getName());
+            }
             t.interrupt();
           }
         }

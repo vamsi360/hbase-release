@@ -29,8 +29,8 @@ import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Threads;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.Code;
@@ -38,6 +38,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
 
 /**
@@ -113,7 +114,10 @@ public final class ReadOnlyZKClient implements Closeable {
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
-  private ZooKeeper zookeeper;
+  @VisibleForTesting
+  ZooKeeper zookeeper;
+
+  private int pendingRequests = 0;
 
   private String getId() {
     return String.format("0x%08x", System.identityHashCode(this));
@@ -126,12 +130,12 @@ public final class ReadOnlyZKClient implements Closeable {
     this.retryIntervalMs =
         conf.getInt(RECOVERY_RETRY_INTERVAL_MILLIS, DEFAULT_RECOVERY_RETRY_INTERVAL_MILLIS);
     this.keepAliveTimeMs = conf.getInt(KEEPALIVE_MILLIS, DEFAULT_KEEPALIVE_MILLIS);
-    LOG.info("Start read only zookeeper connection " + getId() + " to " + connectString +
-        ", session timeout " + sessionTimeoutMs + " ms, retries " + maxRetries +
-        ", retry interval " + retryIntervalMs + " ms, keep alive " + keepAliveTimeMs + " ms");
-    Thread t = new Thread(this::run, "ReadOnlyZKClient");
-    t.setDaemon(true);
-    t.start();
+    LOG.info(
+      "Connect {} to {} with session timeout={}ms, retries {}, " +
+        "retry interval {}ms, keepAlive={}ms",
+      getId(), connectString, sessionTimeoutMs, maxRetries, retryIntervalMs, keepAliveTimeMs);
+    Threads.setDaemonThreadRunning(new Thread(this::run),
+      "ReadOnlyZKClient-" + connectString + "@" + getId());
   }
 
   private abstract class ZKTask<T> extends Task {
@@ -155,6 +159,7 @@ public final class ReadOnlyZKClient implements Closeable {
 
         @Override
         public void exec(ZooKeeper alwaysNull) {
+          pendingRequests--;
           Code code = Code.get(rc);
           if (code == Code.OK) {
             future.complete(ret);
@@ -168,19 +173,19 @@ public final class ReadOnlyZKClient implements Closeable {
             future.completeExceptionally(KeeperException.create(code, path));
           } else {
             if (code == Code.SESSIONEXPIRED) {
-              LOG.warn(getId() + " session expired, close and reconnect");
+              LOG.warn("{} to {} session expired, close and reconnect", getId(), connectString);
               try {
                 zk.close();
               } catch (InterruptedException e) {
               }
             }
             if (ZKTask.this.delay(retryIntervalMs, maxRetries)) {
-              LOG.warn(getId() + " failed for " + operationType + " of " + path + ", code = " +
-                  code + ", retries = " + ZKTask.this.retries);
+              LOG.warn("{} to {} failed for {} of {}, code = {}, retries = {}", getId(),
+                connectString, operationType, path, code, ZKTask.this.retries);
               tasks.add(ZKTask.this);
             } else {
-              LOG.warn(getId() + " failed for " + operationType + " of " + path + ", code = " +
-                  code + ", retries = " + ZKTask.this.retries + ", give up");
+              LOG.warn("{} to {} failed for {} of {}, code = {}, retries = {}, give up", getId(),
+                connectString, operationType, path, code, ZKTask.this.retries);
               future.completeExceptionally(KeeperException.create(code, path));
             }
           }
@@ -204,6 +209,14 @@ public final class ReadOnlyZKClient implements Closeable {
       return true;
     }
 
+    protected abstract void doExec(ZooKeeper zk);
+
+    @Override
+    public final void exec(ZooKeeper zk) {
+      pendingRequests++;
+      doExec(zk);
+    }
+
     public boolean delay(long intervalMs, int maxRetries) {
       if (retries >= maxRetries) {
         return false;
@@ -216,14 +229,12 @@ public final class ReadOnlyZKClient implements Closeable {
     @Override
     public void connectFailed(IOException e) {
       if (delay(retryIntervalMs, maxRetries)) {
-        LOG.warn(getId() + " failed to connect to zk for " + operationType + " of " + path +
-            ", retries = " + retries,
-          e);
+        LOG.warn("{} to {} failed to connect to zk fo {} of {}, retries = {}", getId(),
+          connectString, operationType, path, retries, e);
         tasks.add(this);
       } else {
-        LOG.warn(getId() + " failed to connect to zk for " + operationType + " of " + path +
-            ", retries = " + retries + ", give up",
-          e);
+        LOG.warn("{} to {} failed to connect to zk fo {} of {}, retries = {}, give up", getId(),
+          connectString, operationType, path, retries, e);
         future.completeExceptionally(e);
       }
     }
@@ -248,9 +259,9 @@ public final class ReadOnlyZKClient implements Closeable {
     tasks.add(new ZKTask<byte[]>(path, future, "get") {
 
       @Override
-      public void exec(ZooKeeper zk) {
-        zk.getData(path, false, (rc, path, ctx, data, stat) -> onComplete(zk, rc, data, true),
-          null);
+      protected void doExec(ZooKeeper zk) {
+        zk.getData(path, false,
+            (rc, path, ctx, data, stat) -> onComplete(zk, rc, data, true), null);
       }
     });
     return future;
@@ -264,7 +275,7 @@ public final class ReadOnlyZKClient implements Closeable {
     tasks.add(new ZKTask<Stat>(path, future, "exists") {
 
       @Override
-      public void exec(ZooKeeper zk) {
+      protected void doExec(ZooKeeper zk) {
         zk.exists(path, false, (rc, path, ctx, stat) -> onComplete(zk, rc, stat, false), null);
       }
     });
@@ -284,8 +295,7 @@ public final class ReadOnlyZKClient implements Closeable {
   private ZooKeeper getZk() throws IOException {
     // may be closed when session expired
     if (zookeeper == null || !zookeeper.getState().isAlive()) {
-      zookeeper = new ZooKeeper(connectString, sessionTimeoutMs, e -> {
-      });
+      zookeeper = new ZooKeeper(connectString, sessionTimeoutMs, e -> {});
     }
     return zookeeper;
   }
@@ -302,9 +312,11 @@ public final class ReadOnlyZKClient implements Closeable {
         break;
       }
       if (task == null) {
-        LOG.info(getId() + " no activities for " + keepAliveTimeMs +
-            " ms, close active connection. Will reconnect next time when there are new requests.");
-        closeZk();
+        if (pendingRequests == 0) {
+          LOG.debug("{} to {} inactive for {}ms; closing (Will reconnect when new requests)",
+            getId(), connectString, keepAliveTimeMs);
+          closeZk();
+        }
         continue;
       }
       if (!task.needZk()) {
@@ -329,14 +341,9 @@ public final class ReadOnlyZKClient implements Closeable {
   @Override
   public void close() {
     if (closed.compareAndSet(false, true)) {
-      LOG.info("Close zookeeper connection " + getId() + " to " + connectString);
+      LOG.info("Close zookeeper connection {} to {}", getId(), connectString);
       tasks.add(CLOSE);
     }
-  }
-
-  @VisibleForTesting
-  ZooKeeper getZooKeeper() {
-    return zookeeper;
   }
 
   @VisibleForTesting

@@ -114,8 +114,6 @@ import org.apache.hadoop.hbase.master.RegionState;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
-import org.apache.hadoop.hbase.regionserver.wal.MetricsWAL;
-import org.apache.hadoop.hbase.regionserver.wal.WALActionsListener;
 import org.apache.hadoop.hbase.security.AccessDeniedException;
 import org.apache.hadoop.hbase.security.UserProvider;
 import org.apache.hadoop.hbase.util.Bytes.ByteArrayComparator;
@@ -142,6 +140,7 @@ import org.apache.yetus.audience.InterfaceStability;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.apache.hbase.thirdparty.com.google.common.base.Joiner;
 import org.apache.hbase.thirdparty.com.google.common.base.Preconditions;
 import org.apache.hbase.thirdparty.com.google.common.collect.ImmutableList;
@@ -149,6 +148,7 @@ import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
 import org.apache.hbase.thirdparty.com.google.common.collect.Multimap;
 import org.apache.hbase.thirdparty.com.google.common.collect.Ordering;
 import org.apache.hbase.thirdparty.com.google.common.collect.TreeMultimap;
+
 import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.AdminService.BlockingInterface;
 
@@ -1480,9 +1480,7 @@ public class HBaseFsck extends Configured implements Closeable {
     // unless I pass along via the conf.
     Configuration confForWAL = new Configuration(c);
     confForWAL.set(HConstants.HBASE_DIR, rootdir.toString());
-    WAL wal = (new WALFactory(confForWAL,
-        Collections.<WALActionsListener> singletonList(new MetricsWAL()), walFactoryID))
-            .getWAL(metaHRI.getEncodedNameAsBytes(), metaHRI.getTable().getNamespace());
+    WAL wal = new WALFactory(confForWAL, walFactoryID).getWAL(metaHRI);
     HRegion meta = HRegion.createHRegion(metaHRI, rootdir, c, metaDescriptor, wal);
     MasterFileSystem.setInfoFamilyCachingForMeta(metaDescriptor, true);
     return meta;
@@ -1807,6 +1805,11 @@ public class HBaseFsck extends Configured implements Closeable {
   private void loadTableStates()
   throws IOException {
     tableStates = MetaTableAccessor.getTableStates(connection);
+    // Add hbase:meta so this tool keeps working. In hbase2, meta is always enabled though it
+    // has no entry in the table states. HBCK doesn't work right w/ hbase2 but just do this in
+    // meantime.
+    this.tableStates.put(TableName.META_TABLE_NAME,
+        new TableState(TableName.META_TABLE_NAME, TableState.State.ENABLED));
   }
 
   /**
@@ -3800,7 +3803,7 @@ public class HBaseFsck extends Configured implements Closeable {
     @Override
     public int hashCode() {
       int hash = Arrays.hashCode(getRegionName());
-      hash ^= getRegionId();
+      hash = (int) (hash ^ getRegionId());
       hash ^= Arrays.hashCode(getStartKey());
       hash ^= Arrays.hashCode(getEndKey());
       hash ^= Boolean.valueOf(isOffline()).hashCode();
@@ -3808,7 +3811,7 @@ public class HBaseFsck extends Configured implements Closeable {
       if (regionServer != null) {
         hash ^= regionServer.hashCode();
       }
-      hash ^= modTime;
+      hash = (int) (hash ^ modTime);
       return hash;
     }
   }
@@ -4054,7 +4057,7 @@ public class HBaseFsck extends Configured implements Closeable {
         return -1;
       }
       // both l.hdfsEntry and r.hdfsEntry must not be null.
-      return (int) (l.hdfsEntry.hri.getRegionId()- r.hdfsEntry.hri.getRegionId());
+      return Long.compare(l.hdfsEntry.hri.getRegionId(), r.hdfsEntry.hri.getRegionId());
     }
   };
 
