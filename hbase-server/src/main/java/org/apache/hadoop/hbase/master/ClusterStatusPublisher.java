@@ -175,7 +175,7 @@ public class ClusterStatusPublisher extends ScheduledChore {
     publisher.publish(cs);
   }
 
-  protected void cleanup() {
+  protected synchronized void cleanup() {
     connected = false;
     publisher.close();
   }

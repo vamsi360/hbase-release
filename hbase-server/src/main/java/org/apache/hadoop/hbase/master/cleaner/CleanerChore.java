@@ -278,7 +278,7 @@ public abstract class CleanerChore<T extends FileCleanerDelegate> extends Schedu
   }
 
   @Override
-  public void cleanup() {
+  public synchronized void cleanup() {
     for (T lc : this.cleanersChain) {
       try {
         lc.stop("Exiting");
