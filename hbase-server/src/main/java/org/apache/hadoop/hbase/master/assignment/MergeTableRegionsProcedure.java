@@ -263,6 +263,12 @@ public class MergeTableRegionsProcedure
     return Flow.HAS_MORE_STATE;
   }
 
+  /**
+   * To rollback {@link MergeTableRegionsProcedure}, two AssignProcedures are asynchronously
+   * submitted for each region to be merged (rollback doesn't wait on the completion of the
+   * AssignProcedures) . This can be improved by changing rollback() to support sub-procedures.
+   * See HBASE-19851 for details.
+   */
   @Override
   protected void rollbackState(
       final MasterProcedureEnv env,
@@ -612,7 +618,7 @@ public class MergeTableRegionsProcedure
     final TableDescriptor htd = env.getMasterServices().getTableDescriptors().get(getTableName());
 
     for (String family: regionFs.getFamilies()) {
-      final ColumnFamilyDescriptor hcd = htd.getColumnFamily(family.getBytes());
+      final ColumnFamilyDescriptor hcd = htd.getColumnFamily(Bytes.toBytes(family));
       final Collection<StoreFileInfo> storeFiles = regionFs.getStoreFiles(family);
 
       if (storeFiles != null && storeFiles.size() > 0) {

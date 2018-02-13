@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.util.BuilderStyleTest;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.PrettyPrinter;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -43,6 +44,11 @@ import org.junit.rules.ExpectedException;
 @Category({MiscTests.class, SmallTests.class})
 @Deprecated
 public class TestHColumnDescriptor {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestHColumnDescriptor.class);
+
   @Rule
   public ExpectedException expectedEx = ExpectedException.none();
   @Test

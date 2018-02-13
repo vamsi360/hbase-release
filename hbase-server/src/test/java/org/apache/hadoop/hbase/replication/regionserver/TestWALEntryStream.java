@@ -1,5 +1,4 @@
-/*
- *
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -27,24 +26,23 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.NavigableMap;
 import java.util.NoSuchElementException;
 import java.util.OptionalLong;
 import java.util.TreeMap;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 import org.apache.hadoop.hbase.regionserver.MultiVersionConcurrencyControl;
 import org.apache.hadoop.hbase.regionserver.wal.WALActionsListener;
 import org.apache.hadoop.hbase.replication.WALEntryFilter;
@@ -62,6 +60,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -71,6 +70,10 @@ import org.mockito.Mockito;
 @Category({ ReplicationTests.class, LargeTests.class })
 public class TestWALEntryStream {
 
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestWALEntryStream.class);
+
   private static HBaseTestingUtility TEST_UTIL;
   private static Configuration conf;
   private static FileSystem fs;
@@ -78,8 +81,8 @@ public class TestWALEntryStream {
   private static final TableName tableName = TableName.valueOf("tablename");
   private static final byte[] family = Bytes.toBytes("column");
   private static final byte[] qualifier = Bytes.toBytes("qualifier");
-  private static final HRegionInfo info =
-      new HRegionInfo(tableName, HConstants.EMPTY_START_ROW, HConstants.LAST_ROW, false);
+  private static final RegionInfo info = RegionInfoBuilder.newBuilder(tableName)
+      .setStartKey(HConstants.EMPTY_START_ROW).setEndKey(HConstants.LAST_ROW).build();
   private static final NavigableMap<byte[], Integer> scopes = getScopes();
 
   private static NavigableMap<byte[], Integer> getScopes() {
@@ -114,11 +117,10 @@ public class TestWALEntryStream {
   @Before
   public void setUp() throws Exception {
     walQueue = new PriorityBlockingQueue<>();
-    List<WALActionsListener> listeners = new ArrayList<WALActionsListener>();
     pathWatcher = new PathWatcher();
-    listeners.add(pathWatcher);
-    final WALFactory wals = new WALFactory(conf, listeners, tn.getMethodName());
-    log = wals.getWAL(info.getEncodedNameAsBytes(), info.getTable().getNamespace());
+    final WALFactory wals = new WALFactory(conf, tn.getMethodName());
+    wals.getWALProvider().addWALActionsListener(pathWatcher);
+    log = wals.getWAL(info);
   }
 
   @After
@@ -364,7 +366,7 @@ public class TestWALEntryStream {
     appendToLog("foo");
     entryBatch = batcher.take();
     assertEquals(1, entryBatch.getNbEntries());
-    assertEquals(getRow(entryBatch.getWalEntries().get(0)), "foo");
+    assertEquals("foo", getRow(entryBatch.getWalEntries().get(0)));
   }
 
   private String getRow(WAL.Entry entry) {

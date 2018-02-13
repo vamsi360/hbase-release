@@ -23,8 +23,11 @@ import org.apache.yetus.audience.InterfaceAudience;
 /**
  * Factory for creating cells for CPs. It does deep_copy {@link CellBuilderType#DEEP_COPY} while
  * creating cells.
+ * This class is limited private only for use in unit-tests.
+ * For non-test uses in coprocessors, get an instance of type {@link RawCellBuilder}
+ * using RegionCoprocessorEnvironment#getCellBuilder.
  */
-@InterfaceAudience.Private
+@InterfaceAudience.LimitedPrivate(HBaseInterfaceAudience.UNITTEST)
 public final class RawCellBuilderFactory {
 
   /**

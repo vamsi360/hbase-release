@@ -1,5 +1,4 @@
-/*
- *
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,12 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.hadoop.hbase.client;
 
-package org.apache.hadoop.hbase;
+import java.io.IOException;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
+import org.apache.hadoop.hbase.testclassification.ClientTests;
+import org.apache.hadoop.hbase.testclassification.LargeTests;
+import org.junit.ClassRule;
+import org.junit.experimental.categories.Category;
 
-/**
- * Monitor the resources. use by the tests All resources in {@link ResourceCheckerJUnitListener}
- *  plus the number of connection.
- */
-public class ServerResourceCheckerJUnitListener extends ResourceCheckerJUnitListener {
+@Category({ ClientTests.class, LargeTests.class })
+public class TestCIGetOperationTimeout extends AbstractTestCIOperationTimeout {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestCIGetOperationTimeout.class);
+
+  @Override
+  protected void execute(Table table) throws IOException {
+    table.get(new Get(FAM_NAM));
+  }
 }

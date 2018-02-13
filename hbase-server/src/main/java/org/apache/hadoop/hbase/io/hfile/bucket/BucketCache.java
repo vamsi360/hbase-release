@@ -820,7 +820,8 @@ public class BucketCache implements BlockCache, HeapSize {
         }
       }
 
-      PriorityQueue<BucketEntryGroup> bucketQueue = new PriorityQueue<>(3);
+      PriorityQueue<BucketEntryGroup> bucketQueue = new PriorityQueue<>(3,
+          Comparator.comparingLong(BucketEntryGroup::overflow));
 
       bucketQueue.add(bucketSingle);
       bucketQueue.add(bucketMulti);
@@ -904,6 +905,7 @@ public class BucketCache implements BlockCache, HeapSize {
       this.writerEnabled = false;
     }
 
+    @Override
     public void run() {
       List<RAMQueueEntry> entries = new ArrayList<>();
       try {
@@ -1348,7 +1350,7 @@ public class BucketCache implements BlockCache, HeapSize {
    * the eviction algorithm takes the appropriate number of elements out of each
    * according to configuration parameters and their relative sizes.
    */
-  private class BucketEntryGroup implements Comparable<BucketEntryGroup> {
+  private class BucketEntryGroup {
 
     private CachedEntryQueue queue;
     private long totalSize = 0;
@@ -1388,17 +1390,6 @@ public class BucketCache implements BlockCache, HeapSize {
     public long totalSize() {
       return totalSize;
     }
-
-    @Override
-    public int compareTo(BucketEntryGroup that) {
-      return Long.compare(this.overflow(), that.overflow());
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      return this == that;
-    }
-
   }
 
   /**

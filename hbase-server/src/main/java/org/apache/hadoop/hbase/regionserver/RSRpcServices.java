@@ -100,6 +100,7 @@ import org.apache.hadoop.hbase.ipc.ServerNotRunningYetException;
 import org.apache.hadoop.hbase.ipc.ServerRpcController;
 import org.apache.hadoop.hbase.log.HBaseMarkers;
 import org.apache.hadoop.hbase.master.MasterRpcServices;
+import org.apache.hadoop.hbase.net.Address;
 import org.apache.hadoop.hbase.quotas.ActivePolicyEnforcement;
 import org.apache.hadoop.hbase.quotas.OperationQuota;
 import org.apache.hadoop.hbase.quotas.QuotaUtil;
@@ -558,67 +559,60 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
    * Mutate a list of rows atomically.
    * @param cellScanner if non-null, the mutation data -- the Cell content.
    */
-  private void mutateRows(final HRegion region, final OperationQuota quota,
-      final List<ClientProtos.Action> actions, final CellScanner cellScanner,
-      RegionActionResult.Builder builder, final ActivePolicyEnforcement spaceQuotaEnforcement)
-      throws IOException {
-    for (ClientProtos.Action action: actions) {
-      if (action.hasGet()) {
-        throw new DoNotRetryIOException("Atomic put and/or delete only, not a Get=" +
-          action.getGet());
-      }
-    }
-    doBatchOp(builder, region, quota, actions, cellScanner, spaceQuotaEnforcement, true);
-  }
-
-  /**
-   * Mutate a list of rows atomically.
-   * @param cellScanner if non-null, the mutation data -- the Cell content.
-   */
   private boolean checkAndRowMutate(final HRegion region, final List<ClientProtos.Action> actions,
                                     final CellScanner cellScanner, byte[] row, byte[] family, byte[] qualifier,
                                     CompareOperator op, ByteArrayComparable comparator, RegionActionResult.Builder builder,
                                     ActivePolicyEnforcement spaceQuotaEnforcement) throws IOException {
-    if (!region.getRegionInfo().isMetaRegion()) {
-      regionServer.cacheFlusher.reclaimMemStoreMemory();
-    }
-    RowMutations rm = null;
-    int i = 0;
-    ClientProtos.ResultOrException.Builder resultOrExceptionOrBuilder =
+    int countOfCompleteMutation = 0;
+    try {
+      if (!region.getRegionInfo().isMetaRegion()) {
+        regionServer.cacheFlusher.reclaimMemStoreMemory();
+      }
+      RowMutations rm = null;
+      int i = 0;
+      ClientProtos.ResultOrException.Builder resultOrExceptionOrBuilder =
         ClientProtos.ResultOrException.newBuilder();
-    for (ClientProtos.Action action: actions) {
-      if (action.hasGet()) {
-        throw new DoNotRetryIOException("Atomic put and/or delete only, not a Get=" +
+      for (ClientProtos.Action action: actions) {
+        if (action.hasGet()) {
+          throw new DoNotRetryIOException("Atomic put and/or delete only, not a Get=" +
             action.getGet());
-      }
-      MutationType type = action.getMutation().getMutateType();
-      if (rm == null) {
-        rm = new RowMutations(action.getMutation().getRow().toByteArray(), actions.size());
-      }
-      switch (type) {
-        case PUT:
-          Put put = ProtobufUtil.toPut(action.getMutation(), cellScanner);
-          checkCellSizeLimit(region, put);
-          spaceQuotaEnforcement.getPolicyEnforcement(region).check(put);
-          rm.add(put);
-          break;
-        case DELETE:
-          Delete del = ProtobufUtil.toDelete(action.getMutation(), cellScanner);
-          spaceQuotaEnforcement.getPolicyEnforcement(region).check(del);
-          rm.add(del);
-          break;
-        default:
-          throw new DoNotRetryIOException("Atomic put and/or delete only, not " + type.name());
-      }
-      // To unify the response format with doNonAtomicRegionMutation and read through client's
-      // AsyncProcess we have to add an empty result instance per operation
-      resultOrExceptionOrBuilder.clear();
-      resultOrExceptionOrBuilder.setIndex(i++);
-      builder.addResultOrException(
+        }
+        MutationType type = action.getMutation().getMutateType();
+        if (rm == null) {
+          rm = new RowMutations(action.getMutation().getRow().toByteArray(), actions.size());
+        }
+        switch (type) {
+          case PUT:
+            Put put = ProtobufUtil.toPut(action.getMutation(), cellScanner);
+            ++countOfCompleteMutation;
+            checkCellSizeLimit(region, put);
+            spaceQuotaEnforcement.getPolicyEnforcement(region).check(put);
+            rm.add(put);
+            break;
+          case DELETE:
+            Delete del = ProtobufUtil.toDelete(action.getMutation(), cellScanner);
+            ++countOfCompleteMutation;
+            spaceQuotaEnforcement.getPolicyEnforcement(region).check(del);
+            rm.add(del);
+            break;
+          default:
+            throw new DoNotRetryIOException("Atomic put and/or delete only, not " + type.name());
+        }
+        // To unify the response format with doNonAtomicRegionMutation and read through client's
+        // AsyncProcess we have to add an empty result instance per operation
+        resultOrExceptionOrBuilder.clear();
+        resultOrExceptionOrBuilder.setIndex(i++);
+        builder.addResultOrException(
           resultOrExceptionOrBuilder.build());
+      }
+      return region.checkAndRowMutate(row, family, qualifier, op, comparator, rm);
+    } finally {
+      // Currently, the checkAndMutate isn't supported by batch so it won't mess up the cell scanner
+      // even if the malformed cells are not skipped.
+      for (int i = countOfCompleteMutation; i < actions.size(); ++i) {
+        skipCellsForMutation(actions.get(i), cellScanner);
+      }
     }
-    return region.checkAndRowMutate(row, family, qualifier, op,
-        comparator, rm, Boolean.TRUE);
   }
 
   /**
@@ -785,9 +779,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           context.incrementResponseExceptionSize(pair.getSerializedSize());
           resultOrExceptionBuilder.setIndex(action.getIndex());
           builder.addResultOrException(resultOrExceptionBuilder.build());
-          if (cellScanner != null) {
-            skipCellsForMutation(action, cellScanner);
-          }
+          skipCellsForMutation(action, cellScanner);
           continue;
         }
         if (action.hasGet()) {
@@ -894,6 +886,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       try {
         doBatchOp(builder, region, quota, mutations, cellScanner, spaceQuotaEnforcement, false);
       } catch (IOException ioe) {
+        // TODO do the refactor to avoid this catch as it is useless
+        // doBatchOp has handled the IOE for all non-atomic operations.
         rpcServer.getMetrics().exception(ioe);
         NameBytesPair pair = ResponseConverter.buildException(ioe);
         resultOrExceptionBuilder.setException(pair);
@@ -945,6 +939,10 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       Map<Mutation, ClientProtos.Action> mutationActionMap = new HashMap<>();
       int i = 0;
       for (ClientProtos.Action action: mutations) {
+        if (action.hasGet()) {
+          throw new DoNotRetryIOException("Atomic put and/or delete only, not a Get=" +
+            action.getGet());
+        }
         MutationProto m = action.getMutation();
         Mutation mutation;
         if (m.getMutateType() == MutationType.PUT) {
@@ -967,8 +965,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       }
 
       // HBASE-17924
-      // Sort to improve lock efficiency for non-atomic batch of operations. If atomic (mostly
-      // called from mutateRows()), order is preserved as its expected from the client
+      // Sort to improve lock efficiency for non-atomic batch of operations. If atomic
+      // order is preserved as its expected from the client
       if (!atomic) {
         Arrays.sort(mArray, (v1, v2) -> Row.COMPARATOR.compare(v1, v2));
       }
@@ -1003,11 +1001,18 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
         }
       }
     } catch (IOException ie) {
+      int processedMutationIndex = 0;
+      for (Action mutation : mutations) {
+        // The non-null mArray[i] means the cell scanner has been read.
+        if (mArray[processedMutationIndex++] == null) {
+          skipCellsForMutation(mutation, cells);
+        }
+        if (!atomic) {
+          builder.addResultOrException(getResultOrException(ie, mutation.getIndex()));
+        }
+      }
       if (atomic) {
         throw ie;
-      }
-      for (Action mutation : mutations) {
-        builder.addResultOrException(getResultOrException(ie, mutation.getIndex()));
       }
     }
     if (regionServer.metricsRegionServer != null) {
@@ -1173,7 +1178,11 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
       throw new IllegalArgumentException("Failed resolve of " + initialIsa);
     }
     priority = createPriority();
-    String name = rs.getProcessName() + "/" + initialIsa.toString();
+    String hostname = initialIsa.getHostName();
+    // Using Address means we don't get the IP too. Shorten it more even to just the host name
+    // w/o the domain.
+    String name = rs.getProcessName() + "/" +
+        Address.fromParts(initialIsa.getHostName(), initialIsa.getPort()).toStringWithoutDomain();
     // Set how many times to retry talking to another server over Connection.
     ConnectionUtils.setServerSideHConnectionRetriesConfig(rs.conf, name, LOG);
     rpcServer = createRpcServer(rs, rs.conf, rpcSchedulerFactory, bindAddress, name);
@@ -2546,9 +2555,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
         // All Mutations in this RegionAction not executed as we can not see the Region online here
         // in this RS. Will be retried from Client. Skipping all the Cells in CellScanner
         // corresponding to these Mutations.
-        if (cellScanner != null) {
-          skipCellsForMutations(regionAction.getActionList(), cellScanner);
-        }
+        skipCellsForMutations(regionAction.getActionList(), cellScanner);
         continue;  // For this region it's a failure.
       }
 
@@ -2569,8 +2576,8 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
                   cellScanner, row, family, qualifier, op,
                   comparator, regionActionResultBuilder, spaceQuotaEnforcement);
           } else {
-            mutateRows(region, quota, regionAction.getActionList(), cellScanner,
-                regionActionResultBuilder, spaceQuotaEnforcement);
+            doBatchOp(regionActionResultBuilder, region, quota, regionAction.getActionList(),
+              cellScanner, spaceQuotaEnforcement, true);
             processed = Boolean.TRUE;
           }
         } catch (IOException e) {
@@ -2617,12 +2624,18 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
   }
 
   private void skipCellsForMutations(List<Action> actions, CellScanner cellScanner) {
+    if (cellScanner == null) {
+      return;
+    }
     for (Action action : actions) {
       skipCellsForMutation(action, cellScanner);
     }
   }
 
   private void skipCellsForMutation(Action action, CellScanner cellScanner) {
+    if (cellScanner == null) {
+      return;
+    }
     try {
       if (action.hasMutation()) {
         MutationProto m = action.getMutation();
@@ -2809,7 +2822,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
     private static final long serialVersionUID = -4305297078988180130L;
 
     @Override
-    public Throwable fillInStackTrace() {
+    public synchronized Throwable fillInStackTrace() {
       return this;
     }
   };

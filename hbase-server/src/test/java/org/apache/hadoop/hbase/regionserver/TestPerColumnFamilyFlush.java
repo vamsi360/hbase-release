@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -53,6 +53,7 @@ import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.wal.AbstractFSWALProvider;
 import org.apache.hadoop.hbase.wal.WAL;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -65,6 +66,11 @@ import org.apache.hbase.thirdparty.com.google.common.hash.Hashing;
  */
 @Category({ RegionServerTests.class, LargeTests.class })
 public class TestPerColumnFamilyFlush {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestPerColumnFamilyFlush.class);
+
   private static final Logger LOG = LoggerFactory.getLogger(TestPerColumnFamilyFlush.class);
 
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
@@ -121,10 +127,10 @@ public class TestPerColumnFamilyFlush {
       Arrays.equals(r.getFamilyMap(family).get(qf), val));
   }
 
-  @Test(timeout = 180000)
+  @Test
   public void testSelectiveFlushWhenEnabled() throws IOException {
-    // Set up the configuration
-    Configuration conf = HBaseConfiguration.create();
+    // Set up the configuration, use new one to not conflict with minicluster in other tests
+    Configuration conf = new HBaseTestingUtility().getConfiguration();
     conf.setLong(HConstants.HREGION_MEMSTORE_FLUSH_SIZE, 200 * 1024);
     conf.set(FlushPolicyFactory.HBASE_FLUSH_POLICY_KEY, FlushAllLargeStoresPolicy.class.getName());
     conf.setLong(FlushLargeStoresPolicy.HREGION_COLUMNFAMILY_FLUSH_SIZE_LOWER_BOUND_MIN,
@@ -263,10 +269,10 @@ public class TestPerColumnFamilyFlush {
     HBaseTestingUtility.closeRegionAndWAL(region);
   }
 
-  @Test(timeout = 180000)
+  @Test
   public void testSelectiveFlushWhenNotEnabled() throws IOException {
-    // Set up the configuration
-    Configuration conf = HBaseConfiguration.create();
+    // Set up the configuration, use new one to not conflict with minicluster in other tests
+    Configuration conf = new HBaseTestingUtility().getConfiguration();
     conf.setLong(HConstants.HREGION_MEMSTORE_FLUSH_SIZE, 200 * 1024);
     conf.set(FlushPolicyFactory.HBASE_FLUSH_POLICY_KEY, FlushAllStoresPolicy.class.getName());
 
@@ -417,7 +423,7 @@ public class TestPerColumnFamilyFlush {
   }
 
   // Test Log Replay with Distributed log split on.
-  @Test(timeout = 180000)
+  @Test
   public void testLogReplayWithDistributedLogSplit() throws Exception {
     doTestLogReplay();
   }
@@ -436,7 +442,7 @@ public class TestPerColumnFamilyFlush {
    * test ensures that we do a full-flush in that scenario.
    * @throws IOException
    */
-  @Test(timeout = 180000)
+  @Test
   public void testFlushingWhenLogRolling() throws Exception {
     TableName tableName = TableName.valueOf("testFlushingWhenLogRolling");
     Configuration conf = TEST_UTIL.getConfiguration();
@@ -553,7 +559,7 @@ public class TestPerColumnFamilyFlush {
 
   // Under the same write load, small stores should have less store files when
   // percolumnfamilyflush enabled.
-  @Test(timeout = 180000)
+  @Test
   public void testCompareStoreFileCount() throws Exception {
     long memstoreFlushSize = 1024L * 1024;
     Configuration conf = TEST_UTIL.getConfiguration();

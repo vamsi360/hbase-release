@@ -74,8 +74,12 @@ public class MultiVersionConcurrencyControl {
   public void advanceTo(long newStartPoint) {
     while (true) {
       long seqId = this.getWritePoint();
-      if (seqId >= newStartPoint) break;
-      if (this.tryAdvanceTo(/* newSeqId = */ newStartPoint, /* expected = */ seqId)) break;
+      if (seqId >= newStartPoint) {
+        break;
+      }
+      if (this.tryAdvanceTo(newStartPoint, seqId)) {
+        break;
+      }
     }
   }
 
@@ -239,6 +243,7 @@ public class MultiVersionConcurrencyControl {
   }
 
   @VisibleForTesting
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("readPoint", readPoint)
@@ -286,7 +291,7 @@ public class MultiVersionConcurrencyControl {
   }
 
   public static final long FIXED_SIZE = ClassSize.align(
-      ClassSize.OBJECT +
+      (long)ClassSize.OBJECT +
       2 * Bytes.SIZEOF_LONG +
       2 * ClassSize.REFERENCE);
 }

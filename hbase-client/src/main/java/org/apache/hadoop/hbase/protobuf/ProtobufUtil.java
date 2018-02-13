@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -71,6 +70,7 @@ import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
+import org.apache.hadoop.hbase.net.Address;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.GetServerInfoRequest;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.GetServerInfoResponse;
@@ -91,7 +91,9 @@ import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier.RegionSpecifierType;
 import org.apache.hadoop.hbase.protobuf.generated.MapReduceProtos;
 import org.apache.hadoop.hbase.protobuf.generated.TableProtos;
+import org.apache.hadoop.hbase.protobuf.generated.RSGroupProtos;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos;
+import org.apache.hadoop.hbase.rsgroup.RSGroupInfo;
 import org.apache.hadoop.hbase.util.Addressing;
 import org.apache.hadoop.hbase.util.ByteStringer;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -117,11 +119,6 @@ import org.apache.yetus.audience.InterfaceAudience;
 public final class ProtobufUtil {
   private ProtobufUtil() {
   }
-
-  /**
-   * Primitive type to class mapping.
-   */
-  private final static Map<String, Class<?>> PRIMITIVES = new HashMap<>();
 
   /**
    * Many results are simple: no cell, exists true or false. To save on object creations,
@@ -179,16 +176,6 @@ public final class ProtobufUtil {
     ClassLoader parent = ProtobufUtil.class.getClassLoader();
     Configuration conf = HBaseConfiguration.create();
     CLASS_LOADER = new DynamicClassLoader(conf, parent);
-
-    PRIMITIVES.put(Boolean.TYPE.getName(), Boolean.TYPE);
-    PRIMITIVES.put(Byte.TYPE.getName(), Byte.TYPE);
-    PRIMITIVES.put(Character.TYPE.getName(), Character.TYPE);
-    PRIMITIVES.put(Short.TYPE.getName(), Short.TYPE);
-    PRIMITIVES.put(Integer.TYPE.getName(), Integer.TYPE);
-    PRIMITIVES.put(Long.TYPE.getName(), Long.TYPE);
-    PRIMITIVES.put(Float.TYPE.getName(), Float.TYPE);
-    PRIMITIVES.put(Double.TYPE.getName(), Double.TYPE);
-    PRIMITIVES.put(Void.TYPE.getName(), Void.TYPE);
   }
 
   /**
@@ -255,10 +242,11 @@ public final class ProtobufUtil {
    * Return the Exception thrown by the remote server wrapped in
    * ServiceException as cause. RemoteException are left untouched.
    *
-   * @param se ServiceException that wraps IO exception thrown by the server
+   * @param e ServiceException that wraps IO exception thrown by the server
    * @return Exception wrapped in ServiceException.
    */
-  public static IOException getServiceException(org.apache.hbase.thirdparty.com.google.protobuf.ServiceException e) {
+  public static IOException getServiceException(
+      org.apache.hbase.thirdparty.com.google.protobuf.ServiceException e) {
     Throwable t = e.getCause();
     if (ExceptionUtil.isInterrupt(t)) {
       return ExceptionUtil.asInterrupt(t);
@@ -1816,5 +1804,16 @@ public final class ProtobufUtil {
     String hostname = Addressing.parseHostname(str);
     int port = Addressing.parsePort(str);
     return ServerName.valueOf(hostname, port, -1L);
+  }
+
+  public static RSGroupInfo toGroupInfo(RSGroupProtos.RSGroupInfo proto) {
+    RSGroupInfo RSGroupInfo = new RSGroupInfo(proto.getName());
+    for(HBaseProtos.ServerName el: proto.getServersList()) {
+      RSGroupInfo.addServer(Address.fromParts(el.getHostName(), el.getPort()));
+    }
+    for(TableProtos.TableName pTableName: proto.getTablesList()) {
+      RSGroupInfo.addTable(ProtobufUtil.toTableName(pTableName));
+    }
+    return RSGroupInfo;
   }
 }

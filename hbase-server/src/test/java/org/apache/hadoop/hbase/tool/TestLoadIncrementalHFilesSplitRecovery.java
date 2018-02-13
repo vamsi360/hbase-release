@@ -19,8 +19,8 @@ package org.apache.hadoop.hbase.tool;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -33,10 +33,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -71,6 +71,7 @@ import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Pair;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -78,9 +79,11 @@ import org.junit.rules.TestName;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.apache.hbase.thirdparty.com.google.common.collect.Multimap;
 import org.apache.hbase.thirdparty.com.google.protobuf.RpcController;
 import org.apache.hbase.thirdparty.com.google.protobuf.ServiceException;
+
 import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.ClientProtos.BulkLoadHFileRequest;
@@ -90,6 +93,11 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.ClientProtos.BulkLoadHF
  */
 @Category({ MiscTests.class, LargeTests.class })
 public class TestLoadIncrementalHFilesSplitRecovery {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestLoadIncrementalHFilesSplitRecovery.class);
+
   private static final Logger LOG = LoggerFactory.getLogger(TestHRegionServerBulkLoad.class);
 
   static HBaseTestingUtility util;
@@ -269,7 +277,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
    * Test that shows that exception thrown from the RS side will result in an exception on the
    * LIHFile client.
    */
-  @Test(expected = IOException.class, timeout = 120000)
+  @Test(expected = IOException.class)
   public void testBulkLoadPhaseFailure() throws Exception {
     final TableName table = TableName.valueOf(name.getMethodName());
     final AtomicInteger attmptedCalls = new AtomicInteger();
@@ -383,7 +391,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
    * atomic bulk load call. We cannot use presplitting to test this path, so we actually inject a
    * split just before the atomic region load.
    */
-  @Test(timeout = 120000)
+  @Test
   public void testSplitWhileBulkLoadPhase() throws Exception {
     final TableName table = TableName.valueOf(name.getMethodName());
     try (Connection connection = ConnectionFactory.createConnection(util.getConfiguration())) {
@@ -420,7 +428,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
       // check that data was loaded
       // The three expected attempts are 1) failure because need to split, 2)
       // load of split top 3) load of split bottom
-      assertEquals(attemptedCalls.get(), 3);
+      assertEquals(3, attemptedCalls.get());
       assertExpectedTable(table, ROWCOUNT, 2);
     }
   }
@@ -429,7 +437,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
    * This test splits a table and attempts to bulk load. The bulk import files should be split
    * before atomically importing.
    */
-  @Test(timeout = 120000)
+  @Test
   public void testGroupOrSplitPresplit() throws Exception {
     final TableName table = TableName.valueOf(name.getMethodName());
     try (Connection connection = ConnectionFactory.createConnection(util.getConfiguration())) {
@@ -469,7 +477,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
    * This test creates a table with many small regions. The bulk load files would be splitted
    * multiple times before all of them can be loaded successfully.
    */
-  @Test(timeout = 120000)
+  @Test
   public void testSplitTmpFileCleanUp() throws Exception {
     final TableName table = TableName.valueOf(name.getMethodName());
     byte[][] SPLIT_KEYS = new byte[][] { Bytes.toBytes("row_00000010"),
@@ -504,7 +512,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
   /**
    * This simulates an remote exception which should cause LIHF to exit with an exception.
    */
-  @Test(expected = IOException.class, timeout = 120000)
+  @Test(expected = IOException.class)
   public void testGroupOrSplitFailure() throws Exception {
     final TableName tableName = TableName.valueOf(name.getMethodName());
     try (Connection connection = ConnectionFactory.createConnection(util.getConfiguration())) {
@@ -538,7 +546,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
     fail("doBulkLoad should have thrown an exception");
   }
 
-  @Test(timeout = 120000)
+  @Test
   public void testGroupOrSplitWhenRegionHoleExistsInMeta() throws Exception {
     final TableName tableName = TableName.valueOf(name.getMethodName());
     byte[][] SPLIT_KEYS = new byte[][] { Bytes.toBytes("row_00000100") };

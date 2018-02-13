@@ -204,8 +204,8 @@ public class ReplicationSourceWALReader extends Thread {
   // (highly likely we've closed the current log), we've hit the max retries, and autorecovery is
   // enabled, then dump the log
   private void handleEofException(IOException e) {
-    if (e instanceof EOFException ||
-        e.getCause() instanceof EOFException && logQueue.size() > 1 && this.eofAutoRecovery) {
+    if ((e instanceof EOFException || e.getCause() instanceof EOFException) &&
+      logQueue.size() > 1 && this.eofAutoRecovery) {
       try {
         if (fs.getFileStatus(logQueue.peek()).getLen() == 0) {
           LOG.warn("Forcing removal of 0 length log in queue: " + logQueue.peek());
@@ -355,7 +355,8 @@ public class ReplicationSourceWALReader extends Thread {
           List<StoreDescriptor> stores = bld.getStoresList();
           int totalStores = stores.size();
           for (int j = 0; j < totalStores; j++) {
-            totalStoreFilesSize += stores.get(j).getStoreFileSizeBytes();
+            totalStoreFilesSize =
+                (int) (totalStoreFilesSize + stores.get(j).getStoreFileSizeBytes());
           }
         } catch (IOException e) {
           LOG.error("Failed to deserialize bulk load entry from wal edit. "

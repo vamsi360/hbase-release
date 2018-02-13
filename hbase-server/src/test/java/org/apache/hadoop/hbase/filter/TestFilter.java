@@ -1,5 +1,4 @@
-/*
- *
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.filter;
 
 import static org.junit.Assert.assertEquals;
@@ -27,11 +25,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.CompareOperator;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -54,21 +52,27 @@ import org.apache.hadoop.hbase.wal.WAL;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import org.apache.hbase.thirdparty.com.google.common.base.Throwables;
 import org.junit.rules.TestName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.hbase.thirdparty.com.google.common.base.Throwables;
 
 /**
  * Test filters at the HRegion doorstep.
  */
 @Category({FilterTests.class, SmallTests.class})
 public class TestFilter {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestFilter.class);
+
   private final static Logger LOG = LoggerFactory.getLogger(TestFilter.class);
   private HRegion region;
   private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
@@ -136,8 +140,8 @@ public class TestFilter {
       Bytes.toBytes("f1"), Bytes.toBytes("f2")
     };
 
-  private long numRows = ROWS_ONE.length + ROWS_TWO.length;
-  private long colsPerRow = FAMILIES.length * QUALIFIERS_ONE.length;
+  private long numRows = (long) ROWS_ONE.length + ROWS_TWO.length;
+  private long colsPerRow = (long) FAMILIES.length * QUALIFIERS_ONE.length;
 
   @Before
   public void setUp() throws Exception {
@@ -1756,15 +1760,14 @@ public class TestFilter {
         assertTrue("Qualifier mismatch", CellUtil.matchingQualifier(kv, kvs[idx]));
         assertFalse("Should not have returned whole value", CellUtil.matchingValue(kv, kvs[idx]));
         if (useLen) {
-          assertEquals("Value in result is not SIZEOF_INT",
-                     kv.getValueLength(), Bytes.SIZEOF_INT);
+          assertEquals("Value in result is not SIZEOF_INT", Bytes.SIZEOF_INT, kv.getValueLength());
           LOG.info("idx = "  + idx + ", len=" + kvs[idx].getValueLength()
               + ", actual=" +  Bytes.toInt(CellUtil.cloneValue(kv)));
           assertEquals("Scan value should be the length of the actual value. ",
                      kvs[idx].getValueLength(), Bytes.toInt(CellUtil.cloneValue(kv)) );
           LOG.info("good");
         } else {
-          assertEquals("Value in result is not empty", kv.getValueLength(), 0);
+          assertEquals("Value in result is not empty", 0, kv.getValueLength());
         }
         idx++;
       }

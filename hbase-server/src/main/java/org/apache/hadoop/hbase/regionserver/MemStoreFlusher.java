@@ -712,11 +712,6 @@ class MemStoreFlusher implements FlushRequester {
     public int compareTo(Delayed o) {
       return -1;
     }
-
-    @Override
-    public boolean equals(Object obj) {
-      return (this == obj);
-    }
   }
 
   /**

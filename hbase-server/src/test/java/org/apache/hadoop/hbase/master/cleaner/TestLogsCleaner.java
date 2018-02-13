@@ -30,16 +30,15 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.ChoreService;
 import org.apache.hadoop.hbase.CoordinatedStateManager;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.Server;
@@ -48,12 +47,12 @@ import org.apache.hadoop.hbase.Waiter;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.ClusterConnection;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.replication.ReplicationFactory;
 import org.apache.hadoop.hbase.replication.ReplicationQueues;
 import org.apache.hadoop.hbase.replication.ReplicationQueuesArguments;
 import org.apache.hadoop.hbase.replication.ReplicationQueuesClientZKImpl;
 import org.apache.hadoop.hbase.replication.master.ReplicationLogCleaner;
-import org.apache.hadoop.hbase.replication.regionserver.Replication;
 import org.apache.hadoop.hbase.testclassification.MasterTests;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.zookeeper.MetaTableLocator;
@@ -63,14 +62,21 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.data.Stat;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
+
 @Category({MasterTests.class, MediumTests.class})
 public class TestLogsCleaner {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestLogsCleaner.class);
 
   private static final Logger LOG = LoggerFactory.getLogger(TestLogsCleaner.class);
   private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
@@ -113,7 +119,7 @@ public class TestLogsCleaner {
     conf.setLong("hbase.master.logcleaner.ttl", ttlWAL);
     conf.setLong("hbase.master.procedurewalcleaner.ttl", ttlProcedureWAL);
 
-    Replication.decorateMasterConfiguration(conf);
+    HMaster.decorateMasterConfiguration(conf);
     Server server = new DummyServer();
     ReplicationQueues repQueues = ReplicationFactory.getReplicationQueues(
         new ReplicationQueuesArguments(conf, server, server.getZooKeeper()));
@@ -195,7 +201,7 @@ public class TestLogsCleaner {
     }
   }
 
-  @Test(timeout=5000)
+  @Test
   public void testZnodeCversionChange() throws Exception {
     Configuration conf = TEST_UTIL.getConfiguration();
     ReplicationLogCleaner cleaner = new ReplicationLogCleaner();
@@ -392,6 +398,7 @@ public class TestLogsCleaner {
           .when(zk).getData("/hbase/replication/rs", null, new Stat());
     }
 
+    @Override
     public RecoverableZooKeeper getRecoverableZooKeeper() {
       return zk;
     }

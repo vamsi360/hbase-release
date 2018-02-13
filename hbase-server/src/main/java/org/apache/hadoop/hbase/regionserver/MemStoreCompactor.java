@@ -48,7 +48,7 @@ import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesti
 public class MemStoreCompactor {
 
   public static final long DEEP_OVERHEAD = ClassSize
-      .align(ClassSize.OBJECT + 4 * ClassSize.REFERENCE
+      .align((long)ClassSize.OBJECT + 4 * ClassSize.REFERENCE
           // compactingMemStore, versionedList, isInterrupted, strategy (the reference)
           // "action" is an enum and thus it is a class with static final constants,
           // so counting only the size of the reference to it and not the size of the internals
@@ -167,8 +167,8 @@ public class MemStoreCompactor {
 
       // Substitute the pipeline with one segment
       if (!isInterrupted.get()) {
-        if (resultSwapped = compactingMemStore.swapCompactedSegments(
-            versionedList, result, merge)) {
+        resultSwapped = compactingMemStore.swapCompactedSegments(versionedList, result, merge);
+        if (resultSwapped) {
           // update compaction strategy
           strategy.updateStats(result);
           // update the wal so it can be truncated and not get too long

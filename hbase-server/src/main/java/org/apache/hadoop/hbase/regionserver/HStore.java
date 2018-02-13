@@ -2283,6 +2283,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
       long snapshotId = -1; // -1 means do not drop
       if (dropMemstoreSnapshot && snapshot != null) {
         snapshotId = snapshot.getId();
+        snapshot.close();
       }
       HStore.this.updateStorefiles(storeFiles, snapshotId);
     }
@@ -2314,7 +2315,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
   }
 
   public static final long FIXED_OVERHEAD =
-      ClassSize.align(ClassSize.OBJECT + (17 * ClassSize.REFERENCE) + (11 * Bytes.SIZEOF_LONG)
+      ClassSize.align((long)ClassSize.OBJECT + (17 * ClassSize.REFERENCE) + (11 * Bytes.SIZEOF_LONG)
               + (5 * Bytes.SIZEOF_INT) + (2 * Bytes.SIZEOF_BOOLEAN));
 
   public static final long DEEP_OVERHEAD = ClassSize.align(FIXED_OVERHEAD

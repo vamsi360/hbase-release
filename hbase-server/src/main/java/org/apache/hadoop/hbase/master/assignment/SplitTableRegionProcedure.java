@@ -32,7 +32,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -63,16 +62,20 @@ import org.apache.hadoop.hbase.quotas.QuotaExceededException;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.regionserver.HStore;
 import org.apache.hadoop.hbase.regionserver.HStoreFile;
+import org.apache.hadoop.hbase.regionserver.RegionSplitPolicy;
 import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.Threads;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
+
 import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.AdminProtos.GetRegionInfoResponse;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProcedureProtos;
@@ -91,6 +94,7 @@ public class SplitTableRegionProcedure
   private RegionInfo daughter_1_RI;
   private RegionInfo daughter_2_RI;
   private byte[] bestSplitRow;
+  private RegionSplitPolicy splitPolicy;
 
   public SplitTableRegionProcedure() {
     // Required by the Procedure framework to create the procedure on replay
@@ -115,6 +119,16 @@ public class SplitTableRegionProcedure
         .setSplit(false)
         .setRegionId(rid)
         .build();
+    TableDescriptor htd = env.getMasterServices().getTableDescriptors().get(getTableName());
+    if(htd.getRegionSplitPolicyClassName() != null) {
+      // Since we don't have region reference here, creating the split policy instance without it.
+      // This can be used to invoke methods which don't require Region reference. This instantiation
+      // of a class on Master-side though it only makes sense on the RegionServer-side is
+      // for Phoenix Local Indexing. Refer HBASE-12583 for more information.
+      Class<? extends RegionSplitPolicy> clazz =
+          RegionSplitPolicy.getSplitPolicyClass(htd, env.getMasterConfiguration());
+      this.splitPolicy = ReflectionUtils.newInstance(clazz, env.getMasterConfiguration());
+    }
   }
 
   /**
@@ -263,6 +277,12 @@ public class SplitTableRegionProcedure
     return Flow.HAS_MORE_STATE;
   }
 
+  /**
+   * To rollback {@link SplitTableRegionProcedure}, an AssignProcedure is asynchronously
+   * submitted for parent region to be split (rollback doesn't wait on the completion of the
+   * AssignProcedure) . This can be improved by changing rollback() to support sub-procedures.
+   * See HBASE-19851 for details.
+   */
   @Override
   protected void rollbackState(final MasterProcedureEnv env, final SplitTableRegionState state)
       throws IOException, InterruptedException {
@@ -590,8 +610,8 @@ public class SplitTableRegionProcedure
       maxThreads, Threads.getNamedThreadFactory("StoreFileSplitter-%1$d"));
     final List<Future<Pair<Path,Path>>> futures = new ArrayList<Future<Pair<Path,Path>>>(nbFiles);
 
+    TableDescriptor htd = env.getMasterServices().getTableDescriptors().get(getTableName());
     // Split each store file.
-    final TableDescriptor htd = env.getMasterServices().getTableDescriptors().get(getTableName());
     for (Map.Entry<String, Collection<StoreFileInfo>>e: files.entrySet()) {
       byte [] familyName = Bytes.toBytes(e.getKey());
       final ColumnFamilyDescriptor hcd = htd.getColumnFamily(familyName);
@@ -662,7 +682,7 @@ public class SplitTableRegionProcedure
   }
 
   private Pair<Path, Path> splitStoreFile(HRegionFileSystem regionFs, byte[] family, HStoreFile sf)
-      throws IOException {
+    throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("pid=" + getProcId() + " splitting started for store file: " +
           sf.getPath() + " for region: " + getParentRegion().getShortNameToLog());
@@ -670,10 +690,10 @@ public class SplitTableRegionProcedure
 
     final byte[] splitRow = getSplitRow();
     final String familyName = Bytes.toString(family);
-    final Path path_first =
-        regionFs.splitStoreFile(this.daughter_1_RI, familyName, sf, splitRow, false, null);
-    final Path path_second =
-        regionFs.splitStoreFile(this.daughter_2_RI, familyName, sf, splitRow, true, null);
+    final Path path_first = regionFs.splitStoreFile(this.daughter_1_RI, familyName, sf, splitRow,
+        false, splitPolicy);
+    final Path path_second = regionFs.splitStoreFile(this.daughter_2_RI, familyName, sf, splitRow,
+       true, splitPolicy);
     if (LOG.isDebugEnabled()) {
       LOG.debug("pid=" + getProcId() + " splitting complete for store file: " +
           sf.getPath() + " for region: " + getParentRegion().getShortNameToLog());

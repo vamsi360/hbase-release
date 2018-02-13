@@ -1,6 +1,4 @@
-/**
- * Copyright The Apache Software Foundation
- *
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -36,10 +34,14 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.testclassification.MiscTests;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Threads;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
 import org.apache.hbase.thirdparty.com.google.common.collect.Maps;
@@ -47,6 +49,11 @@ import org.apache.hbase.thirdparty.com.google.common.collect.Maps;
 @Category({MiscTests.class, MediumTests.class})
 public class TestRegionLoad {
 
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestRegionLoad.class);
+
+  private static final Logger LOG = LoggerFactory.getLogger(TestRegionLoad.class);
   private static final HBaseTestingUtility UTIL = new HBaseTestingUtility();
   private static Admin admin;
 
@@ -57,6 +64,9 @@ public class TestRegionLoad {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
+    // Make servers report eagerly. This test is about looking at the cluster status reported.
+    // Make it so we don't have to wait around too long to see change.
+    UTIL.getConfiguration().setInt("hbase.regionserver.msginterval", 500);
     UTIL.startMiniCluster(4);
     admin = UTIL.getAdmin();
     admin.setBalancerRunning(false, true);
@@ -65,18 +75,16 @@ public class TestRegionLoad {
 
   @AfterClass
   public static void afterClass() throws Exception {
-    for (TableName table : tables) {
-      UTIL.deleteTableIfAny(table);
-    }
     UTIL.shutdownMiniCluster();
   }
 
   private static void createTables() throws IOException, InterruptedException {
-    byte[] FAMILY = Bytes.toBytes("f");
+    byte[][] FAMILIES = new byte [][] {Bytes.toBytes("f")};
     for (TableName tableName : tables) {
-      Table table = UTIL.createMultiRegionTable(tableName, FAMILY, 16);
+      Table table =
+          UTIL.createTable(tableName, FAMILIES, HBaseTestingUtility.KEYS_FOR_HBA_CREATE_TABLE);
       UTIL.waitTableAvailable(tableName);
-      UTIL.loadTable(table, FAMILY);
+      UTIL.loadTable(table, FAMILIES[0]);
     }
   }
 
@@ -87,8 +95,13 @@ public class TestRegionLoad {
     for (ServerName serverName : admin
         .getClusterMetrics(EnumSet.of(Option.LIVE_SERVERS)).getLiveServerMetrics().keySet()) {
       List<HRegionInfo> regions = admin.getOnlineRegions(serverName);
+      LOG.info("serverName=" + serverName + ", regions=" +
+          regions.stream().map(r -> r.getRegionNameAsString()).collect(Collectors.toList()));
       Collection<RegionLoad> regionLoads = admin.getRegionMetrics(serverName)
         .stream().map(r -> new RegionLoad(r)).collect(Collectors.toList());
+      LOG.info("serverName=" + serverName + ", regionLoads=" +
+          regionLoads.stream().map(r -> Bytes.toString(r.getRegionName())).
+              collect(Collectors.toList()));
       checkRegionsAndRegionLoads(regions, regionLoads);
     }
 
@@ -104,6 +117,11 @@ public class TestRegionLoad {
       }
       checkRegionsAndRegionLoads(tableRegions, regionLoads);
     }
+    int pause = UTIL.getConfiguration().getInt("hbase.regionserver.msginterval", 3000);
+
+    // Just wait here. If this fixes the test, come back and do a better job.
+    // Would have to redo the below so can wait on cluster status changing.
+    Threads.sleep(2 * pause);
 
     // Check RegionLoad matches the regionLoad from ClusterStatus
     ClusterStatus clusterStatus
@@ -115,6 +133,12 @@ public class TestRegionLoad {
           (v1, v2) -> {
             throw new RuntimeException("impossible!!");
           }, () -> new TreeMap<>(Bytes.BYTES_COMPARATOR)));
+      LOG.info("serverName=" + serverName + ", getRegionLoads=" +
+          serverLoad.getRegionsLoad().keySet().stream().map(r -> Bytes.toString(r)).
+              collect(Collectors.toList()));
+      LOG.info("serverName=" + serverName + ", regionLoads=" +
+          regionLoads.keySet().stream().map(r -> Bytes.toString(r)).
+              collect(Collectors.toList()));
       compareRegionLoads(serverLoad.getRegionsLoad(), regionLoads);
     }
   }

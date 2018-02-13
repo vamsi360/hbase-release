@@ -133,6 +133,7 @@ public class MasterCoprocessorHost
      * @return An instance of MasterServices, an object NOT for general user-space Coprocessor
      * consumption.
      */
+    @Override
     public MasterServices getMasterServices() {
       return this.masterServices;
     }
@@ -149,7 +150,7 @@ public class MasterCoprocessorHost
     // only one MasterCoprocessorHost instance in the master process
     boolean coprocessorsEnabled = conf.getBoolean(COPROCESSORS_ENABLED_CONF_KEY,
       DEFAULT_COPROCESSORS_ENABLED);
-    LOG.info("System coprocessor loading is " + (coprocessorsEnabled ? "enabled" : "disabled"));
+    LOG.trace("System coprocessor loading is {}",  (coprocessorsEnabled ? "enabled" : "disabled"));
     loadSystemCoprocessors(conf, MASTER_COPROCESSOR_CONF_KEY);
   }
 

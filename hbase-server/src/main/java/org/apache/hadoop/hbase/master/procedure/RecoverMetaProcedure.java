@@ -26,8 +26,10 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.RegionInfoBuilder;
 import org.apache.hadoop.hbase.client.RegionReplicaUtil;
-import org.apache.hadoop.hbase.master.HMaster;
+import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.master.assignment.AssignProcedure;
+import org.apache.hadoop.hbase.master.assignment.AssignmentManager;
+import org.apache.hadoop.hbase.master.assignment.RegionTransitionProcedure;
 import org.apache.hadoop.hbase.procedure2.ProcedureStateSerializer;
 import org.apache.hadoop.hbase.procedure2.ProcedureSuspendedException;
 import org.apache.hadoop.hbase.procedure2.ProcedureYieldException;
@@ -58,7 +60,7 @@ public class RecoverMetaProcedure
   private int replicaId;
 
   private final ProcedurePrepareLatch syncLatch;
-  private HMaster master;
+  private MasterServices master;
 
   /**
    * Call this constructor to queue up a {@link RecoverMetaProcedure} in response to meta
@@ -126,17 +128,17 @@ public class RecoverMetaProcedure
               RegionInfoBuilder.FIRST_META_REGIONINFO, this.replicaId);
 
           AssignProcedure metaAssignProcedure;
+          AssignmentManager am = master.getAssignmentManager();
           if (failedMetaServer != null) {
-            LOG.info(this + "; Assigning meta with new plan. previous meta server=" +
-                failedMetaServer);
-            metaAssignProcedure = master.getAssignmentManager().createAssignProcedure(hri);
+            handleRIT(env, hri, this.failedMetaServer);
+            LOG.info(this + "; Assigning meta with new plan; previous server=" + failedMetaServer);
+            metaAssignProcedure = am.createAssignProcedure(hri);
           } else {
             // get server carrying meta from zk
             ServerName metaServer =
                 MetaTableLocator.getMetaRegionState(master.getZooKeeper()).getServerName();
             LOG.info(this + "; Retaining meta assignment to server=" + metaServer);
-            metaAssignProcedure =
-                master.getAssignmentManager().createAssignProcedure(hri, metaServer);
+            metaAssignProcedure = am.createAssignProcedure(hri, metaServer);
           }
 
           addChildProcedure(metaAssignProcedure);
@@ -150,6 +152,32 @@ public class RecoverMetaProcedure
           getCycles(), e);
     }
     return Flow.HAS_MORE_STATE;
+  }
+
+  /**
+   * Is the region stuck assigning to this failedMetaServer? If so, cancel the call
+   * just as we do over in ServerCrashProcedure#handleRIT except less to do here; less context
+   * to carry.
+   */
+  private void handleRIT(MasterProcedureEnv env, RegionInfo ri, ServerName crashedServerName) {
+    AssignmentManager am = env.getAssignmentManager();
+    RegionTransitionProcedure rtp = am.getRegionStates().getRegionTransitionProcedure(ri);
+    if (rtp == null) {
+      return; // Nothing to do. Not in RIT.
+    }
+    // Make sure the RIT is against this crashed server. In the case where there are many
+    // processings of a crashed server -- backed up for whatever reason (slow WAL split)
+    // -- then a previous SCP may have already failed an assign, etc., and it may have a
+    // new location target; DO NOT fail these else we make for assign flux.
+    ServerName rtpServerName = rtp.getServer(env);
+    if (rtpServerName == null) {
+      LOG.warn("RIT with ServerName null! " + rtp);
+    } else if (rtpServerName.equals(crashedServerName)) {
+      LOG.info("pid=" + getProcId() + " found RIT " + rtp + "; " +
+          rtp.getRegionState(env).toShortString());
+      rtp.remoteCallFailed(env, crashedServerName,
+          new ServerCrashException(getProcId(), crashedServerName));
+    }
   }
 
   @Override
@@ -250,7 +278,7 @@ public class RecoverMetaProcedure
    */
   private void prepare(MasterProcedureEnv env) {
     if (master == null) {
-      master = (HMaster) env.getMasterServices();
+      master = env.getMasterServices();
       Preconditions.checkArgument(master != null);
     }
   }

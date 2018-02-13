@@ -1,5 +1,4 @@
 /**
- *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,31 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase;
+package org.apache.hadoop.hbase.replication;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.hadoop.hbase.exceptions.HBaseException;
 
 /**
- * Thrown by operations requiring coordination state access or manipulation
- * when internal error within coordination engine (or other internal implementation) occurs.
+ * Helper class for replication.
  */
 @InterfaceAudience.Private
-@SuppressWarnings("serial")
-public class CoordinatedStateException extends HBaseException {
-  public CoordinatedStateException() {
-    super();
+public final class ReplicationUtils {
+
+  private ReplicationUtils() {
   }
 
-  public CoordinatedStateException(final String message) {
-    super(message);
-  }
-
-  public CoordinatedStateException(final String message, final Throwable t) {
-    super(message, t);
-  }
-
-  public CoordinatedStateException(final Throwable t) {
-    super(t);
+  /**
+   * @param c Configuration to look at
+   * @return True if replication for bulk load data is enabled.
+   */
+  public static boolean isReplicationForBulkLoadDataEnabled(final Configuration c) {
+    return c.getBoolean(HConstants.REPLICATION_BULKLOAD_ENABLE_KEY,
+      HConstants.REPLICATION_BULKLOAD_ENABLE_DEFAULT);
   }
 }

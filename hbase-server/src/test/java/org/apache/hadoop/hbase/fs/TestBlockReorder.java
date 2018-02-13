@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.fs;
 
 import java.io.FileNotFoundException;
@@ -27,7 +26,6 @@ import java.net.BindException;
 import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -35,6 +33,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
@@ -48,6 +47,7 @@ import org.apache.hadoop.hbase.regionserver.Region;
 import org.apache.hadoop.hbase.regionserver.wal.WALActionsListener;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.MiscTests;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.wal.AbstractFSWALProvider;
 import org.apache.hadoop.hdfs.DFSClient;
@@ -64,6 +64,7 @@ import org.apache.hadoop.ipc.RemoteException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -76,6 +77,11 @@ import org.slf4j.LoggerFactory;
  */
 @Category({MiscTests.class, LargeTests.class})
 public class TestBlockReorder {
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestBlockReorder.class);
+
   private static final Logger LOG = LoggerFactory.getLogger(TestBlockReorder.class);
 
   private Configuration conf;
@@ -248,7 +254,7 @@ public class TestBlockReorder {
    */
   @Test()
   public void testHBaseCluster() throws Exception {
-    byte[] sb = "sb".getBytes();
+    byte[] sb = Bytes.toBytes("sb");
     htu.startMiniZKCluster();
 
     MiniHBaseCluster hbm = htu.startMiniHBaseCluster(1, 1);
@@ -442,7 +448,7 @@ public class TestBlockReorder {
       do {
         l = getNamenode(dfs.getClient()).getBlockLocations(fileName, 0, 1);
         Assert.assertNotNull(l.getLocatedBlocks());
-        Assert.assertEquals(l.getLocatedBlocks().size(), 1);
+        Assert.assertEquals(1, l.getLocatedBlocks().size());
         Assert.assertTrue("Expecting " + repCount + " , got " + l.get(0).getLocations().length,
             System.currentTimeMillis() < max);
       } while (l.get(0).getLocations().length != repCount);

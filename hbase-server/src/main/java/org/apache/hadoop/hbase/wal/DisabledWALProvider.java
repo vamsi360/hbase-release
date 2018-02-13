@@ -55,8 +55,7 @@ class DisabledWALProvider implements WALProvider {
   WAL disabled;
 
   @Override
-  public void init(final WALFactory factory, final Configuration conf,
-      final List<WALActionsListener> listeners, String providerId) throws IOException {
+  public void init(WALFactory factory, Configuration conf, String providerId) throws IOException {
     if (null != disabled) {
       throw new IllegalStateException("WALProvider.init should only be called once.");
     }
@@ -74,7 +73,7 @@ class DisabledWALProvider implements WALProvider {
   }
 
   @Override
-  public WAL getWAL(final byte[] identifier, byte[] namespace) throws IOException {
+  public WAL getWAL(RegionInfo region) throws IOException {
     return disabled;
   }
 
@@ -185,7 +184,7 @@ class DisabledWALProvider implements WALProvider {
     public void sync() {
       if (!this.listeners.isEmpty()) {
         for (WALActionsListener listener : this.listeners) {
-          listener.postSync(0l, 0);
+          listener.postSync(0L, 0);
         }
       }
     }
@@ -195,6 +194,7 @@ class DisabledWALProvider implements WALProvider {
       sync();
     }
 
+    @Override
     public Long startCacheFlush(final byte[] encodedRegionName, Map<byte[], Long>
         flushedFamilyNamesToSeq) {
       return startCacheFlush(encodedRegionName, flushedFamilyNamesToSeq.keySet());
@@ -248,5 +248,10 @@ class DisabledWALProvider implements WALProvider {
   @Override
   public long getLogFileSize() {
     return 0;
+  }
+
+  @Override
+  public void addWALActionsListener(WALActionsListener listener) {
+    disabled.registerWALActionsListener(listener);
   }
 }

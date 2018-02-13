@@ -40,7 +40,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -57,6 +56,7 @@ import org.apache.hadoop.hbase.replication.ReplicationEndpoint;
 import org.apache.hadoop.hbase.replication.ReplicationException;
 import org.apache.hadoop.hbase.replication.ReplicationListener;
 import org.apache.hadoop.hbase.replication.ReplicationPeer;
+import org.apache.hadoop.hbase.replication.ReplicationPeer.PeerState;
 import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeers;
 import org.apache.hadoop.hbase.replication.ReplicationQueueInfo;
@@ -68,6 +68,7 @@ import org.apache.hadoop.hbase.wal.AbstractFSWALProvider;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
 import org.apache.hbase.thirdparty.com.google.common.util.concurrent.ThreadFactoryBuilder;
 
@@ -110,7 +111,7 @@ public class ReplicationSourceManager implements ReplicationListener {
   private final Configuration conf;
   private final FileSystem fs;
   // The paths to the latest log of each wal group, for new coming peers
-  private Set<Path> latestPaths;
+  private final Set<Path> latestPaths;
   // Path to the wals directories
   private final Path logDir;
   // Path to the wal archive
@@ -380,7 +381,9 @@ public class ReplicationSourceManager implements ReplicationListener {
     return replicationQueues.getAllQueues();
   }
 
-  void preLogRoll(Path newLog) throws IOException {
+  // public because of we call it in TestReplicationEmptyWALRecovery
+  @VisibleForTesting
+  public void preLogRoll(Path newLog) throws IOException {
     recordLog(newLog);
     String logName = newLog.getName();
     String logPrefix = AbstractFSWALProvider.getWALPrefixFromWALName(logName);
@@ -447,7 +450,9 @@ public class ReplicationSourceManager implements ReplicationListener {
     }
   }
 
-  void postLogRoll(Path newLog) throws IOException {
+  // public because of we call it in TestReplicationEmptyWALRecovery
+  @VisibleForTesting
+  public void postLogRoll(Path newLog) throws IOException {
     // This only updates the sources we own, not the recovered ones
     for (ReplicationSourceInterface source : this.sources) {
       source.enqueueLog(newLog);
@@ -735,6 +740,13 @@ public class ReplicationSourceManager implements ReplicationListener {
             replicationQueues.removeQueue(peerId);
             continue;
           }
+          if (server instanceof ReplicationSyncUp.DummyServer
+              && peer.getPeerState().equals(PeerState.DISABLED)) {
+            LOG.warn("Peer {} is disbaled. ReplicationSyncUp tool will skip "
+                + "replicating data to this peer.",
+              actualPeerId);
+            continue;
+          }
           // track sources in walsByIdRecoveredQueues
           Map<String, SortedSet<String>> walsByGroup = new HashMap<>();
           walsByIdRecoveredQueues.put(peerId, walsByGroup);
@@ -870,7 +882,6 @@ public class ReplicationSourceManager implements ReplicationListener {
    */
   void waitUntilCanBePushed(byte[] encodedName, long seq, String peerId)
       throws IOException, InterruptedException {
-
     /**
      * There are barriers for this region and position for this peer. N barriers form N intervals,
      * (b1,b2) (b2,b3) ... (bn,max). Generally, there is no logs whose seq id is not greater than
@@ -960,5 +971,4 @@ public class ReplicationSourceManager implements ReplicationListener {
       Thread.sleep(replicationWaitTime);
     }
   }
-
 }
