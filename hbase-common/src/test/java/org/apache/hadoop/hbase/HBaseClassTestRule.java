@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase;
 
 import java.util.concurrent.TimeUnit;
+
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
