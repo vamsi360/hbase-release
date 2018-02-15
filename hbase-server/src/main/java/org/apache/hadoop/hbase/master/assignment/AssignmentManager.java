@@ -53,7 +53,6 @@ import org.apache.hadoop.hbase.exceptions.UnexpectedStateException;
 import org.apache.hadoop.hbase.favored.FavoredNodesManager;
 import org.apache.hadoop.hbase.favored.FavoredNodesPromoter;
 import org.apache.hadoop.hbase.master.AssignmentListener;
-import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.master.LoadBalancer;
 import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.master.MetricsAssignmentManager;
@@ -470,10 +469,6 @@ public class AssignmentManager implements ServerListener {
               // ServerCrashProcedure, do NOT handle them here. The goal is to handle this through
               // regular flow of LoadBalancer as a favored node and not to have this special
               // handling.
-              continue;
-            }
-            if (master.getRegionServerVersion(server) == null) {
-              LOG.debug(server + " not in tracker");
               continue;
             }
             List<RegionInfo> regionsShouldMove = getCarryingSystemTables(server);
@@ -1863,15 +1858,10 @@ public class AssignmentManager implements ServerListener {
     }
     String highestVersion = Collections.max(serverList,
         (o1, o2) -> VersionInfo.compareVersion(o1.getSecond(), o2.getSecond())).getSecond();
-    for (Pair<ServerName, String> p : serverList) {
-      if (highestVersion != null && !highestVersion.equals(p.getSecond())) {
-        LOG.debug("found old svr " + p.getFirst() + " with " + p.getSecond() + " " +highestVersion);
-      }
-    }
     return serverList.stream()
-        .filter((p)->highestVersion == null ? p.getSecond() != null :
-          !highestVersion.equals(p.getSecond()))
-        .map(Pair::getFirst).collect(Collectors.toList());
+        .filter((p)->!p.getSecond().equals(highestVersion))
+        .map(Pair::getFirst)
+        .collect(Collectors.toList());
   }
 
   // ============================================================================================

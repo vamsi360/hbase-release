@@ -113,15 +113,9 @@ public class VersionInfo {
   }
 
   public static int compareVersion(String v1, String v2) {
-    if (v1 == null) {
-      return -1;
-    }
     //fast compare equals first
     if (v1.equals(v2)) {
       return 0;
-    }
-    if (v2 == null) {
-      return 1;
     }
 
     String s1[] = v1.split("\\.|-");//1.2.3-hotfix -> [1, 2, 3, hotfix]
