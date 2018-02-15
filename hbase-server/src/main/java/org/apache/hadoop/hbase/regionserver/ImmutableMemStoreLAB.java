@@ -22,8 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.hadoop.hbase.Cell;
 import org.apache.yetus.audience.InterfaceAudience;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A MemStoreLAB implementation which wraps N MemStoreLABs. Its main duty is in proper managing the
@@ -32,11 +30,10 @@ import org.slf4j.LoggerFactory;
  */
 @InterfaceAudience.Private
 public class ImmutableMemStoreLAB implements MemStoreLAB {
-  protected static final Logger LOG = LoggerFactory.getLogger(ImmutableMemStoreLAB.class);
+
   private final AtomicInteger openScannerCount = new AtomicInteger();
   private volatile boolean closed = false;
 
-  private static final String MSG = "This is an Immutable MemStoreLAB.";
   private final List<MemStoreLAB> mslabs;
 
   public ImmutableMemStoreLAB(List<MemStoreLAB> mslabs) {
@@ -45,14 +42,23 @@ public class ImmutableMemStoreLAB implements MemStoreLAB {
 
   @Override
   public Cell copyCellInto(Cell cell) {
-    LOG.error(MSG + cell.toString());
-    throw new IllegalStateException(MSG);
+    throw new IllegalStateException("This is an Immutable MemStoreLAB.");
   }
 
+  /**
+   * The process of merging assumes all cells are allocated on mslab.
+   * There is a rare case in which the first immutable segment,
+   * participating in a merge, is a CSLM.
+   * Since the CSLM hasn't been flattened yet, and there is no point in flattening it (since it is
+   * going to be merged), its big cells (for whom size > maxAlloc) must be copied into mslab.
+   * This method copies the passed cell into the first mslab in the mslabs list,
+   * returning either a new cell instance over the copied data,
+   * or null when this cell cannt be copied.
+   */
   @Override
   public Cell forceCopyOfBigCellInto(Cell cell) {
-    LOG.error(MSG + cell.toString());
-    throw new IllegalStateException(MSG);
+    MemStoreLAB mslab = this.mslabs.get(0);
+    return mslab.forceCopyOfBigCellInto(cell);
   }
 
   /* Creating chunk to be used as index chunk in CellChunkMap, part of the chunks array.
