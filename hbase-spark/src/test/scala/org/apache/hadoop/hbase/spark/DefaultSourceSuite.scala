@@ -26,7 +26,8 @@ import org.apache.hadoop.hbase.{HBaseTestingUtility, TableName}
 import org.apache.spark.sql.datasources.hbase.HBaseTableCatalog
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SQLContext}
-import org.apache.spark.{Logging, SparkConf, SparkContext}
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.hadoop.hbase.spark.Logging
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FunSuite}
 
 case class HBaseRecord(
@@ -377,9 +378,10 @@ BeforeAndAfterEach with BeforeAndAfterAll with Logging {
 
     assert(results.length == 2)
 
-    assert(executionRules.dynamicLogicExpression.toExpressionString.
-      equals("( KEY_FIELD <= 0 AND KEY_FIELD >= 1 )"))
-
+    assertResult("( ( KEY_FIELD isNotNull AND KEY_FIELD <= 0 ) AND KEY_FIELD >= 1 )") {
+      executionRules.dynamicLogicExpression.toExpressionString
+    }
+    
     assert(executionRules.rowKeyFilter.points.size == 0)
     assert(executionRules.rowKeyFilter.ranges.size == 1)
 
@@ -653,9 +655,10 @@ BeforeAndAfterEach with BeforeAndAfterAll with Logging {
     assert(localResult(0).getInt(2) == 8)
 
     val executionRules = DefaultSourceStaticUtils.lastFiveExecutionRules.poll()
-    assert(executionRules.dynamicLogicExpression.toExpressionString.
-      equals("( I_FIELD > 0 AND I_FIELD < 1 )"))
-
+    assertResult("( ( I_FIELD isNotNull AND I_FIELD > 0 ) AND I_FIELD < 1 )") {
+      executionRules.dynamicLogicExpression.toExpressionString
+    }
+    
   }
 
   test("Test table with INT column defined at wrong type") {

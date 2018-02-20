@@ -156,6 +156,7 @@ public class IntegrationTestSparkBulkLoad extends IntegrationTestBase {
     }
 
     SparkConf sparkConf = new SparkConf().setAppName(jobName).setMaster("local");
+    sparkConf.set("spark.driver.allowMultipleContexts", Boolean.toString(true));
     Configuration hbaseConf = new Configuration(getConf());
     hbaseConf.setInt(CURRENT_ROUND_NUM, iteration);
     int partitionNum = hbaseConf.getInt(BULKLOAD_PARTITIONS_NUM, DEFAULT_BULKLOAD_PARTITIONS_NUM);
@@ -324,7 +325,7 @@ public class IntegrationTestSparkBulkLoad extends IntegrationTestBase {
       PairFlatMapFunction<Tuple2<ImmutableBytesWritable, Result>, SparkLinkKey, SparkLinkChain> {
 
     @Override
-    public Iterable<Tuple2<SparkLinkKey, SparkLinkChain>> call(Tuple2<ImmutableBytesWritable, Result> v)
+    public Iterator<Tuple2<SparkLinkKey, SparkLinkChain>> call(Tuple2<ImmutableBytesWritable, Result> v)
         throws Exception {
       Result value = v._2();
       long longRk = Bytes.toLong(value.getRow());
@@ -339,7 +340,7 @@ public class IntegrationTestSparkBulkLoad extends IntegrationTestBase {
             new Tuple2<>(new SparkLinkKey(chainId, order), new SparkLinkChain(longRk, next));
         list.add(tuple2);
       }
-      return list;
+      return list.iterator();
     }
   }
 

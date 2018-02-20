@@ -24,7 +24,8 @@ import org.apache.hadoop.hbase.tool.LoadIncrementalHFiles
 import org.apache.hadoop.hbase.{HConstants, CellUtil, HBaseTestingUtility, TableName}
 import org.apache.hadoop.hbase.util.Bytes
 import org.apache.hadoop.hbase.spark.HBaseRDDFunctions._
-import org.apache.spark.{SparkContext, Logging}
+import org.apache.spark.SparkContext
+import org.apache.hadoop.hbase.spark.Logging
 import org.junit.rules.TemporaryFolder
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FunSuite}
 

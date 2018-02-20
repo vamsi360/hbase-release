@@ -39,7 +39,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.spark.HBaseRDDFunctions._
 import org.apache.hadoop.hbase.client._
 import scala.reflect.ClassTag
-import org.apache.spark.{Logging, SerializableWritable, SparkContext}
+import org.apache.spark.{SerializableWritable, SparkContext}
+import org.apache.hadoop.hbase.spark.Logging
 import org.apache.hadoop.hbase.mapreduce.{TableMapReduceUtil,
 TableInputFormat, IdentityTableMapper}
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable
@@ -65,7 +66,7 @@ class HBaseContext(@transient sc: SparkContext,
                    val tmpHdfsConfgFile: String = null)
   extends Serializable with Logging {
 
-  @transient var credentials = SparkHadoopUtil.get.getCurrentUserCredentials()
+  @transient var credentials = UserGroupInformation.getCurrentUser().getCredentials() 
   @transient var tmpHdfsConfiguration:Configuration = config
   @transient var appliedCredentials = false
   @transient val job = Job.getInstance(config)
@@ -233,7 +234,7 @@ class HBaseContext(@transient sc: SparkContext,
   }
 
   def applyCreds[T] (){
-    credentials = SparkHadoopUtil.get.getCurrentUserCredentials()
+    credentials = UserGroupInformation.getCurrentUser().getCredentials() 
 
     logDebug("appliedCredentials:" + appliedCredentials + ",credentials:" + credentials)
 

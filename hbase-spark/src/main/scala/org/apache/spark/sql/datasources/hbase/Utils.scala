@@ -19,9 +19,11 @@
 package org.apache.spark.sql.datasources.hbase
 
 import org.apache.hadoop.hbase.spark.AvroSerdes
+import java.nio.ByteBuffer
 import org.apache.hadoop.hbase.util.Bytes
-import org.apache.spark.sql.execution.SparkSqlSerializer
+import org.apache.spark.serializer.KryoSerializer
 import org.apache.spark.sql.types._
+import org.apache.spark.{SparkEnv, SparkConf}
 import org.apache.spark.unsafe.types.UTF8String
 
 import org.apache.yetus.audience.InterfaceAudience;
@@ -61,7 +63,7 @@ object Utils {
           System.arraycopy(src, offset, newArray, 0, length)
           newArray
         // TODO: add more data type support
-        case _ => SparkSqlSerializer.deserialize[Any](src)
+        case _ => new KryoSerializer(Option(SparkEnv.get).map(_.conf).getOrElse(new SparkConf())).newInstance().deserialize[Any](ByteBuffer.wrap(src))
       }
     }
   }
