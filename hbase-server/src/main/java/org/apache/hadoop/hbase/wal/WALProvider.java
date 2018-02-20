@@ -80,4 +80,6 @@ public interface WALProvider {
     long getLength() throws IOException;
   }
 
+  List<WAL> getWALs();
+
 }

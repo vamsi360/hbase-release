@@ -44,12 +44,12 @@ public abstract class AbstractHBaseTool implements Tool {
   protected static final int EXIT_SUCCESS = 0;
   protected static final int EXIT_FAILURE = 1;
 
-  private static final String SHORT_HELP_OPTION = "h";
-  private static final String LONG_HELP_OPTION = "help";
+  public static final String SHORT_HELP_OPTION = "h";
+  public static final String LONG_HELP_OPTION = "help";
 
   private static final Log LOG = LogFactory.getLog(AbstractHBaseTool.class);
 
-  private final Options options = new Options();
+  protected final Options options = new Options();
 
   protected Configuration conf = null;
 
@@ -82,7 +82,7 @@ public abstract class AbstractHBaseTool implements Tool {
   }
 
   @Override
-  public final int run(String[] args) throws IOException {
+  public int run(String[] args) throws IOException {
     if (conf == null) {
       LOG.error("Tool configuration is not initialized");
       throw new NullPointerException("conf");

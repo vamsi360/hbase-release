@@ -197,4 +197,13 @@ public class LogRoller extends HasThread {
         requester);
     }
   }
+
+  public boolean walRollFinished() {
+    for (boolean needRoll : walNeedsRoll.values()) {
+      if (needRoll) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

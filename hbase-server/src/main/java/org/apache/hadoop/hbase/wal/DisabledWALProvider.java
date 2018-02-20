@@ -18,6 +18,8 @@
 package org.apache.hadoop.hbase.wal;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -217,5 +219,15 @@ class DisabledWALProvider implements WALProvider {
     public String toString() {
       return "WAL disabled.";
     }
+  }
+
+  @Override
+  public List<WAL> getWALs() {
+    if (disabled == null) {
+      return Collections.emptyList();
+    }
+    List<WAL> wals = new ArrayList<>(1);
+    wals.add(disabled);
+    return wals;
   }
 }

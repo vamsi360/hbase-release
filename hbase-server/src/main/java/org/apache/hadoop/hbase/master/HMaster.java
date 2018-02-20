@@ -86,13 +86,7 @@ import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.TableStateManager;
 import org.apache.hadoop.hbase.UnknownRegionException;
-import org.apache.hadoop.hbase.backup.BackupType;
-import org.apache.hadoop.hbase.backup.HBackupFileSystem;
-import org.apache.hadoop.hbase.backup.impl.BackupManager;
-import org.apache.hadoop.hbase.backup.impl.BackupRestoreConstants;
-import org.apache.hadoop.hbase.backup.impl.BackupSystemTable;
-import org.apache.hadoop.hbase.backup.master.FullTableBackupProcedure;
-import org.apache.hadoop.hbase.backup.master.IncrementalTableBackupProcedure;
+
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.MetaScanner;
@@ -450,7 +444,6 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     this.conf.setBoolean(HConstants.USE_META_REPLICAS, false);
 
     Replication.decorateMasterConfiguration(this.conf);
-    BackupManager.decorateMasterConfiguration(this.conf);
 
     // Hack! Maps DFSClient => Master for logs.  HDFS made this
     // config param for task trackers, but we can piggyback off of it.
@@ -3063,83 +3056,7 @@ public class HMaster extends HRegionServer implements MasterServices, Server {
     return listTableNames(name, null, true);
   }
 
-  @Override
-  public Pair<Long, String> backupTables(final BackupType type,
-        List<TableName> tableList, final String targetRootDir, final int workers,
-        final long bandwidth) throws IOException {
-    long procId;
-    String backupId = BackupRestoreConstants.BACKUPID_PREFIX + 
-        EnvironmentEdgeManager.currentTime();
-    if (type == BackupType.INCREMENTAL) {
-      Set<TableName> incrTableSet = null;
-      try (BackupSystemTable table = new BackupSystemTable(getConnection())) {
-        incrTableSet = table.getIncrementalBackupTableSet(targetRootDir);
-      }
-         
-      if (incrTableSet.isEmpty()) {
-        LOG.warn("Incremental backup table set contains no table.\n"
-            + "Use 'backup create full' or 'backup stop' to \n "
-            + "change the tables covered by incremental backup.");
-        throw new DoNotRetryIOException("No table covered by incremental backup.");
-      }
-
-      LOG.info("Incremental backup for the following table set: " + incrTableSet);
-      tableList = Lists.newArrayList(incrTableSet);
-    }
-    if (tableList != null && !tableList.isEmpty()) {
-      for (TableName table : tableList) {
-        String targetTableBackupDir =
-            HBackupFileSystem.getTableBackupDir(targetRootDir, backupId, table);
-        Path targetTableBackupDirPath = new Path(targetTableBackupDir);
-        FileSystem outputFs = FileSystem.get(targetTableBackupDirPath.toUri(), conf);
-        if (outputFs.exists(targetTableBackupDirPath)) {
-          throw new DoNotRetryIOException("Target backup directory " + targetTableBackupDir
-            + " exists already.");
-        }
-      }
-      ArrayList<TableName> nonExistingTableList = null;
-      for (TableName tableName : tableList) {
-        if (!MetaTableAccessor.tableExists(getConnection(), tableName)) {
-          if (nonExistingTableList == null) {
-            nonExistingTableList = new ArrayList<>();
-          }
-          nonExistingTableList.add(tableName);
-        }
-      }
-      if (nonExistingTableList != null) {
-        if (type == BackupType.INCREMENTAL ) {
-          LOG.warn("Incremental backup table set contains non-exising table: "
-              + nonExistingTableList);
-          // Update incremental backup set 
-          tableList = excludeNonExistingTables(tableList, nonExistingTableList);
-        } else {
-          // Throw exception only in full mode - we try to backup non-existing table
-          throw new DoNotRetryIOException("Non-existing tables found in the table list: "
-              + nonExistingTableList);
-        }
-      }
-    }
-    if (type == BackupType.FULL) {
-      procId = this.procedureExecutor.submitProcedure(
-        new FullTableBackupProcedure(procedureExecutor.getEnvironment(), backupId,
-          tableList, targetRootDir, workers, bandwidth));
-    } else {
-      procId = this.procedureExecutor.submitProcedure(
-        new IncrementalTableBackupProcedure(procedureExecutor.getEnvironment(), backupId,
-          tableList, targetRootDir, workers, bandwidth));
-    }
-    return new Pair<>(procId, backupId);
-  }
-
-  private List<TableName> excludeNonExistingTables(List<TableName> tableList,
-      List<TableName> nonExistingTableList) {
-    
-    for(TableName table: nonExistingTableList) {
-      tableList.remove(table);
-    }
-    return tableList;
-  }
-
+ 
   /**
    * Returns the list of table descriptors that match the specified request
    *

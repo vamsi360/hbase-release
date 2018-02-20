@@ -64,8 +64,6 @@ import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
-import org.apache.hadoop.hbase.backup.BackupRequest;
-import org.apache.hadoop.hbase.backup.util.BackupClientUtil;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.client.ConnectionManager.HConnectionImplementation;
@@ -92,8 +90,7 @@ import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.RollWALWriterReque
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.RollWALWriterResponse;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.StopServerRequest;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.UpdateConfigurationRequest;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse;
+
 import org.apache.hadoop.hbase.protobuf.generated.TableProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NameStringPair;
@@ -2712,27 +2709,6 @@ public class HBaseAdmin implements Admin {
   }
 
   
-  Future<String> backupTablesAsync(final BackupRequest userRequest) throws IOException {
-    BackupClientUtil.checkTargetDir(userRequest.getTargetRootDir(), conf);
-    if (userRequest.getTableList() != null) {
-      for (TableName table : userRequest.getTableList()) {
-        if (!tableExists(table)) {
-          throw new DoNotRetryIOException(table + "does not exist");
-        }
-      }
-    }
-    BackupTablesResponse response = executeCallable(
-      new MasterCallable<BackupTablesResponse>(getConnection()) {
-        @Override
-        public BackupTablesResponse call(int callTimeout) throws ServiceException {
-          BackupTablesRequest request = RequestConverter.buildBackupTablesRequest(
-            userRequest.getBackupType(), userRequest.getTableList(), userRequest.getTargetRootDir(),
-            userRequest.getWorkers(), userRequest.getBandwidth());
-          return master.backupTables(null, request);
-        }
-      });
-    return new TableBackupFuture(this, TableName.BACKUP_TABLE_NAME, response);
-  }
 
   /**
    * Do a get with a timeout against the passed in <code>future<code>.
@@ -2754,49 +2730,7 @@ public class HBaseAdmin implements Admin {
       }
     }
   }
-
   
-  public String backupTables(final BackupRequest userRequest) throws IOException {
-    return get(
-      backupTablesAsync(userRequest),
-      backupWaitTimeout,
-      TimeUnit.SECONDS);
-  }
-
-  public static class TableBackupFuture extends TableFuture<String> {
-    String backupId;
-    public TableBackupFuture(final HBaseAdmin admin, final TableName tableName,
-        final BackupTablesResponse response) {
-      super(admin, tableName,
-          (response != null && response.hasProcId()) ? response.getProcId() : null);
-      backupId = response.getBackupId();
-    }
-
-    String getBackupId() {
-      return backupId;
-    }
-
-    @Override
-    public String getOperationType() {
-      return "BACKUP";
-    }
-
-    @Override
-    protected String convertResult(final GetProcedureResultResponse response) throws IOException {
-      if (response.hasException()) {
-        throw ForeignExceptionUtil.toIOException(response.getException());
-      }
-      ByteString result = response.getResult();
-      if (result == null) return null;
-      return Bytes.toStringBinary(result.toByteArray());
-    }
-
-    @Override
-    protected String postOperationResult(final String result,
-        final long deadlineTs) throws IOException, TimeoutException {
-      return result;
-    }
-  }
 
   /**
    * Modify an existing table, more IRB friendly version.
@@ -5118,11 +5052,6 @@ public class HBaseAdmin implements Admin {
   private HRegionInfo getMobRegionInfo(TableName tableName) {
     return new HRegionInfo(tableName, Bytes.toBytes(".mob"),
             HConstants.EMPTY_END_ROW, false, 0);
-  }
-
-  @Override
-  public BackupAdmin getBackupAdmin() throws IOException {
-    return new HBaseBackupAdmin(this);
   }
 
   private RpcControllerFactory getRpcControllerFactory() {

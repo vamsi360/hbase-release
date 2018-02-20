@@ -22,6 +22,8 @@ import java.io.Closeable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -373,6 +375,21 @@ public class DefaultWALProvider implements WALProvider {
       }
       throw new IOException("cannot get log writer", e);
     }
+  }
+
+  public static boolean isArchivedLogFile(Path p) {
+    String oldLog = Path.SEPARATOR + HConstants.HREGION_OLDLOGDIR_NAME + Path.SEPARATOR;
+    return p.toString().contains(oldLog);
+  }
+
+  @Override
+  public List<WAL> getWALs() {
+    if (log == null) {
+      return Collections.emptyList();
+    }
+    List<WAL> wals = new ArrayList<>(1);
+    wals.add(log);
+    return wals;
   }
 
 }

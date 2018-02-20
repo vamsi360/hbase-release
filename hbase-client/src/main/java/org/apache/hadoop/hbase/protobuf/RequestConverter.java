@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.CellScannable;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
@@ -82,7 +81,6 @@ import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.RegionSpecifier.Re
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AddColumnRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AssignRegionRequest;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BalanceRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.CreateTableRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.DeleteColumnRequest;
@@ -1332,21 +1330,6 @@ public final class RequestConverter {
     return builder.build();
   }
 
-  public static BackupTablesRequest buildBackupTablesRequest(
-      final BackupType type, List<TableName> tableList, String targetRootDir, final int workers,
-      final long bandwidth) {
-    BackupTablesRequest.Builder builder = BackupTablesRequest.newBuilder();
-    builder.setType(ProtobufUtil.toProtoBackupType(type));
-    builder.setTargetRootDir(targetRootDir);
-    builder.setWorkers(workers);
-    builder.setBandwidth(bandwidth);
-    if (tableList != null) {
-      for (TableName table : tableList) {
-        builder.addTables(ProtobufUtil.toProtoTableName(table));
-      }
-    }
-    return builder.build();
-  }
 
   /**
    * Creates a protocol buffer GetSchemaAlterStatusRequest

@@ -19,6 +19,7 @@
 package org.apache.hadoop.hbase.wal;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -207,6 +208,15 @@ class RegionGroupingProvider implements WALProvider {
     public byte[] group(final byte[] identifier) {
       return identifier;
     }
+  }
+
+  @Override
+  public List<WAL> getWALs() {
+    List<WAL> wals = new ArrayList<>();
+    for (WALProvider provider : cached.values()) {
+      wals.addAll(provider.getWALs());
+    }
+    return wals;
   }
 
 }

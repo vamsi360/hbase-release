@@ -19,6 +19,7 @@
 package org.apache.hadoop.hbase.regionserver;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -241,4 +242,6 @@ public interface RegionServerServices extends OnlineRegions, FavoredNodesForRegi
    * @return the metrics tracker for the region server
    */
   MetricsRegionServer getMetrics();
+
+  List<WAL> getWALs();
 }

@@ -171,22 +171,6 @@ public interface MasterServices extends Server {
       final long nonce)
       throws IOException;
 
-  /**
-   * Full backup given list of tables
-   * @param type whether the backup is full or incremental
-   * @param tableList list of tables to backup
-   * @param targetRootDir root dir for saving the backup
-   * @param workers number of paralle workers. -1 - system defined
-   * @param bandwidth bandwidth per worker in MB per sec. -1 - unlimited
-   * @return pair of procedure Id and backupId
-   * @throws IOException
-   */
-  public Pair<Long, String> backupTables(
-      final BackupType type,
-      List<TableName> tableList,
-      final String targetRootDir,
-      final int workers,
-      final long bandwidth) throws IOException;
 
   /**
    * Enable an existing table

@@ -27,7 +27,7 @@ import com.google.protobuf.HBaseZeroCopyByteString;
 /**
  * Hack to workaround HBASE-1304 issue that keeps bubbling up when a mapreduce context.
  */
-@InterfaceAudience.Private
+
 public class ByteStringer {
   private static final Log LOG = LogFactory.getLog(ByteStringer.class);
 

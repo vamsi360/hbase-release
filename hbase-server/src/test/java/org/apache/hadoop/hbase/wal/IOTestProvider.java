@@ -19,7 +19,9 @@
 package org.apache.hadoop.hbase.wal;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -229,5 +231,15 @@ public class IOTestProvider implements WALProvider {
         super.sync();
       }
     }
+  }
+
+  @Override
+  public List<WAL> getWALs() {
+    if (log == null) {
+      return Collections.emptyList();
+    }
+    List<WAL> wals = new ArrayList<>(1);
+    wals.add(log);
+    return wals;
   }
 }

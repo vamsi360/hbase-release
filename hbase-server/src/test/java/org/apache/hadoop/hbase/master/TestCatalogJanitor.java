@@ -435,15 +435,6 @@ public class TestCatalogJanitor {
       return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    @Override
-    public Pair<Long, String> backupTables(
-        final BackupType type,
-        final List<TableName> tableList,
-        final String targetRootDir, final int workers,
-        final long bandwidth) throws IOException {
-      return null;
-    }
-
 
     @Override
     public List<HTableDescriptor> listTableDescriptorsByNamespace(String name) throws IOException {

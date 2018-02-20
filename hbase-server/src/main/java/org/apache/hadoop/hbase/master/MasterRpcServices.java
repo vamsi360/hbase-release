@@ -43,7 +43,6 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.MetaTableAccessor;
-import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.errorhandling.ForeignException;
 import org.apache.hadoop.hbase.exceptions.MergeRegionException;
@@ -74,7 +73,6 @@ import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AddColumnRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AddColumnResponse;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AssignRegionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.AssignRegionResponse;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BackupTablesResponse;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BalanceRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.BalanceResponse;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.CreateNamespaceRequest;
@@ -1149,24 +1147,6 @@ public class MasterRpcServices extends RSRpcServices
     }
   }
 
-  @Override
-  public MasterProtos.BackupTablesResponse backupTables(
-      RpcController controller,
-      MasterProtos.BackupTablesRequest request)  throws ServiceException {
-    try {
-      BackupTablesResponse.Builder response = BackupTablesResponse.newBuilder();
-      List<TableName> tablesList = new ArrayList<>(request.getTablesList().size());
-      for (TableProtos.TableName table : request.getTablesList()) {
-        tablesList.add(ProtobufUtil.toTableName(table));
-      }
-      Pair<Long, String> pair = master.backupTables(
-        BackupType.valueOf(request.getType().name()), tablesList, request.getTargetRootDir(),
-        (int)request.getWorkers(), request.getBandwidth());
-      return response.setProcId(pair.getFirst()).setBackupId(pair.getSecond()).build();
-    } catch (IOException e) {
-      throw new ServiceException(e);
-    }
-  }
 
   @Override
   public ListTableDescriptorsByNamespaceResponse listTableDescriptorsByNamespace(RpcController c,

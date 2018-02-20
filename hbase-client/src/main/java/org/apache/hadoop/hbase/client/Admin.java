@@ -37,8 +37,6 @@ import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.backup.BackupRequest;
-import org.apache.hadoop.hbase.backup.BackupType;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
@@ -1532,13 +1530,6 @@ public interface Admin extends Abortable, Closeable {
   AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(final TableName tableName,
       CompactType compactType) throws IOException;
 
-  /**
-   * Get Backup Admin interface 
-   * @return backup admin object
-   * @throws IOException exception
-   */
-  BackupAdmin getBackupAdmin() throws IOException;
-  
   /**
    * Currently, there are only two compact types:
    * {@code NORMAL} means do store files compaction;

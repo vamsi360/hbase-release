@@ -82,7 +82,7 @@ public class FSTableDescriptors implements TableDescriptors {
 
   /** The file name prefix used to store HTD in HDFS  */
   static final String TABLEINFO_FILE_PREFIX = ".tableinfo";
-  static final String TABLEINFO_DIR = ".tabledesc";
+  public static final String TABLEINFO_DIR = ".tabledesc";
   static final String TMP_DIR = ".tmp";
 
   // This cache does not age out the old stuff.  Thinking is that the amount

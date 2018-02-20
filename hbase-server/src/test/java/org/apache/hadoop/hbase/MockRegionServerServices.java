@@ -317,4 +317,10 @@ public class MockRegionServerServices implements RegionServerServices {
   public RegionServerSpaceQuotaManager getRegionServerSpaceQuotaManager() {
     return null;
   }
+
+  @Override
+  public List<WAL> getWALs() {
+    // TODO Auto-generated method stub
+    return null;
+  }
 }
