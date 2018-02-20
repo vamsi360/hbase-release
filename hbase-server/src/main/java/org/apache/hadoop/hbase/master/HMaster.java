@@ -2591,10 +2591,7 @@ public class HMaster extends HRegionServer implements MasterServices {
   @Override
   public String getRegionServerVersion(final ServerName sn) {
     RegionServerInfo info = this.regionServerTracker.getRegionServerInfo(sn);
-    if (info == null) {
-      return null;
-    }
-    if (info.hasVersionInfo()) {
+    if (info != null && info.hasVersionInfo()) {
       return info.getVersionInfo().getVersion();
     }
     return "0.0.0"; //Lowest version to prevent move system region to unknown version RS.
