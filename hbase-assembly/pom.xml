@@ -284,6 +284,10 @@
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-shaded-mapreduce</artifactId>
     </dependency>
+    <dependency>
+      <groupId>jline</groupId>
+      <artifactId>jline</artifactId>
+    </dependency>
   </dependencies>
   <profiles>
     <profile>
