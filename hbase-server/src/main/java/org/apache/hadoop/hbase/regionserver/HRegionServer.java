@@ -200,6 +200,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.HBaseProtos.RegionServe
 import org.apache.hadoop.hbase.shaded.protobuf.generated.HBaseProtos.RegionSpecifier;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.HBaseProtos.RegionSpecifier.RegionSpecifierType;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.LockServiceProtos.LockService;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.RegionServerStatusProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.RegionServerStatusProtos.GetLastFlushedSequenceIdRequest;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.RegionServerStatusProtos.GetLastFlushedSequenceIdResponse;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.RegionServerStatusProtos.RegionServerReportRequest;
@@ -3675,6 +3676,40 @@ public class HRegionServer extends HasThread implements
   @Override
   public RegionServerSpaceQuotaManager getRegionServerSpaceQuotaManager() {
     return this.rsSpaceQuotaManager;
+  }
+
+  @Override
+  public boolean reportFileArchivalForQuotas(TableName tableName,
+      Collection<Entry<String,Long>> archivedFiles) {
+    RegionServerStatusService.BlockingInterface rss = rssStub;
+    if (rss == null) {
+      // the current server could be stopping.
+      LOG.trace("Skipping file archival reporting to HMaster as stub is null");
+      return false;
+    }
+    try {
+      RegionServerStatusProtos.FileArchiveNotificationRequest request =
+          rsSpaceQuotaManager.buildFileArchiveRequest(tableName, archivedFiles);
+      rss.reportFileArchival(null, request);
+    } catch (ServiceException se) {
+      IOException ioe = ProtobufUtil.getRemoteException(se);
+      if (ioe instanceof PleaseHoldException) {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Failed to report file archival(s) to Master because it is initializing."
+              + " This will be retried.", ioe);
+        }
+        // The Master is coming up. Will retry the report later. Avoid re-creating the stub.
+        return false;
+      }
+      if (rssStub == rss) {
+        rssStub = null;
+      }
+      // re-create the stub if we failed to report the archival
+      createRegionServerStatusStub(true);
+      LOG.debug("Failed to report file archival(s) to Master. This will be retried.", ioe);
+      return false;
+    }
+    return true;
   }
 
   public NettyEventLoopGroupConfig getEventLoopGroupConfig() {
