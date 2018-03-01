@@ -20,7 +20,7 @@ package org.apache.hadoop.hbase.mapreduce;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -51,6 +51,7 @@ import org.apache.hadoop.hbase.testclassification.MapReduceTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.LauncherSecurityManager;
+import org.apache.hadoop.hbase.util.MapReduceExtendedCell;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.wal.WALEdit;
 import org.apache.hadoop.hbase.wal.WALKey;
@@ -71,7 +72,6 @@ import org.mockito.stubbing.Answer;
  * Basic test for the WALPlayer M/R tool
  */
 @Category({MapReduceTests.class, LargeTests.class})
-//TODO : Remove this in 3.0
 public class TestWALPlayer {
 
   @ClassRule
@@ -175,7 +175,7 @@ public class TestWALPlayer {
     WALKey key = mock(WALKey.class);
     when(key.getTableName()).thenReturn(TableName.valueOf("table"));
     @SuppressWarnings("unchecked")
-    Mapper<WALKey, WALEdit, ImmutableBytesWritable, KeyValue>.Context context = mock(Context.class);
+    Mapper<WALKey, WALEdit, ImmutableBytesWritable, Cell>.Context context = mock(Context.class);
     when(context.getConfiguration()).thenReturn(configuration);
 
     WALEdit value = mock(WALEdit.class);
@@ -190,8 +190,8 @@ public class TestWALPlayer {
 
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
-        ImmutableBytesWritable writer = invocation.getArgument(0);
-        KeyValue key = invocation.getArgument(1);
+        ImmutableBytesWritable writer = (ImmutableBytesWritable) invocation.getArgument(0);
+        MapReduceExtendedCell key = (MapReduceExtendedCell) invocation.getArgument(1);
         assertEquals("row", Bytes.toString(writer.get()));
         assertEquals("row", Bytes.toString(CellUtil.cloneRow(key)));
         return null;

@@ -288,6 +288,7 @@ public class TestBackupBase {
     if (setupIsDone) {
       return;
     }
+
     if (secure) {
       // set the always on security provider
       UserProvider.setUserProviderForTesting(TEST_UTIL.getConfiguration(),
@@ -313,6 +314,7 @@ public class TestBackupBase {
     conf1 = TEST_UTIL.getConfiguration();
 
     TEST_UTIL.startMiniMapReduceCluster();
+
     BACKUP_ROOT_DIR =
         new Path ( new Path(TEST_UTIL.getConfiguration().get("fs.defaultFS")),
           BACKUP_ROOT_DIR).toString();
@@ -323,6 +325,7 @@ public class TestBackupBase {
           + BACKUP_REMOTE_ROOT_DIR).toString();
       LOG.info("REMOTE ROOTDIR " + BACKUP_REMOTE_ROOT_DIR);
     }
+
     createTables();
     populateFromMasterConfig(TEST_UTIL.getHBaseCluster().getMaster().getConfiguration(), conf1);
     setupIsDone = true;

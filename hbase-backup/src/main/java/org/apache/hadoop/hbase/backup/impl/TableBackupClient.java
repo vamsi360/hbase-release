@@ -68,7 +68,8 @@ public abstract class TableBackupClient {
 
   protected BackupManager backupManager;
   protected BackupInfo backupInfo;
-
+  protected FileSystem fs;
+  
   public TableBackupClient() {
   }
 
@@ -89,6 +90,7 @@ public abstract class TableBackupClient {
     this.tableList = request.getTableList();
     this.conn = conn;
     this.conf = conn.getConfiguration();
+    this.fs = FSUtils.getCurrentFileSystem(conf);
     backupInfo =
         backupManager.createBackupInfo(backupId, request.getBackupType(), tableList,
           request.getTargetRootDir(), request.getTotalTasks(), request.getBandwidth());

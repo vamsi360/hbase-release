@@ -45,7 +45,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.WALPlayer.WALCellMapper;
+import org.apache.hadoop.hbase.mapreduce.WALPlayer.WALKeyValueMapper;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.MapReduceTests;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -171,7 +171,7 @@ public class TestCellBasedWALPlayer2 {
   private void testWALKeyValueMapper(final String tableConfigKey) throws Exception {
     Configuration configuration = new Configuration();
     configuration.set(tableConfigKey, "table");
-    WALCellMapper mapper = new WALCellMapper();
+    WALKeyValueMapper mapper = new WALKeyValueMapper();
     WALKey key = mock(WALKey.class);
     when(key.getTableName()).thenReturn(TableName.valueOf("table"));
     @SuppressWarnings("unchecked")
