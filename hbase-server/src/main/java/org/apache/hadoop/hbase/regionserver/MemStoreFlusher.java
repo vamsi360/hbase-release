@@ -253,9 +253,6 @@ class MemStoreFlusher implements FlushRequester {
           bestRegionReplicaSize = getMemStoreDataSize(bestRegionReplica);
       }
 
-      LOG.debug("regionToFlush " + regionToFlush + " regionToFlushSize=" + regionToFlushSize +
-          " bestRegionReplica " + bestRegionReplica + " bestRegionReplicaSize=" +
-          bestRegionReplicaSize);
       Preconditions.checkState(
         (regionToFlush != null && regionToFlushSize > 0) || bestRegionReplicaSize > 0);
 
