@@ -65,7 +65,7 @@ public class WALFactory {
    * Maps between configuration names for providers and implementation classes.
    */
   static enum Providers {
-    defaultProvider(AsyncFSWALProvider.class),
+    defaultProvider(FSHLogProvider.class),
     filesystem(FSHLogProvider.class),
     multiwal(RegionGroupingProvider.class),
     asyncfs(AsyncFSWALProvider.class);
