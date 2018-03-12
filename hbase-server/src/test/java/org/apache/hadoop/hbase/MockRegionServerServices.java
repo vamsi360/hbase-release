@@ -339,13 +339,18 @@ public class MockRegionServerServices implements RegionServerServices {
   }
 
   @Override
+  public boolean isClusterUp() {
+    return true;
+  }
+
+  @Override
   public boolean reportRegionSizesForQuotas(RegionSizeStore sizeStore) {
     return true;
   }
 
   @Override
   public boolean reportFileArchivalForQuotas(
-      TableName tableName, Collection<Entry<String,Long>> archivedFiles) {
+      TableName tableName, Collection<Entry<String, Long>> archivedFiles) {
     return true;
   }
 }

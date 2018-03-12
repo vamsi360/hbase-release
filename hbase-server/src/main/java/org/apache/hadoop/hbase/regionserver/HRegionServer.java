@@ -907,7 +907,8 @@ public class HRegionServer extends HasThread implements
   /**
    * @return True if the cluster is up.
    */
-  private boolean isClusterUp() {
+  @Override
+  public boolean isClusterUp() {
     return this.masterless ||
         (this.clusterStatusTracker != null && this.clusterStatusTracker.isClusterUp());
   }

@@ -240,6 +240,11 @@ public interface RegionServerServices extends Server, MutableOnlineRegions, Favo
   void unassign(byte[] regionName) throws IOException;
 
   /**
+   * @return True if cluster is up; false if cluster is not up (we are shutting down).
+   */
+  boolean isClusterUp();
+
+  /**
    * Reports the provided Region sizes hosted by this RegionServer to the active Master.
    *
    * @param sizeStore The sizes for Regions locally hosted.
@@ -254,6 +259,7 @@ public interface RegionServerServices extends Server, MutableOnlineRegions, Favo
    * @param tableName The name of the table that files previously belonged to
    * @param archivedFiles Files and their sizes that were moved to archive
    * @return {@code true} if the files were successfully reported, {@code false} otherwise.
+   * @return True if cluster is up; false if cluster is not up (we are shutting down).
    */
   boolean reportFileArchivalForQuotas(
       TableName tableName, Collection<Entry<String,Long>> archivedFiles);

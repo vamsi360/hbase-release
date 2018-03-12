@@ -683,6 +683,11 @@ ClientProtos.ClientService.BlockingInterface, RegionServerServices {
   }
 
   @Override
+  public boolean isClusterUp() {
+    return true;
+  }
+
+  @Override
   public boolean reportRegionSizesForQuotas(RegionSizeStore sizeStore) {
     return true;
   }
