@@ -616,6 +616,7 @@ public class BackupAdminImpl implements BackupAdmin {
   public void mergeBackups(String[] backupIds) throws IOException {
     try (final BackupMetaTable sysTable = new BackupMetaTable(conn);) {
       checkIfValidForMerge(backupIds, sysTable);
+      //TODO run job on remote cluster
       BackupMergeJob job = BackupRestoreFactory.getBackupMergeJob(conn.getConfiguration());
       job.run(backupIds);
     }

@@ -34,6 +34,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.impl.BackupAdminImpl;
+import org.apache.hadoop.hbase.backup.impl.BackupCommands;
 import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.backup.mapreduce.MapReduceBackupMergeJob;
 import org.apache.hadoop.hbase.backup.mapreduce.MapReduceHFileSplitterJob;
@@ -109,7 +110,7 @@ public class TestIncrementalBackupMergeWithFailures extends TestBackupBase {
         table.startMergeOperation(backupIds);
 
         // Select most recent backup id
-        String mergedBackupId = findMostRecentBackupId(backupIds);
+        String mergedBackupId = BackupUtils.findMostRecentBackupId(backupIds);
 
         TableName[] tableNames = getTableNamesInBackupImages(backupIds);
         String backupRoot = null;
@@ -160,18 +161,38 @@ public class TestIncrementalBackupMergeWithFailures extends TestBackupBase {
         table.updateProcessedTablesForMerge(tableList);
         finishedTables = true;
 
-        // Move data
+        // (modification of a backup file system)
+        // Move existing mergedBackupId data into tmp directory
+        // we will need it later in case of a failure
+        Path tmpBackupDir =  HBackupFileSystem.getBackupTmpDirPathForBackupId(backupRoot, 
+          mergedBackupId);
+        Path backupDirPath = HBackupFileSystem.getBackupPath(backupRoot, mergedBackupId);
+        if (!fs.rename(backupDirPath, tmpBackupDir)) {
+          throw new IOException("Failed to rename "+ backupDirPath +" to "+tmpBackupDir);
+        } else {
+          LOG.debug("Renamed "+ backupDirPath +" to "+ tmpBackupDir);
+        }
+        // Move new data into backup dest
         for (Pair<TableName, Path> tn : processedTableList) {
           moveData(fs, backupRoot, tn.getSecond(), tn.getFirst(), mergedBackupId);
         }
-        // PHASE 4
         checkFailure(FailurePhase.PHASE4);
-        // Delete old data and update manifest
+        // Update backup manifest
         List<String> backupsToDelete = getBackupIdsToDelete(backupIds, mergedBackupId);
+        updateBackupManifest(tmpBackupDir.getParent().toString(), mergedBackupId, backupsToDelete);
+        // Copy meta files back from tmp to backup dir
+        copyMetaData(fs, tmpBackupDir, backupDirPath);
+        // Delete tmp dir (Rename back during repair)
+        if (!fs.delete(tmpBackupDir, true)) {
+          // WARN and ignore
+          LOG.warn("Could not delete tmp dir: "+ tmpBackupDir);
+        }
+        // Delete old data
         deleteBackupImages(backupsToDelete, conn, fs, backupRoot);
-        updateBackupManifest(backupRoot, mergedBackupId, backupsToDelete);
         // Finish merge session
         table.finishMergeOperation();
+        // Release lock
+        table.finishBackupExclusiveOperation();
       } catch (RuntimeException e) {
         throw e;
       } catch (Exception e) {
@@ -290,8 +311,8 @@ public class TestIncrementalBackupMergeWithFailures extends TestBackupBase {
             Assert.fail("IOException is expected");
           } catch(IOException ee) {
             // Expected - clean up before proceeding
-            table.finishMergeOperation();
-            table.finishBackupExclusiveOperation();
+            //table.finishMergeOperation();
+            //table.finishBackupExclusiveOperation();
           }
         }
         table.close();
@@ -302,7 +323,10 @@ public class TestIncrementalBackupMergeWithFailures extends TestBackupBase {
     Configuration conf = conn.getConfiguration();
     conf.unset(FAILURE_PHASE_KEY);
     conf.unset(BackupRestoreFactory.HBASE_BACKUP_MERGE_IMPL_CLASS);
-
+    // Now run repair
+    BackupMetaTable sysTable = new BackupMetaTable(conn);
+    BackupCommands.RepairCommand.repairFailedBackupMergeIfAny(conn, sysTable);
+         // Now repeat merge
     try (BackupAdmin bAdmin = new BackupAdminImpl(conn);) {
       String[] backups = new String[] { backupIdIncMultiple, backupIdIncMultiple2 };
       bAdmin.mergeBackups(backups);

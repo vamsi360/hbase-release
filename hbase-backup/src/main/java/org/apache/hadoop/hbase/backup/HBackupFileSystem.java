@@ -62,6 +62,25 @@ public class HBackupFileSystem {
         + tableName.getNamespaceAsString() + Path.SEPARATOR + tableName.getQualifierAsString()
         + Path.SEPARATOR;
   }
+ 
+  /**
+   * Get backup temporary directory
+   * @param backupRootDir backup root
+   * @return backup tmp directory path
+   */
+  public static Path getBackupTmpDirPath(String backupRootDir) {
+    return new Path(backupRootDir, ".tmp");
+  }
+ 
+  /**
+   * Get backup tmp directory for backupId
+   * @param backupRoot backup root
+   * @param backupId backup id
+   * @return backup tmp directory path
+   */
+  public static Path getBackupTmpDirPathForBackupId(String backupRoot, String backupId) {
+    return new Path(getBackupTmpDirPath(backupRoot), backupId);
+  }
 
   public static String getTableBackupDataDir(String backupRootDir, String backupId,
       TableName tableName) {

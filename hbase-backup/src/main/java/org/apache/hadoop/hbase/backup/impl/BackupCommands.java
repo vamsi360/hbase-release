@@ -58,6 +58,7 @@ import org.apache.hadoop.hbase.backup.BackupRequest;
 import org.apache.hadoop.hbase.backup.BackupRestoreConstants;
 import org.apache.hadoop.hbase.backup.BackupRestoreConstants.BackupCommand;
 import org.apache.hadoop.hbase.backup.BackupType;
+import org.apache.hadoop.hbase.backup.HBackupFileSystem;
 import org.apache.hadoop.hbase.backup.util.BackupSet;
 import org.apache.hadoop.hbase.backup.util.BackupUtils;
 import org.apache.hadoop.hbase.client.Connection;
@@ -397,7 +398,7 @@ public final class BackupCommands {
     }
   }
 
-  private static class HelpCommand extends Command {
+  public static class HelpCommand extends Command {
 
     HelpCommand(Configuration conf, CommandLine cmdline) {
       super(conf);
@@ -449,7 +450,7 @@ public final class BackupCommands {
     }
   }
 
-  private static class DescribeCommand extends Command {
+  public static class DescribeCommand extends Command {
 
     DescribeCommand(Configuration conf, CommandLine cmdline) {
       super(conf);
@@ -488,7 +489,7 @@ public final class BackupCommands {
     }
   }
 
-  private static class ProgressCommand extends Command {
+  public static class ProgressCommand extends Command {
 
     ProgressCommand(Configuration conf, CommandLine cmdline) {
       super(conf);
@@ -545,7 +546,7 @@ public final class BackupCommands {
     }
   }
 
-  private static class DeleteCommand extends Command {
+  public static class DeleteCommand extends Command {
 
     DeleteCommand(Configuration conf, CommandLine cmdline) {
       super(conf);
@@ -586,7 +587,7 @@ public final class BackupCommands {
     }
   }
 
-  private static class RepairCommand extends Command {
+  public static class RepairCommand extends Command {
 
     RepairCommand(Configuration conf, CommandLine cmdline) {
       super(conf);
@@ -665,7 +666,7 @@ public final class BackupCommands {
 
     }
 
-    private void repairFailedBackupMergeIfAny(Connection conn, BackupMetaTable sysTable)
+    public static void repairFailedBackupMergeIfAny(Connection conn, BackupMetaTable sysTable)
         throws IOException {
       String[] backupIds = sysTable.getListOfBackupIdsFromMergeOperation();
       if (backupIds == null || backupIds.length == 0) {
@@ -675,27 +676,61 @@ public final class BackupCommands {
         return;
       }
       System.out.println("Found failed MERGE operation for: " + StringUtils.join(backupIds));
-      System.out.println("Running MERGE again ...");
+      // Check if backup .tmp exists
+      BackupInfo bInfo = sysTable.readBackupInfo(backupIds[0]);
+      String backupRoot = bInfo.getBackupRootDir();
+      FileSystem fs = FileSystem.get(new Path(backupRoot).toUri(), new Configuration());
+      String backupId = BackupUtils.findMostRecentBackupId(backupIds);
+      Path tmpPath = HBackupFileSystem.getBackupTmpDirPathForBackupId(backupRoot, backupId);
+      if (fs.exists(tmpPath)) {
+        // Move data back
+        Path destPath = HBackupFileSystem.getBackupPath(backupRoot, backupId);
+        if (!fs.delete(destPath, true)) {
+          System.out.println("Failed to delete " + destPath);
+        }
+        boolean res = fs.rename(tmpPath, destPath);
+        if (!res) {
+          throw new IOException(
+              "MERGE repair: failed  to rename from " + tmpPath + " to " + destPath);
+        }
+        System.out
+            .println("MERGE repair: renamed from " + tmpPath + " to " + destPath + " res=" + res);
+      } else {
+        checkRemoveBackupImages(fs, backupRoot, backupIds);
+      }
       // Restore table from snapshot
       BackupMetaTable.restoreFromSnapshot(conn);
-      // Unlock backupo system
+      // Unlock backup system
       sysTable.finishBackupExclusiveOperation();
       // Finish previous failed session
       sysTable.finishMergeOperation();
-      try (BackupAdmin admin = new BackupAdminImpl(conn);) {
-        admin.mergeBackups(backupIds);
-      }
-      System.out.println("MERGE operation finished OK: " + StringUtils.join(backupIds));
-
+      System.out.println("MERGE repair operation finished OK: " + StringUtils.join(backupIds));
     }
-
+    
+    private static void checkRemoveBackupImages(FileSystem fs, String backupRoot,
+        String[] backupIds) throws IOException {
+      String mergedBackupId = BackupUtils.findMostRecentBackupId(backupIds);
+      for (String backupId : backupIds) {
+        if (backupId.equals(mergedBackupId)) {
+          continue;
+        }
+        Path path = HBackupFileSystem.getBackupPath(backupRoot, backupId);
+        if (fs.exists(path)) {
+          if (!fs.delete(path, true)) {
+            System.out.println("MERGE repair removing: " + path + " - FAILED");
+          } else {
+            System.out.println("MERGE repair removing: " + path + " - OK");
+          }
+        }
+      }
+    }
     @Override
     protected void printUsage() {
       System.out.println(REPAIR_CMD_USAGE);
     }
   }
 
-  private static class MergeCommand extends Command {
+  public static class MergeCommand extends Command {
 
     MergeCommand(Configuration conf, CommandLine cmdline) {
       super(conf);
@@ -745,7 +780,7 @@ public final class BackupCommands {
     }
   }
 
-  private static class HistoryCommand extends Command {
+  public static class HistoryCommand extends Command {
 
     private final static int DEFAULT_HISTORY_LENGTH = 10;
 
@@ -854,7 +889,7 @@ public final class BackupCommands {
     }
   }
 
-  private static class BackupSetCommand extends Command {
+  public static class BackupSetCommand extends Command {
     private final static String SET_ADD_CMD = "add";
     private final static String SET_REMOVE_CMD = "remove";
     private final static String SET_DELETE_CMD = "delete";
