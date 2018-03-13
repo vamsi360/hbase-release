@@ -41,13 +41,15 @@ import org.apache.hadoop.hbase.procedure.Procedure;
 import org.apache.hadoop.hbase.procedure.ProcedureCoordinator;
 import org.apache.hadoop.hbase.procedure.ProcedureCoordinatorRpcs;
 import org.apache.hadoop.hbase.procedure.RegionServerProcedureManager;
+import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.security.access.AccessChecker;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.HBaseProtos.NameStringPair;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.HBaseProtos.ProcedureDescription;
 import org.apache.zookeeper.KeeperException;
 
 /**
  * Master procedure manager for coordinated cluster-wide WAL roll operation, which is run during
- * backup operation, see {@link MasterProcedureManager} and and {@link RegionServerProcedureManager}
+ * backup operation, see {@link MasterProcedureManager} and {@link RegionServerProcedureManager}
  */
 @InterfaceAudience.Private
 public class LogRollMasterProcedureManager extends MasterProcedureManager {
@@ -154,6 +156,12 @@ public class LogRollMasterProcedureManager extends MasterProcedureManager {
       monitor.receive(ee);
     }
     monitor.rethrowException();
+  }
+
+  @Override
+  public void checkPermissions(ProcedureDescription desc, AccessChecker accessChecker, User user)
+      throws IOException {
+    // TODO: what permissions checks are needed here?
   }
 
   private boolean isBackupEnabled() {
