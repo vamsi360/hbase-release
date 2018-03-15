@@ -1408,7 +1408,7 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
       BloomType type, int blockSize, Configuration c) throws IOException {
     TableDescriptorBuilder builder = TableDescriptorBuilder.newBuilder(htd);
     for (byte[] family : families) {
-      builder.addColumnFamily(
+      builder.setColumnFamily(
           ColumnFamilyDescriptorBuilder.newBuilder(family).setBloomFilterType(type)
               .setBlocksize(blockSize).build());
     }
@@ -3751,7 +3751,7 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
     TableDescriptorBuilder builder = TableDescriptorBuilder.newBuilder(td);
     for (ColumnFamilyDescriptor cd : cds) {
       if (!td.hasColumnFamily(cd.getName())) {
-        builder.addColumnFamily(cd);
+        builder.setColumnFamily(cd);
       }
     }
     td = builder.build();
@@ -3857,7 +3857,7 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
       throws IOException {
     TableDescriptor td
         = TableDescriptorBuilder.newBuilder(TableName.valueOf(tableName))
-            .addColumnFamily(cd)
+            .setColumnFamily(cd)
             .build();
     HRegionInfo info =
         new HRegionInfo(TableName.valueOf(tableName), null, null, false);
