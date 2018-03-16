@@ -19,7 +19,6 @@
 package org.apache.hadoop.hbase.spark;
 
 import com.google.common.collect.Sets;
-import org.apache.commons.cli.CommandLine;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -56,6 +55,7 @@ import org.apache.hadoop.hbase.util.RegionSplitter;
 
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.hbase.thirdparty.org.apache.commons.cli.CommandLine;
 import org.apache.spark.SerializableWritable;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
