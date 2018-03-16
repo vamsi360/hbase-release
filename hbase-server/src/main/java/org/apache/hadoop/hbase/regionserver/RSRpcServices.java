@@ -1530,7 +1530,7 @@ public class RSRpcServices implements HBaseRPCErrorHandler,
           // the region.
           Pair<HRegionInfo, ServerName> p = MetaTableAccessor.getRegion(
             regionServer.getConnection(), region.getRegionName());
-          if (regionServer.serverName.equals(p.getSecond())) {
+          if (p != null && regionServer.serverName.equals(p.getSecond())) {
             Boolean closing = regionServer.regionsInTransitionInRS.get(region.getEncodedNameAsBytes());
             // Map regionsInTransitionInRSOnly has an entry for a region only if the region
             // is in transition on this RS, so here closing can be null. If not null, it can
