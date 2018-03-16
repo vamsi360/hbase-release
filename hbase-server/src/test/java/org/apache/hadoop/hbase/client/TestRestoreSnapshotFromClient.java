@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.master.MasterFileSystem;
@@ -62,13 +63,13 @@ public class TestRestoreSnapshotFromClient {
   protected final byte[] TEST_FAMILY2 = Bytes.toBytes("cf2");
 
   protected TableName tableName;
-  private byte[] emptySnapshot;
-  private byte[] snapshotName0;
-  private byte[] snapshotName1;
-  private byte[] snapshotName2;
-  private int snapshot0Rows;
-  private int snapshot1Rows;
-  private Admin admin;
+  protected byte[] emptySnapshot;
+  protected byte[] snapshotName0;
+  protected byte[] snapshotName1;
+  protected byte[] snapshotName2;
+  protected int snapshot0Rows;
+  protected int snapshot1Rows;
+  protected Admin admin;
 
   @BeforeClass
   public static void setupCluster() throws Exception {
@@ -315,5 +316,10 @@ public class TestRestoreSnapshotFromClient {
 
   protected int countRows(final Table table, final byte[]... families) throws IOException {
     return TEST_UTIL.countRows(table, families);
+  }
+
+  protected void splitRegion(final HRegionInfo regionInfo) throws IOException {
+    byte[][] splitPoints = Bytes.split(regionInfo.getStartKey(), regionInfo.getEndKey(), 1);
+    admin.split(regionInfo.getTable(), splitPoints[1]);
   }
 }
