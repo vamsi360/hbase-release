@@ -196,7 +196,7 @@ public class TestAssignmentManager {
     List<ServerName> avServers = new ArrayList<ServerName>();
     avServers.addAll(onlineServers.keySet());
     Mockito.when(this.serverManager.createDestinationServersList()).thenReturn(avServers);
-    Mockito.when(this.serverManager.createDestinationServersList(null)).thenReturn(avServers);
+    Mockito.when(this.serverManager.createDestinationServersList(new ArrayList<ServerName>())).thenReturn(avServers);
 
     Mockito.when(this.serverManager.sendRegionClose(SERVERNAME_A, REGIONINFO, -1)).
       thenReturn(true);
