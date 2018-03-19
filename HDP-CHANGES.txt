@@ -2,6 +2,37 @@ HDP-2.6 is based on Apache HBase 1.1.2
 
 
 Following are the changes on top of Apache HBase 1.1.2
+HBASE-13376: Improvements to Stochastic load balancer
+HBASE-13716: Stop using Hadoop's FSConstants
+HBASE-13848: Access InfoServer SSL passwords through Credential Provder API
+HBASE-13947: Use MasterServices instead of Server in AssignmentManager
+HBASE-14135: HBase Backup/Restore Phase 3: Merge backup images
+HBASE-14473: Compute region locality in parallel
+HBASE-14517: Show regionserver's version in master status page
+HBASE-14606: TestSecureLoadIncrementalHFiles tests timed out in trunk build on apache
+HBASE-15210: Undo aggressive load balancer logging at tens of lines per millisecond
+HBASE-15515: Improve LocalityBasedCandidateGenerator in Balancer
+HBASE-15615: Wrong sleep time when RegionServerCallable need retry
+HBASE-16135: PeerClusterZnode under rs of removed peer may never be deleted
+HBASE-16570: Compute region locality in parallel at startup
+HBASE-16810: HBase Balancer throws ArrayIndexOutOfBoundsException when regionservers are in /hbase/draining znode and unloaded
+HBASE-16852: TestDefaultCompactSelection failed on branch-1.3
+HBASE-17387: Reduce the overhead of exception report in RegionActionResult for multi()
+HBASE-17850: Backup system repair utility
+HBASE-17931: Assign system tables to servers with highest version
+HBASE-18083: Make large/small file clean thread number configurable in HFileCleaner
+HBASE-18084: Improve CleanerChore to clean from directory which consumes more disk space
+HBASE-18164: Much faster locality cost function and candidate generator
+HBASE-18212: In Standalone mode with local filesystem HBase logs Warning message:Failed to invoke 'unbuffer' method in class class org.apache.hadoop.fs.FSDataInputStream
+HBASE-18808: Ineffective config check in BackupLogCleaner#getDeletableFiles()
+HBASE-19052: FixedFileTrailer should recognize CellComparatorImpl class in branch-1.x
+HBASE-19065: HRegion#bulkLoadHFiles() should wait for concurrent Region#flush() to finish
+HBASE-19285: Add per-table latency histograms
+HBASE-19393: HTTP 413 FULL head while accessing HBase UI using SSL. 
+HBASE-19395: [branch-1] TestEndToEndSplitTransaction.testMasterOpsWhileSplitting fails with NPE
+HBASE-19421: branch-1 does not compile against Hadoop 3.0.0
+HBASE-19934: HBaseSnapshotException when read replicas is enabled and online snapshot is taken after region splitting
+HBASE-20008: [backport] NullPointerException when restoring a snapshot after splitting a region
 HBASE-17151 New API to create HFile.Reader without instantiating block cache
 HBASE-16284 Unauthorized client can shutdown the cluster
 HBASE-16604 Scanner retries on IOException can cause the scans to miss data
