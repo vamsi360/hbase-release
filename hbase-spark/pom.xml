@@ -30,9 +30,6 @@
   <artifactId>hbase-spark</artifactId>
   <name>Apache HBase - Spark</name>
   <properties>
-    <spark.version>2.3.0.3.0.0.0-SNAPSHOT</spark.version>
-    <scala.version>2.11.8</scala.version>
-    <scala.binary.version>2.11</scala.binary.version>
     <top.dir>${project.basedir}/..</top.dir>
   </properties>
   <dependencies>

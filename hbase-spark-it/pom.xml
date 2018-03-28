@@ -33,9 +33,6 @@
 
 
   <properties>
-    <spark.version>2.3.0.3.0.0.2-SNAPSHOT</spark.version>
-    <scala.version>2.11.8</scala.version>
-    <scala.binary.version>2.11</scala.binary.version>
     <!-- Test inclusion patterns used by failsafe configuration -->
     <unittest.include>**/Test*.java</unittest.include>
     <integrationtest.include>**/IntegrationTest*.java</integrationtest.include>
