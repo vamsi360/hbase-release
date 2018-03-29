@@ -1,4 +1,5 @@
 /**
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -125,10 +126,9 @@ public final class BackupMetaTable implements Closeable {
   private TableName tableName;
 
   /**
-   * Backup System table name for bulk loaded files.
-   * We keep all bulk loaded file references in a separate table
-   * because we have to isolate general backup operations: create, merge etc
-   * from activity of RegionObserver, which controls process of a bulk loading
+   * Backup System table name for bulk loaded files. We keep all bulk loaded file references in a
+   * separate table because we have to isolate general backup operations: create, merge etc from
+   * activity of RegionObserver, which controls process of a bulk loading
    * {@link org.apache.hadoop.hbase.backup.BackupObserver}
    */
 
@@ -259,7 +259,7 @@ public final class BackupMetaTable implements Closeable {
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("update backup status in backup system table for: " + info.getBackupId()
-          + " set status=" + info.getState());
+        + " set status=" + info.getState());
     }
     try (Table table = connection.getTable(tableName)) {
       Put put = createPutForBackupInfo(info);
@@ -346,7 +346,6 @@ public final class BackupMetaTable implements Closeable {
     }
   }
 
-
   /**
    * Deletes backup status from backup system table table
    * @param backupId backup id
@@ -374,7 +373,7 @@ public final class BackupMetaTable implements Closeable {
       Map<byte[], List<Path>> finalPaths) throws IOException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("write bulk load descriptor to backup " + tabName + " with " + finalPaths.size()
-          + " entries");
+        + " entries");
     }
     try (Table table = connection.getTable(bulkLoadTableName)) {
       List<Put> puts = BackupMetaTable.createPutForCommittedBulkload(tabName, region, finalPaths);
@@ -393,8 +392,8 @@ public final class BackupMetaTable implements Closeable {
   public void writeFilesForBulkLoadPreCommit(TableName tabName, byte[] region, final byte[] family,
       final List<Pair<Path, Path>> pairs) throws IOException {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("write bulk load descriptor to backup " + tabName + " with " + pairs.size()
-          + " entries");
+      LOG.debug(
+        "write bulk load descriptor to backup " + tabName + " with " + pairs.size() + " entries");
     }
     try (Table table = connection.getTable(bulkLoadTableName)) {
       List<Put> puts =
@@ -429,7 +428,8 @@ public final class BackupMetaTable implements Closeable {
    * whether the hfile was recorded by preCommitStoreFile hook (true)
    */
   public Pair<Map<TableName, Map<String, Map<String, List<Pair<String, Boolean>>>>>, List<byte[]>>
-      readBulkloadRows(List<TableName> tableList) throws IOException {
+    readBulkloadRows(List<TableName> tableList) throws IOException {
+
     Map<TableName, Map<String, Map<String, List<Pair<String, Boolean>>>>> map = new HashMap<>();
     List<byte[]> rows = new ArrayList<>();
     for (TableName tTable : tableList) {
@@ -595,8 +595,7 @@ public final class BackupMetaTable implements Closeable {
         // Row exists, try to put if value == ACTIVE_SESSION_NO
         if (!table.checkAndPut(ACTIVE_SESSION_ROW, SESSIONS_FAMILY, ACTIVE_SESSION_COL,
           ACTIVE_SESSION_NO, put)) {
-          throw new IOException("There is an active backup exclusive operation");
-        }
+          throw new ExclusiveOperationException();        }
       }
     }
   }
@@ -615,8 +614,7 @@ public final class BackupMetaTable implements Closeable {
       Put put = createPutForStopBackupSession();
       if (!table.checkAndPut(ACTIVE_SESSION_ROW, SESSIONS_FAMILY, ACTIVE_SESSION_COL,
         ACTIVE_SESSION_YES, put)) {
-        throw new IOException("There is no active backup exclusive operation");
-      }
+        throw new ExclusiveOperationException();      }
     }
   }
 
@@ -701,8 +699,7 @@ public final class BackupMetaTable implements Closeable {
 
   /**
    * Get first n backup history records
-   * @param n number of records, if n== -1 - max number
-   *        is ignored
+   * @param n number of records, if n== -1 - max number is ignored
    * @return list of records
    * @throws IOException
    */
@@ -720,8 +717,7 @@ public final class BackupMetaTable implements Closeable {
 
   /**
    * Get backup history records filtered by list of filters.
-   * @param n max number of records, if n == -1 , then max number
-   *        is ignored
+   * @param n max number of records, if n == -1 , then max number is ignored
    * @param filters list of filters
    * @return backup records
    * @throws IOException
@@ -925,8 +921,8 @@ public final class BackupMetaTable implements Closeable {
       Map<String, Long> map) {
     BackupProtos.TableServerTimestamp.Builder tstBuilder =
         BackupProtos.TableServerTimestamp.newBuilder();
-    tstBuilder.setTableName(org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil
-        .toProtoTableName(table));
+    tstBuilder
+    .setTableName(org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil.toProtoTableName(table));
 
     for (Entry<String, Long> entry : map.entrySet()) {
       BackupProtos.ServerTimestamp.Builder builder = BackupProtos.ServerTimestamp.newBuilder();
@@ -1121,12 +1117,12 @@ public final class BackupMetaTable implements Closeable {
   /**
    * Check if WAL file is eligible for deletion using multi-get
    * @param files names of a file to check
-   * @return map of results
-   *         (key: FileStatus object. value: true if the file is deletable, false otherwise)
+   * @return map of results (key: FileStatus object. value: true if the file is deletable, false
+   *         otherwise)
    * @throws IOException exception
    */
   public Map<FileStatus, Boolean> areWALFilesDeletable(Iterable<FileStatus> files)
-    throws IOException {
+      throws IOException {
     final int BUF_SIZE = 100;
 
     Map<FileStatus, Boolean> ret = new HashMap<>();
@@ -1307,8 +1303,8 @@ public final class BackupMetaTable implements Closeable {
    */
   public void removeFromBackupSet(String name, String[] toRemove) throws IOException {
     if (LOG.isTraceEnabled()) {
-      LOG.trace(" Backup set remove from : " + name + " tables [" + StringUtils.join(toRemove, " ")
-          + "]");
+      LOG.trace(
+        " Backup set remove from : " + name + " tables [" + StringUtils.join(toRemove, " ") + "]");
     }
     Table table = null;
     String[] disjoint = null;
@@ -1723,8 +1719,8 @@ public final class BackupMetaTable implements Closeable {
         // Snapshot does not exists, i.e completeBackup failed after
         // deleting backup system table snapshot
         // In this case we log WARN and proceed
-        LOG.warn("Could not restore backup system table. Snapshot " + snapshotName
-            + " does not exists.");
+        LOG.warn(
+          "Could not restore backup system table. Snapshot " + snapshotName + " does not exists.");
       }
     }
   }
@@ -1980,9 +1976,8 @@ public final class BackupMetaTable implements Closeable {
    */
   static Scan createScanForBulkLoadedFiles(String backupId) throws IOException {
     Scan scan = new Scan();
-    byte[] startRow =
-        backupId == null ? BULK_LOAD_PREFIX_BYTES : rowkey(BULK_LOAD_PREFIX, backupId
-            + BLK_LD_DELIM);
+    byte[] startRow = backupId == null ? BULK_LOAD_PREFIX_BYTES
+        : rowkey(BULK_LOAD_PREFIX, backupId + BLK_LD_DELIM);
     byte[] stopRow = Arrays.copyOf(startRow, startRow.length);
     stopRow[stopRow.length - 1] = (byte) (stopRow[stopRow.length - 1] + 1);
     scan.setStartRow(startRow);

@@ -1,4 +1,5 @@
 /**
+ *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hbase.backup.impl;
 
 import java.io.Closeable;
@@ -27,13 +27,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.backup.BackupHFileCleaner;
 import org.apache.hadoop.hbase.backup.BackupInfo;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupState;
 import org.apache.hadoop.hbase.backup.BackupObserver;
@@ -47,10 +46,13 @@ import org.apache.hadoop.hbase.backup.regionserver.LogRollRegionServerProcedureM
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
+import org.apache.hadoop.hbase.master.cleaner.HFileCleaner;
 import org.apache.hadoop.hbase.procedure.ProcedureManagerHost;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handles backup requests, creates backup info records in backup system table to
@@ -58,7 +60,12 @@ import org.apache.yetus.audience.InterfaceAudience;
  */
 @InterfaceAudience.Private
 public class BackupManager implements Closeable {
-  private static final Log LOG = LogFactory.getLog(BackupManager.class);
+  // in seconds
+  public final static String BACKUP_EXCLUSIVE_OPERATION_TIMEOUT_SECONDS_KEY =
+      "hbase.backup.exclusive.op.timeout.seconds";
+  // In seconds
+  private final static int DEFAULT_BACKUP_EXCLUSIVE_OPERATION_TIMEOUT = 3600;
+  private static final Logger LOG = LoggerFactory.getLogger(BackupManager.class);
 
   protected Configuration conf = null;
   protected BackupInfo backupInfo = null;
@@ -115,9 +122,13 @@ public class BackupManager implements Closeable {
       conf.set(ProcedureManagerHost.MASTER_PROCEDURE_CONF_KEY, classes + "," + masterProcedureClass);
     }
 
+    plugins = conf.get(HFileCleaner.MASTER_HFILE_CLEANER_PLUGINS);
+    conf.set(HFileCleaner.MASTER_HFILE_CLEANER_PLUGINS, (plugins == null ? "" : plugins + ",") +
+      BackupHFileCleaner.class.getName());
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Added log cleaner: " + cleanerClass + "\n" + "Added master procedure manager: "
-          + masterProcedureClass);
+      LOG.debug("Added log cleaner: {}. Added master procedure manager: {}."
+        +"Added master procedure manager: {}", cleanerClass, masterProcedureClass,
+        BackupHFileCleaner.class.getName());
     }
 
   }
@@ -174,7 +185,7 @@ public class BackupManager implements Closeable {
       try {
         systemTable.close();
       } catch (Exception e) {
-        LOG.error(e);
+        LOG.error(e.getMessage(), e);
       }
     }
   }
@@ -220,14 +231,13 @@ public class BackupManager implements Closeable {
           tableList.add(hTableDescriptor.getTableName());
         }
 
-        LOG.info("Full backup all the tables available in the cluster: " + tableList);
+        LOG.info("Full backup all the tables available in the cluster: {}", tableList);
       }
     }
 
     // there are one or more tables in the table list
-    backupInfo =
-        new BackupInfo(backupId, type, tableList.toArray(new TableName[tableList.size()]),
-            targetRootDir);
+    backupInfo = new BackupInfo(backupId, type, tableList.toArray(new TableName[tableList.size()]),
+      targetRootDir);
     backupInfo.setBandwidth(bandwidth);
     backupInfo.setWorkers(workers);
     return backupInfo;
@@ -256,9 +266,9 @@ public class BackupManager implements Closeable {
   public void initialize() throws IOException {
     String ongoingBackupId = this.getOngoingBackupId();
     if (ongoingBackupId != null) {
-      LOG.info("There is a ongoing backup " + ongoingBackupId
-          + ". Can not launch new backup until no ongoing backup remains.");
-      throw new BackupException("There is ongoing backup.");
+      LOG.info("There is a ongoing backup {}"
+        + ". Can not launch new backup until no ongoing backup remains.", ongoingBackupId);
+      throw new BackupException("There is ongoing backup seesion.");
     }
   }
 
@@ -292,10 +302,9 @@ public class BackupManager implements Closeable {
 
       BackupImage.Builder builder = BackupImage.newBuilder();
 
-      BackupImage image =
-          builder.withBackupId(backup.getBackupId()).withType(backup.getType())
-              .withRootDir(backup.getBackupRootDir()).withTableList(backup.getTableNames())
-              .withStartTime(backup.getStartTs()).withCompleteTime(backup.getCompleteTs()).build();
+      BackupImage image = builder.withBackupId(backup.getBackupId()).withType(backup.getType())
+          .withRootDir(backup.getBackupRootDir()).withTableList(backup.getTableNames())
+          .withStartTime(backup.getStartTs()).withCompleteTime(backup.getCompleteTs()).build();
 
       // add the full backup image as an ancestor until the last incremental backup
       if (backup.getType().equals(BackupType.FULL)) {
@@ -375,7 +384,36 @@ public class BackupManager implements Closeable {
    * @throws IOException if active session already exists
    */
   public void startBackupSession() throws IOException {
-    systemTable.startBackupExclusiveOperation();
+    long startTime = System.currentTimeMillis();
+    long timeout = conf.getInt(BACKUP_EXCLUSIVE_OPERATION_TIMEOUT_SECONDS_KEY,
+      DEFAULT_BACKUP_EXCLUSIVE_OPERATION_TIMEOUT) * 1000L;
+    long lastWarningOutputTime = 0;
+    while (System.currentTimeMillis() - startTime < timeout) {
+      try {
+        systemTable.startBackupExclusiveOperation();
+        return;
+      } catch (IOException e) {
+        if (e instanceof ExclusiveOperationException) {
+          // sleep, then repeat
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException e1) {
+            // Restore the interrupted status
+            Thread.currentThread().interrupt();
+          }
+          if (lastWarningOutputTime == 0
+              || (System.currentTimeMillis() - lastWarningOutputTime) > 60000) {
+            lastWarningOutputTime = System.currentTimeMillis();
+            LOG.warn("Waiting to acquire backup exclusive lock for {}s",
+                +(lastWarningOutputTime - startTime) / 1000);
+          }
+        } else {
+          throw e;
+        }
+      }
+    }
+    throw new IOException(
+      "Failed to acquire backup system table exclusive lock after " + timeout / 1000 + "s");
   }
 
   /**
@@ -416,7 +454,7 @@ public class BackupManager implements Closeable {
   }
 
   public Pair<Map<TableName, Map<String, Map<String, List<Pair<String, Boolean>>>>>, List<byte[]>>
-      readBulkloadRows(List<TableName> tableList) throws IOException {
+    readBulkloadRows(List<TableName> tableList) throws IOException {
     return systemTable.readBulkloadRows(tableList);
   }
 
