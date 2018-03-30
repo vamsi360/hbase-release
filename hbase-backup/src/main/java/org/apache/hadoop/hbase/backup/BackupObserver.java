@@ -103,6 +103,9 @@ public class BackupObserver implements RegionCoprocessor, RegionObserver {
       }
       tbl.writeFilesForBulkLoadPreCommit(tableName, info.getEncodedNameAsBytes(), family, pairs);
       return;
+    } catch (IOException ioe) {
+      LOG.error("Failed to do precommit action", ioe);
+      throw ioe;
     }
   }
 }
