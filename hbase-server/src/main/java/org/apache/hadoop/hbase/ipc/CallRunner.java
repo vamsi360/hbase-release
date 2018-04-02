@@ -29,6 +29,7 @@ import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.yetus.audience.InterfaceStability;
 import org.apache.hadoop.hbase.exceptions.TimeoutIOException;
 import org.apache.hadoop.hbase.monitoring.MonitoredRPCHandler;
+import org.apache.hadoop.hbase.security.AccessDeniedException;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hbase.thirdparty.com.google.protobuf.Message;
 import org.apache.hadoop.hbase.util.Pair;
@@ -139,7 +140,9 @@ public class CallRunner {
           }
         } else {
           // Don't dump full exception.. just String version
-          RpcServer.LOG.debug(call.toShortString() + ", exception=" + e);
+          if (e instanceof AccessDeniedException) {
+            RpcServer.LOG.debug(call.toShortString(), e);
+          } else RpcServer.LOG.debug(call.toShortString() + ", exception=" + e);
         }
         errorThrowable = e;
         error = StringUtils.stringifyException(e);
