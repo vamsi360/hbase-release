@@ -343,7 +343,6 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
             this.getHRegion().getRegionServicesForStores(), inMemoryCompaction});
     }
     return ms;
->>>>>>> c88ca54c16... HBASE-20259 Doc configs for in-memory-compaction and add detail to
   }
 
   /**
