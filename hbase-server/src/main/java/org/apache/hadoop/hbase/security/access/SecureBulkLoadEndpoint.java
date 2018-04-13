@@ -23,10 +23,12 @@ import java.math.BigInteger;
 import java.security.PrivilegedAction;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -125,7 +127,9 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
 
   private final static FsPermission PERM_ALL_ACCESS = FsPermission.valueOf("-rwxrwxrwx");
   private final static FsPermission PERM_HIDDEN = FsPermission.valueOf("-rwx--x--x");
-  private final static String[] FsWithoutSupportPermission = {"s3", "s3a", "s3n", "wasb", "wasbs", "swift"};
+
+  public static final String FS_WITHOUT_SUPPORT_PERMISSION_KEY = "hbase.secure.bulkload.fs.permission.lacking";
+  public static final String FS_WITHOUT_SUPPORT_PERMISSION_DEFAULT = "s3,s3a,s3n,wasb,wasbs,swift,adfs";
 
   private SecureRandom random;
   private FileSystem fs;
@@ -146,7 +150,7 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
     conf = env.getConfiguration();
     baseStagingDir = SecureBulkLoadUtil.getBaseStagingDir(conf);
     this.userProvider = UserProvider.instantiate(conf);
-    Set<String> fsSet = new HashSet<String>(Arrays.asList(FsWithoutSupportPermission));
+    Set<String> fsSet = getFileSystemSchemesWithPermissionSupport(conf);
 
     try {
       fs = baseStagingDir.getFileSystem(conf);
@@ -170,6 +174,12 @@ public class SecureBulkLoadEndpoint extends SecureBulkLoadService
     } catch (IOException e) {
       throw new IllegalStateException("Failed to get FileSystem instance",e);
     }
+  }
+
+  Set<String> getFileSystemSchemesWithPermissionSupport(Configuration conf) {
+    final String value = conf.get(
+        FS_WITHOUT_SUPPORT_PERMISSION_KEY, FS_WITHOUT_SUPPORT_PERMISSION_DEFAULT);
+    return new HashSet<String>(Arrays.asList(StringUtils.split(value, ',')));
   }
 
   @Override
