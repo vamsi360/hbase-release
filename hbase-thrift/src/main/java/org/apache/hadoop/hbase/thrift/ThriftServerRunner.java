@@ -98,8 +98,10 @@ import org.apache.hadoop.hbase.thrift.generated.TRowResult;
 import org.apache.hadoop.hbase.thrift.generated.TScan;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ConnectionCache;
+import org.apache.hadoop.hbase.util.DNS;
+import org.apache.hadoop.hbase.util.HttpServerUtil;
+import org.apache.hadoop.hbase.util.JvmPauseMonitor;
 import org.apache.hadoop.hbase.util.Strings;
-import org.apache.hadoop.net.DNS;
 import org.apache.hadoop.security.SaslRpcServer.SaslGssCallbackHandler;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authorize.ProxyUsers;
@@ -383,6 +385,7 @@ public class ThriftServerRunner implements Runnable {
     String httpPath = "/*";
     httpServer.setHandler(context);
     context.addServlet(new ServletHolder(thriftHttpServlet), httpPath);
+    HttpServerUtil.constrainHttpMethods(context);
 
     // set up Jetty and run the embedded server
     Connector connector = new SelectChannelConnector();
