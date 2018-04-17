@@ -116,10 +116,10 @@ public class RegionServerRpcQuotaManager {
    * @param region the region where the operation will be performed
    * @param type the operation type
    * @return the OperationQuota
-   * @throws ThrottlingException if the operation cannot be executed due to quota exceeded.
+   * @throws RpcThrottlingException if the operation cannot be executed due to quota exceeded.
    */
-  public OperationQuota checkQuota(final Region region, final OperationQuota.OperationType type)
-      throws IOException, ThrottlingException {
+  public OperationQuota checkQuota(final Region region,
+      final OperationQuota.OperationType type) throws IOException, RpcThrottlingException {
     switch (type) {
     case SCAN:
       return checkQuota(region, 0, 0, 1);
@@ -138,10 +138,10 @@ public class RegionServerRpcQuotaManager {
    * @param region the region where the operation will be performed
    * @param actions the "multi" actions to perform
    * @return the OperationQuota
-   * @throws ThrottlingException if the operation cannot be executed due to quota exceeded.
+   * @throws RpcThrottlingException if the operation cannot be executed due to quota exceeded.
    */
-  public OperationQuota checkQuota(final Region region, final List<ClientProtos.Action> actions)
-      throws IOException, ThrottlingException {
+  public OperationQuota checkQuota(final Region region,
+      final List<ClientProtos.Action> actions) throws IOException, RpcThrottlingException {
     int numWrites = 0;
     int numReads = 0;
     for (final ClientProtos.Action action : actions) {
@@ -162,10 +162,11 @@ public class RegionServerRpcQuotaManager {
    * @param numReads number of short-reads to perform
    * @param numScans number of scan to perform
    * @return the OperationQuota
-   * @throws ThrottlingException if the operation cannot be executed due to quota exceeded.
+   * @throws RpcThrottlingException if the operation cannot be executed due to quota exceeded.
    */
-  private OperationQuota checkQuota(final Region region, final int numWrites, final int numReads,
-      final int numScans) throws IOException, ThrottlingException {
+  private OperationQuota checkQuota(final Region region,
+      final int numWrites, final int numReads, final int numScans)
+      throws IOException, RpcThrottlingException {
     User user = RpcServer.getRequestUser();
     UserGroupInformation ugi;
     if (user != null) {
@@ -178,10 +179,11 @@ public class RegionServerRpcQuotaManager {
     OperationQuota quota = getQuota(ugi, table);
     try {
       quota.checkQuota(numWrites, numReads, numScans);
-    } catch (ThrottlingException e) {
-      LOG.debug("Throttling exception for user=" + ugi.getUserName() + " table=" + table
-          + " numWrites=" + numWrites + " numReads=" + numReads + " numScans=" + numScans + ": "
-          + e.getMessage());
+    } catch (RpcThrottlingException e) {
+      LOG.debug("Throttling exception for user=" + ugi.getUserName() +
+                " table=" + table + " numWrites=" + numWrites +
+                " numReads=" + numReads + " numScans=" + numScans +
+                ": " + e.getMessage());
       throw e;
     }
     return quota;

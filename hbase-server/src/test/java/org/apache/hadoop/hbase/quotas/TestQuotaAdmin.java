@@ -14,16 +14,20 @@ package org.apache.hadoop.hbase.quotas;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellScanner;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.TableName;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
@@ -34,6 +38,8 @@ import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.Quotas;
 import org.apache.hadoop.hbase.protobuf.generated.QuotaProtos.SpaceLimitRequest;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -78,10 +84,10 @@ public class TestQuotaAdmin {
     Admin admin = TEST_UTIL.getHBaseAdmin();
     String userName = User.getCurrent().getShortName();
 
+    admin.setQuota(
+        QuotaSettingsFactory.throttleUser(userName, ThrottleType.READ_NUMBER, 6, TimeUnit.MINUTES));
     admin.setQuota(QuotaSettingsFactory
-      .throttleUser(userName, ThrottleType.READ_NUMBER, 6, TimeUnit.MINUTES));
-    admin.setQuota(QuotaSettingsFactory
-      .throttleUser(userName, ThrottleType.WRITE_NUMBER, 12, TimeUnit.MINUTES));
+        .throttleUser(userName, ThrottleType.WRITE_NUMBER, 12, TimeUnit.MINUTES));
     admin.setQuota(QuotaSettingsFactory.bypassGlobals(userName, true));
 
     try (QuotaRetriever scanner = QuotaRetriever.open(TEST_UTIL.getConfiguration())) {
@@ -161,6 +167,49 @@ public class TestQuotaAdmin {
     admin.setQuota(QuotaSettingsFactory.bypassGlobals(userName, false));
     assertNumResults(0, null);
   }
+
+  @Test
+  public void testMultiQuotaThrottling() throws Exception {
+    byte[] FAMILY = Bytes.toBytes("testFamily");
+    byte[] ROW = Bytes.toBytes("testRow");
+    byte[] QUALIFIER = Bytes.toBytes("testQualifier");
+    byte[] VALUE = Bytes.toBytes("testValue");
+
+    Admin admin = TEST_UTIL.getHBaseAdmin();
+    TableName tableName = TableName.valueOf("testMultiQuotaThrottling");
+    HTableDescriptor desc = new HTableDescriptor(tableName);
+    desc.addFamily(new HColumnDescriptor(FAMILY));
+    admin.createTable(desc);
+
+    // Set up the quota.
+    admin.setQuota(QuotaSettingsFactory.throttleTable(tableName, ThrottleType.WRITE_NUMBER, 6,
+        TimeUnit.SECONDS));
+
+    Thread.sleep(1000);
+    TEST_UTIL.getRSForFirstRegionInTable(tableName).getRegionServerRpcQuotaManager().
+        getQuotaCache().triggerCacheRefresh();
+    Thread.sleep(1000);
+
+    Table t =  TEST_UTIL.getConnection().getTable(tableName);
+    try {
+      int size = 5;
+      List actions = new ArrayList();
+      Object[] results = new Object[size];
+
+      for (int i = 0; i < size; i++) {
+        Put put1 = new Put(ROW);
+        put1.addColumn(FAMILY, QUALIFIER, VALUE);
+        actions.add(put1);
+      }
+      t.batch(actions, results);
+      t.batch(actions, results);
+    } catch (IOException e) {
+      fail("Not supposed to get ThrottlingExcepiton " + e);
+    } finally {
+      t.close();
+    }
+  }
+
 
   @Test
   public void testQuotaRetrieverFilter() throws Exception {
@@ -300,8 +349,8 @@ public class TestQuotaAdmin {
     final TableName tn = TableName.valueOf("table1");
     final long originalSizeLimit = 1024L * 1024L * 1024L * 1024L * 5L; // 5TB
     final SpaceViolationPolicy violationPolicy = SpaceViolationPolicy.NO_WRITES;
-    QuotaSettings settings = QuotaSettingsFactory.limitTableSpace(
-        tn, originalSizeLimit, violationPolicy);
+    QuotaSettings settings = QuotaSettingsFactory.limitTableSpace(tn, originalSizeLimit,
+        violationPolicy);
     admin.setQuota(settings);
 
     // Verify the Quotas in the table
@@ -328,8 +377,8 @@ public class TestQuotaAdmin {
     // Setting a new size and policy should be reflected
     final long newSizeLimit = 1024L * 1024L * 1024L * 1024L; // 1TB
     final SpaceViolationPolicy newViolationPolicy = SpaceViolationPolicy.NO_WRITES_COMPACTIONS;
-    QuotaSettings newSettings = QuotaSettingsFactory.limitTableSpace(
-        tn, newSizeLimit, newViolationPolicy);
+    QuotaSettings newSettings = QuotaSettingsFactory.limitTableSpace(tn, newSizeLimit,
+        newViolationPolicy);
     admin.setQuota(newSettings);
 
     // Verify the new Quotas in the table
