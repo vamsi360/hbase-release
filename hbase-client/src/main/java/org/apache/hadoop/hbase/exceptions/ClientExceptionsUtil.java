@@ -19,12 +19,12 @@
 
 package org.apache.hadoop.hbase.exceptions;
 
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.hbase.CallDroppedException;
 import org.apache.hadoop.hbase.CallQueueTooBigException;
 import org.apache.hadoop.hbase.RegionTooBusyException;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.classification.InterfaceStability;
-import org.apache.hadoop.hbase.quotas.ThrottlingException;
+import org.apache.hadoop.hbase.quotas.RpcThrottlingException;
 import org.apache.hadoop.ipc.RemoteException;
 
 @InterfaceAudience.Private
@@ -44,7 +44,7 @@ public final class ClientExceptionsUtil {
 
   public static boolean isSpecialException(Throwable cur) {
     return (cur instanceof RegionMovedException || cur instanceof RegionOpeningException
-        || cur instanceof RegionTooBusyException || cur instanceof ThrottlingException
+        || cur instanceof RegionTooBusyException || cur instanceof RpcThrottlingException
         || cur instanceof CallQueueTooBigException || cur instanceof CallDroppedException);
   }
 
@@ -76,7 +76,7 @@ public final class ClientExceptionsUtil {
    * - nested exceptions
    *
    * Looks for: RegionMovedException / RegionOpeningException / RegionTooBusyException /
-   *            ThrottlingException
+   *            RpcThrottlingException
    * @return null if we didn't find the exception, the exception otherwise.
    */
   public static Throwable findException(Object exception) {
