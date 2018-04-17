@@ -497,7 +497,7 @@ public class TestQuotaThrottle {
       }
     } catch (RetriesExhaustedWithDetailsException e) {
       for (Throwable t : e.getCauses()) {
-        if (!(t instanceof ThrottlingException)) {
+        if (!(t instanceof RpcThrottlingException)) {
           throw e;
         }
       }
@@ -516,7 +516,7 @@ public class TestQuotaThrottle {
         }
         count += tables.length;
       }
-    } catch (ThrottlingException e) {
+    } catch (RpcThrottlingException e) {
       LOG.error("get failed after nRetries=" + count, e);
     }
     return count;
