@@ -82,12 +82,17 @@ public class IntegrationTestBackupRestore extends IntegrationTestBase {
   protected static final String REGIONSERVER_COUNT_KEY = "region_servers";
   protected static final String ROWS_PER_ITERATION_KEY = "rows_in_iteration";
   protected static final String NUM_ITERATIONS_KEY = "num_iterations";
+  protected static final String BACKUP_ROOT_KEY = "backup_root";
+
   protected static final int DEFAULT_REGION_COUNT = 10;
   protected static final int DEFAULT_REGIONSERVER_COUNT = 5;
   protected static final int DEFAULT_NUMBER_OF_TABLES = 1;
   protected static final int DEFAULT_NUM_ITERATIONS = 10;
   protected static final int DEFAULT_ROWS_IN_ITERATION = 500000;
+  protected static String DEFAULT_BACKUP_ROOT = "backupIT";
+
   protected static final String SLEEP_TIME_KEY = "sleeptime";
+
   // short default interval because tests don't run very long.
   protected static final long SLEEP_TIME_DEFAULT = 50000L;
 
@@ -97,28 +102,54 @@ public class IntegrationTestBackupRestore extends IntegrationTestBase {
 
   protected static int numIterations;
   protected static int numTables;
+  protected static String backupRoot;
   protected static TableName[] tableNames;
   protected long sleepTime;
   protected static Object lock = new Object();
 
-  private static String BACKUP_ROOT_DIR = "backupIT";
 
   @Override
   @Before
   public void setUp() throws Exception {
     util = new IntegrationTestingUtility();
     Configuration conf = util.getConfiguration();
-    regionsCountPerServer = conf.getInt(REGION_COUNT_KEY, DEFAULT_REGION_COUNT);
+    regionsCountPerServer = getIntProperty(REGION_COUNT_KEY, DEFAULT_REGION_COUNT);
     regionServerCount =
-        conf.getInt(REGIONSERVER_COUNT_KEY, DEFAULT_REGIONSERVER_COUNT);
-    rowsInIteration = conf.getInt(ROWS_PER_ITERATION_KEY, DEFAULT_ROWS_IN_ITERATION);
-    numIterations = conf.getInt(NUM_ITERATIONS_KEY, DEFAULT_NUM_ITERATIONS);
-    numTables = conf.getInt(NUMBER_OF_TABLES_KEY, DEFAULT_NUMBER_OF_TABLES);
-    sleepTime = conf.getLong(SLEEP_TIME_KEY, SLEEP_TIME_DEFAULT);
+        getIntProperty(REGIONSERVER_COUNT_KEY, DEFAULT_REGIONSERVER_COUNT);
+    rowsInIteration = getIntProperty(ROWS_PER_ITERATION_KEY, DEFAULT_ROWS_IN_ITERATION);
+    numIterations = getIntProperty(NUM_ITERATIONS_KEY, DEFAULT_NUM_ITERATIONS);
+    numTables = getIntProperty(NUMBER_OF_TABLES_KEY, DEFAULT_NUMBER_OF_TABLES);
+    sleepTime = getLongProperty(SLEEP_TIME_KEY, SLEEP_TIME_DEFAULT);
+    backupRoot = getProperty(BACKUP_ROOT_KEY, DEFAULT_BACKUP_ROOT);
+    Path p = util.getDefaultRootDirPath();
+    LOG.info(p.toString());
     enableBackup(conf);
-    LOG.info("Initializing cluster with {} region servers.", regionServerCount);
+    LOG.info("Initializing cluster with {} region servers, {} tables",
+      regionServerCount, numTables);
     util.initializeCluster(regionServerCount);
     LOG.info("Cluster initialized and ready");
+  }
+
+  private String getProperty(String propName, String defaultValue) {
+    return System.getProperty(propName, defaultValue);
+  }
+
+  private int getIntProperty(String propName, int defaultValue) {
+    String v = System.getProperty(propName);
+    if (v != null) {
+      return Integer.parseInt(v);
+    } else {
+      return defaultValue;
+    }
+  }
+
+  private long getLongProperty(String propName, long defaultValue) {
+    String v = System.getProperty(propName);
+    if (v != null) {
+      return Long.parseLong(v);
+    } else {
+      return defaultValue;
+    }
   }
 
   @After
@@ -167,12 +198,12 @@ public class IntegrationTestBackupRestore extends IntegrationTestBase {
 
   private void cleanUpBackupDir() throws IOException {
     FileSystem fs = FileSystem.get(util.getConfiguration());
-    fs.delete(new Path(BACKUP_ROOT_DIR), true);
+    fs.delete(new Path(backupRoot), true);
   }
 
   @Test
   public void testBackupRestore() throws Exception {
-    BACKUP_ROOT_DIR = util.getDataTestDirOnTestFS() + Path.SEPARATOR + BACKUP_ROOT_DIR;
+    backupRoot = util.getDataTestDirOnTestFS() + Path.SEPARATOR + backupRoot;
     createTables();
     runTestMulti();
   }
@@ -265,7 +296,7 @@ public class IntegrationTestBackupRestore extends IntegrationTestBase {
       List<TableName> tables = Lists.newArrayList(table);
       BackupRequest.Builder builder = new BackupRequest.Builder();
       BackupRequest request = builder.withBackupType(BackupType.FULL).withTableList(tables)
-          .withTargetRootDir(BACKUP_ROOT_DIR).build();
+          .withTargetRootDir(backupRoot).build();
 
       String backupIdFull = backup(request, client);
       assertTrue(checkSucceeded(backupIdFull));
@@ -281,7 +312,7 @@ public class IntegrationTestBackupRestore extends IntegrationTestBase {
         // Do incremental backup
         builder = new BackupRequest.Builder();
         request = builder.withBackupType(BackupType.INCREMENTAL).withTableList(tables)
-            .withTargetRootDir(BACKUP_ROOT_DIR).build();
+            .withTargetRootDir(backupRoot).build();
         String backupId = backup(request, client);
         assertTrue(checkSucceeded(backupId));
         backupIds.add(backupId);
@@ -299,7 +330,7 @@ public class IntegrationTestBackupRestore extends IntegrationTestBase {
       String backupId = incBackupIds[incBackupIds.length - 1];
       // restore incremental backup for table, with overwrite
       TableName[] tablesRestoreIncMultiple = new TableName[] { table };
-      restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, false, tablesRestoreIncMultiple, null,
+      restore(createRestoreRequest(backupRoot, backupId, false, tablesRestoreIncMultiple, null,
         true), client);
       Table hTable = conn.getTable(table);
       Assert.assertEquals(util.countRows(hTable), rowsInIteration * numIterations);
@@ -312,7 +343,7 @@ public class IntegrationTestBackupRestore extends IntegrationTestBase {
       String backupId, long expectedRows) throws IOException {
 
     TableName[] tablesRestoreIncMultiple = new TableName[] { table };
-    restore(createRestoreRequest(BACKUP_ROOT_DIR, backupId, false,
+    restore(createRestoreRequest(backupRoot, backupId, false,
       tablesRestoreIncMultiple, null, true), client);
     Table hTable = conn.getTable(table);
     Assert.assertEquals(expectedRows, util.countRows(hTable));
@@ -415,6 +446,7 @@ public class IntegrationTestBackupRestore extends IntegrationTestBase {
       "Total number iterations." + " Default: " + DEFAULT_NUM_ITERATIONS);
     addOptWithArg(NUMBER_OF_TABLES_KEY,
       "Total number of tables in the test." + " Default: " + DEFAULT_NUMBER_OF_TABLES);
+    addOptWithArg(BACKUP_ROOT_KEY, "Path to backup destination");
 
   }
 
@@ -434,10 +466,13 @@ public class IntegrationTestBackupRestore extends IntegrationTestBase {
       Integer.toString(DEFAULT_NUM_ITERATIONS)));
     numTables = Integer.parseInt(cmd.getOptionValue(NUMBER_OF_TABLES_KEY,
       Integer.toString(DEFAULT_NUMBER_OF_TABLES)));
+    backupRoot = cmd.getOptionValue(BACKUP_ROOT_KEY, DEFAULT_BACKUP_ROOT);
 
     LOG.info(MoreObjects.toStringHelper("Parsed Options").
       add(REGION_COUNT_KEY, regionsCountPerServer)
       .add(REGIONSERVER_COUNT_KEY, regionServerCount).add(ROWS_PER_ITERATION_KEY, rowsInIteration)
+      .add(BACKUP_ROOT_KEY, backupRoot)
+      .add(NUMBER_OF_TABLES_KEY, numTables)
       .toString());
   }
 
