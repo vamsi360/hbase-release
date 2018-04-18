@@ -20,15 +20,19 @@ package org.apache.hadoop.hbase.backup;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.impl.BackupMetaTable;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
+import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 
 @Category(LargeTests.class)
 public class TestSystemTableSnapshot extends TestBackupBase {
-
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+      HBaseClassTestRule.forClass(TestSystemTableSnapshot.class);
   private static final Log LOG = LogFactory.getLog(TestSystemTableSnapshot.class);
 
   /**

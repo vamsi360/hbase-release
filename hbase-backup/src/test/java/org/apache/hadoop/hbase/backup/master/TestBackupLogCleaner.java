@@ -33,6 +33,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupType;
@@ -48,11 +49,16 @@ import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.wal.AbstractFSWALProvider;
 import org.apache.hbase.thirdparty.com.google.common.collect.Iterables;
 import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(LargeTests.class)
 public class TestBackupLogCleaner extends TestBackupBase {
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+  HBaseClassTestRule.forClass(TestBackupLogCleaner.class);
+
   private static final Log LOG = LogFactory.getLog(TestBackupLogCleaner.class);
 
   // implements all test cases in 1 test since incremental full backup/
