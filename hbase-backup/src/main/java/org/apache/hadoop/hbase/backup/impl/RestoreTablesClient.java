@@ -163,14 +163,21 @@ public class RestoreTablesClient {
       return;
     }
 
+
+    LOG.debug("[DEBUG] collecting files for incremental restore");
     List<Path> dirList = new ArrayList<Path>();
     // add full backup path
     // full backup path comes first
+    FileSystem fs = FileSystem.get(conf);
     for (int i = 1; i < images.length; i++) {
       BackupImage im = images[i];
       String fileBackupDir =
          HBackupFileSystem.getTableBackupDir(im.getRootDir(), im.getBackupId(), sTable);
+      LOG.debug("[DEBUG] backupId="+ im.getBackupId() + " fileBackupDir="+fileBackupDir
+        +" exists=" + fs.exists(new Path(fileBackupDir)));
+
       List<Path> list = getFilesRecursively(fileBackupDir);
+      LOG.debug("[DEBUG] found "+ list.size() +" files");
       dirList.addAll(list);
 
     }
@@ -196,6 +203,9 @@ public class RestoreTablesClient {
       Path p = it.next().getPath();
       if (HFile.isHFileFormat(fs, p)) {
         list.add(p);
+        LOG.debug("[DEBUG] "+ p +" is HFile");
+      } else {
+        LOG.debug("[DEBUG] "+ p +" not HFile");
       }
     }
     return list;
