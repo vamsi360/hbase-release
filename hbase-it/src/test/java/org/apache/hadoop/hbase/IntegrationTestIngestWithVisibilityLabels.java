@@ -26,6 +26,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.visibility.LoadTestDataGeneratorWithVisibilityLabels;
 import org.apache.hadoop.hbase.security.visibility.VisibilityClient;
+import org.apache.hadoop.hbase.security.visibility.VisibilityConstants;
 import org.apache.hadoop.hbase.security.visibility.VisibilityTestUtil;
 import org.apache.hadoop.hbase.testclassification.IntegrationTests;
 import org.apache.hadoop.hbase.util.LoadTestTool;
@@ -78,6 +79,7 @@ public class IntegrationTestIngestWithVisibilityLabels extends IntegrationTestIn
     VisibilityTestUtil.enableVisiblityLabels(conf);
     conf.set("hbase.superuser", "admin," + User.getCurrent().getName());
     super.setUpCluster();
+    util.waitTableAvailable(VisibilityConstants.LABELS_TABLE_NAME);
     addLabels();
   }
 
