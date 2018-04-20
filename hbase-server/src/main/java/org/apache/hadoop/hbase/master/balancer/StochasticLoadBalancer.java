@@ -264,10 +264,19 @@ public class StochasticLoadBalancer extends BaseLoadBalancer {
   @Override
   protected synchronized boolean areSomeRegionReplicasColocated(Cluster c) {
     regionReplicaHostCostFunction.init(c);
-    if (regionReplicaHostCostFunction.cost() > 0) return true;
+    boolean ret = false;
+    double d = regionReplicaHostCostFunction.cost();
+    if (d > 0) {
+      ret = true;
+      LOG.debug("replica on same host " + d);
+    }
     regionReplicaRackCostFunction.init(c);
-    if (regionReplicaRackCostFunction.cost() > 0) return true;
-    return false;
+    d = regionReplicaRackCostFunction.cost();
+    if (d > 0) {
+      ret = true;
+      LOG.debug("replica on same rack " + d);
+    }
+    return ret;
   }
 
   @Override
@@ -1605,10 +1614,14 @@ public class StochasticLoadBalancer extends BaseLoadBalancer {
         if (newHost != oldHost) {
           costsPerGroup[oldHost] = costPerGroup(cluster.primariesOfRegionsPerHost[oldHost]);
           costsPerGroup[newHost] = costPerGroup(cluster.primariesOfRegionsPerHost[newHost]);
+          LOG.debug("replica old cost " + costsPerGroup[oldHost] + " new cost " +
+          costsPerGroup[newHost]);
         }
       } else {
         costsPerGroup[oldServer] = costPerGroup(cluster.primariesOfRegionsPerServer[oldServer]);
         costsPerGroup[newServer] = costPerGroup(cluster.primariesOfRegionsPerServer[newServer]);
+        LOG.debug("replica cost on old server " + costsPerGroup[oldServer] + " cost on new server "
+        + costsPerGroup[newServer]);
       }
     }
   }
