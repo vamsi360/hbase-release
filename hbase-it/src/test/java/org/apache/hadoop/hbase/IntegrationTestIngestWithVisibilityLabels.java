@@ -79,7 +79,7 @@ public class IntegrationTestIngestWithVisibilityLabels extends IntegrationTestIn
     VisibilityTestUtil.enableVisiblityLabels(conf);
     conf.set("hbase.superuser", "admin," + User.getCurrent().getName());
     super.setUpCluster();
-    util.waitTableAvailable(VisibilityConstants.LABELS_TABLE_NAME);
+    util.waitTableAvailable(VisibilityConstants.LABELS_TABLE_NAME, 150000);
     addLabels();
   }
 
