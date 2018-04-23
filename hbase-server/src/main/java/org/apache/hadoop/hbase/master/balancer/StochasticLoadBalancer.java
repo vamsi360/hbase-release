@@ -1620,8 +1620,8 @@ public class StochasticLoadBalancer extends BaseLoadBalancer {
       } else {
         costsPerGroup[oldServer] = costPerGroup(cluster.primariesOfRegionsPerServer[oldServer]);
         costsPerGroup[newServer] = costPerGroup(cluster.primariesOfRegionsPerServer[newServer]);
-        LOG.debug("replica cost on old server " + costsPerGroup[oldServer] + " cost on new server "
-        + costsPerGroup[newServer]);
+        /* LOG.debug("replica cost on old server " + costsPerGroup[oldServer] + " cost on new server "
+        + costsPerGroup[newServer]); */
       }
     }
   }
