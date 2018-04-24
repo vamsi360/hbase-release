@@ -62,6 +62,9 @@ import org.slf4j.LoggerFactory;
 @Category({MiscTests.class, MediumTests.class})
 public class TestFSTableDescriptors {
 
+  static {
+    System.out.println(System.getProperty("java.class.path"));
+  }
   @ClassRule
   public static final HBaseClassTestRule CLASS_RULE =
       HBaseClassTestRule.forClass(TestFSTableDescriptors.class);
