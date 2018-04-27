@@ -24,9 +24,11 @@ import org.apache.hadoop.hbase.testclassification.RegionServerTests;
 import org.apache.hadoop.hbase.wal.WALFactory;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 @Category({ RegionServerTests.class, MediumTests.class })
+@Ignore
 public class TestAsyncLogRollPeriod extends AbstractTestLogRollPeriod {
 
   @ClassRule

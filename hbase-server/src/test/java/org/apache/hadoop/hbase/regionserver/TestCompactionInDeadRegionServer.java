@@ -98,9 +98,10 @@ public class TestCompactionInDeadRegionServer {
   public Class<? extends WALProvider> walProvider;
 
   @Parameters(name = "{index}: wal={0}")
-  public static List<Object[]> params() {
-    return Arrays.asList(new Object[] { FSHLogProvider.class },
-        new Object[] { AsyncFSWALProvider.class });
+  public static List<Object> params() {
+    return Arrays.asList(new Object[] { FSHLogProvider.class }
+        // , new Object[] { AsyncFSWALProvider.class }
+    );
   }
 
   @Before

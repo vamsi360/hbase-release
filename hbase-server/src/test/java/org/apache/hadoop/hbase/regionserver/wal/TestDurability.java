@@ -91,8 +91,9 @@ public class TestDurability {
   public TestName name = new TestName();
 
   @Parameters(name = "{index}: provider={0}")
-  public static Iterable<Object[]> data() {
-    return Arrays.asList(new Object[] { "defaultProvider" }, new Object[] { "asyncfs" });
+  public static Iterable<Object> data() {
+    return Arrays.asList(new Object[] { "defaultProvider" } //, new Object[] { "asyncfs" }
+    );
   }
 
   @BeforeClass

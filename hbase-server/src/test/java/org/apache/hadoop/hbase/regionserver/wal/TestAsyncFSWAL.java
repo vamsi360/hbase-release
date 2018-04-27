@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.util.Threads;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 import org.apache.hbase.thirdparty.io.netty.channel.Channel;
@@ -40,6 +41,7 @@ import org.apache.hbase.thirdparty.io.netty.channel.socket.nio.NioSocketChannel;
  * Provides AsyncFSWAL test cases.
  */
 @Category({ RegionServerTests.class, MediumTests.class })
+@Ignore
 public class TestAsyncFSWAL extends AbstractTestFSWAL {
 
   @ClassRule

@@ -62,8 +62,9 @@ public class TestWALOpenAfterDNRollingStart {
   public String walProvider;
 
   @Parameters(name = "{index}: wal={0}")
-  public static List<Object[]> data() {
-    return Arrays.asList(new Object[] { "asyncfs" }, new Object[] { "filesystem" });
+  public static List<Object> data() {
+    return Arrays.asList( // new Object[] { "asyncfs" },
+        new Object[] { "filesystem" });
   }
 
   @BeforeClass
