@@ -27,6 +27,7 @@ import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.MasterTests;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -38,6 +39,7 @@ public class TestStochasticLoadBalancerRegionReplicaSameHosts extends BalancerTe
       HBaseClassTestRule.forClass(TestStochasticLoadBalancerRegionReplicaSameHosts.class);
 
   @Test // Test is flakey. TODO: Fix!
+  @Ignore
   public void testRegionReplicationOnMidClusterSameHosts() {
     conf.setLong(StochasticLoadBalancer.MAX_STEPS_KEY, 2000000L);
     conf.setLong("hbase.master.balancer.stochastic.maxRunningTime", 90 * 1000); // 90 sec
