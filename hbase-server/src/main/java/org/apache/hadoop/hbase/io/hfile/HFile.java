@@ -647,14 +647,12 @@ public class HFile {
       throws IOException {
     final Path path = fileStatus.getPath();
     final long size = fileStatus.getLen();
-    boolean isHBaseChecksum = false;
     try (FSDataInputStreamWrapper fsdis = new FSDataInputStreamWrapper(fs, path)) {
-      isHBaseChecksum = fsdis.shouldUseHBaseChecksum();
+      boolean isHBaseChecksum = fsdis.shouldUseHBaseChecksum();
       assert !isHBaseChecksum; // Initially we must read with FS checksum.
       FixedFileTrailer.readFromStream(fsdis.getStream(isHBaseChecksum), size);
       return true;
     } catch (IllegalArgumentException e) {
-      LOG.debug("isHBaseChecksum " + isHBaseChecksum + " for " + fileStatus, e);
       return false;
     }
   }
