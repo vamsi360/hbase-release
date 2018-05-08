@@ -180,6 +180,7 @@ public class MetricsSource implements BaseSource {
 
   /** Removes all metrics about this Source. */
   public void clear() {
+    LOG.debug("clearing metric source " + this);
     int lastQueueSize = singleSourceSource.getSizeOfLogQueue();
     globalSourceSource.decrSizeOfLogQueue(lastQueueSize);
     singleSourceSource.decrSizeOfLogQueue(lastQueueSize);
