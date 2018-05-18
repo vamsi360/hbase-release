@@ -120,7 +120,8 @@ public class RegionStateStore {
 
       // TODO: move under trace, now is visible for debugging
       LOG.info("Load hbase:meta entry region={}, regionState={}, lastHost={}, " +
-          "regionLocation={}", regionInfo.getEncodedName(), state, lastHost, regionLocation);
+          "regionLocation={}, seqnum={}", regionInfo.getEncodedName(), state, lastHost,
+          regionLocation, hrl.getSeqNum());
       visitor.visitRegionState(regionInfo, state, regionLocation, lastHost, openSeqNum);
     }
   }
