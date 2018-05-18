@@ -144,6 +144,7 @@ public class WALProcedureStore extends ProcedureStoreBase {
   private LinkedTransferQueue<ByteSlot> slotsCache = null;
   private Set<ProcedureWALFile> corruptedLogs = null;
   private FSDataOutputStream stream = null;
+  private Path logFile = null;
   private int runningProcCount = 1;
   private long flushLogId = 0;
   private int syncMaxSlot = 1;
@@ -883,6 +884,9 @@ public class WALProcedureStore extends ProcedureStoreBase {
     syncStream(stream);
     sendPostSyncSignal();
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("{} completed for {}", useHsync ? "hsync" : "hflush", logFile);
+    }
     if (LOG.isTraceEnabled()) {
       LOG.trace("Sync slots=" + count + '/' + syncMaxSlot +
                 ", flushed=" + StringUtils.humanSize(totalSynced));
@@ -1059,6 +1063,7 @@ public class WALProcedureStore extends ProcedureStoreBase {
 
     storeTracker.resetUpdates();
     stream = newStream;
+    logFile = newLogFile;
     flushLogId = logId;
     totalSynced.set(0);
     long rollTs = System.currentTimeMillis();
@@ -1099,7 +1104,16 @@ public class WALProcedureStore extends ProcedureStoreBase {
     } catch (IOException e) {
       LOG.error("Unable to close the stream", e);
     }
+    if (LOG.isDebugEnabled()) {
+      try {
+        FileStatus fileStatus = fs.getFileStatus(logFile);
+        LOG.debug("After closing {}, length={}", logFile, fileStatus.getLen());
+      } catch (IOException e) {
+        LOG.debug("Failed to get FileStatus for {} after closing.", logFile, e);
+      }
+    }
     stream = null;
+    logFile = null;
   }
 
   // ==========================================================================

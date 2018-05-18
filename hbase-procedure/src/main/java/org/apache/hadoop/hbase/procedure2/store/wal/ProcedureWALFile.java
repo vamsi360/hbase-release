@@ -79,6 +79,8 @@ public class ProcedureWALFile implements Comparable<ProcedureWALFile> {
   public void open() throws IOException {
     if (stream == null) {
       stream = fs.open(logFile);
+      FileStatus fileStatus = fs.getFileStatus(logFile);
+      LOG.info("Opening {} length={}", logFile, fileStatus.getLen());
     }
 
     if (header == null) {
@@ -117,6 +119,8 @@ public class ProcedureWALFile implements Comparable<ProcedureWALFile> {
     if (stream == null) return;
     try {
       stream.close();
+      FileStatus fileStatus = fs.getFileStatus(logFile);
+      LOG.info("Closed {} length={}", logFile, fileStatus.getLen());
     } catch (IOException e) {
       LOG.warn("unable to close the wal file: " + logFile, e);
     } finally {
