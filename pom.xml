@@ -3736,5 +3736,16 @@
         <name>project</name>
         <url>file:${project.basedir}/src/main/site/resources/repo</url>
     </repository>
+    <repository>
+      <id>hwxsnapshots</id>
+      <name>HWX Snapshots</name>
+      <url>http://nexus-private.hortonworks.com/nexus/content/groups/public/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
   </repositories>
 </project>
