@@ -177,6 +177,7 @@ public class RSGroupBasedLoadBalancer implements RSGroupableBalancer {
         }
       }
     }
+    LOG.debug("round robin assign using " + assignments.size() + " servers, given "+servers.size());
     return assignments;
   }
 
@@ -225,9 +226,11 @@ public class RSGroupBasedLoadBalancer implements RSGroupableBalancer {
           if(!assignments.containsKey(LoadBalancer.BOGUS_SERVER_NAME)) {
             assignments.put(LoadBalancer.BOGUS_SERVER_NAME, new ArrayList<>());
           }
+          LOG.debug("adding " + region + " to " + LoadBalancer.BOGUS_SERVER_NAME);
           assignments.get(LoadBalancer.BOGUS_SERVER_NAME).add(region);
         }
       }
+      LOG.debug("retain assign using " + assignments.size() + " servers, given " + servers.size());
       return assignments;
     } catch (IOException e) {
       throw new HBaseIOException("Failed to do online retain assignment", e);
