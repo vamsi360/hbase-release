@@ -154,6 +154,10 @@ public class RecoverMetaProcedure
             // get server carrying meta from zk
             ServerName metaServer =
                 MetaTableLocator.getMetaRegionState(master.getZooKeeper()).getServerName();
+            if (metaServer != null &&
+                !master.getServerManager().getOnlineServers().containsKey(metaServer)) {
+              LOG.debug(metaServer + " is not online");
+            }
             LOG.info(this + "; Retaining meta assignment to server=" + metaServer);
             metaAssignProcedure = am.createAssignProcedure(hri, metaServer);
           }
