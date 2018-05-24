@@ -214,6 +214,10 @@ public class RSGroupBasedLoadBalancer implements RSGroupableBalancer {
         String groupName = rsGroupInfoManager.getRSGroupOfTable(region.getTable());
         RSGroupInfo info = rsGroupInfoManager.getRSGroup(groupName);
         List<ServerName> candidateList = filterOfflineServers(info, servers);
+        if (candidateList.isEmpty() && region.getTable().isSystemTable()) {
+          LOG.debug("Should assign " + region + " to online servers though its group " +
+              groupName + " does't have any online server");
+        }
         ServerName server = this.internalBalancer.randomAssignment(region,
             candidateList);
         if (server != null) {
