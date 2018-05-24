@@ -196,6 +196,10 @@ public class RegionStates {
         LOG.trace("Tracking when we are set to null " + this, new Throwable("TRACE"));
       }
       this.regionLocation = serverName;
+      if (serverName != null && !serverName.equals(lastRegionLocation)) {
+        LOG.debug("setting location=" + serverName + " for " + this + " last loc=" +
+          lastRegionLocation);
+      }
       this.lastUpdate = EnvironmentEdgeManager.currentTime();
       return lastRegionLocation;
     }
