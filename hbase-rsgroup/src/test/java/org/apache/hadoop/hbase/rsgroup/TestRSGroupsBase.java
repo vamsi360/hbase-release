@@ -780,6 +780,8 @@ public abstract class TestRSGroupsBase {
 
     //get server which is not a member of new group
     ServerName targetServer = null;
+    LOG.info("rsGroupAdmin: " + rsGroupAdmin);
+    LOG.info("rsGroupInfo: " + (rsGroupAdmin == null ? "null admin" : rsGroupAdmin.getRSGroupInfo("master")));
     for(ServerName server : admin.getClusterMetrics(EnumSet.of(Option.LIVE_SERVERS))
       .getLiveServerMetrics().keySet()) {
       if(!newGroup.containsServer(server.getAddress()) &&
