@@ -70,33 +70,38 @@ public class IntegrationTestRSGroup extends TestRSGroupsBase {
     deleteTableIfNecessary();
     deleteNamespaceIfNecessary();
     deleteGroups();
-    admin.setBalancerRunning(true, true);
+    // if we failed to initialize, the admin member object will be null
+    TEST_UTIL.getAdmin().setBalancerRunning(true, true);
 
     LOG.info("Restoring the cluster");
     ((IntegrationTestingUtility)TEST_UTIL).restoreCluster();
     LOG.info("Done restoring the cluster");
 
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
-      @Override
-      public boolean evaluate() throws Exception {
-        LOG.info("Waiting for cleanup to finish "+ rsGroupAdmin.listRSGroups());
-        //Might be greater since moving servers back to default
-        //is after starting a server
-        return rsGroupAdmin.getRSGroupInfo(RSGroupInfo.DEFAULT_GROUP).getServers().size()
-            >= NUM_SLAVES_BASE;
-      }
-    });
+    // If the rsGroupAdmin is null, this implies the setup was not successful in running
+    // so we shouldn't try to do any cleanup.
+    if (rsGroupAdmin == null) {
+      TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+        @Override
+        public boolean evaluate() throws Exception {
+          LOG.info("Waiting for cleanup to finish "+ rsGroupAdmin.listRSGroups());
+          //Might be greater since moving servers back to default
+          //is after starting a server
+          return rsGroupAdmin.getRSGroupInfo(RSGroupInfo.DEFAULT_GROUP).getServers().size()
+              >= NUM_SLAVES_BASE;
+        }
+      });
 
-    TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
-      @Override
-      public boolean evaluate() throws Exception {
-        LOG.info("Waiting for regionservers to be registered "+ rsGroupAdmin.listRSGroups());
-        //Might be greater since moving servers back to default
-        //is after starting a server
-        return rsGroupAdmin.getRSGroupInfo(RSGroupInfo.DEFAULT_GROUP).getServers().size()
-            == getNumServers();
-      }
-    });
+      TEST_UTIL.waitFor(WAIT_TIMEOUT, new Waiter.Predicate<Exception>() {
+        @Override
+        public boolean evaluate() throws Exception {
+          LOG.info("Waiting for regionservers to be registered "+ rsGroupAdmin.listRSGroups());
+          //Might be greater since moving servers back to default
+          //is after starting a server
+          return rsGroupAdmin.getRSGroupInfo(RSGroupInfo.DEFAULT_GROUP).getServers().size()
+              == getNumServers();
+        }
+      });
+    }
 
     LOG.info("Done cleaning up previous test run");
   }
