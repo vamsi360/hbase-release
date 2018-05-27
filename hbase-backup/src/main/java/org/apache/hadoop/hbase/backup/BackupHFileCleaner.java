@@ -57,7 +57,6 @@ public class BackupHFileCleaner extends BaseHFileCleanerDelegate implements Abor
       secondPrevReadFromBackupTbl = 0; // timestamp of 2nd most recent read from backup:system table
   //used by unit test to skip reading backup:system
   private boolean checkForFullyBackedUpTables = true;
-  private List<TableName> fullyBackedUpTables = null;
 
   private Set<String> getFilenameFromBulkLoad(Map<byte[], List<Path>>[] maps) {
     Set<String> filenames = new HashSet<String>();
@@ -94,6 +93,8 @@ public class BackupHFileCleaner extends BaseHFileCleanerDelegate implements Abor
     if (conf == null) {
       return files;
     }
+    List<TableName> fullyBackedUpTables = null;
+
     // obtain the Set of TableName's which have been fully backed up
     // so that we filter BulkLoad to be returned from server
     if (checkForFullyBackedUpTables) {
