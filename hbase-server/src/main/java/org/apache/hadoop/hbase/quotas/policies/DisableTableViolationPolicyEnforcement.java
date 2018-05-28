@@ -20,9 +20,12 @@ import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
-import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.quotas.SpaceLimitingException;
 import org.apache.hadoop.hbase.quotas.SpaceViolationPolicy;
@@ -61,8 +64,9 @@ public class DisableTableViolationPolicyEnforcement extends DefaultViolationPoli
       if (LOG.isTraceEnabled()) {
         LOG.trace("Enable is complete for " + getTableName());
       }
-    } catch (TableNotDisabledException tnde) {
+    } catch (TableNotDisabledException | TableNotFoundException e) {
       // The state we wanted it to be in
+      // Or, in case table is not found, nothing to do
     }
   }
 
