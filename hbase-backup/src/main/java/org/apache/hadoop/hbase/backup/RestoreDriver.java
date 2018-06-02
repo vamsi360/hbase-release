@@ -225,6 +225,9 @@ public class RestoreDriver extends AbstractHBaseTool {
     Path hbasedir = FSUtils.getRootDir(conf);
     URI defaultFs = hbasedir.getFileSystem(conf).getUri();
     FSUtils.setFsDefault(conf, new Path(defaultFs));
+    /*DEBUG*/LOG.warn("DDD hbaseDir="+hbasedir);
+    /*DEBUG*/LOG.warn("DDD defaultFs="+defaultFs);
+
     int ret = ToolRunner.run(conf, new RestoreDriver(), args);
     System.exit(ret);
   }

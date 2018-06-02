@@ -350,6 +350,7 @@ public class AssignProcedure extends RegionTransitionProcedure {
   @Override
   protected boolean remoteCallFailed(final MasterProcedureEnv env, final RegionStateNode regionNode,
       final IOException exception) {
+    LOG.debug("ap remote call failed for " + regionNode, exception);
     handleFailure(env, regionNode);
     return true;
   }

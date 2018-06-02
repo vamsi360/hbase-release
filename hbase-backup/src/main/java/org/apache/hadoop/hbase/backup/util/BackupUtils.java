@@ -261,6 +261,10 @@ public final class BackupUtils {
     Path rootDir = FSUtils.getRootDir(c);
     Path logDir = new Path(rootDir, HConstants.HREGION_LOGDIR_NAME);
     Path oldLogDir = new Path(rootDir, HConstants.HREGION_OLDLOGDIR_NAME);
+    /*DEBUG*/LOG.warn("DDD logDir="+rootDir);
+    /*DEBUG*/LOG.warn("DDD rootDir="+logDir);
+    /*DEBUG*/LOG.warn("DDD oldLogDir="+oldLogDir);
+
     List<String> logFiles = new ArrayList<String>();
 
     PathFilter filter = new PathFilter() {
@@ -406,6 +410,9 @@ public final class BackupUtils {
 
   public static List<String> getFiles(FileSystem fs, Path rootDir, List<String> files,
       PathFilter filter) throws FileNotFoundException, IOException {
+    /*DEBUG*/LOG.warn("DDD getFiles: fs URI="+ fs.getUri());
+    /*DEBUG*/LOG.warn("DDD getFiles: dir   ="+ rootDir);
+
     RemoteIterator<LocatedFileStatus> it = fs.listFiles(rootDir, true);
 
     while (it.hasNext()) {

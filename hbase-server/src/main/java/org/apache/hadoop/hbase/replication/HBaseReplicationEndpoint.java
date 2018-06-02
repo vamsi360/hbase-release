@@ -48,17 +48,14 @@ public abstract class HBaseReplicationEndpoint extends BaseReplicationEndpoint
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseReplicationEndpoint.class);
 
-  private Object zkwLock = new Object();
   private ZKWatcher zkw = null;
 
   private List<ServerName> regionServers = new ArrayList<>(0);
   private long lastRegionServerUpdate;
 
-  protected void disconnect() {
-    synchronized (zkwLock) {
-      if (zkw != null) {
-        zkw.close();
-      }
+  protected synchronized void disconnect() {
+    if (zkw != null) {
+      zkw.close();
     }
   }
 
@@ -113,9 +110,7 @@ public abstract class HBaseReplicationEndpoint extends BaseReplicationEndpoint
   public synchronized UUID getPeerUUID() {
     UUID peerUUID = null;
     try {
-      synchronized (zkwLock) {
-        peerUUID = ZKClusterId.getUUIDForCluster(zkw);
-      }
+      peerUUID = ZKClusterId.getUUIDForCluster(zkw);
     } catch (KeeperException ke) {
       reconnect(ke);
     }
@@ -126,25 +121,19 @@ public abstract class HBaseReplicationEndpoint extends BaseReplicationEndpoint
    * Get the ZK connection to this peer
    * @return zk connection
    */
-  protected ZKWatcher getZkw() {
-    synchronized (zkwLock) {
-      return zkw;
-    }
+  protected synchronized ZKWatcher getZkw() {
+    return zkw;
   }
 
   /**
    * Closes the current ZKW (if not null) and creates a new one
    * @throws IOException If anything goes wrong connecting
    */
-  void reloadZkWatcher() throws IOException {
-    synchronized (zkwLock) {
-      if (zkw != null) {
-        zkw.close();
-      }
-      zkw = new ZKWatcher(ctx.getConfiguration(),
+  synchronized void reloadZkWatcher() throws IOException {
+    if (zkw != null) zkw.close();
+    zkw = new ZKWatcher(ctx.getConfiguration(),
         "connection to cluster: " + ctx.getPeerId(), this);
-      zkw.registerListener(new PeerRegionServerListener(this));
-    }
+    getZkw().registerListener(new PeerRegionServerListener(this));
   }
 
   @Override
@@ -182,15 +171,13 @@ public abstract class HBaseReplicationEndpoint extends BaseReplicationEndpoint
    * for this peer cluster
    * @return list of addresses
    */
-  public List<ServerName> getRegionServers() {
+  // Synchronize peer cluster connection attempts to avoid races and rate
+  // limit connections when multiple replication sources try to connect to
+  // the peer cluster. If the peer cluster is down we can get out of control
+  // over time.
+  public synchronized List<ServerName> getRegionServers() {
     try {
-      // Synchronize peer cluster connection attempts to avoid races and rate
-      // limit connections when multiple replication sources try to connect to
-      // the peer cluster. If the peer cluster is down we can get out of control
-      // over time.
-      synchronized (zkwLock) {
-        setRegionServers(fetchSlavesAddresses(zkw));
-      }
+      setRegionServers(fetchSlavesAddresses(this.getZkw()));
     } catch (KeeperException ke) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Fetch slaves addresses failed", ke);

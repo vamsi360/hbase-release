@@ -30,12 +30,13 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-@Category(SmallTests.class)
+@Category({SmallTests.class})
 public class TestQuotaGlobalsSettingsBypass {
 
   @ClassRule
   public static final HBaseClassTestRule CLASS_RULE =
       HBaseClassTestRule.forClass(TestQuotaGlobalsSettingsBypass.class);
+
   @Test
   public void testMerge() throws IOException {
     QuotaGlobalsSettingsBypass orig = new QuotaGlobalsSettingsBypass("joe", null, null, true);
