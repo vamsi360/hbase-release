@@ -315,6 +315,17 @@ public class RSGroupAdminServer implements RSGroupAdmin {
         }
       }
       if (srcGrp.getServers().size() <= servers.size() && srcGrp.getTables().size() > 0) {
+        LOG.warn(srcGrp.getName() + " has " + srcGrp.getServers().size() + " severs while " + servers.size());
+        LOG.warn(srcGrp.getName() + " has " + srcGrp.getTables().size() + " tables");
+        for (Address addr : srcGrp.getServers()) {
+          LOG.info("group has " + addr);
+        }
+        for (Address addr : servers) {
+          LOG.info("servers Set has " + addr);
+        }
+        for (TableName tbl : srcGrp.getTables()) {
+          LOG.info("group has table " + tbl);
+        }
         throw new ConstraintException("Cannot leave a RSGroup " + srcGrp.getName() +
             " that contains tables without servers to host them.");
       }
