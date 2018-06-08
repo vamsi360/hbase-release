@@ -466,7 +466,7 @@ public class ModifyTableProcedure
   private List<RegionInfo> getRegionInfoList(final MasterProcedureEnv env) throws IOException {
     if (regionInfoList == null) {
       regionInfoList = env.getAssignmentManager().getRegionStates()
-          .getRegionsOfTable(getTableName());
+          .getOpenRegionsOfTable(getTableName());
     }
     return regionInfoList;
   }
