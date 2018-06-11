@@ -68,7 +68,7 @@ public class RegionStateStore {
   }
 
   public interface RegionStateVisitor {
-    void visitRegionState(RegionInfo regionInfo, State state,
+    void visitRegionState(Result result, RegionInfo regionInfo, State state,
       ServerName regionLocation, ServerName lastHost, long openSeqNum);
   }
 
@@ -122,7 +122,7 @@ public class RegionStateStore {
       LOG.info("Load hbase:meta entry region={}, regionState={}, lastHost={}, " +
           "regionLocation={}, seqnum={}", regionInfo.getEncodedName(), state, lastHost,
           regionLocation, hrl.getSeqNum());
-      visitor.visitRegionState(regionInfo, state, regionLocation, lastHost, openSeqNum);
+      visitor.visitRegionState(result, regionInfo, state, regionLocation, lastHost, openSeqNum);
     }
   }
 
