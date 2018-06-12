@@ -59,6 +59,8 @@ public class ModifyTableProcedure
   private List<RegionInfo> regionInfoList;
   private Boolean traceEnabled = null;
 
+  private volatile boolean lock = false;
+
   public ModifyTableProcedure() {
     super();
     initilize();
@@ -332,7 +334,35 @@ public class ModifyTableProcedure
     }
   }
 
-  /**
+  @Override
+  protected void releaseLock(final MasterProcedureEnv env) {
+    super.releaseLock(env);
+    lock = false;
+  }
+
+  @Override
+  protected boolean holdLock(MasterProcedureEnv env) {
+    return true;
+  }
+
+  @Override
+  protected boolean hasLock(final MasterProcedureEnv env) {
+    return lock;
+  }
+
+  @Override
+  protected LockState acquireLock(MasterProcedureEnv env) {
+    if (env.waitInitialized(this)) {
+      return LockState.LOCK_EVENT_WAIT;
+    }
+    if (env.getProcedureScheduler().waitTableExclusiveLock(this, getTableName())) {
+      return LockState.LOCK_EVENT_WAIT;
+    }
+    lock = true;
+    return LockState.LOCK_ACQUIRED;
+  }
+
+    /**
    * update replica column families if necessary.
    * @param env MasterProcedureEnv
    * @throws IOException
@@ -436,7 +466,7 @@ public class ModifyTableProcedure
   private List<RegionInfo> getRegionInfoList(final MasterProcedureEnv env) throws IOException {
     if (regionInfoList == null) {
       regionInfoList = env.getAssignmentManager().getRegionStates()
-          .getRegionsOfTable(getTableName());
+          .getOpenRegionsOfTable(getTableName());
     }
     return regionInfoList;
   }

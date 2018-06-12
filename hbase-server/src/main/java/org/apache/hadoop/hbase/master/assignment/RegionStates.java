@@ -34,6 +34,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.ServerName;
@@ -342,7 +343,6 @@ public class RegionStates {
     private final ServerName serverName;
 
     private volatile ServerState state = ServerState.ONLINE;
-    private volatile int versionNumber = 0;
 
     public ServerStateNode(final ServerName serverName) {
       this.serverName = serverName;
@@ -356,10 +356,6 @@ public class RegionStates {
 
     public ServerState getState() {
       return state;
-    }
-
-    public int getVersionNumber() {
-      return versionNumber;
     }
 
     public ProcedureEvent<?> getReportEvent() {
@@ -382,10 +378,6 @@ public class RegionStates {
 
     public void setState(final ServerState state) {
       this.state = state;
-    }
-
-    public void setVersionNumber(final int versionNumber) {
-      this.versionNumber = versionNumber;
     }
 
     public Set<RegionStateNode> getRegions() {
@@ -573,6 +565,13 @@ public class RegionStates {
   }
 
   /**
+   * @return Return OPEN regions of the table
+   */
+  public List<RegionInfo> getOpenRegionsOfTable(final TableName table) {
+    return getRegionsOfTable(table, (state) -> state.isInState(State.OPEN));
+  }
+
+  /**
    * @return Return online regions of table; does not include OFFLINE or SPLITTING regions.
    */
   public List<RegionInfo> getRegionsOfTable(final TableName table) {
@@ -580,15 +579,22 @@ public class RegionStates {
   }
 
   /**
+   * @return Return online regions of table; does not include OFFLINE or SPLITTING regions.
+   */
+  public List<RegionInfo> getRegionsOfTable(final TableName table, boolean offline) {
+    return getRegionsOfTable(table, (state) -> include(state, offline));
+  }
+
+  /**
    * @return Return the regions of the table; does not include OFFLINE unless you set
    * <code>offline</code> to true. Does not include regions that are in the
    * {@link State#SPLIT} state.
    */
-  public List<RegionInfo> getRegionsOfTable(final TableName table, final boolean offline) {
+  public List<RegionInfo> getRegionsOfTable(final TableName table, Predicate<RegionStateNode> filter) {
     final ArrayList<RegionStateNode> nodes = getTableRegionStateNodes(table);
     final ArrayList<RegionInfo> hris = new ArrayList<RegionInfo>(nodes.size());
     for (RegionStateNode node: nodes) {
-      if (include(node, offline)) hris.add(node.getRegionInfo());
+      if (filter.test(node)) hris.add(node.getRegionInfo());
     }
     return hris;
   }
