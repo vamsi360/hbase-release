@@ -26,6 +26,8 @@ import java.util.TreeMap;
 
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.yetus.audience.InterfaceStability;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.ProcedureProtos;
 
 /**
@@ -37,6 +39,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.ProcedureProtos;
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
 public class ProcedureStoreTracker {
+  private static final Logger LOG = LoggerFactory.getLogger(ProcedureStoreTracker.class);
   // Key is procedure id corresponding to first bit of the bitmap.
   private final TreeMap<Long, BitSetNode> map = new TreeMap<>();
 
@@ -434,6 +437,7 @@ public class ProcedureStoreTracker {
     for (ProcedureProtos.ProcedureStoreTracker.TrackerNode protoNode: trackerProtoBuf.getNodeList()) {
       final BitSetNode node = new BitSetNode(protoNode);
       map.put(node.getStart(), node);
+      LOG.debug("storing " + node + " for " + node.getStart());
     }
   }
 
