@@ -657,7 +657,10 @@ public class TestSpaceQuotas {
       } catch (Exception e) {
         String msg = StringUtils.stringifyException(e);
         if (policyToViolate.equals(SpaceViolationPolicy.DISABLE)) {
-          assertTrue(e instanceof TableNotEnabledException);
+          // If we try only once, we'll see a NotServingRegionException for a disabled table
+          LOG.debug("Caught exception", e);
+          assertTrue("Caught exception: " + e,
+              e instanceof TableNotEnabledException || e.getMessage().contains("NotServingRegionException"));
         } else {
           assertTrue("Expected exception message to contain the word '" + policyToViolate.name()
               + "', but was " + msg,
