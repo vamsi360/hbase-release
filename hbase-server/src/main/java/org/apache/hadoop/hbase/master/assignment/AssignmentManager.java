@@ -1789,9 +1789,6 @@ public class AssignmentManager implements ServerListener {
       }
       LOG.debug("Processing assignQueue; systemServersCount=" + serversForSysTables.size() +
           ", allServersCount=" + servers.size());
-      for (ServerName sn : serversForSysTables) {
-        LOG.debug(sn.toString());
-      }
       processAssignmentPlans(regions, null, systemHRIs,
           serversForSysTables.isEmpty()? servers: serversForSysTables);
     }
@@ -1806,7 +1803,6 @@ public class AssignmentManager implements ServerListener {
     if (isTraceEnabled) {
       LOG.trace("Available servers count=" + servers.size() + ": " + servers);
     }
-    LOG.debug("processAssignmentPlans Available servers count=" + servers.size() + ": " + servers);
 
     final LoadBalancer balancer = getBalancer();
     // ask the balancer where to place regions
@@ -1814,7 +1810,6 @@ public class AssignmentManager implements ServerListener {
       if (isTraceEnabled) {
         LOG.trace("retain assign regions=" + retainMap);
       }
-      LOG.debug("processAssignmentPlans retain assign regions=" + retainMap);
       try {
         acceptPlan(regions, balancer.retainAssignment(retainMap, servers));
       } catch (HBaseIOException e) {
@@ -1830,7 +1825,6 @@ public class AssignmentManager implements ServerListener {
       if (isTraceEnabled) {
         LOG.trace("round robin regions=" + hris);
       }
-      LOG.debug("processAssignmentPlans round robin regions=" + hris);
       try {
         acceptPlan(regions, balancer.roundRobinAssignment(hris, servers));
       } catch (HBaseIOException e) {
@@ -1989,7 +1983,7 @@ public class AssignmentManager implements ServerListener {
           "RecoverMetaProcedure so meta latch gets cleaned up.");
     }
     // meta has been assigned to crashed server.
-    LOG.info("Meta assigned to crashed " + serverName + "; reassigning... for " + regionStateNode);
+    LOG.info("Meta assigned to crashed " + serverName + "; reassigning...");
     // Handle failure and wake event
     RegionTransitionProcedure rtp = getRegionStates().getRegionTransitionProcedure(hri);
     // Do not need to consider for REGION_TRANSITION_QUEUE step
