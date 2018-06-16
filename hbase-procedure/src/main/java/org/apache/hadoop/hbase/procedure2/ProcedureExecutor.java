@@ -347,7 +347,7 @@ public class ProcedureExecutor<TEnvironment> {
         int corruptedCount = 0;
         while (procIter.hasNext()) {
           Procedure<?> proc = procIter.next();
-          LOG.error("Corrupt " + proc);
+          LOG.error("Corrupt proc " + proc);
           corruptedCount++;
         }
         if (abortOnCorruption && corruptedCount > 0) {
@@ -469,7 +469,7 @@ public class ProcedureExecutor<TEnvironment> {
       if (procStack.isValid()) continue;
 
       for (Procedure proc: procStack.getSubproceduresStack()) {
-        LOG.error("Corrupted " + proc);
+        LOG.error("Corrupted proc " + proc);
         procedures.remove(proc.getProcId());
         runnableList.remove(proc);
         if (waitingSet != null) waitingSet.remove(proc);
@@ -487,6 +487,7 @@ public class ProcedureExecutor<TEnvironment> {
       for (Procedure proc: waitingSet) {
         proc.afterReplay(getEnvironment());
         timeoutExecutor.add(proc);
+        LOG.debug("adding " + proc + " to timeoutExecutor");
       }
     }
 
