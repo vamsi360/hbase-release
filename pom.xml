@@ -1220,6 +1220,8 @@
     <junit.version>4.12</junit.version>
     <hamcrest.version>1.3</hamcrest.version>
     <htrace.version>3.1.0-incubating</htrace.version>
+    <htrace-core4.version>4.1.0-incubating</htrace-core4.version>
+    <threadly.version>4.9.0</threadly.version>
     <log4j.version>1.2.17</log4j.version>
     <mockito-all.version>1.10.8</mockito-all.version>
     <protobuf.version>2.5.0</protobuf.version>
@@ -1769,6 +1771,16 @@
         <version>${htrace.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.htrace</groupId>
+        <artifactId>htrace-core4</artifactId>
+        <version>${htrace-core4.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.threadly</groupId>
+        <artifactId>threadly</artifactId>
+        <version>${threadly.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.lmax</groupId>
         <artifactId>disruptor</artifactId>
         <version>${disruptor.version}</version>
@@ -2212,6 +2224,14 @@
                <artifactId>htrace-core</artifactId>
              </exclusion>
              <exclusion>
+               <groupId>org.apache.htrace</groupId>
+               <artifactId>htrace-core4</artifactId>
+             </exclusion>
+             <exclusion>
+               <groupId>org.threadly</groupId>
+               <artifactId>threadly</artifactId>
+             </exclusion>
+             <exclusion>
                <groupId>javax.servlet.jsp</groupId>
                <artifactId>jsp-api</artifactId>
              </exclusion>
@@ -2244,6 +2264,14 @@
              <exclusion>
                <groupId>org.apache.htrace</groupId>
                <artifactId>htrace-core</artifactId>
+             </exclusion>
+             <exclusion>
+               <groupId>org.apache.htrace</groupId>
+               <artifactId>htrace-core4</artifactId>
+             </exclusion>
+             <exclusion>
+               <groupId>org.threadly</groupId>
+               <artifactId>threadly</artifactId>
              </exclusion>
              <exclusion>
                <groupId>javax.servlet.jsp</groupId>
@@ -2280,6 +2308,14 @@
              <exclusion>
                <groupId>org.apache.htrace</groupId>
                <artifactId>htrace-core</artifactId>
+             </exclusion>
+             <exclusion>
+               <groupId>org.apache.htrace</groupId>
+               <artifactId>htrace-core4</artifactId>
+             </exclusion>
+             <exclusion>
+               <groupId>org.threadly</groupId>
+               <artifactId>threadly</artifactId>
              </exclusion>
             <exclusion>
               <groupId>commons-httpclient</groupId>

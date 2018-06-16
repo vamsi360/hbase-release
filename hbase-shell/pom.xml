@@ -251,7 +251,15 @@
     <dependency>
       <groupId>org.apache.htrace</groupId>
       <artifactId>htrace-core</artifactId>
-   </dependency>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.htrace</groupId>
+      <artifactId>htrace-core4</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.threadly</groupId>
+      <artifactId>threadly</artifactId>
+    </dependency>
   </dependencies>
   <profiles>
     <profile>
@@ -467,6 +475,14 @@
               <groupId>org.apache.htrace</groupId>
               <artifactId>htrace-core</artifactId>
             </exclusion>
+            <exclusion>
+              <groupId>org.apache.htrace</groupId>
+              <artifactId>htrace-core4</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.threadly</groupId>
+              <artifactId>threadly</artifactId>
+            </exclusion>
           </exclusions>
         </dependency>
         <dependency>
@@ -476,6 +492,14 @@
             <exclusion>
               <groupId>org.apache.htrace</groupId>
               <artifactId>htrace-core</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.apache.htrace</groupId>
+              <artifactId>htrace-core4</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.threadly</groupId>
+              <artifactId>threadly</artifactId>
             </exclusion>
             <exclusion>
               <groupId>com.google.guava</groupId>

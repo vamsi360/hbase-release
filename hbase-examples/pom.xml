@@ -265,6 +265,14 @@ if we can combine these profiles somehow -->
               <groupId>org.apache.htrace</groupId>
               <artifactId>htrace-core</artifactId>
             </exclusion>
+             <exclusion>
+               <groupId>org.apache.htrace</groupId>
+               <artifactId>htrace-core4</artifactId>
+             </exclusion>
+             <exclusion>
+               <groupId>org.threadly</groupId>
+               <artifactId>threadly</artifactId>
+             </exclusion>
           </exclusions>
         </dependency>
         <dependency>
@@ -275,6 +283,14 @@ if we can combine these profiles somehow -->
               <groupId>org.apache.htrace</groupId>
               <artifactId>htrace-core</artifactId>
             </exclusion>
+             <exclusion>
+               <groupId>org.apache.htrace</groupId>
+               <artifactId>htrace-core4</artifactId>
+             </exclusion>
+             <exclusion>
+               <groupId>org.threadly</groupId>
+               <artifactId>threadly</artifactId>
+             </exclusion>
           </exclusions>
         </dependency>
       </dependencies>
