@@ -56,7 +56,6 @@ public class ModifyTableProcedure
   private TableDescriptor modifiedTableDescriptor;
   private boolean deleteColumnFamilyInModify;
 
-  private List<RegionInfo> regionInfoList;
   private Boolean traceEnabled = null;
 
   private volatile boolean lock = false;
@@ -82,7 +81,6 @@ public class ModifyTableProcedure
 
   private void initilize() {
     this.unmodifiedTableDescriptor = null;
-    this.regionInfoList = null;
     this.traceEnabled = null;
     this.deleteColumnFamilyInModify = false;
   }
@@ -463,11 +461,19 @@ public class ModifyTableProcedure
     }
   }
 
+  /**
+   * Fetches all Regions for a table. Cache the result of this method if you need to use it multiple
+   * times. Be aware that it may change over in between calls to this procedure.
+   */
   private List<RegionInfo> getRegionInfoList(final MasterProcedureEnv env) throws IOException {
-    if (regionInfoList == null) {
-      regionInfoList = env.getAssignmentManager().getRegionStates()
-          .getOpenRegionsOfTable(getTableName());
-    }
-    return regionInfoList;
+    return env.getAssignmentManager().getRegionStates().getRegionsOfTable(getTableName());
+  }
+
+  /**
+   * Fetches opens Regions for a table. Cache the result of this method if you need to use it multiple
+   * times. Be aware that it may change over in between calls to this procedure.
+   */
+  private List<RegionInfo> getOpenRegionInfoList(final MasterProcedureEnv env) throws IOException {
+    return env.getAssignmentManager().getRegionStates().getOpenRegionsOfTable(getTableName());
   }
 }

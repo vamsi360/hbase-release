@@ -578,7 +578,12 @@ public class RegionStates {
    * @return Return OPEN regions of the table
    */
   public List<RegionInfo> getOpenRegionsOfTable(final TableName table) {
-    return getRegionsOfTable(table, (state) -> state.isInState(State.OPEN));
+    // We want to get regions which are already open on the cluster or are about to be open.
+    // The use-case is for identifying regions which need to be re-opened to ensure they see some
+    // new configuration. Regions in OPENING now are presently being opened by a RS, so we can
+    // assume that they will imminently be OPEN but may not see our configuration change
+    return getRegionsOfTable(
+        table, (state) -> state.isInState(State.OPEN) || state.isInState(State.OPENING));
   }
 
   /**
@@ -600,11 +605,14 @@ public class RegionStates {
    * <code>offline</code> to true. Does not include regions that are in the
    * {@link State#SPLIT} state.
    */
-  public List<RegionInfo> getRegionsOfTable(final TableName table, Predicate<RegionStateNode> filter) {
+  public List<RegionInfo> getRegionsOfTable(
+			final TableName table, Predicate<RegionStateNode> filter) {
     final ArrayList<RegionStateNode> nodes = getTableRegionStateNodes(table);
     final ArrayList<RegionInfo> hris = new ArrayList<RegionInfo>(nodes.size());
     for (RegionStateNode node: nodes) {
-      if (filter.test(node)) hris.add(node.getRegionInfo());
+			if (filter.test(node)) {
+				hris.add(node.getRegionInfo());
+			}
     }
     return hris;
   }
