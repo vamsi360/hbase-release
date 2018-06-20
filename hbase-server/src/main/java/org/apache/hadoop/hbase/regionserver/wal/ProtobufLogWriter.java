@@ -87,6 +87,7 @@ public class ProtobufLogWriter extends WriterBase {
         "hbase.regionserver.hlog.replication", FSUtils.getDefaultReplication(fs, path));
     long blockSize = conf.getLong("hbase.regionserver.hlog.blocksize",
         FSUtils.getDefaultBlockSize(fs, path));
+    LOG.info("creating " + path + " on " + fs + " overwritable: " + overwritable);
     output = fs.createNonRecursive(path, overwritable, bufferSize, replication, blockSize, null);
     output.write(ProtobufLogReader.PB_WAL_MAGIC);
     boolean doTagCompress = doCompress
