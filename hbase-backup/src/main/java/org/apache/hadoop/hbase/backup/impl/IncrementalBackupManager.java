@@ -219,6 +219,9 @@ public class IncrementalBackupManager extends BackupManager {
       }
       if (tss > oldTss && tss < newTss) {
         logFiles.add(item);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("getLogFilesFromBackupSystem :"+ item);
+        }
       }
     }
     return logFiles;
@@ -297,6 +300,9 @@ public class IncrementalBackupManager extends BackupManager {
         }
         currentLogFile = log.getPath().toString();
         resultLogFiles.add(currentLogFile);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("getLogFilesForNewBackup :"+ currentLogFile);
+        }
         currentLogTS = BackupUtils.getCreationTime(log.getPath());
         // newestTimestamps is up-to-date with the current list of hosts
         // so newestTimestamps.get(host) will not be null.
@@ -339,7 +345,9 @@ public class IncrementalBackupManager extends BackupManager {
       } else if (currentLogTS > oldTimeStamp) {
         resultLogFiles.add(currentLogFile);
       }
-
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("getLogFilesForNewBackup :"+ currentLogFile);
+      }
       // It is possible that a host in .oldlogs is an obsolete region server
       // so newestTimestamps.get(host) here can be null.
       // Even if these logs belong to a obsolete region server, we still need

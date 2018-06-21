@@ -1022,11 +1022,10 @@ public final class BackupMetaTable implements Closeable {
    */
   public void addWALFiles(List<String> files, String backupId, String backupRoot)
       throws IOException {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("add WAL files to backup system table: " + backupId + " " + backupRoot + " files ["
-          + StringUtils.join(files, ",") + "]");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Add WAL files to backup system table: " + backupId + " " + backupRoot + " files:\n" );
       for (String f : files) {
-        LOG.debug("add :" + f);
+        LOG.debug("Add :" + f);
       }
     }
     try (Table table = connection.getTable(tableName)) {
@@ -1041,8 +1040,8 @@ public final class BackupMetaTable implements Closeable {
    * @throws IOException exception
    */
   public Iterator<WALItem> getWALFilesIterator(String backupRoot) throws IOException {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("get WAL files from backup system table");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Get WAL files from backup system table for root: "+ backupRoot);
     }
     final Table table = connection.getTable(tableName);
     Scan scan = createScanForGetWALs(backupRoot);
@@ -1101,16 +1100,21 @@ public final class BackupMetaTable implements Closeable {
    * TODO: multiple backup destination support
    */
   public boolean isWALFileDeletable(String file) throws IOException {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("Check if WAL file has been already backed up in backup system table " + file);
-    }
+
+    boolean result = false;
     try (Table table = connection.getTable(tableName)) {
       Get get = createGetForCheckWALFile(file);
       Result res = table.get(get);
       if (res.isEmpty()) {
-        return false;
+        result = false;
       }
-      return true;
+      result = true;
+      return result;
+    } finally {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Check if WAL file has been already backed up in backup system table " + file
+          + " result=" + result);
+      }
     }
   }
 
