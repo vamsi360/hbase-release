@@ -178,11 +178,11 @@ public class IncrementalTableBackupClient extends TableBackupClient {
             Path tgt = new Path(tgtFam, filename);
             Path archive = new Path(archiveDir, filename);
             if (fs.exists(p)) {
-              if (LOG.isTraceEnabled()) {
-                LOG.trace("found bulk hfile " + file + " in " + famDir + " for " + tblName);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("found bulk hfile " + file + " in " + famDir + " for " + tblName);
               }
-              if (LOG.isTraceEnabled()) {
-                LOG.trace("copying " + p + " to " + tgt);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("copying " + p + " to " + tgt);
               }
               activeFiles.add(p.toString());
             } else if (fs.exists(archive)){
