@@ -66,10 +66,10 @@ public class TestChildProcedures {
     logDir = new Path(testDir, "proc-logs");
     procEnv = new TestProcEnv();
     procStore = ProcedureTestingUtility.createStore(htu.getConfiguration(), logDir);
-    procExecutor = new ProcedureExecutor<>(htu.getConfiguration(), procEnv, procStore);
+    procExecutor = new ProcedureExecutor(htu.getConfiguration(), procEnv, procStore);
     procExecutor.testing = new ProcedureExecutor.Testing();
     procStore.start(PROCEDURE_EXECUTOR_SLOTS);
-    ProcedureTestingUtility.initAndStartWorkers(procExecutor, PROCEDURE_EXECUTOR_SLOTS, true);
+    procExecutor.start(PROCEDURE_EXECUTOR_SLOTS, true);
   }
 
   @After

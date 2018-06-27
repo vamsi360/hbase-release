@@ -512,16 +512,21 @@ public class ProcedureExecutor<TEnvironment> {
   }
 
   /**
-   * Initialize the procedure executor, but do not start workers. We will start them later.
-   * <p/>
-   * It calls ProcedureStore.recoverLease() and ProcedureStore.load() to recover the lease, and
-   * ensure a single executor, and start the procedure replay to resume and recover the previous
-   * pending and in-progress procedures.
+   * Start the procedure executor.
+   * It calls ProcedureStore.recoverLease() and ProcedureStore.load() to
+   * recover the lease, and ensure a single executor, and start the procedure
+   * replay to resume and recover the previous pending and in-progress perocedures.
+   *
    * @param numThreads number of threads available for procedure execution.
-   * @param abortOnCorruption true if you want to abort your service in case a corrupted procedure
-   *          is found on replay. otherwise false.
+   * @param abortOnCorruption true if you want to abort your service in case
+   *          a corrupted procedure is found on replay. otherwise false.
    */
-  public void init(int numThreads, boolean abortOnCorruption) throws IOException {
+  public void start(int numThreads, boolean abortOnCorruption) throws IOException {
+    if (!running.compareAndSet(false, true)) {
+      LOG.warn("Already running");
+      return;
+    }
+
     // We have numThreads executor + one timer thread used for timing out
     // procedures and triggering periodic procedures.
     this.corePoolSize = numThreads;
@@ -542,11 +547,11 @@ public class ProcedureExecutor<TEnvironment> {
     long st, et;
 
     // Acquire the store lease.
-    st = System.nanoTime();
+    st = EnvironmentEdgeManager.currentTime();
     store.recoverLease();
-    et = System.nanoTime();
+    et = EnvironmentEdgeManager.currentTime();
     LOG.info("Recovered {} lease in {}", store.getClass().getSimpleName(),
-      StringUtils.humanTimeDiff(TimeUnit.NANOSECONDS.toMillis(et - st)));
+      StringUtils.humanTimeDiff(et - st));
 
     // start the procedure scheduler
     scheduler.start();
@@ -556,21 +561,12 @@ public class ProcedureExecutor<TEnvironment> {
     // The first one will make sure that we have the latest id,
     // so we can start the threads and accept new procedures.
     // The second step will do the actual load of old procedures.
-    st = System.nanoTime();
+    st = EnvironmentEdgeManager.currentTime();
     load(abortOnCorruption);
-    et = System.nanoTime();
+    et = EnvironmentEdgeManager.currentTime();
     LOG.info("Loaded {} in {}", store.getClass().getSimpleName(),
-      StringUtils.humanTimeDiff(TimeUnit.NANOSECONDS.toMillis(et - st)));
-  }
+      StringUtils.humanTimeDiff(et - st));
 
-  /**
-   * Start the workers.
-   */
-  public void startWorkers() throws IOException {
-    if (!running.compareAndSet(false, true)) {
-      LOG.warn("Already running");
-      return;
-    }
     // Start the executors. Here we must have the lastProcId set.
     LOG.trace("Start workers {}", workerThreads.size());
     timeoutExecutor.start();
@@ -866,6 +862,7 @@ public class ProcedureExecutor<TEnvironment> {
       justification = "FindBugs is blind to the check-for-null")
   public long submitProcedure(final Procedure proc, final NonceKey nonceKey) {
     Preconditions.checkArgument(lastProcId.get() >= 0);
+    Preconditions.checkArgument(isRunning(), "executor not running");
 
     prepareProcedure(proc);
 
@@ -899,6 +896,7 @@ public class ProcedureExecutor<TEnvironment> {
   // TODO: Do we need to take nonces here?
   public void submitProcedures(final Procedure[] procs) {
     Preconditions.checkArgument(lastProcId.get() >= 0);
+    Preconditions.checkArgument(isRunning(), "executor not running");
     if (procs == null || procs.length <= 0) {
       return;
     }
@@ -922,6 +920,7 @@ public class ProcedureExecutor<TEnvironment> {
 
   private Procedure prepareProcedure(final Procedure proc) {
     Preconditions.checkArgument(proc.getState() == ProcedureState.INITIALIZING);
+    Preconditions.checkArgument(isRunning(), "executor not running");
     Preconditions.checkArgument(!proc.hasParent(), "unexpected parent", proc);
     if (this.checkOwnerSet) {
       Preconditions.checkArgument(proc.hasOwner(), "missing owner");

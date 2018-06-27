@@ -77,11 +77,6 @@ class SchemaLocking {
     return getLock(regionLocks, encodedRegionName);
   }
 
-  /**
-   * @deprecated only used for {@link RecoverMetaProcedure}. Should be removed along with
-   *             {@link RecoverMetaProcedure}.
-   */
-  @Deprecated
   LockAndQueue getMetaLock() {
     return metaLock;
   }

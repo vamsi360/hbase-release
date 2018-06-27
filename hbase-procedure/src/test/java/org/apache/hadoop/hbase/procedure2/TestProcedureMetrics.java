@@ -75,7 +75,7 @@ public class TestProcedureMetrics {
     procExecutor = new ProcedureExecutor<TestProcEnv>(htu.getConfiguration(), procEnv, procStore);
     procExecutor.testing = new ProcedureExecutor.Testing();
     procStore.start(PROCEDURE_EXECUTOR_SLOTS);
-    ProcedureTestingUtility.initAndStartWorkers(procExecutor, PROCEDURE_EXECUTOR_SLOTS, true);
+    procExecutor.start(PROCEDURE_EXECUTOR_SLOTS, true);
   }
 
   @After

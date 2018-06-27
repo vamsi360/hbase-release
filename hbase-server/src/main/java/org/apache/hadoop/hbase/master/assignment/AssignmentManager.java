@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.hadoop.hbase.master.assignment;
 
 import java.io.IOException;
@@ -23,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,6 +40,7 @@ import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.PleaseHoldException;
 import org.apache.hadoop.hbase.RegionException;
+import org.apache.hadoop.hbase.RegionStateListener;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.YouAreDeadException;
@@ -63,6 +66,7 @@ import org.apache.hadoop.hbase.master.assignment.RegionStates.RegionStateNode;
 import org.apache.hadoop.hbase.master.assignment.RegionStates.ServerState;
 import org.apache.hadoop.hbase.master.assignment.RegionStates.ServerStateNode;
 import org.apache.hadoop.hbase.master.balancer.FavoredStochasticBalancer;
+import org.apache.hadoop.hbase.master.normalizer.RegionNormalizer;
 import org.apache.hadoop.hbase.master.procedure.MasterProcedureEnv;
 import org.apache.hadoop.hbase.master.procedure.MasterProcedureScheduler;
 import org.apache.hadoop.hbase.master.procedure.ProcedureSyncWait;
@@ -80,10 +84,7 @@ import org.apache.hadoop.hbase.util.HasThread;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.util.VersionInfo;
-import org.apache.hadoop.hbase.zookeeper.MetaTableLocator;
-import org.apache.hadoop.hbase.zookeeper.ZKWatcher;
 import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,12 +147,25 @@ public class AssignmentManager implements ServerListener {
       "hbase.metrics.rit.stuck.warning.threshold";
   private static final int DEFAULT_RIT_STUCK_WARNING_THRESHOLD = 60 * 1000;
 
-  private final ProcedureEvent<?> metaAssignEvent = new ProcedureEvent<>("meta assign");
+  private final ProcedureEvent<?> metaInitializedEvent = new ProcedureEvent<>("meta initialized");
   private final ProcedureEvent<?> metaLoadEvent = new ProcedureEvent<>("meta load");
+
+  /**
+   * Indicator that AssignmentManager has recovered the region states so
+   * that ServerCrashProcedure can be fully enabled and re-assign regions
+   * of dead servers. So that when re-assignment happens, AssignmentManager
+   * has proper region states.
+   */
+  private final ProcedureEvent<?> failoverCleanupDone = new ProcedureEvent<>("failover cleanup");
 
   /** Listeners that are called on assignment events. */
   private final CopyOnWriteArrayList<AssignmentListener> listeners =
       new CopyOnWriteArrayList<AssignmentListener>();
+
+  // TODO: why is this different from the listeners (carried over from the old AM)
+  private RegionStateListener regionStateListener;
+
+  private RegionNormalizer regionNormalizer;
 
   private final MetricsAssignmentManager metrics;
   private final RegionInTransitionChore ritChore;
@@ -196,9 +210,12 @@ public class AssignmentManager implements ServerListener {
     int ritChoreInterval = conf.getInt(RIT_CHORE_INTERVAL_MSEC_CONF_KEY,
         DEFAULT_RIT_CHORE_INTERVAL_MSEC);
     this.ritChore = new RegionInTransitionChore(ritChoreInterval);
+
+    // Used for region related procedure.
+    setRegionNormalizer(master.getRegionNormalizer());
   }
 
-  public void start() throws IOException, KeeperException {
+  public void start() throws IOException {
     if (!running.compareAndSet(false, true)) {
       return;
     }
@@ -210,20 +227,6 @@ public class AssignmentManager implements ServerListener {
 
     // Start the Assignment Thread
     startAssignmentThread();
-
-    // load meta region state
-    ZKWatcher zkw = master.getZooKeeper();
-    // it could be null in some tests
-    if (zkw != null) {
-      RegionState regionState = MetaTableLocator.getMetaRegionState(zkw);
-      RegionStateNode regionStateNode =
-        regionStates.getOrCreateRegionStateNode(RegionInfoBuilder.FIRST_META_REGIONINFO);
-      synchronized (regionStateNode) {
-        regionStateNode.setRegionLocation(regionState.getServerName());
-        regionStateNode.setState(regionState.getState());
-        setMetaAssigned(regionState.getRegion(), regionState.getState() == State.OPEN);
-      }
-    }
   }
 
   public void stop() {
@@ -254,8 +257,9 @@ public class AssignmentManager implements ServerListener {
     // Update meta events (for testing)
     if (hasProcExecutor) {
       metaLoadEvent.suspend();
+      setFailoverCleanupDone(false);
       for (RegionInfo hri: getMetaRegionSet()) {
-        setMetaAssigned(hri, false);
+        setMetaInitialized(hri, false);
       }
     }
   }
@@ -284,7 +288,7 @@ public class AssignmentManager implements ServerListener {
     return getProcedureEnvironment().getProcedureScheduler();
   }
 
-  int getAssignMaxAttempts() {
+  protected int getAssignMaxAttempts() {
     return assignMaxAttempts;
   }
 
@@ -302,6 +306,18 @@ public class AssignmentManager implements ServerListener {
    */
   public boolean unregisterListener(final AssignmentListener listener) {
     return this.listeners.remove(listener);
+  }
+
+  public void setRegionStateListener(final RegionStateListener listener) {
+    this.regionStateListener = listener;
+  }
+
+  public void setRegionNormalizer(final RegionNormalizer normalizer) {
+    this.regionNormalizer = normalizer;
+  }
+
+  public RegionNormalizer getRegionNormalizer() {
+    return regionNormalizer;
   }
 
   public RegionStates getRegionStates() {
@@ -355,8 +371,12 @@ public class AssignmentManager implements ServerListener {
   }
 
   public boolean isCarryingMeta(final ServerName serverName) {
-    // TODO: handle multiple meta
-    return isCarryingRegion(serverName, RegionInfoBuilder.FIRST_META_REGIONINFO);
+    for (RegionInfo hri: getMetaRegionSet()) {
+      if (isCarryingRegion(serverName, hri)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean isCarryingRegion(final ServerName serverName, final RegionInfo regionInfo) {
@@ -382,66 +402,49 @@ public class AssignmentManager implements ServerListener {
   // ============================================================================================
   //  META Event(s) helpers
   // ============================================================================================
-  /**
-   * Notice that, this only means the meta region is available on a RS, but the AM may still be
-   * loading the region states from meta, so usually you need to check {@link #isMetaLoaded()} first
-   * before checking this method, unless you can make sure that your piece of code can only be
-   * executed after AM builds the region states.
-   * @see #isMetaLoaded()
-   */
-  public boolean isMetaAssigned() {
-    return metaAssignEvent.isReady();
+  public boolean isMetaInitialized() {
+    return metaInitializedEvent.isReady();
   }
 
   public boolean isMetaRegionInTransition() {
-    return !isMetaAssigned();
+    return !isMetaInitialized();
   }
 
-  /**
-   * Notice that this event does not mean the AM has already finished region state rebuilding. See
-   * the comment of {@link #isMetaAssigned()} for more details.
-   * @see #isMetaAssigned()
-   */
-  public boolean waitMetaAssigned(Procedure<?> proc, RegionInfo regionInfo) {
-    return getMetaAssignEvent(getMetaForRegion(regionInfo)).suspendIfNotReady(proc);
+  public boolean waitMetaInitialized(final Procedure proc) {
+    // TODO: handle multiple meta. should this wait on all meta?
+    // this is used by the ServerCrashProcedure...
+    return waitMetaInitialized(proc, RegionInfoBuilder.FIRST_META_REGIONINFO);
   }
 
-  private void setMetaAssigned(RegionInfo metaRegionInfo, boolean assigned) {
+  public boolean waitMetaInitialized(final Procedure proc, final RegionInfo regionInfo) {
+    return getMetaInitializedEvent(getMetaForRegion(regionInfo)).suspendIfNotReady(proc);
+  }
+
+  private void setMetaInitialized(final RegionInfo metaRegionInfo, final boolean isInitialized) {
     assert isMetaRegion(metaRegionInfo) : "unexpected non-meta region " + metaRegionInfo;
-    ProcedureEvent<?> metaAssignEvent = getMetaAssignEvent(metaRegionInfo);
-    if (assigned) {
-      metaAssignEvent.wake(getProcedureScheduler());
+    final ProcedureEvent metaInitEvent = getMetaInitializedEvent(metaRegionInfo);
+    if (isInitialized) {
+      metaInitEvent.wake(getProcedureScheduler());
     } else {
-      metaAssignEvent.suspend();
+      metaInitEvent.suspend();
     }
   }
 
-  private ProcedureEvent<?> getMetaAssignEvent(RegionInfo metaRegionInfo) {
+  private ProcedureEvent getMetaInitializedEvent(final RegionInfo metaRegionInfo) {
     assert isMetaRegion(metaRegionInfo) : "unexpected non-meta region " + metaRegionInfo;
     // TODO: handle multiple meta.
-    return metaAssignEvent;
+    return metaInitializedEvent;
   }
 
-  /**
-   * Wait until AM finishes the meta loading, i.e, the region states rebuilding.
-   * @see #isMetaLoaded()
-   * @see #waitMetaAssigned(Procedure, RegionInfo)
-   */
-  public boolean waitMetaLoaded(Procedure<?> proc) {
+  public boolean waitMetaLoaded(final Procedure proc) {
     return metaLoadEvent.suspendIfNotReady(proc);
   }
 
-  @VisibleForTesting
-  void wakeMetaLoadedEvent() {
+  protected void wakeMetaLoadedEvent() {
     metaLoadEvent.wake(getProcedureScheduler());
     assert isMetaLoaded() : "expected meta to be loaded";
   }
 
-  /**
-   * Return whether AM finishes the meta loading, i.e, the region states rebuilding.
-   * @see #isMetaAssigned()
-   * @see #waitMetaLoaded(Procedure)
-   */
   public boolean isMetaLoaded() {
     return metaLoadEvent.isReady();
   }
@@ -837,7 +840,7 @@ public class AssignmentManager implements ServerListener {
   private void updateRegionTransition(final ServerName serverName, final TransitionCode state,
       final RegionInfo regionInfo, final long seqId)
       throws PleaseHoldException, UnexpectedStateException {
-    checkMetaLoaded(regionInfo);
+    checkFailoverCleanupCompleted(regionInfo);
 
     final RegionStateNode regionNode = regionStates.getRegionStateNode(regionInfo);
     if (regionNode == null) {
@@ -878,7 +881,7 @@ public class AssignmentManager implements ServerListener {
   private void updateRegionSplitTransition(final ServerName serverName, final TransitionCode state,
       final RegionInfo parent, final RegionInfo hriA, final RegionInfo hriB)
       throws IOException {
-    checkMetaLoaded(parent);
+    checkFailoverCleanupCompleted(parent);
 
     if (state != TransitionCode.READY_TO_SPLIT) {
       throw new UnexpectedStateException("unsupported split regionState=" + state +
@@ -910,7 +913,7 @@ public class AssignmentManager implements ServerListener {
 
   private void updateRegionMergeTransition(final ServerName serverName, final TransitionCode state,
       final RegionInfo merged, final RegionInfo hriA, final RegionInfo hriB) throws IOException {
-    checkMetaLoaded(merged);
+    checkFailoverCleanupCompleted(merged);
 
     if (state != TransitionCode.READY_TO_MERGE) {
       throw new UnexpectedStateException("Unsupported merge regionState=" + state +
@@ -1051,7 +1054,7 @@ public class AssignmentManager implements ServerListener {
     }
   }
 
-  protected boolean waitServerReportEvent(ServerName serverName, Procedure<?> proc) {
+  protected boolean waitServerReportEvent(final ServerName serverName, final Procedure proc) {
     final ServerStateNode serverNode = regionStates.getOrCreateServer(serverName);
     if (serverNode == null) {
       LOG.warn("serverName=null; {}", proc);
@@ -1140,7 +1143,7 @@ public class AssignmentManager implements ServerListener {
 
     public Collection<RegionState> getRegionOverThreshold() {
       Map<String, RegionState> m = this.ritsOverThreshold;
-      return m != null? m.values(): Collections.emptySet();
+      return m != null? m.values(): Collections.EMPTY_SET;
     }
 
     public boolean isRegionOverThreshold(final RegionInfo regionInfo) {
@@ -1197,44 +1200,27 @@ public class AssignmentManager implements ServerListener {
   //  TODO: Master load/bootstrap
   // ============================================================================================
   public void joinCluster() throws IOException {
-    long startTime = System.nanoTime();
+    final long startTime = System.currentTimeMillis();
     LOG.debug("Joining cluster...");
 
     // Scan hbase:meta to build list of existing regions, servers, and assignment
     // hbase:meta is online when we get to here and TableStateManager has been started.
     loadMeta();
 
-    while (master.getServerManager().countOfRegionServers() < 1) {
-      LOG.info("Waiting for RegionServers to join; current count={}",
-        master.getServerManager().countOfRegionServers());
+    for (int i = 0; master.getServerManager().countOfRegionServers() < 1; ++i) {
+      LOG.info("Waiting for RegionServers to join; current count=" +
+          master.getServerManager().countOfRegionServers());
       Threads.sleep(250);
     }
-    LOG.info("Number of RegionServers={}", master.getServerManager().countOfRegionServers());
+    LOG.info("Number of RegionServers=" + master.getServerManager().countOfRegionServers());
 
-    processOfflineRegions();
+    boolean failover = processofflineServersWithOnlineRegions();
 
     // Start the RIT chore
     master.getMasterProcedureExecutor().addChore(this.ritChore);
 
-    long costMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
-    LOG.info("Joined the cluster in {}", StringUtils.humanTimeDiff(costMs));
-  }
-
-  // Create assign procedure for offline regions.
-  // Just follow the old processofflineServersWithOnlineRegions method. Since now we do not need to
-  // deal with dead server any more, we only deal with the regions in OFFLINE state in this method.
-  // And this is a bit strange, that for new regions, we will add it in CLOSED state instead of
-  // OFFLINE state, and usually there will be a procedure to track them. The
-  // processofflineServersWithOnlineRegions is a legacy from long ago, as things are going really
-  // different now, maybe we do not need this method any more. Need to revisit later.
-  private void processOfflineRegions() {
-    List<RegionInfo> offlineRegions = regionStates.getRegionStates().stream()
-      .filter(RegionState::isOffline).filter(s -> isTableEnabled(s.getRegion().getTable()))
-      .map(RegionState::getRegion).collect(Collectors.toList());
-    if (!offlineRegions.isEmpty()) {
-      master.getMasterProcedureExecutor().submitProcedures(
-        master.getAssignmentManager().createRoundRobinAssignProcedures(offlineRegions));
-    }
+    LOG.info(String.format("Joined the cluster in %s, failover=%s",
+      StringUtils.humanTimeDiff(System.currentTimeMillis() - startTime), failover));
   }
 
   private void loadMeta() throws IOException {
@@ -1291,21 +1277,117 @@ public class AssignmentManager implements ServerListener {
   }
 
   /**
-   * Used to check if the meta loading is done.
-   * <p/>
+   * Look at what is in meta and the list of servers that have checked in and make reconciliation.
+   * We cannot tell definitively the difference between a clean shutdown and a cluster that has
+   * been crashed down. At this stage of a Master startup, they look the same: they have the
+   * same state in hbase:meta. We could do detective work probing ZK and the FS for old WALs to
+   * split but SCP does this already so just let it do its job.
+   * <p>>The profiles of clean shutdown and cluster crash-down are the same because on clean
+   * shutdown currently, we do not update hbase:meta with region close state (In AMv2, region
+   * state is kept in hbse:meta). Usually the master runs all region transitions as of AMv2 but on
+   * cluster controlled shutdown, the RegionServers close all their regions only reporting the
+   * final change to the Master. Currently this report is ignored. Later we could take it and
+   * update as many regions as we can before hbase:meta goes down or have the master run the
+   * close of all regions out on the cluster but we may never be able to achieve the proper state on
+   * all regions (at least not w/o lots of painful manipulations and waiting) so clean shutdown
+   * might not be possible especially on big clusters.... And clean shutdown will take time. Given
+   * this current state of affairs, we just run ServerCrashProcedure in both cases. It will always
+   * do the right thing.
+   * @return True if for sure this is a failover where a Master is starting up into an already
+   * running cluster.
+   */
+  // The assumption here is that if RSs are crashing while we are executing this
+  // they will be handled by the SSH that are put in the ServerManager deadservers "queue".
+  private boolean processofflineServersWithOnlineRegions() {
+    boolean deadServers = !master.getServerManager().getDeadServers().isEmpty();
+    final Set<ServerName> offlineServersWithOnlineRegions = new HashSet<>();
+    int size = regionStates.getRegionStateNodes().size();
+    final List<RegionInfo> offlineRegionsToAssign = new ArrayList<>(size);
+    // If deadservers then its a failover, else, we are not sure yet.
+    boolean failover = deadServers;
+    for (RegionStateNode regionNode: regionStates.getRegionStateNodes()) {
+      // Region State can be OPEN even if we did controlled cluster shutdown; Master does not close
+      // the regions in this case. The RegionServer does the close so hbase:meta is state in
+      // hbase:meta is not updated -- Master does all updates -- and is left with OPEN as region
+      // state in meta. How to tell difference between ordered shutdown and crashed-down cluster
+      // then? We can't. Not currently. Perhaps if we updated hbase:meta with CLOSED on ordered
+      // shutdown. This would slow shutdown though and not all edits would make it in anyways.
+      // TODO: Examine.
+      // Because we can't be sure it an ordered shutdown, we run ServerCrashProcedure always.
+      // ServerCrashProcedure will try to retain old deploy when it goes to assign.
+      if (regionNode.getState() == State.OPEN) {
+        final ServerName serverName = regionNode.getRegionLocation();
+        if (!master.getServerManager().isServerOnline(serverName)) {
+          offlineServersWithOnlineRegions.add(serverName);
+        } else {
+          // Server is online. This a failover. Master is starting into already-running cluster.
+          failover = true;
+        }
+      } else if (regionNode.getState() == State.OFFLINE) {
+        if (isTableEnabled(regionNode.getTable())) {
+          offlineRegionsToAssign.add(regionNode.getRegionInfo());
+        }
+      }
+    }
+    // Kill servers with online regions just-in-case. Runs ServerCrashProcedure.
+    for (ServerName serverName: offlineServersWithOnlineRegions) {
+      if (!master.getServerManager().isServerOnline(serverName)) {
+        LOG.info("KILL RegionServer=" + serverName + " hosting regions but not online.");
+        killRegionServer(serverName);
+      }
+    }
+    setFailoverCleanupDone(true);
+
+    // Assign offline regions. Uses round-robin.
+    if (offlineRegionsToAssign.size() > 0) {
+      master.getMasterProcedureExecutor().submitProcedures(master.getAssignmentManager().
+          createRoundRobinAssignProcedures(offlineRegionsToAssign));
+    }
+
+    return failover;
+  }
+
+  /**
+   * Used by ServerCrashProcedure to make sure AssignmentManager has completed
+   * the failover cleanup before re-assigning regions of dead servers. So that
+   * when re-assignment happens, AssignmentManager has proper region states.
+   */
+  public boolean isFailoverCleanupDone() {
+    return failoverCleanupDone.isReady();
+  }
+
+  /**
+   * Used by ServerCrashProcedure tests verify the ability to suspend the
+   * execution of the ServerCrashProcedure.
+   */
+  @VisibleForTesting
+  public void setFailoverCleanupDone(final boolean b) {
+    master.getMasterProcedureExecutor().getEnvironment()
+      .setEventReady(failoverCleanupDone, b);
+  }
+
+  public ProcedureEvent getFailoverCleanupEvent() {
+    return failoverCleanupDone;
+  }
+
+  /**
+   * Used to check if the failover cleanup is done.
    * if not we throw PleaseHoldException since we are rebuilding the RegionStates
    * @param hri region to check if it is already rebuild
-   * @throws PleaseHoldException if meta has not been loaded yet
+   * @throws PleaseHoldException if the failover cleanup is not completed
    */
-  private void checkMetaLoaded(RegionInfo hri) throws PleaseHoldException {
+  private void checkFailoverCleanupCompleted(final RegionInfo hri) throws PleaseHoldException {
     if (!isRunning()) {
       throw new PleaseHoldException("AssignmentManager not running");
     }
+
+    // TODO: can we avoid throwing an exception if hri is already loaded?
+    //       at the moment we bypass only meta
     boolean meta = isMetaRegion(hri);
-    boolean metaLoaded = isMetaLoaded();
-    if (!meta && !metaLoaded) {
-      throw new PleaseHoldException(
-        "Master not fully online; hbase:meta=" + meta + ", metaLoaded=" + metaLoaded);
+    boolean cleanup = isFailoverCleanupDone();
+    if (!isMetaRegion(hri) && !isFailoverCleanupDone()) {
+      String msg = "Master not fully online; hbase:meta=" + meta + ", failoverCleanup=" + cleanup;
+      throw new PleaseHoldException(msg);
     }
   }
 
@@ -1448,7 +1530,7 @@ public class AssignmentManager implements ServerListener {
         // can't be disabled -- so skip the RPC (besides... enabled is managed by TableStateManager
         // which is backed by hbase:meta... Avoid setting ENABLED to avoid having to update state
         // on table that contains state.
-        setMetaAssigned(hri, true);
+        setMetaInitialized(hri, true);
       }
       regionStates.addRegionToServer(regionNode);
       // TODO: OPENING Updates hbase:meta too... we need to do both here and there?
@@ -1464,7 +1546,7 @@ public class AssignmentManager implements ServerListener {
       regionNode.transitionState(State.CLOSING, RegionStates.STATES_EXPECTED_ON_CLOSE);
       // Set meta has not initialized early. so people trying to create/edit tables will wait
       if (isMetaRegion(hri)) {
-        setMetaAssigned(hri, false);
+        setMetaInitialized(hri, false);
       }
       regionStates.addRegionToServer(regionNode);
       regionStateStore.updateRegionLocation(regionNode);
@@ -1741,7 +1823,7 @@ public class AssignmentManager implements ServerListener {
 
   private void acceptPlan(final HashMap<RegionInfo, RegionStateNode> regions,
       final Map<ServerName, List<RegionInfo>> plan) throws HBaseIOException {
-    final ProcedureEvent<?>[] events = new ProcedureEvent[regions.size()];
+    final ProcedureEvent[] events = new ProcedureEvent[regions.size()];
     final long st = System.currentTimeMillis();
 
     if (plan == null) {
@@ -1793,7 +1875,7 @@ public class AssignmentManager implements ServerListener {
         .map((s)->new Pair<>(s, master.getRegionServerVersion(s)))
         .collect(Collectors.toList());
     if (serverList.isEmpty()) {
-      return Collections.emptyList();
+      return Collections.EMPTY_LIST;
     }
     String highestVersion = Collections.max(serverList,
         (o1, o2) -> VersionInfo.compareVersion(o1.getSecond(), o2.getSecond())).getSecond();
@@ -1817,6 +1899,11 @@ public class AssignmentManager implements ServerListener {
 
     // just in case, wake procedures waiting for this server report
     wakeServerReportEvent(serverNode);
+  }
+
+  private void killRegionServer(final ServerName serverName) {
+    final ServerStateNode serverNode = regionStates.getServerNode(serverName);
+    killRegionServer(serverNode);
   }
 
   private void killRegionServer(final ServerStateNode serverNode) {
