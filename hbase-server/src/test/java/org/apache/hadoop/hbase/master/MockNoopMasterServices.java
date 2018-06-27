@@ -175,11 +175,6 @@ public class MockNoopMasterServices implements MasterServices, Server {
   }
 
   @Override
-  public boolean isNamespaceManagerInitialized() {
-    return false;
-  }
-
-  @Override
   public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
 
   }
