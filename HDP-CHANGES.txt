@@ -1,0 +1,20 @@
+The following issues are included over Apache HBase 2.0.1
+
+5a0fbf293a HBASE-20723 Custom hbase.wal.dir results in data loss because we write recovered edits into a different place than where the recovering region server looks for them
+46bb73d0cb HBASE-20722 Make RegionServerTracker only depend on children changed event
+3b2b134b7f HBASE-20668 Avoid permission change if ExportSnapshot's copy fails
+587cc45427 HBASE-20657 Retrying RPC call for ModifyTableProcedure may get stuck
+8b9dd42605 HBASE-20635 Add missing shaded-pb conversion method for UserPermission
+b6855f0160 HBASE-20627 Relocate RS Group pre/post hooks from RSGroupAdminServer to RSGroupAdminEndpoint
+1a24e3b1f8 HBASE-20579 Include original exception in wrapped exception
+78e2cdec03 HBASE-20579 Improve snapshot manifest copy in ExportSnapshot
+5282aed097 HBASE-20547: Restore from backup will fail if done from a different file system
+95c206b2d5 HBASE-20531 RS may throw NPE when close meta regions in shutdown procedure.
+7b4fede014 HBASE-20495 REST unit test fails with NoClassDefFoundError against hadoop3
+442f528e13 HBASE-20196 Maintain all regions with same size in memstore flusher
+4c423883ea HBASE-20136 TestKeyValue misses ClassRule and Category annotations
+5f153796a6 HBASE-19735 Create a client-tarball assembly
+e1d120320d HBASE-19478 Utilize multi-get to speed up WAL file checking in BackupLogCleaner (Toshihiro Suzuki)
+a100d04a4f HBASE-18135 Implement mechanism for RegionServers to report file archival for space quotas
+f78455262e HBASE-18133 Decrease quota reaction latency by HBase
+92fc4c0cc8 HBASE-17549 HBase-Spark Module: Corrected - Incorrect log at println and unwanted comment code
