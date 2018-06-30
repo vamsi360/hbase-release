@@ -1106,10 +1106,9 @@ public final class BackupMetaTable implements Closeable {
       Get get = createGetForCheckWALFile(file);
       Result res = table.get(get);
       if (res.isEmpty()) {
-        result = false;
+        return false;
       }
-      result = true;
-      return result;
+      return true;
     } finally {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Check if WAL file has been already backed up in backup system table " + file

@@ -1614,8 +1614,6 @@ public class StochasticLoadBalancer extends BaseLoadBalancer {
         if (newHost != oldHost) {
           costsPerGroup[oldHost] = costPerGroup(cluster.primariesOfRegionsPerHost[oldHost]);
           costsPerGroup[newHost] = costPerGroup(cluster.primariesOfRegionsPerHost[newHost]);
-          LOG.debug("replica old cost " + costsPerGroup[oldHost] + " new cost " +
-          costsPerGroup[newHost]);
         }
       } else {
         costsPerGroup[oldServer] = costPerGroup(cluster.primariesOfRegionsPerServer[oldServer]);

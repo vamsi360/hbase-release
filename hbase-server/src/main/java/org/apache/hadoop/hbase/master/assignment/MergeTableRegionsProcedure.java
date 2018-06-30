@@ -553,7 +553,7 @@ public class MergeTableRegionsProcedure
     try {
       env.getMasterServices().getMasterQuotaManager().onRegionMerged(this.mergedRegion);
     } catch (QuotaExceededException e) {
-      env.getMasterServices().getRegionNormalizer().planSkipped(this.mergedRegion,
+      env.getAssignmentManager().getRegionNormalizer().planSkipped(this.mergedRegion,
           NormalizationPlan.PlanType.MERGE);
       throw e;
     }

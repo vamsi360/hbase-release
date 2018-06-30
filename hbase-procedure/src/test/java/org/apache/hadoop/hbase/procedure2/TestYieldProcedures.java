@@ -71,10 +71,10 @@ public class TestYieldProcedures {
     logDir = new Path(testDir, "proc-logs");
     procStore = ProcedureTestingUtility.createWalStore(htu.getConfiguration(), logDir);
     procRunnables = new TestScheduler();
-    procExecutor =
-      new ProcedureExecutor<>(htu.getConfiguration(), new TestProcEnv(), procStore, procRunnables);
+    procExecutor = new ProcedureExecutor(htu.getConfiguration(), new TestProcEnv(),
+        procStore, procRunnables);
     procStore.start(PROCEDURE_EXECUTOR_SLOTS);
-    ProcedureTestingUtility.initAndStartWorkers(procExecutor, PROCEDURE_EXECUTOR_SLOTS, true);
+    procExecutor.start(PROCEDURE_EXECUTOR_SLOTS, true);
   }
 
   @After

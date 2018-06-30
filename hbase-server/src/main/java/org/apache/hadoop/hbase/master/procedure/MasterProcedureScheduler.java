@@ -421,7 +421,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @param table Table to lock
    * @return true if the procedure has to wait for the table to be available
    */
-  public boolean waitTableExclusiveLock(final Procedure<?> procedure, final TableName table) {
+  public boolean waitTableExclusiveLock(final Procedure procedure, final TableName table) {
     schedLock();
     try {
       final String namespace = table.getNamespaceAsString();
@@ -450,7 +450,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @param procedure the procedure releasing the lock
    * @param table the name of the table that has the exclusive lock
    */
-  public void wakeTableExclusiveLock(final Procedure<?> procedure, final TableName table) {
+  public void wakeTableExclusiveLock(final Procedure procedure, final TableName table) {
     schedLock();
     try {
       final LockAndQueue namespaceLock = locking.getNamespaceLock(table.getNamespaceAsString());
@@ -478,7 +478,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @param table Table to lock
    * @return true if the procedure has to wait for the table to be available
    */
-  public boolean waitTableSharedLock(final Procedure<?> procedure, final TableName table) {
+  public boolean waitTableSharedLock(final Procedure procedure, final TableName table) {
     return waitTableQueueSharedLock(procedure, table) == null;
   }
 
@@ -509,7 +509,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @param procedure the procedure releasing the lock
    * @param table the name of the table that has the shared lock
    */
-  public void wakeTableSharedLock(final Procedure<?> procedure, final TableName table) {
+  public void wakeTableSharedLock(final Procedure procedure, final TableName table) {
     schedLock();
     try {
       final LockAndQueue namespaceLock = locking.getNamespaceLock(table.getNamespaceAsString());
@@ -570,7 +570,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @param regionInfo the region we are trying to lock
    * @return true if the procedure has to wait for the regions to be available
    */
-  public boolean waitRegion(final Procedure<?> procedure, final RegionInfo regionInfo) {
+  public boolean waitRegion(final Procedure procedure, final RegionInfo regionInfo) {
     return waitRegions(procedure, regionInfo.getTable(), regionInfo);
   }
 
@@ -581,7 +581,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @param regionInfo the list of regions we are trying to lock
    * @return true if the procedure has to wait for the regions to be available
    */
-  public boolean waitRegions(final Procedure<?> procedure, final TableName table,
+  public boolean waitRegions(final Procedure procedure, final TableName table,
       final RegionInfo... regionInfo) {
     Arrays.sort(regionInfo, RegionInfo.COMPARATOR);
     schedLock();
@@ -629,7 +629,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @param procedure the procedure that was holding the region
    * @param regionInfo the region the procedure was holding
    */
-  public void wakeRegion(final Procedure<?> procedure, final RegionInfo regionInfo) {
+  public void wakeRegion(final Procedure procedure, final RegionInfo regionInfo) {
     wakeRegions(procedure, regionInfo.getTable(), regionInfo);
   }
 
@@ -638,7 +638,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @param procedure the procedure that was holding the regions
    * @param regionInfo the list of regions the procedure was holding
    */
-  public void wakeRegions(final Procedure<?> procedure,final TableName table,
+  public void wakeRegions(final Procedure procedure,final TableName table,
       final RegionInfo... regionInfo) {
     Arrays.sort(regionInfo, RegionInfo.COMPARATOR);
     schedLock();
@@ -685,7 +685,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @param namespace Namespace to lock
    * @return true if the procedure has to wait for the namespace to be available
    */
-  public boolean waitNamespaceExclusiveLock(final Procedure<?> procedure, final String namespace) {
+  public boolean waitNamespaceExclusiveLock(final Procedure procedure, final String namespace) {
     schedLock();
     try {
       final LockAndQueue systemNamespaceTableLock =
@@ -716,7 +716,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @param procedure the procedure releasing the lock
    * @param namespace the namespace that has the exclusive lock
    */
-  public void wakeNamespaceExclusiveLock(final Procedure<?> procedure, final String namespace) {
+  public void wakeNamespaceExclusiveLock(final Procedure procedure, final String namespace) {
     schedLock();
     try {
       final LockAndQueue namespaceLock = locking.getNamespaceLock(namespace);
@@ -788,10 +788,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * @see #wakeMetaExclusiveLock(Procedure)
    * @param procedure the procedure trying to acquire the lock
    * @return true if the procedure has to wait for meta to be available
-   * @deprecated only used for {@link RecoverMetaProcedure}. Should be removed along with
-   *             {@link RecoverMetaProcedure}.
    */
-  @Deprecated
   public boolean waitMetaExclusiveLock(Procedure<?> procedure) {
     schedLock();
     try {
@@ -812,10 +809,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
    * Wake the procedures waiting for meta.
    * @see #waitMetaExclusiveLock(Procedure)
    * @param procedure the procedure releasing the lock
-   * @deprecated only used for {@link RecoverMetaProcedure}. Should be removed along with
-   *             {@link RecoverMetaProcedure}.
    */
-  @Deprecated
   public void wakeMetaExclusiveLock(Procedure<?> procedure) {
     schedLock();
     try {

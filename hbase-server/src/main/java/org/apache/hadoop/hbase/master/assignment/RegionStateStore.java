@@ -116,12 +116,13 @@ public class RegionStateStore {
 
       final ServerName lastHost = hrl.getServerName();
       final ServerName regionLocation = getRegionServer(result, replicaId);
-      final long openSeqNum = -1;
+      final long openSeqNum = hrl.getSeqNum();
 
       // TODO: move under trace, now is visible for debugging
-      LOG.info("Load hbase:meta entry region={}, regionState={}, lastHost={}, " +
-          "regionLocation={}, seqnum={}", regionInfo.getEncodedName(), state, lastHost,
-          regionLocation, hrl.getSeqNum());
+      LOG.info(
+        "Load hbase:meta entry region={}, regionState={}, lastHost={}, " +
+          "regionLocation={}, openSeqNum={}",
+        regionInfo.getEncodedName(), state, lastHost, regionLocation, openSeqNum);
       visitor.visitRegionState(result, regionInfo, state, regionLocation, lastHost, openSeqNum);
     }
   }
@@ -129,24 +130,23 @@ public class RegionStateStore {
   public void updateRegionLocation(RegionStates.RegionStateNode regionStateNode)
       throws IOException {
     if (regionStateNode.getRegionInfo().isMetaRegion()) {
-      updateMetaLocation(regionStateNode.getRegionInfo(), regionStateNode.getRegionLocation(),
-        regionStateNode.getState());
+      updateMetaLocation(regionStateNode.getRegionInfo(), regionStateNode.getRegionLocation());
     } else {
-      long openSeqNum = regionStateNode.getState() == State.OPEN ? regionStateNode.getOpenSeqNum()
-        : HConstants.NO_SEQNUM;
+      long openSeqNum = regionStateNode.getState() == State.OPEN ?
+          regionStateNode.getOpenSeqNum() : HConstants.NO_SEQNUM;
       updateUserRegionLocation(regionStateNode.getRegionInfo(), regionStateNode.getState(),
-        regionStateNode.getRegionLocation(), regionStateNode.getLastHost(), openSeqNum,
-        // The regionStateNode may have no procedure in a test scenario; allow for this.
-        regionStateNode.getProcedure() != null ? regionStateNode.getProcedure().getProcId()
-          : Procedure.NO_PROC_ID);
+          regionStateNode.getRegionLocation(), regionStateNode.getLastHost(), openSeqNum,
+          // The regionStateNode may have no procedure in a test scenario; allow for this.
+          regionStateNode.getProcedure() != null?
+              regionStateNode.getProcedure().getProcId(): Procedure.NO_PROC_ID);
     }
   }
 
-  private void updateMetaLocation(RegionInfo regionInfo, ServerName serverName, State state)
+  private void updateMetaLocation(final RegionInfo regionInfo, final ServerName serverName)
       throws IOException {
     try {
-      MetaTableLocator.setMetaLocation(master.getZooKeeper(), serverName, regionInfo.getReplicaId(),
-        state);
+      MetaTableLocator.setMetaLocation(master.getZooKeeper(), serverName,
+        regionInfo.getReplicaId(), State.OPEN);
     } catch (KeeperException e) {
       throw new IOException(e);
     }
