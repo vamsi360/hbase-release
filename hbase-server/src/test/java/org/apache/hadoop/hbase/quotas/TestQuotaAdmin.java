@@ -74,6 +74,14 @@ public class TestQuotaAdmin {
     TEST_UTIL.waitTableAvailable(QuotaTableUtil.QUOTA_TABLE_NAME);
   }
 
+  @After
+  public void clearQuotaTable() throws Exception {
+    if (TEST_UTIL.getHBaseAdmin().tableExists(QuotaUtil.QUOTA_TABLE_NAME)) {
+      TEST_UTIL.getHBaseAdmin().disableTable(QuotaUtil.QUOTA_TABLE_NAME);
+      TEST_UTIL.getHBaseAdmin().truncateTable(QuotaUtil.QUOTA_TABLE_NAME, false);
+    }
+  }
+
   @AfterClass
   public static void tearDownAfterClass() throws Exception {
     TEST_UTIL.shutdownMiniCluster();
