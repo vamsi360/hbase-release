@@ -73,8 +73,7 @@ public class RestoreDriver extends AbstractHBaseTool {
   private static final String USAGE_STRING =
       "Usage: hbase restore <backup_path> <backup_id> [options]\n"
           + "  backup_path     Path to a backup destination root\n"
-          + "  backup_id       Backup image ID to restore\n"
-          + "  table(s)        Comma-separated list of tables to restore\n";
+          + "  backup_id       Backup image ID to restore\n";
 
   private static final String USAGE_FOOTER = "";
 
