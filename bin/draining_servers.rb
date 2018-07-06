@@ -27,6 +27,7 @@ java_import org.apache.hadoop.hbase.HBaseConfiguration
 java_import org.apache.hadoop.hbase.client.ConnectionFactory
 java_import org.apache.hadoop.hbase.client.HBaseAdmin
 java_import org.apache.hadoop.hbase.zookeeper.ZKUtil
+java_import org.apache.hadoop.hbase.zookeeper.ZNodePaths
 java_import org.slf4j.LoggerFactory
 
 # Name of this script
@@ -90,7 +91,7 @@ def addServers(_options, hostOrServers)
 
   begin
     for server in servers
-      node = ZKUtil.joinZNode(parentZnode, server)
+      node = ZNodePaths.joinZNode(parentZnode, server)
       ZKUtil.createAndFailSilent(zkw, node)
     end
   ensure
@@ -107,7 +108,7 @@ def removeServers(_options, hostOrServers)
 
   begin
     for server in servers
-      node = ZKUtil.joinZNode(parentZnode, server)
+      node = ZNodePaths.joinZNode(parentZnode, server)
       ZKUtil.deleteNodeFailSilent(zkw, node)
     end
   ensure
