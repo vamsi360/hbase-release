@@ -60,7 +60,7 @@ public class TestShutdownBackupMaster {
     }
 
     @Override
-    protected void initClusterSchemaService() throws IOException, InterruptedException {
+    void initClusterSchemaService() throws IOException, InterruptedException {
       if (ARRIVE != null) {
         ARRIVE.countDown();
         CONTINUE.await();
