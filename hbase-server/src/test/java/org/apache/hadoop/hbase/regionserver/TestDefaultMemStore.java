@@ -250,12 +250,11 @@ public class TestDefaultMemStore extends TestCase {
     kv1.setSequenceId(w.getWriteNumber());
     memstore.add(kv1);
 
-    KeyValueScanner s = this.memstore.getScanners(mvcc.memstoreReadPoint()).get(0);
-    assertScannerResults(s, new KeyValue[]{});
+    assertTrue(this.memstore.getScanners(mvcc.memstoreReadPoint()) == null);
 
     mvcc.completeMemstoreInsert(w);
 
-    s = this.memstore.getScanners(mvcc.memstoreReadPoint()).get(0);
+    KeyValueScanner s = this.memstore.getScanners(mvcc.memstoreReadPoint()).get(0);
     assertScannerResults(s, new KeyValue[]{kv1});
 
     w = mvcc.beginMemstoreInsertWithSeqNum(this.startSeqNum.incrementAndGet());
