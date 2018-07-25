@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.backup.impl;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +28,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.backup.BackupInfo;
 import org.apache.hadoop.hbase.backup.BackupInfo.BackupPhase;
@@ -69,7 +72,7 @@ public abstract class TableBackupClient {
   protected BackupManager backupManager;
   protected BackupInfo backupInfo;
   protected FileSystem fs;
-  
+
   public TableBackupClient() {
   }
 
@@ -416,6 +419,16 @@ public abstract class TableBackupClient {
    * @throws IOException
    */
   public abstract void execute() throws IOException;
+
+  /*DEBUG*/
+  protected void dumpDir(FileSystem fs, Path dir) throws FileNotFoundException, IOException {
+    LOG.warn("DDD Dumping directory: "+ dir);
+    RemoteIterator<LocatedFileStatus> it = fs.listFiles(dir, true);
+    while(it.hasNext()) {
+      LocatedFileStatus lfs = it.next();
+      LOG.warn(lfs.getPath() + " size="+ lfs.getLen());
+    }
+  }
 
   @VisibleForTesting
   protected Stage getTestStage() {

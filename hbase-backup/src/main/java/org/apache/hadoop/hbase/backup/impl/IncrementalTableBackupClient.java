@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
@@ -345,6 +346,7 @@ public class IncrementalTableBackupClient extends TableBackupClient {
       }
       conf.set(JOB_NAME_CONF_KEY, jobname);
 
+      // FIXIT: remote cluster config? Why do we use local config?
       BackupCopyJob copyService = BackupRestoreFactory.getBackupCopyJob(conf);
       int res = copyService.copy(backupInfo, backupManager, conf, BackupType.INCREMENTAL, strArr);
       if (res != 0) {
@@ -354,6 +356,9 @@ public class IncrementalTableBackupClient extends TableBackupClient {
       }
       LOG.debug("Incremental copy HFiles from " + StringUtils.join(files, ',')
           + " to " + backupDest + " finished.");
+      LOG.warn("DDD Dumping backup destination ");
+      Path p = new Path(backupDest);
+      dumpDir( p.getFileSystem(new Configuration()), p);
     } finally {
       deleteBulkLoadDirectory();
     }
@@ -417,6 +422,8 @@ public class IncrementalTableBackupClient extends TableBackupClient {
       if(result != 0) {
         throw new IOException("WAL Player failed");
       }
+      /*DEBUG*/ LOG.warn("DDD Dumping Bulk Output directory");
+      dumpDir(fs, bulkOutputPath);
       conf.unset(WALPlayer.INPUT_FILES_SEPARATOR_KEY);
       conf.unset(JOB_NAME_CONF_KEY);
     } catch (IOException e) {
