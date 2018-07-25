@@ -1,5 +1,4 @@
 /**
-
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -12,27 +11,26 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUTKey WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.hadoop.hbase.exceptions;
 
-package org.apache.hadoop.hbase.procedure2;
-
+import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.yetus.audience.InterfaceAudience;
-import org.apache.hadoop.hbase.procedure2.Procedure;
-
-import java.util.ArrayDeque;
 
 /**
- * Type class.
- * For conceptual purpose only. Seeing ProcedureDeque as type instead of just ArrayDeque gives
- * more understanding that it's a queue of waiting procedures.
+ * Thrown when the connection is closed
  */
-@InterfaceAudience.Private
-public class ProcedureDeque extends ArrayDeque<Procedure> {
-  public ProcedureDeque() {
-    // Default is 16 for a list that is rarely used; elements will resize if too small.
-    super(2);
+
+@InterfaceAudience.Public
+public class ConnectionClosedException extends HBaseIOException {
+
+  private static final long serialVersionUID = -8938225073412971497L;
+
+  public ConnectionClosedException(String string) {
+    super(string);
   }
+
 }

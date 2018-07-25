@@ -106,6 +106,9 @@ public class RegionStates {
 
     private volatile RegionTransitionProcedure procedure = null;
     private volatile ServerName regionLocation = null;
+    // notice that, the lastHost will only be updated when a region is successfully CLOSED through
+    // UnassignProcedure, so do not use it for critical condition as the data maybe stale and unsync
+    // with the data in meta.
     private volatile ServerName lastHost = null;
     /**
      * A Region-in-Transition (RIT) moves through states.
@@ -504,6 +507,12 @@ public class RegionStates {
 
   public void deleteRegion(final RegionInfo regionInfo) {
     regionsMap.remove(regionInfo.getRegionName());
+    // See HBASE-20860
+    // After master restarts, merged regions' RIT state may not be cleaned,
+    // making sure they are cleaned here
+    if (regionInTransition.containsKey(regionInfo)) {
+      regionInTransition.remove(regionInfo);
+    }
     // Remove from the offline regions map too if there.
     if (this.regionOffline.containsKey(regionInfo)) {
       if (LOG.isTraceEnabled()) LOG.trace("Removing from regionOffline Map: " + regionInfo);
