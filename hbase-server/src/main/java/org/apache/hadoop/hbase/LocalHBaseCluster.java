@@ -144,7 +144,12 @@ public class LocalHBaseCluster {
     // clash over default ports.
     conf.set(HConstants.MASTER_PORT, "0");
     conf.set(HConstants.REGIONSERVER_PORT, "0");
-    conf.set(HConstants.REGIONSERVER_INFO_PORT, "0");
+    if (conf.getInt(HConstants.MASTER_INFO_PORT, 0) != -1) {
+      conf.set(HConstants.MASTER_INFO_PORT, "0");
+    }
+    if (conf.getInt(HConstants.REGIONSERVER_INFO_PORT, 0) != -1) {
+      conf.set(HConstants.REGIONSERVER_INFO_PORT, "0");
+    }
 
     this.masterClass = (Class<? extends HMaster>)
       conf.getClass(HConstants.MASTER_IMPL, masterClass);
