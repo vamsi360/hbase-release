@@ -219,9 +219,8 @@ public class IncrementalBackupManager extends BackupManager {
       }
       if (tss > oldTss && tss < newTss) {
         logFiles.add(item);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("getLogFilesFromBackupSystem :"+ item);
-        }
+        //TODO revert back to DEBUG
+        LOG.warn("DDD getLogFilesFromBackupSystem :"+ item);
       }
     }
     return logFiles;
@@ -291,23 +290,25 @@ public class IncrementalBackupManager extends BackupManager {
         logs = fs.listStatus(p, pathFilter);
       }
       for (FileStatus log : logs) {
-        LOG.debug("currentLogFile: " + log.getPath().toString());
+        //TODO revert back to DEBUG
+        LOG.warn("DDD currentLogFile: " + log.getPath().toString());
         if (AbstractFSWALProvider.isMetaFile(log.getPath())) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Skip hbase:meta log file: " + log.getPath().getName());
+          //TODO revert back to DEBUG
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Skip hbase:meta log file: " + log.getPath().getName());
           }
           continue;
         }
         currentLogFile = log.getPath().toString();
         resultLogFiles.add(currentLogFile);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("getLogFilesForNewBackup :"+ currentLogFile);
-        }
         currentLogTS = BackupUtils.getCreationTime(log.getPath());
         // newestTimestamps is up-to-date with the current list of hosts
         // so newestTimestamps.get(host) will not be null.
         if (currentLogTS > newestTimestamps.get(host)) {
+          LOG.warn("DDD added "+ currentLogFile);
           newestLogs.add(currentLogFile);
+        } else {
+          LOG.warn("DDD NOT added "+ currentLogFile);
         }
       }
     }
@@ -317,9 +318,11 @@ public class IncrementalBackupManager extends BackupManager {
     for (FileStatus oldlog : oldlogs) {
       p = oldlog.getPath();
       currentLogFile = p.toString();
+      //TODO revert back to DEBUG
+      LOG.warn("DDD currentOldLogFile: " + p);
       if (AbstractFSWALProvider.isMetaFile(p)) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Skip .meta log file: " + currentLogFile);
+        if (LOG.isWarnEnabled()) {
+          LOG.warn("Skip .meta log file: " + currentLogFile);
         }
         continue;
       }
@@ -345,16 +348,19 @@ public class IncrementalBackupManager extends BackupManager {
       } else if (currentLogTS > oldTimeStamp) {
         resultLogFiles.add(currentLogFile);
       }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("getLogFilesForNewBackup :"+ currentLogFile);
-      }
+
       // It is possible that a host in .oldlogs is an obsolete region server
       // so newestTimestamps.get(host) here can be null.
       // Even if these logs belong to a obsolete region server, we still need
       // to include they to avoid loss of edits for backup.
       Long newTimestamp = newestTimestamps.get(host);
       if (newTimestamp != null && currentLogTS > newTimestamp) {
+        // TODO DEBUG
+        LOG.warn("DDD added old "+ currentLogFile);
         newestLogs.add(currentLogFile);
+      } else {
+        //TODO DEBUG
+        LOG.warn("DDD NOT added old log "+ currentLogFile);
       }
     }
     // remove newest log per host because they are still in use

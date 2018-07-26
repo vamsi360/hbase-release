@@ -1022,12 +1022,13 @@ public final class BackupMetaTable implements Closeable {
    */
   public void addWALFiles(List<String> files, String backupId, String backupRoot)
       throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Add WAL files to backup system table: " + backupId + " " + backupRoot + " files:\n" );
-      for (String f : files) {
-        LOG.debug("Add :" + f);
-      }
+    //TODO revert to DEBUG
+    LOG.warn(
+      "DDD Add WAL files to backup system table: " + backupId + " " + backupRoot + " files:\n");
+    for (String f : files) {
+      LOG.warn("Add :" + f);
     }
+
     try (Table table = connection.getTable(tableName)) {
       List<Put> puts = createPutsForAddWALFiles(files, backupId, backupRoot);
       table.put(puts);
@@ -1040,9 +1041,9 @@ public final class BackupMetaTable implements Closeable {
    * @throws IOException exception
    */
   public Iterator<WALItem> getWALFilesIterator(String backupRoot) throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Get WAL files from backup system table for root: "+ backupRoot);
-    }
+    //TODO revert to DEBUG
+    LOG.warn("DDD Get WAL files from backup system table for root: "+ backupRoot);
+
     final Table table = connection.getTable(tableName);
     Scan scan = createScanForGetWALs(backupRoot);
     final ResultScanner scanner = table.getScanner(scan);
@@ -1110,10 +1111,10 @@ public final class BackupMetaTable implements Closeable {
       }
       return true;
     } finally {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Check if WAL file has been already backed up in backup system table " + file
+      // TODO revert to DEBUG
+      LOG.warn("DDD Check if WAL file has been already backed up in backup system table " + file
           + " result=" + result);
-      }
+
     }
   }
 
