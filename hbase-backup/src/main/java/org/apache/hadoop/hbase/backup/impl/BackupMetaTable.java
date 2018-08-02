@@ -63,6 +63,7 @@ import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
+import org.apache.hadoop.hbase.procedure2.store.wal.WALProcedureStore;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.BackupProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -1135,6 +1136,11 @@ public final class BackupMetaTable implements Closeable {
       List<FileStatus> fileStatuses = new ArrayList<>();
 
       for (FileStatus file : files) {
+        String fn = file.getPath().getName();
+        if (fn.startsWith(WALProcedureStore.LOG_PREFIX)) {
+          ret.put(file, true);
+          continue;
+        }
         String wal = file.getPath().toString();
         Get get = createGetForCheckWALFile(wal);
         getBuffer.add(get);
