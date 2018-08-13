@@ -971,7 +971,7 @@ public class ServerManager {
     }
   }
 
-  boolean isClusterShutdown() {
+  public boolean isClusterShutdown() {
     return this.clusterShutdown.get();
   }
 
