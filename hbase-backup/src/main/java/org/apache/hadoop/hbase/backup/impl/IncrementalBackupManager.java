@@ -111,48 +111,7 @@ public class IncrementalBackupManager extends BackupManager {
     return newTimestamps;
   }
 
-  /**
-   * Get list of WAL files eligible for incremental backup
-   * @return list of WAL files
-   * @throws IOException
-   */
-  public List<String> getIncrBackupLogFileList()
-      throws IOException {
-    List<String> logList;
-    HashMap<String, Long> newTimestamps;
-    HashMap<String, Long> previousTimestampMins;
 
-    String savedStartCode = readBackupStartCode();
-
-    // key: tableName
-    // value: <RegionServer,PreviousTimeStamp>
-    HashMap<TableName, HashMap<String, Long>> previousTimestampMap = readLogTimestampMap();
-
-    previousTimestampMins = BackupUtils.getRSLogTimestampMins(previousTimestampMap);
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("StartCode " + savedStartCode + "for backupID " + backupInfo.getBackupId());
-    }
-    // get all new log files from .logs and .oldlogs after last TS and before new timestamp
-    if (savedStartCode == null || previousTimestampMins == null
-        || previousTimestampMins.isEmpty()) {
-      throw new IOException(
-          "Cannot read any previous back up timestamps from backup system table. "
-              + "In order to create an incremental backup, at least one full backup is needed.");
-    }
-
-    newTimestamps = readRegionServerLastLogRollResult();
-
-    logList = getLogFilesForNewBackup(previousTimestampMins, newTimestamps, conf, savedStartCode);
-    List<WALItem> logFromSystemTable =
-        getLogFilesFromBackupSystem(previousTimestampMins, newTimestamps, getBackupInfo()
-            .getBackupRootDir());
-
-    logList = excludeAlreadyBackedUpAndProcV2WALs(logList, logFromSystemTable);
-    backupInfo.setIncrBackupFileList(logList);
-
-    return logList;
-  }
 
   private List<String> excludeAlreadyBackedUpAndProcV2WALs(List<String> logList,
       List<WALItem> logFromSystemTable) {
@@ -181,7 +140,7 @@ public class IncrementalBackupManager extends BackupManager {
     Set<String> set = new HashSet<String>();
     for (int i=0; i < logFromSystemTable.size(); i++) {
       WALItem item = logFromSystemTable.get(i);
-      set.add(item.walFile);
+      set.add( new Path(item.walFile).getName());
     }
     return set;
   }
@@ -214,6 +173,7 @@ public class IncrementalBackupManager extends BackupManager {
       Long newTss = newestTimestamps.get(server);
       if (oldTss == null) {
         logFiles.add(item);
+        LOG.warn("DDD getLogFilesFromBackupSystem oldTss=null:"+ item);
         continue;
       }
       if (newTss == null) {
@@ -222,7 +182,10 @@ public class IncrementalBackupManager extends BackupManager {
       if (tss > oldTss && tss < newTss) {
         logFiles.add(item);
         //TODO revert back to DEBUG
-        LOG.warn("DDD getLogFilesFromBackupSystem :"+ item);
+        LOG.warn("DDD getLogFilesFromBackupSystem ts inside range:"+ item);
+      } else {
+        LOG.warn("DDD_WARNING getLogFilesFromBackupSystem ts NOT inside range: BYPASS"+ item);
+
       }
     }
     return logFiles;
