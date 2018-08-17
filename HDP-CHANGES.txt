@@ -1,3 +1,81 @@
+The following changes exist over HDP 3.0.0
+  HBASE-20772 Controlled shutdown fills Master log with the disturbing message 'No matching procedure found for rit=OPEN, location=ZZZZ, table=YYYYY, region=XXXX transition to CLOSED'
+  HBASE-21018 RS crashed because AsyncFS was unable to update HDFS data encryption key
+  HBASE-21007 Memory leak in HBase REST server
+  HBASE-20885 Removed entry for RPC quota from hbase:quota when RPC quota is removed
+  HBASE-20989 Minor, miscellaneous logging fixes
+  HBASE-20935 HStore.removeCompactedFiles should log in case it is unable to delete a file (Vishal Khandelwal)
+  HBASE-20893 Data loss if splitting region while ServerCrashProcedure executing ADDENDUM: Rather than rollback, just do region reopens.
+  HBASE-20856 PITA having to set WAL provider in two places
+  HBASE-21012 Revert the change of serializing TimeRangeTracker
+  HBASE-20729 B&R BackupLogCleaner must ignore ProcV2 WAL files
+  HBASE-19369 Switch to Builder Pattern In WAL
+  HBASE-20939 There will be race when we call suspendIfNotReady and then throw ProcedureSuspendedException
+  HBASE-20921 Possible NPE in ReopenTableRegionsProcedure
+  HBASE-20859 [Backup and incremental load could fail in secure clusters]
+  HBASE-20966 RestoreTool#getTableInfoPath should look for completed snapshot only
+  HBASE-20927 RSGroupAdminEndpoint doesn't handle clearing dead servers if they are not processed yet.
+  HBASE-105255: debug changed to warn
+  HBASE-20867 RS may get killed while master restarts
+  HBASE-20873 Update doc for Endpoint-based Export
+  HBASE-20565 ColumnRangeFilter combined with ColumnPaginationFilter can produce incorrect result
+  HBASE-20878 Data loss if merging regions while ServerCrashProcedure executing
+  HBASE-20893 Data loss if splitting region while ServerCrashProcedure executing
+  HBASE-20401 Make MAX_WAIT and waitIfNotFinished in CleanerContext configurable (Contributed by Stephen Wu)
+  HBASE-20914 Trim Master memory usage
+  HBASE-20870 Wrong HBase root dir in ITBLL's Search Tool
+  HBASE-20903 backport HBASE-20792 "info:servername and info:sn inconsistent for OPEN region" to branch-2.0
+  HBASE-20869 Endpoint-based Export use incorrect user to write to destination
+  HBASE-20853 Polish "Add defaults to Table Interface so Implementors don't have to"
+  HBASE-20907 Fix Intermittent failure on TestProcedurePriority
+  HBASE-20875 MemStoreLABImp::copyIntoCell uses 7% CPU when writing
+  HBASE-20887 Backport HBASE-20865 "CreateTableProcedure is stuck in retry loop in CREATE_TABLE_WRITE_FS_LAYOUT state"
+  HBASE-20882 Backport HBASE-20616 "TruncateTableProcedure is stuck in retry loop in TRUNCATE_TABLE_CREATE_FS_LAYOUT state" to branch-2.0
+  HBASE-20884 Replace Base64 with j.u.Base64
+  HBASE-19572 RegionMover should use the configured default port number and not the one from HConstants
+  HBASE-20697 Can't cache All region locations of the specify table by calling table.getRegionLocator().getAllRegionLocations()
+  HBASE-20860 Merged region's RIT state may not be cleaned after master restart
+  HBASE-20833 Modify pre-upgrade coprocessor validator to support table level coprocessors
+  HBASE-20806 Split style journal for flushes and compactions
+  HBASE-20854 Wrong retries number in RpcRetryingCaller's log message
+  HBASE-20822 TestAsyncNonMetaRegionLocator is flakey
+  HBASE-20691 Change the default WAL storage policy back to "NONE""
+  HBASE-20474 Show non-RPC tasks on master/regionserver Web UI by default
+  HBASE-20839 Fallback to FSHLog if we can not instantiated AsyncFSWAL when user does not specify AsyncFSWAL explicitly
+  HBASE-20789 TestBucketCache#testCacheBlockNextBlockMetadataMissing is flaky
+  HBASE-20447 Only fail cacheBlock if block collisions aren't related to next block metadata
+  HBASE-20244 NoSuchMethodException when retrieving private method decryptEncryptedDataEncryptionKey from DFSClient
+  HBASE-20826 Truncate really long RpcServer warnings unless TRACE is on
+  HBASE-20817 Infinite loop when executing ReopenTableRegionsProcedure
+  HBASE-20825 Fix pre and post hooks of CloneSnapshot and RestoreSnapshot for Access checks
+  HBASE-20812 Add defaults to Table Interface so implementors don't have to Signed-off-by: Mike Drob <mdrob@apache.org>
+  HBASE-20810 Include the procedure id in the exception message in HBaseAdmin for better debugging
+  HBASE-19722 Meta query statistics metrics source
+  HBASE-20781 Save recalculating families in a WALEdit batch of Cells
+  HBASE-20785 NPE getting metrics in PE testing scans
+  HBASE-20769 getSplits() has a out of bounds problem in TableSnapshotInputFormatImpl
+  HBASE-20795 Allow option in BBKVComparator.compare to do comparison without sequence id
+  HBASE-20777 RpcConnection could still remain opened after we shutdown the NettyRpcServer
+  HBASE-20780 ServerRpcConnection logging cleanup Get rid of one of the logging lines in ServerRpcConnection by amalgamating all into one new-style log line.
+  HBASE-20403. Fix race between prefetch task and non-pread HFile reads
+  HBASE-20770 WAL cleaner logs way too much; gets clogged when lots of work to do
+  HBASE-19764 Fix Checkstyle errors in hbase-endpoint
+  HBASE-20778 Make it so WALPE runs on DFS
+  HBASE-20710 extra cloneFamily() in Mutation.add(Cell); ADDENDUM checkstyle
+  HBASE-20710 extra cloneFamily() in Mutation.add(Cell) Signed-off-by: Michael Stack <stack@apache.org>
+  HBASE-20752 Make sure the regions are truly reopened after ReopenTableRegionsProcedure
+  HBASE-20767 Always close hbaseAdmin along with connection in HBTU
+  HBASE-20642 Clients should re-use the same nonce across DDL operations
+  HBASE-20765 Move branch-2.0 version to 2.0.2-SNAPSHOT from 2.0.1
+  HBASE-20706 Prevent MTP from trying to reopen non-OPEN regions
+  HBASE-20745 Log when master proc wal rolls
+  HBASE-20681 Explicitly include hamcrest in binary tarball
+  HBASE-20733 QABot should run checkstyle tests if the checkstyle configs change
+  HBASE-20726 Update RELEASENOTES.md and CHANGES.md for 2.0.1RC
+  HBASE-20725 Copy down docs from master branch (absent chapters on features not in 2.0.x)
+  HBASE-20699 QuotaCache should cancel the QuotaRefresherChore service inside its stop()
+  HBASE-20721 Set version on branch-2.0 to 2.0.1 in prep for 2.0.1 RC
+
 The following issues are included over Apache HBase 2.0.1
 
 5a0fbf293a HBASE-20723 Custom hbase.wal.dir results in data loss because we write recovered edits into a different place than where the recovering region server looks for them
