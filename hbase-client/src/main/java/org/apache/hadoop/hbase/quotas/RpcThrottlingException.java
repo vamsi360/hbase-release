@@ -14,7 +14,8 @@ package org.apache.hadoop.hbase.quotas;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.classification.InterfaceStability;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.util.StringUtils;
 
@@ -24,9 +25,11 @@ import org.apache.hadoop.util.StringUtils;
  * of this exception.
  */
 @InterfaceAudience.Public
+@InterfaceStability.Evolving
 public class RpcThrottlingException extends HBaseIOException {
 
   @InterfaceAudience.Public
+  @InterfaceStability.Evolving
   public enum Type {
     NumRequestsExceeded, RequestSizeExceeded, NumReadRequestsExceeded, NumWriteRequestsExceeded,
     WriteSizeExceeded, ReadSizeExceeded,
