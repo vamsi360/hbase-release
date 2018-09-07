@@ -197,7 +197,8 @@ public class WALProcedureStore extends ProcedureStoreBase {
       throws IOException {
     this(conf,
         new Path(CommonFSUtils.getWALRootDir(conf), MASTER_PROCEDURE_LOGDIR),
-        new Path(CommonFSUtils.getRootDir(conf), HConstants.HREGION_OLDLOGDIR_NAME), leaseRecovery);
+        new Path(CommonFSUtils.getWALRootDir(conf), HConstants.HREGION_OLDLOGDIR_NAME),
+        leaseRecovery);
   }
 
   @VisibleForTesting
@@ -1196,6 +1197,10 @@ public class WALProcedureStore extends ProcedureStoreBase {
   // ==========================================================================
   public Path getWALDir() {
     return this.walDir;
+  }
+
+  Path getWalArchiveDir() {
+    return this.walArchiveDir;
   }
 
   public FileSystem getFileSystem() {
