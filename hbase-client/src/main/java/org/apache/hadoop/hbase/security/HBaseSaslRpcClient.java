@@ -20,11 +20,14 @@ package org.apache.hadoop.hbase.security;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.crypto.CipherOption;
+import org.apache.hadoop.crypto.CipherSuite;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.ipc.RemoteException;
-import org.apache.hadoop.security.SaslInputStream;
-import org.apache.hadoop.security.SaslOutputStream;
+import org.apache.hadoop.hbase.security.SaslInputStream;
+import org.apache.hadoop.hbase.security.SaslOutputStream;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 
@@ -39,13 +42,8 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -58,7 +56,11 @@ public class HBaseSaslRpcClient {
   public static final Log LOG = LogFactory.getLog(HBaseSaslRpcClient.class);
 
   private final SaslClient saslClient;
+  private boolean useNegotiatedCiper;
+  private SaslCryptoCodec saslCodec;
   private final boolean fallbackAllowed;
+  protected final Map<String, String> saslProps;
+
   /**
    * Create a HBaseSaslRpcClient for an authentication method
    *
@@ -96,7 +98,7 @@ public class HBaseSaslRpcClient {
       Token<? extends TokenIdentifier> token, String serverPrincipal, boolean fallbackAllowed,
       String rpcProtection) throws IOException {
     this.fallbackAllowed = fallbackAllowed;
-    SaslUtil.initSaslProperties(rpcProtection);
+    saslProps = SaslUtil.initSaslProperties(rpcProtection);
     switch (method) {
     case DIGEST:
       if (LOG.isDebugEnabled())
@@ -138,13 +140,13 @@ public class HBaseSaslRpcClient {
       String saslDefaultRealm, CallbackHandler saslClientCallbackHandler)
       throws IOException {
     return Sasl.createSaslClient(mechanismNames, null, null, saslDefaultRealm,
-        SaslUtil.SASL_PROPS, saslClientCallbackHandler);
+        saslProps, saslClientCallbackHandler);
   }
 
   protected SaslClient createKerberosSaslClient(String[] mechanismNames,
       String userFirstPart, String userSecondPart) throws IOException {
     return Sasl.createSaslClient(mechanismNames, null, userFirstPart,
-        userSecondPart, SaslUtil.SASL_PROPS, null);
+        userSecondPart, saslProps, null);
   }
 
   private static void readStatus(DataInputStream inStream) throws IOException {
@@ -167,8 +169,11 @@ public class HBaseSaslRpcClient {
    *             to simple Auth.
    * @throws IOException
    */
-  public boolean saslConnect(InputStream inS, OutputStream outS)
+  public boolean saslConnect(Configuration conf, InputStream inS, OutputStream outS)
       throws IOException {
+    String cipherSuites = conf.get(SaslUtil.HBASE_RPC_SECURITY_CRYPTO_CIPHER_SUITES);
+    useNegotiatedCiper = SaslUtil.requestedQopContainsPrivacy(saslProps) &&
+            cipherSuites != null && !cipherSuites.isEmpty();
     DataInputStream inStream = new DataInputStream(new BufferedInputStream(inS));
     DataOutputStream outStream = new DataOutputStream(new BufferedOutputStream(
         outS));
@@ -178,6 +183,13 @@ public class HBaseSaslRpcClient {
       if (saslClient.hasInitialResponse())
         saslToken = saslClient.evaluateChallenge(saslToken);
       if (saslToken != null) {
+        if (useNegotiatedCiper) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Will send client ciphers: " + cipherSuites);
+          }
+          outStream.writeInt(SaslUtil.USE_NEGOTIATED_CIPHER);
+          WritableUtils.writeString(outStream, cipherSuites);
+        }
         outStream.writeInt(saslToken.length);
         outStream.write(saslToken, 0, saslToken.length);
         outStream.flush();
@@ -206,6 +218,7 @@ public class HBaseSaslRpcClient {
         inStream.readFully(saslToken);
       }
 
+      CipherOption cipherOption = null;
       while (!saslClient.isComplete()) {
         saslToken = saslClient.evaluateChallenge(saslToken);
         if (saslToken != null) {
@@ -223,7 +236,38 @@ public class HBaseSaslRpcClient {
             LOG.debug("Will read input token of size " + saslToken.length
                 + " for processing by initSASLContext");
           inStream.readFully(saslToken);
+        } else if (useNegotiatedCiper && SaslUtil.isNegotiatedQopPrivacy(saslClient)) {
+          readStatus(inStream);
+          int len = inStream.readInt();
+          if (len == SaslUtil.USE_NEGOTIATED_CIPHER) {
+            String cipherName = WritableUtils.readString(inStream);
+            byte[] inKey = new byte[inStream.readInt()];
+            inStream.readFully(inKey);
+            byte[] inIv = new byte[inStream.readInt()];
+            inStream.read(inIv);
+            byte[] outKey = new byte[inStream.readInt()];
+            inStream.readFully(outKey);
+            byte[] outIv = new byte[inStream.readInt()];
+            inStream.readFully(outIv);
+            CipherOption wrappedCipherOption = new CipherOption(CipherSuite.convert(cipherName),
+                    inKey, inIv, outKey, outIv);
+            // Unwrap the negotiated cipher option
+            cipherOption = SaslUtil.unwrap(wrappedCipherOption, saslClient);
+          } else if (len != 0) {
+            LOG.warn("Have read unexpected input otken of size " + len + " after client is complete");
+          }
+          if (LOG.isDebugEnabled()){
+            if (cipherOption == null) {
+              LOG.debug("Client not using any cipher suite");
+            } else {
+              LOG.debug("Client using cipher suite "
+                      + cipherOption.getCipherSuite().getName() + "with server");
+            }
+          }
         }
+      }
+      if (cipherOption != null) {
+        saslCodec = new SaslCryptoCodec(conf, cipherOption, false);
       }
       if (LOG.isDebugEnabled()) {
         LOG.debug("SASL client context established. Negotiated QoP: "
@@ -253,7 +297,7 @@ public class HBaseSaslRpcClient {
     if (!saslClient.isComplete()) {
       throw new IOException("Sasl authentication exchange hasn't completed yet");
     }
-    return new SaslInputStream(in, saslClient);
+    return saslCodec != null ? new SaslInputStream(in, saslCodec) : new SaslInputStream(in, saslClient);
   }
 
   /**
@@ -269,12 +313,16 @@ public class HBaseSaslRpcClient {
     if (!saslClient.isComplete()) {
       throw new IOException("Sasl authentication exchange hasn't completed yet");
     }
-    return new SaslOutputStream(out, saslClient);
+    return saslCodec != null ? new SaslOutputStream(out, saslCodec) : new SaslOutputStream(out, saslClient);
   }
 
   /** Release resources used by wrapped saslClient */
   public void dispose() throws SaslException {
     saslClient.dispose();
+    if (saslCodec != null) {
+      saslCodec.dispose();
+      saslCodec = null;
+    }
   }
 
   @VisibleForTesting

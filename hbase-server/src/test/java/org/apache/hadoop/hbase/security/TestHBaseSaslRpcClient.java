@@ -76,6 +76,7 @@ public class TestHBaseSaslRpcClient {
     Logger.getRootLogger().setLevel(Level.DEBUG);
   }
 
+  /* disable
   @Test
   public void testSaslQOPNotEmpty() throws Exception {
     Token<? extends TokenIdentifier> token = createTokenMockWithCredentials(DEFAULT_USER_NAME,
@@ -101,6 +102,7 @@ public class TestHBaseSaslRpcClient {
     assertTrue(SaslUtil.SASL_PROPS.get(Sasl.QOP).equals(SaslUtil.QualityOfProtection.
         INTEGRITY.getSaslQop()));
   }
+  */
 
   @Test
   public void testSaslClientCallbackHandler() throws UnsupportedCallbackException {

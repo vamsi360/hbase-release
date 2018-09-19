@@ -608,7 +608,7 @@ public class RpcClientImpl extends AbstractRpcClient {
       saslRpcClient = new HBaseSaslRpcClient(authMethod, token, serverPrincipal, fallbackAllowed,
           conf.get("hbase.rpc.protection",
               QualityOfProtection.AUTHENTICATION.name().toLowerCase()));
-      return saslRpcClient.saslConnect(in2, out2);
+      return saslRpcClient.saslConnect(conf, in2, out2);
     }
 
     /**

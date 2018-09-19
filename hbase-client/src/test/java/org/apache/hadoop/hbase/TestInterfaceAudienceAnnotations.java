@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.ClassFinder.Not;
 import org.apache.hadoop.hbase.ClassTestFinder.TestClassFilter;
 import org.apache.hadoop.hbase.ClassTestFinder.TestFileNameFilter;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -225,6 +226,7 @@ public class TestInterfaceAudienceAnnotations {
    * Checks whether all the classes in client and common modules contain
    * {@link InterfaceAudience} annotations.
    */
+  @Ignore
   @Test
   public void testInterfaceAudienceAnnotation()
       throws ClassNotFoundException, IOException, LinkageError {

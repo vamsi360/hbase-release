@@ -63,6 +63,7 @@ import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.wal.DefaultWALProvider;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.wal.WALKey;
+import org.apache.hadoop.hbase.regionserver.RSRpcServices;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -942,8 +943,10 @@ public class ReplicationSource extends Thread
         new Thread.UncaughtExceptionHandler() {
           @Override
           public void uncaughtException(final Thread t, final Throwable e) {
+            RSRpcServices.exitIfOOME(e);
             LOG.error("Unexpected exception in ReplicationSource," +
               " currentPath=" + currentPath, e);
+            stopper.stop("Unexpected exception in ReplicationSourceWorkerThread");
           }
         };
     Threads.setDaemonThreadRunning(

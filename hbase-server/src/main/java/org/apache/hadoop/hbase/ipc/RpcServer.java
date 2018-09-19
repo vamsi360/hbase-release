@@ -65,8 +65,11 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.crypto.CipherOption;
+import org.apache.hadoop.crypto.CipherSuite;
 import org.apache.hadoop.hbase.CallQueueTooBigException;
 import org.apache.hadoop.hbase.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.classification.InterfaceStability;
@@ -82,6 +85,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Operation;
 import org.apache.hadoop.hbase.codec.Codec;
 import org.apache.hadoop.hbase.conf.ConfigurationObserver;
+import org.apache.hadoop.hbase.exceptions.IllegalArgumentIOException;
 import org.apache.hadoop.hbase.exceptions.RegionMovedException;
 import org.apache.hadoop.hbase.io.BoundedByteBufferPool;
 import org.apache.hadoop.hbase.io.ByteBufferInputStream;
@@ -98,16 +102,9 @@ import org.apache.hadoop.hbase.protobuf.generated.RPCProtos.RequestHeader;
 import org.apache.hadoop.hbase.protobuf.generated.RPCProtos.ResponseHeader;
 import org.apache.hadoop.hbase.protobuf.generated.RPCProtos.UserInformation;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
-import org.apache.hadoop.hbase.security.AccessDeniedException;
-import org.apache.hadoop.hbase.security.AuthMethod;
-import org.apache.hadoop.hbase.security.HBasePolicyProvider;
-import org.apache.hadoop.hbase.security.HBaseSaslRpcServer;
-import org.apache.hadoop.hbase.security.User;
+import org.apache.hadoop.hbase.security.*;
 import org.apache.hadoop.hbase.security.HBaseSaslRpcServer.SaslDigestCallbackHandler;
 import org.apache.hadoop.hbase.security.HBaseSaslRpcServer.SaslGssCallbackHandler;
-import org.apache.hadoop.hbase.security.SaslStatus;
-import org.apache.hadoop.hbase.security.SaslUtil;
-import org.apache.hadoop.hbase.security.UserProvider;
 import org.apache.hadoop.hbase.security.token.AuthenticationTokenSecretManager;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Counter;
@@ -456,8 +453,14 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
       byte [] token;
       // synchronization may be needed since there can be multiple Handler
       // threads using saslServer to wrap responses.
-      synchronized (connection.saslServer) {
-        token = connection.saslServer.wrap(responseBytes, 0, responseBytes.length);
+      if (connection.saslCodec != null) {
+        synchronized(connection.saslCodec) {
+          token = connection.saslCodec.wrap(responseBytes, 0, responseBytes.length);
+        }
+      } else {
+        synchronized (connection.saslServer) {
+          token = connection.saslServer.wrap(responseBytes, 0, responseBytes.length);
+        }
       }
       if (LOG.isTraceEnabled()) {
         LOG.trace("Adding saslServer wrapped token of size " + token.length
@@ -877,7 +880,7 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
         throw ieo;
       } catch (Exception e) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug(getName() + ": Caught exception while reading:", e);
+          LOG.debug(getName() + ": Caught exception while reading:" + e.getMessage(), e);
         }
         count = -1; //so that the (count < 0) block is executed
       }
@@ -1231,6 +1234,9 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
     private ByteBuffer unwrappedDataLengthBuffer = ByteBuffer.allocate(4);
     boolean useSasl;
     SaslServer saslServer;
+    SaslCryptoCodec saslCodec;
+    private boolean useNegotiatedCipher = false;
+    private String clientCiphers;
     private boolean useWrap = false;
     // Fake 'call' for failed authorization response
     private static final int AUTHORIZATION_FAILED_CALLID = -1;
@@ -1343,8 +1349,13 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
         if (!useWrap) {
           processOneRpc(saslToken);
         } else {
-          byte[] b = saslToken.array();
-          byte [] plaintextData = saslServer.unwrap(b, saslToken.position(), saslToken.limit());
+          byte[] tokenBytes = saslToken.array();
+          byte[] plaintextData = null;
+          if (saslCodec != null) {
+            plaintextData = saslCodec.unwrap(tokenBytes, saslToken.position(), saslToken.limit());
+          } else {
+            plaintextData = saslServer.unwrap(tokenBytes, saslToken.position(), saslToken.limit());
+          }
           processUnwrappedData(plaintextData);
         }
       } else {
@@ -1359,7 +1370,7 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
               }
               saslServer = Sasl.createSaslServer(AuthMethod.DIGEST
                   .getMechanismName(), null, SaslUtil.SASL_DEFAULT_REALM,
-                  SaslUtil.SASL_PROPS, new SaslDigestCallbackHandler(
+                  HBaseSaslRpcServer.getSaslProps(), new SaslDigestCallbackHandler(
                       secretManager, this));
               break;
             default:
@@ -1379,7 +1390,7 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
                 public Object run() throws SaslException {
                   saslServer = Sasl.createSaslServer(AuthMethod.KERBEROS
                       .getMechanismName(), names[0], names[1],
-                      SaslUtil.SASL_PROPS, new SaslGssCallbackHandler());
+                          HBaseSaslRpcServer.getSaslProps(), new SaslGssCallbackHandler());
                   return null;
                 }
               });
@@ -1407,7 +1418,7 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
             }
             cause = cause.getCause();
           }
-          doRawSaslReply(SaslStatus.ERROR, null, sendToClient.getClass().getName(),
+          doRawSaslReply(SaslStatus.ERROR, null, null, sendToClient.getClass().getName(),
             sendToClient.getLocalizedMessage());
           metrics.authenticationFailure();
           String clientIP = this.toString();
@@ -1420,8 +1431,26 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
             LOG.debug("Will send token of size " + replyToken.length
                 + " from saslServer.");
           }
-          doRawSaslReply(SaslStatus.SUCCESS, new BytesWritable(replyToken), null,
+          doRawSaslReply(SaslStatus.SUCCESS, new BytesWritable(replyToken), null, null,
               null);
+        } else if (useNegotiatedCipher && saslServer.isComplete() &&
+                SaslUtil.isNegotiatedQopPrivacy(saslServer)) {
+          // negotiate a cipher option
+          CipherOption cipherOption = SaslUtil.negotiateCipherOption(
+                  conf, SaslUtil.getCipherOptions(clientCiphers));
+          if (LOG.isDebugEnabled()) {
+            if (cipherOption == null) {
+              LOG.debug("Server not using any cipher suite");
+            } else {
+              LOG.debug("Server using cipher suite " + cipherOption.getCipherSuite().getName()
+                      + " with client" + hostAddress);
+            }
+          }
+          if (cipherOption != null) {
+            saslCodec = new SaslCryptoCodec(conf, cipherOption, true);
+          }
+          CipherOption wrappedCipherOption = SaslUtil.wrap(cipherOption, saslServer);
+          doRawSaslReply(SaslStatus.SUCCESS, null, wrappedCipherOption, null, null);
         }
         if (saslServer.isComplete()) {
           String qop = (String) saslServer.getNegotiatedProperty(Sasl.QOP);
@@ -1442,7 +1471,7 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
     /**
      * No protobuf encoding of raw sasl messages
      */
-    private void doRawSaslReply(SaslStatus status, Writable rv,
+    private void doRawSaslReply(SaslStatus status, Writable rv, CipherOption cipherOption,
         String errorClass, String error) throws IOException {
       ByteBufferOutputStream saslResponse = null;
       DataOutputStream out = null;
@@ -1453,7 +1482,18 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
         out = new DataOutputStream(saslResponse);
         out.writeInt(status.state); // write status
         if (status == SaslStatus.SUCCESS) {
-          rv.write(out);
+          if (cipherOption != null) {
+            out.writeInt(SaslUtil.USE_NEGOTIATED_CIPHER);
+            WritableUtils.writeString(out, cipherOption.getCipherSuite().getName());
+            new BytesWritable(cipherOption.getInKey()).write(out);
+            new BytesWritable(cipherOption.getInIv()).write(out);
+            new BytesWritable(cipherOption.getOutKey()).write(out);
+            new BytesWritable(cipherOption.getOutIv()).write(out);
+          } else if (rv != null){
+            rv.write(out);
+          } else {
+            out.writeInt(0);
+          }
         } else {
           WritableUtils.writeString(out, errorClass);
           WritableUtils.writeString(out, error);
@@ -1517,7 +1557,7 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
       }
       if (!isSecurityEnabled && authMethod != AuthMethod.SIMPLE) {
         doRawSaslReply(SaslStatus.SUCCESS, new IntWritable(
-            SaslUtil.SWITCH_TO_SIMPLE_AUTH), null, null);
+            SaslUtil.SWITCH_TO_SIMPLE_AUTH), null, null, null);
         authMethod = AuthMethod.SIMPLE;
         // client has already sent the initial Sasl message and we
         // should ignore it. Both client and server should fall back
@@ -1582,7 +1622,39 @@ public class RpcServer implements RpcServerInterface, ConfigurationObserver {
             dataLengthBuffer.clear();
             return 0;  //ping message
           }
+        } else if (dataLength == SaslUtil.USE_NEGOTIATED_CIPHER) {
+          useNegotiatedCipher = true;
+          dataLengthBuffer.clear();
+          count = read4Bytes();
+          if (count < 0 || dataLengthBuffer.remaining() > 0) {
+            return count;
+          }
+          dataLengthBuffer.flip();
+          dataLength = dataLengthBuffer.getInt();
+          if (dataLength < 0) {
+            throw new IllegalArgumentException("Unexpected data length "
+              + dataLength + "!! from " + getHostAddress() + "while reading client ciphers");
+          }
+          ByteBuffer ciphers = ByteBuffer.allocate(dataLength);
+          count = channelRead(channel, ciphers);
+          if (count < 0 || ciphers.remaining() > 0) {
+            return count;
+          }
+          clientCiphers = new String(ciphers.array(), "UTF-8");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Read Client Ciphers: " + clientCiphers);
+          }
+
+          dataLengthBuffer.clear();
+          count = read4Bytes();
+          if (count < 0 || dataLengthBuffer.remaining() > 0) {
+            return count;
+          }
+          dataLengthBuffer.flip();
+          dataLength = dataLengthBuffer.getInt();
         }
+
+
         if (dataLength < 0) { // A data length of zero is legal.
           throw new IllegalArgumentException("Unexpected data length "
               + dataLength + "!! from " + getHostAddress());

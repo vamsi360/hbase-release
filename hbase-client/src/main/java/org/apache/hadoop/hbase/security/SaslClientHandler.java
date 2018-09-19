@@ -41,6 +41,7 @@ import javax.security.sasl.SaslException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.PrivilegedExceptionAction;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -58,6 +59,7 @@ public class SaslClientHandler extends ChannelDuplexHandler {
    * Used for client or server's token to send or receive from each other.
    */
   private final SaslClient saslClient;
+  private final Map<String, String> saslProps;
   private final SaslExceptionHandler exceptionHandler;
   private final SaslSuccessfulConnectHandler successfulConnectHandler;
   private byte[] saslToken;
@@ -89,7 +91,7 @@ public class SaslClientHandler extends ChannelDuplexHandler {
     this.exceptionHandler = exceptionHandler;
     this.successfulConnectHandler = successfulConnectHandler;
 
-    SaslUtil.initSaslProperties(rpcProtection);
+    saslProps = SaslUtil.initSaslProperties(rpcProtection);
     switch (method) {
     case DIGEST:
       if (LOG.isDebugEnabled())
@@ -133,7 +135,7 @@ public class SaslClientHandler extends ChannelDuplexHandler {
    */
   protected SaslClient createDigestSaslClient(String[] mechanismNames, String saslDefaultRealm,
       CallbackHandler saslClientCallbackHandler) throws IOException {
-    return Sasl.createSaslClient(mechanismNames, null, null, saslDefaultRealm, SaslUtil.SASL_PROPS,
+    return Sasl.createSaslClient(mechanismNames, null, null, saslDefaultRealm, saslProps,
         saslClientCallbackHandler);
   }
 
@@ -149,7 +151,7 @@ public class SaslClientHandler extends ChannelDuplexHandler {
   protected SaslClient createKerberosSaslClient(String[] mechanismNames, String userFirstPart,
       String userSecondPart) throws IOException {
     return Sasl
-        .createSaslClient(mechanismNames, null, userFirstPart, userSecondPart, SaslUtil.SASL_PROPS,
+        .createSaslClient(mechanismNames, null, userFirstPart, userSecondPart, saslProps,
             null);
   }
 
