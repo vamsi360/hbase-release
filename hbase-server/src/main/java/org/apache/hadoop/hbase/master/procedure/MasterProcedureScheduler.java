@@ -197,8 +197,7 @@ public class MasterProcedureScheduler extends AbstractProcedureScheduler {
       // check if the next procedure is still a child.
       // if not, remove the rq from the fairq and go back to the xlock state
       Procedure<?> nextProc = rq.peek();
-      if (nextProc != null && !Procedure.haveSameParent(nextProc, pollResult)
-              && nextProc.getRootProcId() != pollResult.getRootProcId()) {
+      if (nextProc != null && !Procedure.haveSameParent(nextProc, pollResult)) {
         removeFromRunQueue(fairq, rq);
       }
     }
