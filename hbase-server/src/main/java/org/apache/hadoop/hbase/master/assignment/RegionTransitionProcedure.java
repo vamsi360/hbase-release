@@ -33,15 +33,18 @@ import org.apache.hadoop.hbase.procedure2.FailedRemoteDispatchException;
 import org.apache.hadoop.hbase.procedure2.Procedure;
 import org.apache.hadoop.hbase.procedure2.ProcedureStateSerializer;
 import org.apache.hadoop.hbase.procedure2.ProcedureSuspendedException;
+import org.apache.hadoop.hbase.procedure2.ProcedureUtil;
 import org.apache.hadoop.hbase.procedure2.RemoteProcedureDispatcher.RemoteOperation;
 import org.apache.hadoop.hbase.procedure2.RemoteProcedureDispatcher.RemoteProcedure;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.ProcedureProtos;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProcedureProtos.RegionTransitionState;
-import org.apache.hadoop.hbase.shaded.protobuf.generated.RegionServerStatusProtos.RegionStateTransition.TransitionCode;
-import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
+
+import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProcedureProtos.RegionTransitionState;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.ProcedureProtos;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.RegionServerStatusProtos.RegionStateTransition.TransitionCode;
 
 /**
  * Base class for the Assign and Unassign Procedure.
@@ -114,8 +117,6 @@ public abstract class RegionTransitionProcedure
    * data member. It is used doing backoff when Procedure gets stuck.
    */
   private int attempt;
-
-  private volatile boolean lock = false;
 
   // Required by the Procedure framework to create the procedure on replay
   public RegionTransitionProcedure() {}
@@ -367,25 +368,16 @@ public abstract class RegionTransitionProcedure
       // If here, success so clear out the attempt counter so we start fresh each time we get stuck.
       this.attempt = 0;
     } catch (IOException e) {
-      long backoff = getBackoffTime(this.attempt++);
+      long backoff = ProcedureUtil.getBackoffTimeMs(this.attempt++);
       LOG.warn("Failed transition, suspend {}secs {}; {}; waiting on rectified condition fixed " +
               "by other Procedure or operator intervention", backoff / 1000, this,
           regionNode.toShortString(), e);
-      getRegionState(env).getProcedureEvent().suspend();
-      if (getRegionState(env).getProcedureEvent().suspendIfNotReady(this)) {
-        setTimeout(Math.toIntExact(backoff));
-        setState(ProcedureProtos.ProcedureState.WAITING_TIMEOUT);
-        throw new ProcedureSuspendedException();
-      }
+      setTimeout(Math.toIntExact(backoff));
+      setState(ProcedureProtos.ProcedureState.WAITING_TIMEOUT);
+      throw new ProcedureSuspendedException();
     }
 
     return new Procedure[] {this};
-  }
-
-  private long getBackoffTime(int attempts) {
-    long backoffTime = (long)(1000 * Math.pow(2, attempts));
-    long maxBackoffTime = 60 * 60 * 1000; // An hour. Hard-coded for for now.
-    return backoffTime < maxBackoffTime? backoffTime: maxBackoffTime;
   }
 
   /**
@@ -394,7 +386,7 @@ public abstract class RegionTransitionProcedure
   @Override
   protected synchronized boolean setTimeoutFailure(MasterProcedureEnv env) {
     setState(ProcedureProtos.ProcedureState.RUNNABLE);
-    getRegionState(env).getProcedureEvent().wake(env.getProcedureScheduler());
+    env.getProcedureScheduler().addFront(this);
     return false; // 'false' means that this procedure handled the timeout
   }
 
@@ -426,42 +418,38 @@ public abstract class RegionTransitionProcedure
   }
 
   @Override
-  protected LockState acquireLock(final MasterProcedureEnv env) {
+  protected boolean waitInitialized(MasterProcedureEnv env) {
     // Unless we are assigning meta, wait for meta to be available and loaded.
-    if (!isMeta() && (env.waitFailoverCleanup(this) ||
-        env.getAssignmentManager().waitMetaInitialized(this, getRegionInfo()))) {
-      return LockState.LOCK_EVENT_WAIT;
+    if (isMeta()) {
+      return false;
     }
+    AssignmentManager am = env.getAssignmentManager();
+    return am.waitMetaLoaded(this) || am.waitMetaAssigned(this, regionInfo);
+  }
 
+  @Override
+  protected LockState acquireLock(final MasterProcedureEnv env) {
     // TODO: Revisit this and move it to the executor
     if (env.getProcedureScheduler().waitRegion(this, getRegionInfo())) {
       try {
         LOG.debug(LockState.LOCK_EVENT_WAIT + " pid=" + getProcId() + " " +
           env.getProcedureScheduler().dumpLocks());
       } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        // ignore, just for logging
       }
       return LockState.LOCK_EVENT_WAIT;
     }
-    this.lock = true;
     return LockState.LOCK_ACQUIRED;
   }
 
   @Override
   protected void releaseLock(final MasterProcedureEnv env) {
     env.getProcedureScheduler().wakeRegion(this, getRegionInfo());
-    lock = false;
   }
 
   @Override
   protected boolean holdLock(final MasterProcedureEnv env) {
     return true;
-  }
-
-  @Override
-  protected boolean hasLock(final MasterProcedureEnv env) {
-    return lock;
   }
 
   @Override

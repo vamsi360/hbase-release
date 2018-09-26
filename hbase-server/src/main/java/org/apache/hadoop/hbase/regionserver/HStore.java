@@ -334,7 +334,8 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
     switch (inMemoryCompaction) {
       case NONE:
         ms = ReflectionUtils.newInstance(DefaultMemStore.class,
-            new Object[]{conf, this.comparator});
+            new Object[] { conf, this.comparator,
+                this.getHRegion().getRegionServicesForStores()});
         break;
       default:
         Class<? extends CompactingMemStore> clz = conf.getClass(MEMSTORE_CLASS_NAME,
@@ -899,7 +900,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
           storeEngine.getStoreFileManager().clearCompactedFiles();
       // clear the compacted files
       if (CollectionUtils.isNotEmpty(compactedfiles)) {
-        removeCompactedfiles(compactedfiles);
+        removeCompactedfiles(compactedfiles, true);
       }
       if (!result.isEmpty()) {
         // initialize the thread pool for closing store files in parallel.
@@ -1674,7 +1675,28 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
 
   @Override
   public boolean hasReferences() {
-    return StoreUtils.hasReferences(this.storeEngine.getStoreFileManager().getStorefiles());
+    List<HStoreFile> reloadedStoreFiles = null;
+    try {
+      // Reloading the store files from file system due to HBASE-20940. As split can happen with an
+      // region which has references
+      reloadedStoreFiles = loadStoreFiles();
+      return StoreUtils.hasReferences(reloadedStoreFiles);
+    } catch (IOException ioe) {
+      LOG.error("Error trying to determine if store has references, assuming references exists",
+        ioe);
+      return true;
+    } finally {
+      if (reloadedStoreFiles != null) {
+        for (HStoreFile storeFile : reloadedStoreFiles) {
+          try {
+            storeFile.closeStoreFile(false);
+          } catch (IOException ioe) {
+            LOG.warn("Encountered exception closing " + storeFile + ": " + ioe.getMessage());
+            // continue with closing the remaining store files
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -2353,6 +2375,10 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
     @Override
     public void abort() throws IOException {
       if (snapshot != null) {
+        //We need to close the snapshot when aborting, otherwise, the segment scanner
+        //won't be closed. If we are using MSLAB, the chunk referenced by those scanners
+        //can't be released, thus memory leak
+        snapshot.close();
         HStore.this.updateStorefiles(Collections.emptyList(), snapshot.getId());
       }
     }
@@ -2520,6 +2546,11 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
    * Closes and archives the compacted files under this store
    */
   public synchronized void closeAndArchiveCompactedFiles() throws IOException {
+    closeAndArchiveCompactedFiles(false);
+  }
+
+  @VisibleForTesting
+  public synchronized void closeAndArchiveCompactedFiles(boolean storeClosing) throws IOException {
     // ensure other threads do not attempt to archive the same files on close()
     archiveLock.lock();
     try {
@@ -2538,7 +2569,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
         lock.readLock().unlock();
       }
       if (CollectionUtils.isNotEmpty(copyCompactedfiles)) {
-        removeCompactedfiles(copyCompactedfiles);
+        removeCompactedfiles(copyCompactedfiles, storeClosing);
       }
     } finally {
       archiveLock.unlock();
@@ -2549,7 +2580,7 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
    * Archives and removes the compacted files
    * @param compactedfiles The compacted files in this store that are not active in reads
    */
-  private void removeCompactedfiles(Collection<HStoreFile> compactedfiles)
+  private void removeCompactedfiles(Collection<HStoreFile> compactedfiles, boolean storeClosing)
       throws IOException {
     final List<HStoreFile> filesToRemove = new ArrayList<>(compactedfiles.size());
     final List<Long> storeFileSizes = new ArrayList<>(compactedfiles.size());
@@ -2567,26 +2598,52 @@ public class HStore implements Store, HeapSize, StoreConfigInformation, Propagat
             storeFileSizes.add(length);
             continue;
           }
-          if (file.isCompactedAway() && !file.isReferencedInReads()) {
+
+          //Compacted files in the list should always be marked compacted away. In the event
+          //they're contradicting in order to guarantee data consistency
+          //should we choose one and ignore the other?
+          if (storeClosing && !file.isCompactedAway()) {
+            String msg =
+                "Region closing but StoreFile is in compacted list but not compacted away: " +
+                file.getPath();
+            throw new IllegalStateException(msg);
+          }
+
+          //If store is closing we're ignoring any references to keep things consistent
+          //and remove compacted storefiles from the region directory
+          if (file.isCompactedAway() && (!file.isReferencedInReads() || storeClosing)) {
+            if (storeClosing && file.isReferencedInReads()) {
+              LOG.warn("Region closing but StoreFile still has references: file={}, refCount={}",
+                  file.getPath(), r.getRefCount());
+            }
             // Even if deleting fails we need not bother as any new scanners won't be
             // able to use the compacted file as the status is already compactedAway
             LOG.trace("Closing and archiving the file {}", file);
             // Copy the file size before closing the reader
             final long length = r.length();
             r.close(true);
+            file.closeStreamReaders(true);
             // Just close and return
             filesToRemove.add(file);
             // Only add the length if we successfully added the file to `filesToRemove`
             storeFileSizes.add(length);
           } else {
             LOG.info("Can't archive compacted file " + file.getPath()
-                + " because of either isCompactedAway = " + file.isCompactedAway()
-                + " or file has reference, isReferencedInReads = " + file.isReferencedInReads()
-                + ", skipping for now.");
+                + " because of either isCompactedAway=" + file.isCompactedAway()
+                + " or file has reference, isReferencedInReads=" + file.isReferencedInReads()
+                + ", refCount=" + r.getRefCount() + ", skipping for now.");
           }
         } catch (Exception e) {
-          LOG.error("Exception while trying to close the compacted store file {}",
-            file.getPath(), e);
+          String msg = "Exception while trying to close the compacted store file " +
+              file.getPath();
+          if (storeClosing) {
+            msg = "Store is closing. " + msg;
+          }
+          LOG.error(msg, e);
+          //if we get an exception let caller know so it can abort the server
+          if (storeClosing) {
+            throw new IOException(msg, e);
+          }
         }
       }
     }

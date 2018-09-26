@@ -1355,8 +1355,8 @@
     <maven.min.version>3.0.4</maven.min.version>
     <java.min.version>${compileSource}</java.min.version>
     <!-- Dependencies -->
-    <hadoop-two.version>2.7.4</hadoop-two.version>
-    <hadoop-three.version>3.0.0</hadoop-three.version>
+    <hadoop-two.version>2.7.7</hadoop-two.version>
+    <hadoop-three.version>3.0.3</hadoop-three.version>
     <!-- These must be defined here for downstream build tools that don't look at profiles.
          They ought to match the values found in our default hadoop profile, which is
          currently "hadoop-2.0". See HBASE-15925 for more info. -->
@@ -2204,7 +2204,7 @@
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>findbugs-maven-plugin</artifactId>
-              <version>3.0.0</version>
+              <version>${findbugs.maven.version}</version>
               <!--NOTE: Findbugs 3.0.0 requires jdk7-->
               <configuration>
                 <excludeFilterFile>${project.basedir}/../dev-support/findbugs-exclude.xml</excludeFilterFile>
@@ -3731,11 +3731,6 @@
     </site>
   </distributionManagement>
   <repositories>
-    <repository>
-        <id>project.local</id>
-        <name>project</name>
-        <url>file:${project.basedir}/src/main/site/resources/repo</url>
-    </repository>
     <repository>
       <id>hwxsnapshots</id>
       <name>HWX Snapshots</name>
