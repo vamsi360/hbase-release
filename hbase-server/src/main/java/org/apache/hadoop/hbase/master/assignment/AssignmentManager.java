@@ -811,6 +811,10 @@ public class AssignmentManager implements ServerListener {
     return builder.build();
   }
 
+  /**
+   * Called when the RegionServer wants to report a Procedure transition.
+   * Ends up calling {@link #reportTransition(RegionStateNode, ServerName, TransitionCode, long)}
+   */
   private void updateRegionTransition(final ServerName serverName, final TransitionCode state,
       final RegionInfo regionInfo, final long seqId)
       throws PleaseHoldException, UnexpectedStateException {
@@ -829,8 +833,7 @@ public class AssignmentManager implements ServerListener {
         serverName, regionNode, state));
     }
 
-    final ServerStateNode serverNode = regionStates.getOrCreateServer(serverName);
-    if (!reportTransition(regionNode, serverNode, state, seqId)) {
+    if (!reportTransition(regionNode, serverName, state, seqId)) {
       // Don't log WARN if shutting down cluster; during shutdown. Avoid the below messages:
       // 2018-08-13 10:45:10,551 WARN ...AssignmentManager: No matching procedure found for
       //   rit=OPEN, location=ve0538.halxg.cloudera.com,16020,1533493000958,
@@ -849,10 +852,9 @@ public class AssignmentManager implements ServerListener {
   }
 
   // FYI: regionNode is sometimes synchronized by the caller but not always.
-  private boolean reportTransition(final RegionStateNode regionNode,
-      final ServerStateNode serverNode, final TransitionCode state, final long seqId)
+  private boolean reportTransition(final RegionStateNode regionNode, ServerName serverName,
+      final TransitionCode state, final long seqId)
       throws UnexpectedStateException {
-    final ServerName serverName = serverNode.getServerName();
     synchronized (regionNode) {
       final RegionTransitionProcedure proc = regionNode.getProcedure();
       if (proc == null) return false;
@@ -941,8 +943,8 @@ public class AssignmentManager implements ServerListener {
             collect(Collectors.toList()));
     }
 
-    final ServerStateNode serverNode = regionStates.getOrCreateServer(serverName);
-
+    // Make sure there is a ServerStateNode for this server that just checked in.
+    ServerStateNode serverNode = regionStates.getOrCreateServer(serverName);
     synchronized (serverNode) {
       if (!serverNode.isInState(ServerState.ONLINE)) {
         LOG.warn("Got a report from a server result in state " + serverNode.getState());
@@ -955,7 +957,7 @@ public class AssignmentManager implements ServerListener {
       LOG.trace("no online region found on " + serverName);
     } else if (!isMetaLoaded()) {
       // if we are still on startup, discard the report unless is from someone holding meta
-      checkOnlineRegionsReportForMeta(serverNode, regionNames);
+      checkOnlineRegionsReportForMeta(serverName, regionNames);
     } else {
       // The Heartbeat updates us of what regions are only. check and verify the state.
       checkOnlineRegionsReport(serverNode, regionNames);
@@ -965,8 +967,7 @@ public class AssignmentManager implements ServerListener {
     wakeServerReportEvent(serverNode);
   }
 
-  void checkOnlineRegionsReportForMeta(final ServerStateNode serverNode,
-      final Set<byte[]> regionNames) {
+  void checkOnlineRegionsReportForMeta(final ServerName serverName, final Set<byte[]> regionNames) {
     try {
       for (byte[] regionName: regionNames) {
         final RegionInfo hri = getMetaRegionFromName(regionName);
@@ -980,18 +981,16 @@ public class AssignmentManager implements ServerListener {
 
         final RegionStateNode regionNode = regionStates.getOrCreateRegionStateNode(hri);
         LOG.info("META REPORTED: " + regionNode);
-        if (!reportTransition(regionNode, serverNode, TransitionCode.OPENED, 0)) {
-          LOG.warn("META REPORTED but no procedure found (complete?); set location=" +
-              serverNode.getServerName());
-          regionNode.setRegionLocation(serverNode.getServerName());
+        if (!reportTransition(regionNode, serverName, TransitionCode.OPENED, 0)) {
+          LOG.warn("META REPORTED but no procedure found (complete?); set location={}", serverName);
+          regionNode.setRegionLocation(serverName);
         } else if (LOG.isTraceEnabled()) {
           LOG.trace("META REPORTED: " + regionNode);
         }
       }
     } catch (UnexpectedStateException e) {
-      final ServerName serverName = serverNode.getServerName();
       LOG.warn("KILLING " + serverName + ": " + e.getMessage());
-      killRegionServer(serverNode);
+      killRegionServer(serverName);
     }
   }
 
@@ -1013,7 +1012,8 @@ public class AssignmentManager implements ServerListener {
                 " but state has otherwise.");
             } else if (regionNode.isInState(State.OPENING)) {
               try {
-                if (!reportTransition(regionNode, serverNode, TransitionCode.OPENED, 0)) {
+                if (!reportTransition(regionNode, serverNode.getServerName(),
+                    TransitionCode.OPENED, 0)) {
                   LOG.warn(regionNode.toString() + " reported OPEN on server=" + serverName +
                     " but state has otherwise AND NO procedure is running");
                 }
@@ -1035,17 +1035,18 @@ public class AssignmentManager implements ServerListener {
       }
     } catch (UnexpectedStateException e) {
       LOG.warn("Killing " + serverName + ": " + e.getMessage());
-      killRegionServer(serverNode);
+      killRegionServer(serverName);
       throw (YouAreDeadException)new YouAreDeadException(e.getMessage()).initCause(e);
     }
   }
 
   protected boolean waitServerReportEvent(ServerName serverName, Procedure<?> proc) {
-    final ServerStateNode serverNode = regionStates.getOrCreateServer(serverName);
-    if (serverNode == null) {
-      LOG.warn("serverName=null; {}", proc);
+    ServerStateNode ssn = this.regionStates.getServerNode(serverName);
+    if (ssn == null) {
+      LOG.warn("Why is ServerStateNode for {} empty at this point? Creating...", serverName);
+      ssn = this.regionStates.getOrCreateServer(serverName);
     }
-    return serverNode.getReportEvent().suspendIfNotReady(proc);
+    return ssn.getReportEvent().suspendIfNotReady(proc);
   }
 
   protected void wakeServerReportEvent(final ServerStateNode serverNode) {
@@ -1255,9 +1256,9 @@ public class AssignmentManager implements ServerListener {
             regionNode.setLastHost(lastHost);
             regionNode.setRegionLocation(regionLocation);
             regionNode.setOpenSeqNum(openSeqNum);
-
             if (localState == State.OPEN) {
               assert regionLocation != null : "found null region location for " + regionNode;
+              regionStates.getOrCreateServer(regionNode.getRegionLocation());
               regionStates.addRegionToServer(regionNode);
             } else if (localState == State.OFFLINE || regionInfo.isOffline()) {
               regionStates.addToOfflineRegions(regionNode);
@@ -1267,9 +1268,18 @@ public class AssignmentManager implements ServerListener {
               // The region is CLOSED and the table is DISABLED/ DISABLING, there is nothing to
               // schedule; the region is inert.
             } else {
-              // These regions should have a procedure in replay
+              // This is region in CLOSING or OPENING state.
+              // These regions should have a procedure in replay.
+              // If they don't, then they will show as STUCK after a while because of the below
+              // registration and will need intervention by operator to fix. Add them to a server
+              // even if the server is not around so a SCP cleans them up.
+              if (regionLocation != null) {
+                regionStates.getOrCreateServer(regionLocation);
+              }
               regionStates.addRegionInTransition(regionNode, null);
             }
+          } else {
+            LOG.info("RIT {}", regionNode);
           }
         }
       }
@@ -1808,8 +1818,8 @@ public class AssignmentManager implements ServerListener {
     wakeServerReportEvent(serverNode);
   }
 
-  private void killRegionServer(final ServerStateNode serverNode) {
-    master.getServerManager().expireServer(serverNode.getServerName());
+  private void killRegionServer(final ServerName serverName) {
+    master.getServerManager().expireServer(serverName);
   }
 
   /**
