@@ -26,6 +26,7 @@ import java.io.InterruptedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -4168,15 +4169,13 @@ public class HBaseAdmin implements Admin {
   }
 
   @Override
-  public List<ServerName> clearDeadServers(final List<ServerName> servers) throws IOException {
-    if (servers == null || servers.size() == 0) {
-      throw new IllegalArgumentException("servers cannot be null or empty");
-    }
+  public List<ServerName> clearDeadServers(List<ServerName> servers) throws IOException {
     return executeCallable(new MasterCallable<List<ServerName>>(getConnection(),
             getRpcControllerFactory()) {
       @Override
       protected List<ServerName> rpcCall() throws Exception {
-        ClearDeadServersRequest req = RequestConverter.buildClearDeadServersRequest(servers);
+        ClearDeadServersRequest req = RequestConverter.
+          buildClearDeadServersRequest(servers == null? Collections.EMPTY_LIST: servers);
         return ProtobufUtil.toServerNameList(
                 master.clearDeadServers(getRpcController(), req).getServerNameList());
       }
