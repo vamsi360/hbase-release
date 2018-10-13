@@ -1055,6 +1055,7 @@ public class ProcedureExecutor<TEnvironment> {
 
   boolean bypassProcedure(long pid, long lockWait, boolean override, boolean recursive)
       throws IOException {
+    Preconditions.checkArgument(lockWait > 0, "lockWait should be positive");
     final Procedure<TEnvironment> procedure = getProcedure(pid);
     if (procedure == null) {
       LOG.debug("Procedure pid={} does not exist, skipping bypass", pid);
