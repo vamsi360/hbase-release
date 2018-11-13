@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProcedureProtos;
+import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProcedureProtos.RegionTransitionState;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProcedureProtos.ServerCrashState;
 
 /**
@@ -418,6 +419,11 @@ public class ServerCrashProcedure
       // Notify RIT on server crash.
       if (sce == null) {
         sce = new ServerCrashException(getProcId(), getServerName());
+      }
+      if (rtp instanceof AssignProcedure
+          && rtp.getTransitionState() == RegionTransitionState.REGION_TRANSITION_FINISH) {
+        // we will not interrupt the assign RTP if we are in the REGION_TRANSITION_FINISH finish
+        continue;
       }
       rtp.remoteCallFailed(env, this.serverName, sce);
       // If an assign, remove from passed-in list of regions so we subsequently do not create

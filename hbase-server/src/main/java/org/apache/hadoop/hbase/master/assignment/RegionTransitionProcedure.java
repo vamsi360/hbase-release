@@ -205,7 +205,7 @@ public abstract class RegionTransitionProcedure
     this.transitionState = state;
   }
 
-  RegionTransitionState getTransitionState() {
+  public RegionTransitionState getTransitionState() {
     return transitionState;
   }
 
