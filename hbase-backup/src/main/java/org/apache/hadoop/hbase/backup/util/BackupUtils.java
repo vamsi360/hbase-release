@@ -57,6 +57,7 @@ import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.tool.LoadIncrementalHFiles;
+import org.apache.hadoop.hbase.util.CommonFSUtils;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.FSUtils;
@@ -258,12 +259,9 @@ public final class BackupUtils {
    */
   public static List<String> getWALFilesOlderThan(final Configuration c,
       final HashMap<String, Long> hostTimestampMap) throws IOException {
-    Path rootDir = FSUtils.getRootDir(c);
-    Path logDir = new Path(rootDir, HConstants.HREGION_LOGDIR_NAME);
-    Path oldLogDir = new Path(rootDir, HConstants.HREGION_OLDLOGDIR_NAME);
-    /*DEBUG*/LOG.warn("DDD logDir="+rootDir);
-    /*DEBUG*/LOG.warn("DDD rootDir="+logDir);
-    /*DEBUG*/LOG.warn("DDD oldLogDir="+oldLogDir);
+    Path walRootDir = CommonFSUtils.getWALRootDir(c);
+    Path logDir = new Path(walRootDir, HConstants.HREGION_LOGDIR_NAME);
+    Path oldLogDir = new Path(walRootDir, HConstants.HREGION_OLDLOGDIR_NAME);
 
     List<String> logFiles = new ArrayList<String>();
 
@@ -288,9 +286,9 @@ public final class BackupUtils {
         }
       }
     };
-    FileSystem fs = FileSystem.get(c);
-    logFiles = BackupUtils.getFiles(fs, logDir, logFiles, filter);
-    logFiles = BackupUtils.getFiles(fs, oldLogDir, logFiles, filter);
+    FileSystem walFs = CommonFSUtils.getWALFileSystem(c);
+    logFiles = BackupUtils.getFiles(walFs, logDir, logFiles, filter);
+    logFiles = BackupUtils.getFiles(walFs, oldLogDir, logFiles, filter);
     return logFiles;
   }
 
