@@ -269,7 +269,7 @@ public class TestTruncateTableProcedure {
     HTableDescriptor htd = MasterProcedureTestingUtility.createHTD(tableName, families);
     htd.setRegionReplication(3);
     HRegionInfo[] regions =
-        MasterProcedureTestingUtility.createTable(getMasterProcedureExecutor(), htd, splitKeys);
+        MasterProcedureTestingUtility.createTable(getMasterProcedureExecutor(), tableName, splitKeys);
     splitAndTruncate(families, splitKeys, tableName, regions);
   }
 
