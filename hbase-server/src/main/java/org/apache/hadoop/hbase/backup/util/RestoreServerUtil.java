@@ -216,7 +216,7 @@ public class RestoreServerUtil {
     Path tableInfoPath = null;
 
     // can't build the path directly as the timestamp values are different
-    FileStatus[] snapshots = fs.listStatus(tableSnapShotPath);
+    FileStatus[] snapshots = fs.listStatus(tableSnapShotPath, new SnapshotDescriptionUtils.CompletedSnaphotDirectoriesFilter(fs));
     for (FileStatus snapshot : snapshots) {
       tableInfoPath = snapshot.getPath();
       // SnapshotManifest.DATA_MANIFEST_NAME = "data.manifest";
