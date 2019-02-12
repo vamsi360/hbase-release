@@ -35,9 +35,11 @@ import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+@Ignore // Disabled because flakey. Fails ~30% on a resource constrained GCE though not on Apache.
 @Category({ MediumTests.class })
 public class TestQuotaThrottle {
   final Log LOG = LogFactory.getLog(getClass());
