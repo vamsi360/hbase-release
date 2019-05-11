@@ -17,7 +17,9 @@
  */
 package org.apache.hadoop.hbase.mapreduce;
 
+import com.google.common.collect.Iterables;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 
 import org.apache.commons.logging.Log;
@@ -302,7 +304,7 @@ public class SyncTable extends Configured implements Tool {
     }
     
     private static final CellScanner EMPTY_CELL_SCANNER
-      = new CellScanner(Iterators.<Result>emptyIterator());
+      = new CellScanner(Collections.emptyIterator());
     
     /**
      * Rescan the given range directly from the source and target tables.

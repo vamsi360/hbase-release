@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase;
 
 import static org.codehaus.jackson.map.SerializationConfig.Feature.SORT_PROPERTIES_ALPHABETICALLY;
 
+import com.google.common.base.MoreObjects;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Constructor;
@@ -329,7 +330,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
       || (!isReadCmd && desc != null && desc.getRegionReplication() != opts.replicas)) {
       needsDelete = true;
       // wait, why did it delete my table?!?
-      LOG.debug(Objects.toStringHelper("needsDelete")
+      LOG.debug(MoreObjects.toStringHelper("needsDelete")
         .add("needsDelete", needsDelete)
         .add("isReadCmd", isReadCmd)
         .add("exists", exists)

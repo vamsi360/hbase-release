@@ -20,6 +20,7 @@
 
 package org.apache.hadoop.hbase.io.hfile.bucket;
 
+import com.google.common.base.MoreObjects;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -268,7 +269,7 @@ public final class BucketAllocator {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this.getClass())
+      return MoreObjects.toStringHelper(this.getClass())
         .add("sizeIndex", sizeIndex)
         .add("bucketSize", bucketSizes[sizeIndex])
         .toString();

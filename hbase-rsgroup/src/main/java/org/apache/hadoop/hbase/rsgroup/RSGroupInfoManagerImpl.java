@@ -509,7 +509,7 @@ public class RSGroupInfoManagerImpl implements RSGroupInfoManager, ServerListene
           Collections.sort(servers, new Comparator<HostAndPort>() {
             @Override
             public int compare(HostAndPort o1, HostAndPort o2) {
-              int diff = o1.getHostText().compareTo(o2.getHostText());
+              int diff = o1.getHost().compareTo(o2.getHost());
               if (diff != 0) {
                 return diff;
               }

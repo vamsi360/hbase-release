@@ -17,11 +17,15 @@
  */
 package org.apache.hadoop.hbase.security.visibility;
 
+import com.google.common.util.concurrent.Service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.Cell;
@@ -128,28 +132,47 @@ public class VisibilityReplicationEndpoint implements ReplicationEndpoint {
   }
 
   @Override
-  public ListenableFuture<State> start() {
-    return delegator.start();
-  }
-
-  @Override
-  public State startAndWait() {
-    return delegator.startAndWait();
-  }
-
-  @Override
   public State state() {
     return delegator.state();
   }
 
   @Override
-  public ListenableFuture<State> stop() {
-    return delegator.stop();
+  public Service startAsync() {
+    return delegator.startAsync();
   }
 
   @Override
-  public State stopAndWait() {
-    return delegator.stopAndWait();
+  public Service stopAsync() {
+    return delegator.stopAsync();
   }
 
+  @Override
+  public void awaitRunning() {
+    delegator.awaitRunning();
+  }
+
+  @Override
+  public void awaitRunning(long timeout, TimeUnit unit) throws TimeoutException {
+    delegator.awaitRunning(timeout, unit);
+  }
+
+  @Override
+  public void awaitTerminated() {
+    delegator.awaitTerminated();
+  }
+
+  @Override
+  public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
+    delegator.awaitTerminated(timeout, unit);
+  }
+
+  @Override
+  public Throwable failureCause() {
+    return delegator.failureCause();
+  }
+
+  @Override
+  public void addListener(Listener listener, Executor executor) {
+    delegator.addListener(listener, executor);
+  }
 }

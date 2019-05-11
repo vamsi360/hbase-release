@@ -94,7 +94,7 @@ class RSGroupAdminClient extends RSGroupAdmin {
     Set<HBaseProtos.ServerName> hostPorts = Sets.newHashSet();
     for(HostAndPort el: servers) {
       hostPorts.add(HBaseProtos.ServerName.newBuilder()
-        .setHostName(el.getHostText())
+        .setHostName(el.getHost())
         .setPort(el.getPort())
         .build());
     }
@@ -183,7 +183,7 @@ class RSGroupAdminClient extends RSGroupAdmin {
     RSGroupAdminProtos.GetRSGroupInfoOfServerRequest request =
         RSGroupAdminProtos.GetRSGroupInfoOfServerRequest.newBuilder()
             .setServer(HBaseProtos.ServerName.newBuilder()
-                .setHostName(hostPort.getHostText())
+                .setHostName(hostPort.getHost())
                 .setPort(hostPort.getPort())
                 .build())
             .build();

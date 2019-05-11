@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hbase.regionserver.compactions;
 
+import com.google.common.base.MoreObjects;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -78,7 +79,7 @@ class MockStoreFileGenerator {
     when(mockSf.isReference()).thenReturn(false); // TODO come back to
     // this when selection takes this into account
     when(mockSf.getReader()).thenReturn(reader);
-    String toString = Objects.toStringHelper("MockStoreFile")
+    String toString = MoreObjects.toStringHelper("MockStoreFile")
         .add("isReference", false)
         .add("fileSize", StringUtils.humanReadableInt(sizeInBytes))
         .add("seqId", seqId)
