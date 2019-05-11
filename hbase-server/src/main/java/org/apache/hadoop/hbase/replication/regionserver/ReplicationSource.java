@@ -264,9 +264,8 @@ public class ReplicationSource extends Thread
 
     try {
       // start the endpoint, connect to the cluster
-      //Service.State state = replicationEndpoint.start().get();
-      Service.State state = replicationEndpoint.startAsync().state();
-      if (state != Service.State.RUNNING) {
+      replicationEndpoint.startAsync().awaitRunning();
+      if (replicationEndpoint.state() != Service.State.RUNNING) {
         LOG.warn("ReplicationEndpoint was not started. Exiting");
         uninitialize();
         return;
