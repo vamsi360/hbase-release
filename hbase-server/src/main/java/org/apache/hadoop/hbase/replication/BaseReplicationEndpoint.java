@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hbase.replication;
 
+import com.google.common.util.concurrent.Service;
 import java.io.IOException;
 import java.util.ArrayList;
 

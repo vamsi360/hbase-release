@@ -18,6 +18,7 @@
  */
 package org.apache.hadoop.hbase.io.hfile;
 
+import com.google.common.base.MoreObjects;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.EnumMap;
@@ -653,7 +654,7 @@ public class LruBlockCache implements ResizableBlockCache, HeapSize {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
       .add("blockCount", getBlockCount())
       .add("currentSize", getCurrentSize())
       .add("freeSize", getFreeSize())
@@ -739,7 +740,7 @@ public class LruBlockCache implements ResizableBlockCache, HeapSize {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
         .add("name", name)
         .add("totalSize", StringUtils.byteDesc(totalSize))
         .add("bucketSize", StringUtils.byteDesc(bucketSize))

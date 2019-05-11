@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.metrics2.lib;
 
+import com.google.common.base.MoreObjects;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 
@@ -393,7 +394,7 @@ public class DynamicMetricsRegistry {
   }
 
   @Override public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("info", metricsInfo).add("tags", tags()).add("metrics", metrics())
         .toString();
   }
